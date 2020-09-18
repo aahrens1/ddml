@@ -17,7 +17,7 @@ program ddml, eclass sortpreserve
 	}
 	//
 	
-	dmlparse `anything'
+	ddmlparse `anything'
 	local ycmd = r(ycmd)
 	local dcmd = r(dcmd)
 	if ("`debug'"!="") {
