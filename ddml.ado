@@ -1,6 +1,6 @@
 ** version 5 july 2019
 
-program dml, eclass sortpreserve
+program ddml, eclass sortpreserve
 
 	version 13
 	
