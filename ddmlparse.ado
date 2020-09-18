@@ -1,5 +1,5 @@
 
-program dmlparse, rclass
+program ddmlparse, rclass
 
 	syntax anything
 
