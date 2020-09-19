@@ -1,3 +1,4 @@
 v 3
 d ddml: Package for Double Debiased Machine Learning
 f ddml.ado
+f ddml.sthlp

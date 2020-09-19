@@ -8,7 +8,7 @@ clear
 use https://statalasso.github.io/dta/AJR.dta
    
 net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/master/)
-   
+
 set seed 123
 
 *** initialise ddml and select model; 

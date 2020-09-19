@@ -280,10 +280,44 @@ program _ddml_crossfit, eclass sortpreserve
     }
 
     *** display mse
-    di "MSE for y:"
-    mat list `MSEy'
-    di "MSE for d:"
-    mat list `MSEd'
+    di " "
+    di as res "Mean-squared error for y:"
+    di _col(2) _c
+    di _col(10) "Name" _c
+    di _col(30) "Command" _c
+    di _col(50) "MSPE"
+    di "{hline 65}"
+    forvalues i = 1(1)`yestn' {
+        di _col(2) "`i'" _c
+        di _col(10) "`yname`i''" _c
+        di _col(30) "`ycmd`i''" _c
+        if (`yminmseid'==`i') {
+            di _col(50) `MSEy'[1,`i'] _c
+            di "*"
+        } 
+        else {
+            di _col(50) `MSEy'[1,`i'] 
+        }
+    }
+    di " "
+    di as res "Mean-squared error for d:"
+    di _col(10) "Name" _c
+    di _col(30) "Command" _c
+    di _col(50) "MSPE"
+    di "{hline 65}"
+    forvalues i = 1(1)`destn' {
+        di _col(2) "`i'" _c
+        di _col(10) "`dname`i''" _c
+        di _col(30) "`dcmd`i''" _c
+        if (`dminmseid'==`i') {
+            di _col(50) `MSEd'[1,`i'] _c
+            di "*"
+        }
+        else {
+            di _col(50) `MSEd'[1,`i']
+        }
+    }
+    di as text "* indicates model with minimum MSE."
 
     *** save all 
     ereturn clear
@@ -305,6 +339,8 @@ program _ddml_crossfit, eclass sortpreserve
     ereturn scalar doptid = `dminmseid'
     ereturn matrix ymse = `MSEy'
     ereturn matrix dmse = `MSEd'
+    ereturn local depvar `yvar'
+    ereturn local dvar `dvar'
 
 
 end
@@ -315,14 +351,21 @@ program _ddml_estimate, eclass sortpreserve
     syntax [anything] [if] [in] , /// 
 								[  ///
                                 robust ///
-                                post(string) /// dertermined which to post
+                                show(string) /// dertermined which to post
                                 * ]
+
+    *** set defaults
+    //if ("`show'"=="") {
+    //    local show opt
+    //}
 	
     *** save everything that is needed in locals
-    local yestn = `e(yest)'
-    local destn = `e(dest)' 
-    local yoptid = `e(yoptid)'
-    local doptid = `e(doptid)'
+    local yestn = e(yest)
+    local destn = e(dest)
+    local yoptid = e(yoptid)
+    local doptid = e(doptid)
+    local yvar = e(depvar)
+    local dvar = e(dvar)
     
     *** do estimation
     forvalues i = 1(1)`yestn' {
@@ -331,10 +374,43 @@ program _ddml_estimate, eclass sortpreserve
     forvalues i = 1(1)`destn' {
         local dtilde`i' _`e(d`i')'
     }
-    forvalues i = 1(1)`yestn' {
-        forvalues j = 1(1)`destn' {
-            di as text "DML `ytilde`i'' -> `dtilde`j'':"
-	        reg `ytilde`i'' `dtilde`j'', nocons `robust'
+    if ("`show'"=="all") {
+        forvalues i = 1(1)`yestn' {
+            forvalues j = 1(1)`destn' {
+                if (`i'!=`yoptid' | `j'==`doptid') {
+                    di as text "DML with `ytilde`i'' and `dtilde`j'':"
+                    qui reg `ytilde`i'' `dtilde`j'', nocons `robust' noheader
+                    // display
+                    tempname b
+                    tempname V 
+                    mat `b' = e(b)
+                    mat `V' = e(V)
+                    matrix colnames `b' = "`dvar'"
+                    matrix rownames `b' = "`yvar'"
+                    matrix colnames `V' = "`dvar'"
+                    matrix rownames `V' = "`dvar'"
+                    ereturn clear
+                    ereturn post `b' `V' 
+                    ereturn display
+
+                }
+            }
         }
     }
+    *** estimate best model
+    di as res "Optimal model: DML with `ytilde`yoptid'' and `dtilde`doptid'':"
+    qui reg `ytilde`yoptid'' `dtilde`doptid'', nocons `robust' noheader
+    // display
+	tempname b
+	tempname V 
+	mat `b' = e(b)
+	mat `V' = e(V)
+	matrix colnames `b' = "`dvar'"
+	matrix rownames `b' = "`yvar'"
+ 	matrix colnames `V' = "`dvar'"
+	matrix rownames `V' = "`dvar'"
+	ereturn clear
+	ereturn post `b' `V' 
+	ereturn display
+
 end
