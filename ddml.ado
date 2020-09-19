@@ -1,4 +1,4 @@
-*! ddml v0.1.3 (19 sep 2020)
+*! ddml v0.1.4 (19 sep 2020)
 
 program ddml, eclass
 
@@ -139,7 +139,6 @@ program _ddml_crossfit, eclass sortpreserve
         local ycmdline`i' `anything'
         local ycmd`i': word 1 of `ycmdline`i''
         local yxvar`i': list ycmdline`i' - ycmd`i' 
-        di "`yxvar`i''"	
         local yxvar`i': list yxvar`i' - yvar  
         qui ds `yxvar`i''
         local yxvar`i' = r(varlist)
@@ -167,12 +166,12 @@ program _ddml_crossfit, eclass sortpreserve
     forvalues i = 1(1)`yestn' {
         tempvar ytilde`i'
         tempvar ytilde_temp`i'
-        gen `ytilde`i'' = .
+        qui gen `ytilde`i'' = .
     }
     forvalues i = 1(1)`destn' {
         tempvar dtilde`i'
         tempvar dtilde_temp`i'
-        gen `dtilde`i'' = .
+        qui gen `dtilde`i'' = .
     }
 
     *** show locals (debug-mode)
@@ -247,6 +246,45 @@ program _ddml_crossfit, eclass sortpreserve
 	//mat list `bhat_k'
 	//`qui' mat list `se_k'
 
+    *** calculate and report MSE 
+    * y equation(s)
+    tempname MSEy
+    tempname MSEd
+    mat `MSEy' = J(1,`yestn',.)
+    mat `MSEd' = J(1,`destn',.)
+    local yminmse = .
+    local dminmse = .
+	forvalues i = 1(1)`yestn' {
+        gen double _`yname`i'' = `ytilde`i''
+        tempname ytilde_sq`i'
+        qui gen double `ytilde_sq`i'' = (`ytilde`i'')^2
+        qui sum `ytilde_sq`i'' , meanonly
+        mat `MSEy'[1,`i'] = r(mean)
+        local newyminmse = r(mean)
+        if (`newyminmse'<`yminmse') {
+            local yminmse = `newyminmse'
+            local yminmseid = `i'
+        }
+	}
+    forvalues i = 1(1)`destn' {
+        gen double _`dname`i'' = `dtilde`i''
+        tempname dtilde_sq`i'
+        qui gen double `dtilde_sq`i'' = (`dtilde`i'')^2
+        qui sum `dtilde_sq`i'' , meanonly
+        mat `MSEd'[1,`i'] = r(mean)
+        local newdminmse = r(mean)
+        if (`newdminmse'<`dminmse') {
+            local dminmse = `newdminmse'
+            local dminmseid = `i'
+        }   
+    }
+
+    *** display mse
+    di "MSE for y:"
+    mat list `MSEy'
+    di "MSE for d:"
+    mat list `MSEd'
+
     *** save all 
     ereturn clear
     ereturn scalar crossfit = 1
@@ -262,27 +300,12 @@ program _ddml_crossfit, eclass sortpreserve
     }
     ereturn local cmd ddml_init
     ereturn local model "partial"
-
-    *** save tilde-vars
-    * y equation(s)
-    di "Show MSPE:"
-	forvalues i = 1(1)`yestn' {
-        gen double _`yname`i'' = `ytilde`i''
-        tempname ytilde_sq`i'
-        qui gen double `ytilde_sq`i'' = (`ytilde`i'')^2
-        qui sum `ytilde_sq`i'' , meanonly
-        di as text "MSE for `yname`i'':"
-        di r(mean)
-	}
-    forvalues i = 1(1)`destn' {
-        gen double _`dname`i'' = `dtilde`i''
-        tempname dtilde_sq`i'
-        qui gen double `dtilde_sq`i'' = (`dtilde`i'')^2
-        qui sum `dtilde_sq`i'' , meanonly
-        di as text "MSE for `dname`i'':"
-        di r(mean)    
-    }
     ereturn scalar crossfit = 1
+    ereturn scalar yoptid = `yminmseid'
+    ereturn scalar doptid = `dminmseid'
+    ereturn matrix ymse = `MSEy'
+    ereturn matrix dmse = `MSEd'
+
 
 end
 
@@ -290,12 +313,18 @@ end
 program _ddml_estimate, eclass sortpreserve
 
     syntax [anything] [if] [in] , /// 
-								[ * ]
+								[  ///
+                                robust ///
+                                post(string) /// dertermined which to post
+                                * ]
 	
     *** save everything that is needed in locals
     local yestn = `e(yest)'
     local destn = `e(dest)' 
+    local yoptid = `e(yoptid)'
+    local doptid = `e(doptid)'
     
+    *** do estimation
     forvalues i = 1(1)`yestn' {
         local ytilde`i' _`e(y`i')'
     }
