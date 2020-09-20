@@ -1,4 +1,4 @@
-*! ddml v0.1.4 (19 sep 2020)
+*! ddml v0.1.5 (20 sep 2020)
 
 program ddml, eclass
 
@@ -38,9 +38,10 @@ program ddml, eclass
         gettoken left theeq: anything, parse(":")
         gettoken left theeq: theeq, parse(":") 
         gettoken theeq: theeq, parse("(") match(paren)
-        ereturn local y`=`e(yest)'+1' "y_`estname'"
+        ereturn local y`=`e(yest)'+1' "`estname'"
         ereturn local ycmd`=`e(yest)'+1' "`theeq'"
         ereturn scalar yest = `e(yest)'+1
+        qui gen `estname' = .
     }
 
     *** add d-equation estimation
@@ -50,9 +51,10 @@ program ddml, eclass
         gettoken left theeq: anything, parse(":")
         gettoken left theeq: theeq, parse(":") 
         gettoken theeq: theeq, parse("(") match(paren)
-        ereturn local d`=`e(dest)'+1' "d_`estname'"
+        ereturn local d`=`e(dest)'+1' "`estname'"
         ereturn local dcmd`=`e(dest)'+1' "`theeq'"
         ereturn scalar dest = `e(dest)'+1
+        qui gen `estname' = .
     }
 
     *** cross-fitting
@@ -255,7 +257,8 @@ program _ddml_crossfit, eclass sortpreserve
     local yminmse = .
     local dminmse = .
 	forvalues i = 1(1)`yestn' {
-        gen double _`yname`i'' = `ytilde`i''
+        //gen double _`yname`i'' = `ytilde`i''
+        replace `yname`i'' = `ytilde`i''
         tempname ytilde_sq`i'
         qui gen double `ytilde_sq`i'' = (`ytilde`i'')^2
         qui sum `ytilde_sq`i'' , meanonly
@@ -267,7 +270,8 @@ program _ddml_crossfit, eclass sortpreserve
         }
 	}
     forvalues i = 1(1)`destn' {
-        gen double _`dname`i'' = `dtilde`i''
+        //gen double _`dname`i'' = `dtilde`i''
+        replace `dname`i'' = `dtilde`i''
         tempname dtilde_sq`i'
         qui gen double `dtilde_sq`i'' = (`dtilde`i'')^2
         qui sum `dtilde_sq`i'' , meanonly
@@ -369,16 +373,29 @@ program _ddml_estimate, eclass sortpreserve
     
     *** do estimation
     forvalues i = 1(1)`yestn' {
-        local ytilde`i' _`e(y`i')'
+        local ytilde`i' `e(y`i')'
+        local yname`i' `e(y`i')'
+        local ycmdline`i' `e(ycmd`i')'
+        local ycmd`i': word 1 of `ycmdline`i''
     }
     forvalues i = 1(1)`destn' {
-        local dtilde`i' _`e(d`i')'
+        local dtilde`i' `e(d`i')'
+        local dname`i' `e(d`i')'
+        local dcmdline`i' `e(dcmd`i')'
+        local dcmd`i': word 1 of `dcmdline`i''
     }
+
+    *** do estimation
     if ("`show'"=="all") {
         forvalues i = 1(1)`yestn' {
             forvalues j = 1(1)`destn' {
-                if (`i'!=`yoptid' | `j'==`doptid') {
-                    di as text "DML with `ytilde`i'' and `dtilde`j'':"
+                if (`i'==`yoptid' & `j'==`doptid') {
+                    // do nothing: optimal model always comes last 
+                    // and is estimated below
+                    di "" _c
+                }
+                else {
+                    di as text "DML with `ycmd`i'' (`yname`i'') and `dcmd`j'' (`dname`j''):"
                     qui reg `ytilde`i'' `dtilde`j'', nocons `robust' noheader
                     // display
                     tempname b
@@ -392,13 +409,12 @@ program _ddml_estimate, eclass sortpreserve
                     ereturn clear
                     ereturn post `b' `V' 
                     ereturn display
-
                 }
             }
         }
     }
     *** estimate best model
-    di as res "Optimal model: DML with `ytilde`yoptid'' and `dtilde`doptid'':"
+    di as res "Optimal model: DML with `ycmd`yoptid'' (`yname`yoptid'') and `dcmd`doptid'' (`dname`doptid''):"
     qui reg `ytilde`yoptid'' `dtilde`doptid'', nocons `robust' noheader
     // display
 	tempname b
