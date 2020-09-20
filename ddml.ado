@@ -1,4 +1,4 @@
-*! ddml v0.1.6 (20 sep 2020)
+*! ddml v0.1.7 (20 sep 2020)
 
 program ddml, eclass
 
