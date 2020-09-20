@@ -258,7 +258,7 @@ program _ddml_crossfit, eclass sortpreserve
     local dminmse = .
 	forvalues i = 1(1)`yestn' {
         //gen double _`yname`i'' = `ytilde`i''
-        replace `yname`i'' = `ytilde`i''
+        qui replace `yname`i'' = `ytilde`i''
         tempname ytilde_sq`i'
         qui gen double `ytilde_sq`i'' = (`ytilde`i'')^2
         qui sum `ytilde_sq`i'' , meanonly
@@ -271,7 +271,7 @@ program _ddml_crossfit, eclass sortpreserve
 	}
     forvalues i = 1(1)`destn' {
         //gen double _`dname`i'' = `dtilde`i''
-        replace `dname`i'' = `dtilde`i''
+        qui replace `dname`i'' = `dtilde`i''
         tempname dtilde_sq`i'
         qui gen double `dtilde_sq`i'' = (`dtilde`i'')^2
         qui sum `dtilde_sq`i'' , meanonly
