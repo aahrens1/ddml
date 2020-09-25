@@ -1,4 +1,4 @@
-*! ddml v0.1.7 (20 sep 2020)
+*! ddml v0.1.8 (24 sep 2020)
 
 program ddml, eclass
 
@@ -19,8 +19,9 @@ program ddml, eclass
         ereturn clear
         ereturn local cmd "ddml_init"
         ereturn local model "`model'"
-        ereturn scalar yest = 0 // number of y-equation estimations
-        ereturn scalar dest = 0 // number of d-equation estimations
+        ereturn scalar yest = 0    // make these hidden later
+        ereturn scalar dest = 0  
+        ereturn scalar zest = 0
         ereturn scalar crossfit = 0
     } 
     else {
@@ -31,49 +32,89 @@ program ddml, eclass
         }
     }
 
-    *** add y-equation estimation
-    if "`subcmd'"=="yeq" {
-        local estname: word 2 of `anything'
-        gettoken estname: estname, parse(":")
-        gettoken left theeq: anything, parse(":")
-        gettoken left theeq: theeq, parse(":") 
-        gettoken theeq: theeq, parse("(") match(paren)
-        ereturn local y`=`e(yest)'+1' "`estname'"
-        ereturn local ycmd`=`e(yest)'+1' "`theeq'"
-        ereturn scalar yest = `e(yest)'+1
-        qui gen `estname' = .
-    }
+    *** add equation  
+    if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="zeq" {
 
-    *** add d-equation estimation
-    if "`subcmd'"=="deq" {
+        ** parsing
         local estname: word 2 of `anything'
         gettoken estname: estname, parse(":")
         gettoken left theeq: anything, parse(":")
         gettoken left theeq: theeq, parse(":") 
         gettoken theeq: theeq, parse("(") match(paren)
-        ereturn local d`=`e(dest)'+1' "`estname'"
-        ereturn local dcmd`=`e(dest)'+1' "`theeq'"
-        ereturn scalar dest = `e(dest)'+1
-        qui gen `estname' = .
+
+        local 0 `theeq'
+        syntax [anything] [if] [in], [*]
+        if "`if'`in'"!="" {
+            di as err "if and in not allowed in equation"
+            error 198
+        }
+        local cmdline `anything'
+        local cmd: word 1 of `cmdline'
+        local vars: list cmdline - cmd
+        local depvar: word 1 of `vars'
+        local xvars: list vars - depvar  
+        //qui ds `xvars'
+        //local xvars = r(varlist)
+        local yopts`i' `options'
+
+        ** ereturn
+        if "`subcmd'"=="yeq" {
+            ereturn local yname`=`e(yest)'+1' "`estname'"
+            ereturn local ycmd`=`e(yest)'+1' "`cmd'"
+            ereturn local yopts`=`e(yest)'+1' "`options'"
+            ereturn local yvar`=`e(yest)'+1' "`depvar'"
+            ereturn local yxvars`=`e(yest)'+1' "`xvars'"
+            ereturn scalar yest = `e(yest)'+1
+            qui gen `estname' = .
+        }
+        if "`subcmd'"=="deq" {
+            ereturn local dname`=`e(dest)'+1' "`estname'"
+            ereturn local dcmd`=`e(dest)'+1' "`cmd'"
+            ereturn local dopts`=`e(dest)'+1' "`options'"
+            ereturn local dvar`=`e(dest)'+1' "`depvar'"
+            ereturn local dxvars`=`e(dest)'+1' "`xvars'"
+            ereturn scalar dest = `e(dest)'+1
+            qui gen `estname' = .
+        }
+        if "`subcmd'"=="zeq" {
+            ereturn local zname`=`e(zest)'+1' "`estname'"
+            ereturn local zcmd`=`e(zest)'+1' "`cmd'"
+            ereturn local zopts`=`e(zest)'+1' "`options'"
+            ereturn local zvar`=`e(zest)'+1' "`depvar'"
+            ereturn local zxvars`=`e(zest)'+1' "`xvars'"
+            ereturn scalar zest = `e(zest)'+1
+            qui gen `estname' = .
+        }
     }
 
     *** cross-fitting
     if "`subcmd'" =="crossfit" {
-        _ddml_crossfit, `options'
+        _ddml_crossfit_partial, `options'
     }
 
     *** estimate
     if "`subcmd'" =="estimate" {
         if (`e(crossfit)'==0) {
-            di as err "you first need to do 'ddml crossfit'"
+            di as err "you first need to call 'ddml crossfit'"
             exit 1
         }
-        _ddml_estimate, `options'
+        if ("`e(model)'"=="partial") {
+            _ddml_estimate_partial, `options'
+        }
+        if ("`e(model)'"=="iv") {
+            _ddml_estimate_iv, `options'
+        }
+        if ("`e(model)'"=="interactive") {
+            _ddml_estimate_interactive, `options'
+        }
+        if ("`e(model)'"=="late") {
+            _ddml_estimate_late, `options'
+        }
     }
 end
 
 *** ddml cross-fitting
-program _ddml_crossfit, eclass sortpreserve
+program _ddml_crossfit_partial, eclass sortpreserve
 
     syntax [anything] [if] [in] , /// 
 							[ kfolds(integer 2)  ///
@@ -93,24 +134,18 @@ program _ddml_crossfit, eclass sortpreserve
         exit 1
     }
     
-    *** extract yvar, dvar, xvars and cmds; sense-checking
-    local ycmd1 = e(ycmd1)
-    local dcmd1 = e(dcmd1)
-    local yvar: word 2 of `ycmd1'
-    local dvar: word 2 of `dcmd1'
+    *** check that dependent variable in y and d-equation is always the same
+    local yvar = e(yvar1)
+    local dvar = e(dvar1)
     forvalues i = 1(1)`yestn' {
-        local ycmd`i' = e(ycmd`i')
-        local yname`i' = e(y`i')
-        local yvar`i': word 2 of `ycmd`i'' 
+        local yvar`i' = e(yvar`i')
         if "`yvar`i''" != "`yvar'" {
             di as err "inconsistent d-variables: `yvar', `yvar`i''"
             exit 1
         }
     }
     forvalues i = 1(1)`destn' {
-        local dcmd`i' = e(dcmd`i')
-        local dname`i' = e(d`i')
-        local dvar`i': word 2 of `dcmd`i'' 
+        local dvar`i' = e(dvar`i')
         if "`dvar`i''" != "`dvar'" {
             di as err "inconsistent d-variables: `dvar', `dvar`i''"
             exit 1
@@ -130,38 +165,31 @@ program _ddml_crossfit, eclass sortpreserve
 	}
 	//
 
-    *** parse y command(s)
+    *** retrieve y macros
     forvalues i = 1(1)`yestn' {
-        local 0 `ycmd`i''
-        syntax [anything] [if] [in], [*]
-        if "`if'`in'"!="" {
-            di as err "if and in not allowed in response equation"
-            error 198
+        local yname`i' = e(yname`i')
+        local ycmd`i' = e(ycmd`i')
+        local yxvar`i' = e(yxvars`i')
+        //qui ds `yxvar`i'' 
+        //local yxvar`i' = r(varlist)
+        local yopts`i' = e(yopts`i')
+        if "`yopts`i''"=="." { // in case local is empty
+            local yopts`i'
         }
-        local ycmdline`i' `anything'
-        local ycmd`i': word 1 of `ycmdline`i''
-        local yxvar`i': list ycmdline`i' - ycmd`i' 
-        local yxvar`i': list yxvar`i' - yvar  
-        qui ds `yxvar`i''
-        local yxvar`i' = r(varlist)
-        local yopts`i' `options'
     }
 
-	*** parse D command(s)
+	*** retrieve d macros
     forvalues i = 1(1)`destn' {
-        local 0 `dcmd`i''
-        syntax [anything] [if] [in], [*]
-        if "`if'`in'"!="" {
-            di as err "if and in not allowed in treatment equation"
-            error 198
+        local dname`i' = e(dname`i')
+        local dcmd`i' = e(dcmd`i')
+        local dxvar`i' = e(dxvars`i')	
+        //qui ds `dxvar`i'' 
+        //local dxvar`i' = r(varlist)
+        local dopts`i' = e(dopts`i')
+        local dopts`i' = e(dopts`i')
+        if "`dopts`i''"=="." { // in case local is empty
+            local dopts`i'
         }
-        local dcmdline`i' `anything'
-        local dcmd`i': word 1 of `dcmdline`i''
-        local dxvar`i': list dcmdline`i' - dcmd`i' 
-        local dxvar`i': list dxvar`i' - dvar  	
-        qui ds `dxvar`i'' 
-        local dxvar`i' = r(varlist)
-        local dopts`i' `options'
     }
 
     *** initialize ytilde / dtilde temp vars
@@ -183,15 +211,17 @@ program _ddml_crossfit, eclass sortpreserve
         di "dvar: `dvar'"
         di "-------------------------------------------------"
         forvalues i = 1(1)`destn' {
+            di "dname`i': `dname`i''"
             di "dcmd`i': `dcmd`i''"
-            di "dcmdline`i': `dcmdline`i''"
+            //di "dcmdline`i': `dcmdline`i''"
             di "dxvar`i': `dxvar`i''"
             di "dopts`i': `dopts`i''"
         }
         di "-----------------------------------"
         forvalues i = 1(1)`yestn' {
+            di "yname`i': `yname`i''"
             di "ycmd`i': `ycmd`i''"
-            di "ycmdline`i': `ycmdline`i''"
+            //di "ycmdline`i': `ycmdline`i''"
             di "yxvar`i': `yxvar`i''"
             di "yopts`i': `yopts`i''"
         }
@@ -215,7 +245,7 @@ program _ddml_crossfit, eclass sortpreserve
 			** y equation(s)
 			forvalues i = 1(1)`yestn' {
                 cap drop `ytilde_temp`i''
-				`ycmdline`i'' if `kid'!=`k', `yopts`i''
+				`ycmd`i'' `yvar' `yxvar`i'' if `kid'!=`k', `yopts`i''
 				predict `ytilde_temp`i'' if `kid'==`k' 
 				replace `ytilde`i'' = `yvar' - `ytilde_temp`i'' if `kid'==`k'
 			}
@@ -233,7 +263,7 @@ program _ddml_crossfit, eclass sortpreserve
 			** d equation(s)
             forvalues i = 1(1)`destn' {
                 cap drop `dtilde_temp`i''
-                `dcmdline`i'' if `kid'!=`k', `dopts`i''
+                `dcmd`i'' `dvar' `dxvar`i'' if `kid'!=`k', `dopts`i''
                 predict `dtilde_temp`i'' if `kid'==`k'   
                 replace `dtilde`i'' = `dvar' - `dtilde_temp`i'' if `kid'==`k'
             }
@@ -346,16 +376,16 @@ program _ddml_crossfit, eclass sortpreserve
     ereturn local depvar `yvar'
     ereturn local dvar `dvar'
 
-
 end
 
-*** ddml estimation
-program _ddml_estimate, eclass sortpreserve
+*** ddml estimation: partial linear model
+program _ddml_estimate_partial, eclass sortpreserve
 
     syntax [anything] [if] [in] , /// 
 								[  ///
                                 robust ///
                                 show(string) /// dertermined which to post
+                                avplot ///
                                 * ]
 
     *** set defaults
@@ -416,6 +446,12 @@ program _ddml_estimate, eclass sortpreserve
     *** estimate best model
     di as res "Optimal model: DML with `ycmd`yoptid'' (`yname`yoptid'') and `dcmd`doptid'' (`dname`doptid''):"
     qui reg `ytilde`yoptid'' `dtilde`doptid'', nocons `robust' noheader
+
+    // plot
+    if ("`avplot'"!="") {
+        twoway (scatter `ytilde`yoptid'' `dtilde`doptid'') (lfit `ytilde`yoptid'' `dtilde`doptid'')
+    }
+
     // display
 	tempname b
 	tempname V 
