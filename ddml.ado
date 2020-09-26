@@ -7,6 +7,11 @@ program ddml, eclass
     syntax [anything] , [*]
 
     local subcmd: word 1 of `anything'
+
+    *** get latest version
+    if "`subcmd'"=="update" {
+        net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/master/)
+    } 
     
     *** initialize new estimation
     if "`subcmd'"=="init" {
@@ -24,16 +29,15 @@ program ddml, eclass
         ereturn scalar zest = 0
         ereturn scalar crossfit = 0
     } 
-    else {
-        if ("`e(cmd)'"!="ddml_init"&"`e(cmd)'"!="ddml_crossfit") {
-            di as err "no ddml object found." _c
-            di as err "you first need to initialize using 'ddml init'"
-            exit 1
-        }
-    }
 
     *** add equation  
     if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="zeq" {
+
+        if ("`e(cmd)'"!="ddml_init") {
+            di as err "no ddml init object found." _c
+            di as err "you need to initialize using 'ddml init'"
+            exit 1
+        }
 
         ** parsing
         local estname: word 2 of `anything'
