@@ -1,9 +1,9 @@
-*! ddml v0.1.9 (27 oct 2020)
+*! ddml v0.1.10 (1 nov 2020)
 
 *** features to be added 
 * - absorb() to partial out fixed effects
 * - markout
-* - options
+* - optimalIV and LATE model
 
 program ddml, eclass
 
@@ -21,9 +21,8 @@ program ddml, eclass
     *** initialize new estimation
     if "`subcmd'"=="init" {
         local model: word 2 of `anything'
-        if ("`model'"!="partial"&"`model'"!="iv"&"`model'"!="interactive"&"`model'"!= "late") {
-            di as err "no or wrong model specified." _c
-            di as err "currently only 'ddml init partial' is supported"
+        if ("`model'"!="partial"&"`model'"!="iv"&"`model'"!="interactive"&"`model'"!="late"&"`model'"!="optimaliv") {
+            di as err "no or wrong model specified." 
             exit 1
         }
         ereturn clear
@@ -38,6 +37,15 @@ program ddml, eclass
     *** add equation  
     if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="zeq" {
 
+        ** check that equation is consistent with model
+        if ("`subcmd'"=="yeq"&"`model'"=="optimaliv") {
+            di as err "not allowed; yeq not allowed with `model'"
+        }
+        if ("`subcmd'"=="zeq"&("`model'"=="optimaliv"|"`model'"=="partial"|"`model'"=="interactive")) {
+            di as err "not allowed; deq not allowed with `model'"
+        }
+
+        ** check that ddml has been initialized
         if ("`e(cmd)'"!="ddml_init") {
             di as err "no ddml init object found." _c
             di as err "you need to initialize using 'ddml init'"
@@ -123,6 +131,9 @@ program ddml, eclass
         if ("`e(model)'"=="late") {
             _ddml_estimate_late, `options'
         }
+        if ("`e(model)'"=="optimaliv") {
+            _ddml_estimate_optimaliv, `options'
+        }
     }
 end
 
@@ -158,7 +169,14 @@ program _ddml_crossfit, eclass sortpreserve
     if ("`model'"=="iv"|"`model'"=="late") {
         if (`yestn'==0 | `destn'==0 | `zestn'==0) {
             di as err "insufficient equations specified." _c 
-            di as err "we need at least one ML commands for y, one for d, one for z."
+            di as err "we need at least one ML command for y, one for d, one for z."
+            exit 1
+        }
+    }
+    if ("`model'"=="optimaliv") {
+        if (`destn'==0) {
+            di as err "insufficient equations specified." _c 
+            di as err "we need at least one ML command for d."
             exit 1
         }
     }
@@ -166,21 +184,25 @@ program _ddml_crossfit, eclass sortpreserve
     *** check that dependent variable in y and d-equation is always the same
     local yvar = e(yvar1)
     local dvar = e(dvar1)
-    forvalues i = 1(1)`yestn' {
-        local yvar`i' = e(yvar`i')
-        if "`yvar`i''" != "`yvar'" {
-            di as err "inconsistent d-variables: `yvar', `yvar`i''"
-            exit 1
+    if (`yestn'>1) {
+        forvalues i = 1(1)`yestn' {
+            local yvar`i' = e(yvar`i')
+            if "`yvar`i''" != "`yvar'" {
+                di as err "inconsistent d-variables: `yvar', `yvar`i''"
+                exit 1
+            }
         }
     }
-    forvalues i = 1(1)`destn' {
-        local dvar`i' = e(dvar`i')
-        if "`dvar`i''" != "`dvar'" {
-            di as err "inconsistent d-variables: `dvar', `dvar`i''"
-            exit 1
+    if (`destn'>1) {
+        forvalues i = 1(1)`destn' {
+            local dvar`i' = e(dvar`i')
+            if "`dvar`i''" != "`dvar'" {
+                di as err "inconsistent d-variables: `dvar', `dvar`i''"
+                exit 1
+            }
         }
     }
-    if ("`model'"=="iv"|"`model'"=="late") {
+    if (`zestn'>0) {
         local zvar = e(zvar1)
         forvalues i = 1(1)`zestn' {
             local zvar`i' = e(zvar`i')
@@ -246,7 +268,7 @@ program _ddml_crossfit, eclass sortpreserve
     }
 
     *** retrieve z macros
-    if ("`model'"=="iv") {
+    if (`zestn'>0) {
         forvalues i = 1(1)`zestn' {
             local zname`i' = e(zname`i')
             local zcmd`i' = e(zcmd`i')
@@ -352,7 +374,7 @@ program _ddml_crossfit, eclass sortpreserve
             }
 
 			** d equation(s)
-            if ("`model'"=="partial"|"`model'"=="iv"|"`model'"=="interactive") {
+            if ("`model'"=="partial"|"`model'"=="iv"|"`model'"=="interactive"|"`model'"=="optimaliv") {
                 forvalues i = 1(1)`destn' {
                     cap drop `dtilde_temp`i''
                     `dcmd`i'' `dvar' `dxvar`i'' if `kid'!=`k', `dopts`i''
@@ -401,6 +423,7 @@ program _ddml_crossfit, eclass sortpreserve
     if ("`model'"=="partial"|"`model'"=="iv") {
         tempname MSEy
         local yminmse = .
+        local yminmseid = 1
         mat `MSEy' = J(1,`yestn',.)
         forvalues i = 1(1)`yestn' {
             qui replace `yname`i'' = `ytilde`i''
@@ -439,6 +462,8 @@ program _ddml_crossfit, eclass sortpreserve
         tempname MSEy1
         local yminmse0 = .
         local yminmse1 = .
+        local yminmseid1 = 1
+        local yminmseid0 = 1
         mat `MSEy0' = J(1,`yestn',.)
         mat `MSEy1' = J(1,`yestn',.)
         forvalues i = 1(1)`yestn' {
@@ -463,7 +488,8 @@ program _ddml_crossfit, eclass sortpreserve
             }
         }
         di " "
-        di as res "Mean-squared error for y|D=0,X:"
+        if "`model'"=="interactive" di as res "Mean-squared error for y|D=0,X:"
+        else  di as res "Mean-squared error for y|Z=0,X:"
         di _col(2) _c
         di _col(10) "Name" _c
         di _col(30) "Command" _c
@@ -482,7 +508,8 @@ program _ddml_crossfit, eclass sortpreserve
             }
         }
         di " "
-        di as res "Mean-squared error for y|D=1,X:"
+        if "`model'"=="interactive" di as res "Mean-squared error for y|D=1,X:"
+        else di as res "Mean-squared error for y|Z=1,X:"
         di _col(2) _c
         di _col(10) "Name" _c
         di _col(30) "Command" _c
@@ -505,6 +532,7 @@ program _ddml_crossfit, eclass sortpreserve
         tempname MSEd
         mat `MSEd' = J(1,`destn',.)
         local dminmse = .
+        local dminmseid = 1
         forvalues i = 1(1)`destn' {
             qui replace `dname`i'' = `dtilde`i''
             tempname dtilde_sq`i'
@@ -541,6 +569,8 @@ program _ddml_crossfit, eclass sortpreserve
         tempname MSEd1
         local dminmse0 = .
         local dminmse1 = .
+        local dminmseid1 = 1
+        local dminmseid0 = 1
         mat `MSEd0' = J(1,`destn',.)
         mat `MSEd1' = J(1,`destn',.)
         forvalues i = 1(1)`destn' {
@@ -607,6 +637,7 @@ program _ddml_crossfit, eclass sortpreserve
         tempname MSEz
         mat `MSEz' = J(1,`zestn',.)
         local zminmse = .
+        local zminmseid = 1
         forvalues i = 1(1)`zestn' {
             qui replace `zname`i'' = `ztilde`i''
             tempname ztilde_sq`i'
@@ -615,7 +646,7 @@ program _ddml_crossfit, eclass sortpreserve
             mat `MSEz'[1,`i'] = r(mean)
             local newzminmse = r(mean)
             if (`newzminmse'<`zminmse') {
-                local zminmse = `newdminmse'
+                local zminmse = `newzminmse'
                 local zminmseid = `i'
             }   
         }
@@ -1018,28 +1049,26 @@ program _ddml_estimate_late, eclass sortpreserve
 
     *** do estimation
     if ("`show'"=="all") {
-        forvalues i = 1(1)`yestn' {
-            forvalues i = 1(1)`yestn' {
-                forvalues j = 1(1)`destn' {
-                    forvalues j = 1(1)`destn' {
+        forvalues i0 = 1(1)`yestn' {
+            forvalues i1 = 1(1)`yestn' {
+                forvalues j0 = 1(1)`destn' {
+                    forvalues j1 = 1(1)`destn' {
                         forvalues l = 1(1)`zestn' {
-                            if (`i'==`yoptid' & `j'==`doptid' & `l'==`zoptid') {
+                            if (`i0'==`y0optid' & `i1'==`y1optid' & `j0'==`d0optid' & `j1'==`d1optid' & `l'==`zoptid') {
                                 // do nothing: optimal model always comes last 
                                 // and is estimated below
                                 di "" _c
                             }
                             else {
                                 di as text "DML with `ycmd`i'' (`yname`i''), `dcmd`j'' (`dname`j'') and instrument `zcmd`j'' (`zname`j''):"
-                                mata: LATE("`yname`i''","`dcmd`j''","`zname`j''")
-                                // display
                                 tempname b
                                 tempname V 
-                                mat `b' = e(b)
-                                mat `V' = e(V)
+                                mata: LATE("`yvar'","`dvar'","`zvar'","`ytilde`i0''", "`ytilde`i1''", "`dtilde`j0''","`dtilde`j1''","`ztilde`l''","`touse'","`b'","`V'")
                                 matrix colnames `b' = "`dvar'"
                                 matrix rownames `b' = "`yvar'"
                                 matrix colnames `V' = "`dvar'"
                                 matrix rownames `V' = "`dvar'"
+                                // display
                                 ereturn clear
                                 ereturn post `b' `V' 
                                 ereturn display
@@ -1052,17 +1081,14 @@ program _ddml_estimate_late, eclass sortpreserve
     }
     *** estimate best model
     di as res "Optimal model: DML with `ycmd`yoptid'' (`yname`yoptid''), `dcmd`doptid'' (`dname`doptid'') and instrument `zcmd`zoptid'' (`zname`zoptid''):"
-    qui ivreg2 `ytilde`yoptid'' (`dtilde`doptid''=`ztilde`zoptid''), nocons `robust' noheader
-
-    // display
 	tempname b
 	tempname V 
-	mat `b' = e(b)
-	mat `V' = e(V)
+    mata: LATE("`yvar'","`dvar'","`zvar'","`ytilde`y0optid''", "`ytilde`y1optid''", "`dtilde`d0optid''","`dtilde`d1optid''","`ztilde`zoptid''","`touse'","`b'","`V'")
 	matrix colnames `b' = "`dvar'"
 	matrix rownames `b' = "`yvar'"
  	matrix colnames `V' = "`dvar'"
 	matrix rownames `V' = "`dvar'"
+    // display
 	ereturn clear
 	ereturn post `b' `V' 
 	ereturn display
@@ -1105,22 +1131,34 @@ void ATE(   string scalar yvar,	    // Y
     st_matrix(outatese,ate_V)
 }
 
-void LATE(string scalar yvar,	//
-        string scalar dvar,     //
-        string scalar zvar,     //
-        string scalar samplevar,   //
-        string scalar outlate,   //
-        string scalar outlatese
-        )
+void LATE(  string scalar yvar,	     // Y
+            string scalar dvar,      // D
+            string scalar zvar,      // Z
+            string scalar y0tilde,   // E[Y|X,Z=0]
+            string scalar y1tilde,   // E[Y|X,Z=1]
+            string scalar d0tilde,   // E[D|X,Z=0]
+            string scalar d1tilde,   // E[D|X,Z=1]
+            string scalar ztilde,    // E[Z|X]
+            string scalar sample,    // sample
+            string scalar outlate,   // output: name of matrix to store b
+            string scalar outlatese  // output: name of matrix to store V
+            )
 {
-    st_view(sample,.,dvar,samplevar)
-    st_view(y0,.,yvar,sample)
-    st_view(y0,.,dvar,sample)
+    st_view(my_z0x,.,y0tilde,sample)
+    st_view(my_z1x,.,y1tilde,sample)
+    st_view(md_z0x,.,d0tilde,sample)
+    st_view(md_z1x,.,d1tilde,sample)
+    st_view(mz_x,.,ztilde,sample)
+    st_view(d,.,dvar,sample)
+    st_view(y,.,yvar,sample)
+    st_view(z,.,zvar,sample)
 
-    late = mean( z * (y - my_z1x) / mz_x -  ((1 - z) * (y - my_z0x) / (1 - mz_x)) + my_z1x - my_z0x ) / 
-            mean( z * (d - md_z1x) / mz_x -  ((1 - z) * (d - md_z0x) / (1 - mz_x)) + md_z1x - md_z0x ) 
-    late_se =  sd(( z * (y - my_z1x) / mz_x -  ((1 - z) * (y - my_z0x) / (1 - mz_x)) + my_z1x - my_z0x ) / 
-               mean( z * (d - md_z1x) / mz_x -  ((1 - z) * (d - md_z0x) / (1 - mz_x)) + md_z1x - md_z0x )) / sqrt(length(y)) 
+    n = rows(y)
+
+    late =  mean( z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x ) /
+                mean( z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x ) 
+    late_se = variance(( z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x ) :/ 
+               mean( z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x )) / n
 
     st_matrix(outlate,late)
     st_matrix(outlatese,late_se)
