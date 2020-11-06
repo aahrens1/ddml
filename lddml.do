@@ -20,7 +20,6 @@ st_global("s(stata_version)","`stata_version'")
 st_global("s(compiled_date)","`current_date")
 }
 
-
 struct ddmlStruct {
 	string scalar		model
 	string scalar		nameY
@@ -39,7 +38,6 @@ struct eqnStruct {
 	string scalar		eststring
 	string scalar		command
 	real scalar			MSE
-	
 }
 
 mata mlib create lddml, dir(PERSONAL) replace

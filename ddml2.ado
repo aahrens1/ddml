@@ -2,10 +2,14 @@
 program ddml2, eclass
 
 	version 13
+	
+	local allargs `0'
+	tokenize "`allargs'", parse(",")
+	local mainargs `1'
+	macro shift
+	local restargs `*'
 
-	syntax [anything] , [*]
-
-	local subcmd: word 1 of `anything'
+	local subcmd : word 1 of `mainargs'
 
 	*** get latest version
 	if "`subcmd'"=="update" {
@@ -14,7 +18,7 @@ program ddml2, eclass
 	
 	*** describe model
 	if "`subcmd'"=="desc" {
-		local 0 ", `options'"
+		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
 		// remaining args are temporary and for debugging only
 		syntax , mname(name)
@@ -62,12 +66,12 @@ program ddml2, eclass
 	
 	*** initialize new estimation
 	if "`subcmd'"=="init" {
-		local model: word 2 of `anything'
+		local model: word 2 of `mainargs'
 		if ("`model'"!="partial"&"`model'"!="iv"&"`model'"!="interactive"&"`model'"!="late"&"`model'"!="optimaliv") {
 			di as err "no or wrong model specified." 
 			exit 1
 		}
-		local 0 ", `options'"
+		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
 		// remaining args are temporary and for debugging only
 		syntax , mname(name)
@@ -92,9 +96,12 @@ program ddml2, eclass
 		// to add
 
 		** parsing
-		local 0 ", `options'"
+		// macro options has eqn to be estimated set off from the reset by a :
+		tokenize `" `restargs' "', parse(":")
+		// parse character is in macro `2'
+		local eqn `3'
+		local 0 "`1'"
 		syntax ,	mname(name)		///
-					eqn(string)		///
 					vname(name)		///
 					gen(name)
 
