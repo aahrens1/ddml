@@ -73,7 +73,6 @@ program ddml2, eclass
 		}
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
-		// remaining args are temporary and for debugging only
 		syntax , mname(name)
 		mata: `mname'=init_ddmlStruct()
 		// fill by hand
@@ -135,25 +134,26 @@ program ddml2, eclass
 
 	*** cross-fitting
 	if "`subcmd'" =="crossfit" {
-		_ddml_crossfit, `options'
+		_ddml_crossfit `restargs'
 	}
 
 	*** estimate
 	if "`subcmd'" =="estimate" {
-	
-		local mstruct: word 2 of `anything'
+		local 0 "`restargs'"
+		// mname is required; could make optional with a default name
+		syntax , mname(name)
 		
-		// check that mstruct is the name of a Mata ddmlStruct
-		mata: st_global("r(structname)",structname(`mstruct'))
+		// check that mname is the name of a Mata ddmlStruct
+		mata: st_global("r(structname)",structname(`mname'))
 		if ("`r(structname)'" ~= "ddmlStruct") {
 			di as err "you need to provide the name of the ddmlStruct with the crossfit results"
 			exit 198
 		}
 
-		mata: st_global("r(model)",`mstruct'.model)
+		mata: st_global("r(model)",`mname'.model)
 
 		if ("`r(model)'"=="partial") {
-			_ddml_estimate_partial `mstruct', `options'
+			_ddml_estimate_partial `mname', `options'
 		}
 		if ("`r(model)'"=="iv") {
 			_ddml_estimate_iv, `options'
@@ -529,10 +529,10 @@ program _ddml_estimate_partial, eclass sortpreserve
 	local Yopt `r(Yopt)'
    	mata: st_global("r(Dopt)",`mstruct'.nameDopt)
 	local Dopt `r(Dopt)'
-   	mata: st_global("r(nameY)",`mstruct'.nameY)
-	local nameY `r(nameY)'
-   	mata: st_global("r(nameD)",`mstruct'.nameD)
-	local nameD `r(nameD)'
+//   	mata: st_global("r(nameY)",`mstruct'.nameY)
+//	local nameY `r(nameY)'
+//   	mata: st_global("r(nameD)",`mstruct'.nameD)
+//	local nameD `r(nameD)'
 
 	*** estimate best model
 	di as res "Optimal model: DML with optimal Y~ `r(Yopt)' and optimal D~ `r(Dopt)':"
