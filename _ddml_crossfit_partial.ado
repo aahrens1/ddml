@@ -44,10 +44,12 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	}
 	//
 
-	*** initialize tilde variables
 	// blank eqn - declare this way so that it's a struct and not transmorphic
+	// used multiple times below
 	tempname eqn
 	mata: `eqn' = init_eqnStruct()
+
+	*** initialize tilde variables
 	// Y equations
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
@@ -62,8 +64,56 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		cap drop `vtilde'
 		qui gen double `vtilde'=.
 	}
-	// clear this global from Mata
-	mata: mata drop `eqn'
+
+	*** estimate equations that do not require crossfitting
+	qui {
+		forvalues i=1/`numeqnsY' {
+			mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
+			mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
+			if r(crossfit)==0 {
+				mata: st_local("vtilde",`eqn'.vtilde)
+				mata: st_local("vname",`eqn'.vname)
+				mata: st_local("eststring",`eqn'.eststring)
+				local 0 "`eststring'"
+				syntax [anything] , [*]
+				local est_main `anything'
+				local est_options `options'
+				di "Y estimating equation `i' (no crossfit):"
+				di "  est_main: `est_main'"
+				di "  est_options: `est_options'"
+	
+				// estimate
+				`est_main', `est_options'
+				// get fitted values and residuals
+				tempvar vtilde_i
+				qui predict double `vtilde_i'
+				qui replace `vtilde' = `vname' - `vtilde_i'
+			}
+		}
+		forvalues i=1/`numeqnsD' {
+			mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
+			mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
+			if r(crossfit)==0 {
+				mata: st_local("vtilde",`eqn'.vtilde)
+				mata: st_local("vname",`eqn'.vname)
+				mata: st_local("eststring",`eqn'.eststring)
+				local 0 "`eststring'"
+				syntax [anything] , [*]
+				local est_main `anything'
+				local est_options `options'
+				di "D estimating equation `i' (no crossfit):"
+				di "  est_main: `est_main'"
+				di "  est_options: `est_options'"
+	
+				// estimate
+				`est_main', `est_options'
+				// get fitted values and residuals
+				tempvar vtilde_i
+				qui predict double `vtilde_i'
+				qui replace `vtilde' = `vname' - `vtilde_i'
+			}
+		}
+	}
 	
 	*** do cross-fitting
 	di "Cross-fitting fold " _c
@@ -78,66 +128,59 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		// ML is applied to I^c sample (all data ex partition k)
 		qui {
 		
-			// blank eqn - declare this way so that it's a struct and not transmorphic
-			tempname eqn
-			mata: `eqn' = init_eqnStruct()
-			
 			// Y equations
 			forvalues i=1/`numeqnsY' {
-				di "Y estimating equation `i':"
 				mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-				mata: st_local("vtilde",`eqn'.vtilde)
-				mata: st_local("vname",`eqn'.vname)
-				mata: st_local("eststring",`eqn'.eststring)
-				local 0 "`eststring'"
-				syntax [anything] , [*]
-				local est_main `anything'
-				local est_options `options'
-				di "  est_main: `est_main'"
-				di "  est_options: `est_options'"
-
-				// estimate excluding kth fold
-				`est_main' if `kid'!=`k', `est_options'
-				// get fitted values and residuals for kth fold	
-				tempvar vtilde_i
-				qui predict double `vtilde_i' if `kid'==`k' 
-				qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
-
+				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
+				if r(crossfit) {
+					mata: st_local("vtilde",`eqn'.vtilde)
+					mata: st_local("vname",`eqn'.vname)
+					mata: st_local("eststring",`eqn'.eststring)
+					local 0 "`eststring'"
+					syntax [anything] , [*]
+					local est_main `anything'
+					local est_options `options'
+					di "Y estimating equation `i':"
+					di "  est_main: `est_main'"
+					di "  est_options: `est_options'"
+	
+					// estimate excluding kth fold
+					`est_main' if `kid'!=`k', `est_options'
+					// get fitted values and residuals for kth fold	
+					tempvar vtilde_i
+					qui predict double `vtilde_i' if `kid'==`k' 
+					qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
+				}
 			}
 			// D equations
 			forvalues i=1/`numeqnsD' {
-				di "D estimating equation `i':"
 				mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-				mata: st_local("vtilde",`eqn'.vtilde)
-				mata: st_local("vname",`eqn'.vname)
-				mata: st_local("eststring",`eqn'.eststring)
-				local 0 "`eststring'"
-				syntax [anything] , [*]
-				local est_main `anything'
-				local est_options `options'
-				di "  est_main: `est_main'"
-				di "  est_options: `est_options'"
-
-				// estimate excluding kth fold
-				`est_main' if `kid'!=`k', `est_options'
-				// get fitted values and residuals for kth fold	
-				tempvar vtilde_i
-				qui predict double `vtilde_i' if `kid'==`k' 
-				qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
-
+				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
+				if r(crossfit) {
+					mata: st_local("vtilde",`eqn'.vtilde)
+					mata: st_local("vname",`eqn'.vname)
+					mata: st_local("eststring",`eqn'.eststring)
+					local 0 "`eststring'"
+					syntax [anything] , [*]
+					local est_main `anything'
+					local est_options `options'
+					di "D estimating equation `i':"
+					di "  est_main: `est_main'"
+					di "  est_options: `est_options'"
+	
+					// estimate excluding kth fold
+					`est_main' if `kid'!=`k', `est_options'
+					// get fitted values and residuals for kth fold	
+					tempvar vtilde_i
+					qui predict double `vtilde_i' if `kid'==`k' 
+					qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
+				}
 			}
-
-			// clear this global from Mata
-			mata: mata drop `eqn'
 
 		}
 	}	
 
 	*** calculate MSE (or any other postestimation calculations)
-
-	// blank eqn - declare this way so that it's a struct and not transmorphic
-	tempname eqn
-	mata: `eqn' = init_eqnStruct()
 	
 	// insert MSE for each estimation
 	forvalues i=1/`numeqnsY' {

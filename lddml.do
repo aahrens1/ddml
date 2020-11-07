@@ -41,6 +41,7 @@ struct eqnStruct {
 	string scalar		eststring
 	string scalar		command
 	real scalar			MSE
+	real scalar			crossfit		// boolean, 0 or 1
 }
 
 mata mlib create lddml, dir(PERSONAL) replace

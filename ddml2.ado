@@ -51,7 +51,14 @@ program ddml2, eclass
 			mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
 			di "Estimating equation `i': " _c
 			mata: st_numscalar("r(MSE)",`eqn'.MSE)
-			di "MSE = " %10.6f `r(MSE)'
+			di "MSE = " %10.6f `r(MSE)' _c
+			mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
+			if `r(crossfit)'==0 {
+				di " (no crossfit)"
+			}
+			else {
+				di
+			}
 			mata: st_global("r(estring)",`eqn'.vname)
 			di "  Variable: `r(estring)'" _c
 			mata: st_global("r(estring)",`eqn'.vtilde)
@@ -67,7 +74,14 @@ program ddml2, eclass
 			mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
 			di "Estimating equation `i': " _c
 			mata: st_numscalar("r(MSE)",`eqn'.MSE)
-			di "MSE = " %10.6f `r(MSE)'
+			di "MSE = " %10.6f `r(MSE)' _c
+			mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
+			if `r(crossfit)'==0 {
+				di " (no crossfit)"
+			}
+			else {
+				di
+			}
 			mata: st_global("r(estring)",`eqn'.vname)
 			di "  Variable: `r(estring)'" _c
 			mata: st_global("r(estring)",`eqn'.vtilde)
@@ -119,9 +133,11 @@ program ddml2, eclass
 		local 0 "`1'"
 		syntax ,	mname(name)		///
 					vname(name)		///
-					gen(name)
+					gen(name)		///
+					[ NOCROSSfit ]
 
-		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'", "`eqn'")
+		// subcmd macro tells add_eqn(.) which list to add it to
+		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'", "`eqn'", "`nocrossfit'")
 		if "`subcmd'"=="yeq" {
 			// check if nameY is already there; if it is, must be identical to vname here
 			mata: st_global("r(vname)",`mname'.nameY)
@@ -241,13 +257,15 @@ void add_eqn(						struct ddmlStruct m,
 									string scalar eqtype,
 									string scalar vname,
 									string scalar vtilde,
-									string scalar estcmd)
+									string scalar estcmd,
+									string scalar nocrossfit)
 {
 	struct eqnStruct scalar		e
-	e.vname		= vname
-	e.vtilde	= vtilde
-	e.eststring	= estcmd
-	e.command	= tokens(estcmd)[1,1]
+	e.vname			= vname
+	e.vtilde		= vtilde
+	e.eststring		= estcmd
+	e.command		= tokens(estcmd)[1,1]
+	e.crossfit		= (nocrossfit=="")
 
 	if (eqtype=="yeq") {
 		if (cols(m.eqnlistY)==0) {

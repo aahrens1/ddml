@@ -9,65 +9,6 @@ program _ddml_estimate_partial, eclass sortpreserve
 								avplot ///
 								* ]
 
-/*
-
-	*** set defaults
-	if ("`show'"=="") {
-		local show opt
-	}
-	
-	*** save everything that is needed in locals
-	local yestn = e(yest)
-	local destn = e(dest)
-	local zestn = e(zest)
-	local yoptid = e(yoptid)
-	local doptid = e(doptid)
-	local zoptid = e(zoptid)
-	local yvar = e(depvar)
-	local dvar = e(dvar)
-	local zvar = e(zvar)
-	
-	*** retrieve variable names
-	forvalues i = 1(1)`yestn' {
-		local ytilde`i' `e(y`i')'
-		local yname`i' `e(y`i')'
-		local ycmd`i' `e(ycmd`i')'
-	}
-	forvalues i = 1(1)`destn' {
-		local dtilde`i' `e(d`i')'
-		local dname`i' `e(d`i')'
-		local dcmd`i' `e(dcmd`i')'
-	}
-
-	*** do estimation
-	if ("`show'"=="all") {
-		forvalues i = 1(1)`yestn' {
-			forvalues j = 1(1)`destn' {
-				if (`i'==`yoptid' & `j'==`doptid') {
-					// do nothing: optimal model always comes last 
-					// and is estimated below
-					di "" _c
-				}
-				else {
-					di as text "DML with `ycmd`i'' (`yname`i'') and `dcmd`j'' (`dname`j''):"
-					qui reg `ytilde`i'' `dtilde`j'', nocons `robust' noheader
-					// display
-					tempname b
-					tempname V 
-					mat `b' = e(b)
-					mat `V' = e(V)
-					matrix colnames `b' = "`dvar'"
-					matrix rownames `b' = "`yvar'"
-					matrix colnames `V' = "`dvar'"
-					matrix rownames `V' = "`dvar'"
-					ereturn clear
-					ereturn post `b' `V' 
-					ereturn display
-				}
-			}
-		}
-	}
-*/
 
 	// loop through all Ytildes and all possible combinations of Dtildes
 	mata: st_local("ylist",invtokens(`mname'.nameYtilde))
