@@ -25,14 +25,17 @@ struct ddmlStruct {
 	string scalar		nameY
 	string colvector	nameYtilde
 	string scalar		nameYopt
+	string scalar		nameY0opt
+	string scalar		nameY1opt
 	string colvector	nameD
 	string matrix		nameDtilde
 	string colvector	nameDopt
-	pointer matrix		eqnlist
+	pointer matrix		eqnlistY
+	pointer matrix		eqnlistD
+	pointer matrix		eqnlistZ
 }
 
 struct eqnStruct {
-    string scalar		YorD
 	string scalar		vname
 	string scalar		vtilde
 	string scalar		eststring
