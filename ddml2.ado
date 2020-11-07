@@ -237,26 +237,6 @@ struct eqnStruct init_eqnStruct()
 	return(e)
 }
 
-void add_mse_Y(						struct ddmlStruct m,
-									real scalar eqnumber,
-									real scalar mse)
-{
-	pointer(struct eqnStruct) scalar p
-
-	p = m.eqnlistY[1,eqnumber]
-	(*p).MSE	= mse
-}
-
-void add_mse_D(						struct ddmlStruct m,
-									real scalar eqnumber,
-									real scalar mse)
-{
-	pointer(struct eqnStruct) scalar p
-
-	p = m.eqnlistD[1,eqnumber]
-	(*p).MSE	= mse
-}
-
 void add_eqn(						struct ddmlStruct m,
 									string scalar eqtype,
 									string scalar vname,
