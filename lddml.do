@@ -35,6 +35,7 @@ struct ddmlStruct {
 	pointer matrix		eqnlistZ
 }
 
+// to add: boolean to indicte min MSE / optimal orthogonalized var
 struct eqnStruct {
 	string scalar		vname
 	string scalar		vtilde
