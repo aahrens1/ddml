@@ -14,7 +14,7 @@
 {opt ddml} implements algorithms for causal inference aided by supervised
 machine learning as proposed in 
 {it:Double/debiased machine learning for treatment and structural parameters}
-(Economics Letters, 2018). Five different models are supported; allowing for 
+(Econometrics Journal, 2018). Five different models are supported; allowing for 
 binary or continous treatment variables and endogeneity. 
 {opt ddml} supports a variety of different ML programs, including
 but not limited to {helpb lassopack} and {helpb pylearn}. 
@@ -54,7 +54,7 @@ See compatibility below.
         {cmd:ddml estimate} [, {it:estopt}] 
 
 {pstd}
-{ul:Other auxiliary commands:}
+{ul:Auxiliary sub-programs:}
      
 {pstd} 
 Update {cmd:ddml}:
@@ -66,6 +66,10 @@ Describe model:
 
         {cmd:ddml desc} [, {opt mname()}]
 
+{pstd}
+Set-up Mata library:
+
+        {cmd:ddml setup} 
 
 {marker syntax}{...}
 {title:Options}
@@ -201,8 +205,8 @@ Note that {helpb pylearn} requires Stata 16.
 - {helpb rforest} by Zou & Schonlau.
 
 {pstd}
-Beyond these, it is compatible with almost any Stata program that uses the standard {it:reg y x}-type Syntax
-and comes with predict post-estimation programs.
+Beyond these, it is compatible with almost any Stata program that uses the standard {it:reg y x}-type Syntax,
+supports {it:if}-conditions and comes with predict post-estimation programs.
 
 {pstd}
 If you are aware of a program that is not compatible with {opt ddml}, but think it should be, please
@@ -212,7 +216,16 @@ do not hesitate to contact us.
 {title:Examples}
 
 {pstd}
-This help file is under construction.
+To be added.
+
+{marker references}{title:References}
+
+{pstd}
+Chernozhukov, V., Chetverikov, D., Demirer, M., 
+Duflo, E., Hansen, C., Newey, W. and Robins, J. (2018), 
+Double/debiased machine learning for 
+treatment and structural parameters. 
+{it:The Econometrics Journal}, 21: C1-C68. {browse "https://doi.org/10.1111/ectj.12097"}
 
 {marker installation}{title:Installation}
 
@@ -241,7 +254,8 @@ Christian.Hansen@chicagobooth.edu
 Mark E Schaffer, Heriot-Watt University, UK
 m.e.schaffer@hw.ac.uk	
 
-{title:Also see}
+{title:Also see (if installed)}
 
 {pstd}
-Help: {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso}, {helpb pdslasso}, {helpb pylearn}.{p_end}
+Help: {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
+ {helpb pdslasso}, {helpb pylearn}.{p_end}

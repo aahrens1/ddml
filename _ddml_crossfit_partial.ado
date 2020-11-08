@@ -335,7 +335,6 @@ end
 
 mata:
 
-
 struct eqnStruct init_eqnStruct()
 {
 	struct eqnStruct scalar		e
