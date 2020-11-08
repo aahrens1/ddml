@@ -21,15 +21,19 @@ st_global("s(compiled_date)","`current_date")
 }
 
 struct ddmlStruct {
-	string scalar		model
-	string scalar		nameY
-	string colvector	nameYtilde
-	string scalar		nameYopt
-	string scalar		nameY0opt
-	string scalar		nameY1opt
-	string colvector	nameD
-	string matrix		nameDtilde
-	string colvector	nameDopt
+	string scalar		model			// model; partial, iv, late, etc
+	string scalar		nameY			// dependent variable 
+	string colvector	nameYtilde		// names of orthogonalized variables
+	string scalar		nameYopt 		// name of optimal orthog. Y variable
+	string scalar		nameY0opt		// name of optimal orthog. Y variable E[Y|D=0]
+	string scalar		nameY1opt		// name of optimal orthog. Y variable E[Y|D=1]
+	string colvector	nameD			// name of treatment variable(s)
+	string matrix		nameDtilde		// names of orthogonalized treatment variables OR name of optimal instrument
+	string colvector	nameD0opt		// name of optimal orthog. D variable(s) E[D|Z=0]
+	string colvector	nameD1opt		// name of optimal orthog. D variable(s) E[D|Z=1]
+	string colvector	nameZ			// name of instrument(s)
+	string matrix		nameZtilde		// names of orthogonalized instruments
+	string colvector	nameZopt		// names of optimal orthog. instruments
 	pointer matrix		eqnlistY
 	pointer matrix		eqnlistD
 	pointer matrix		eqnlistZ

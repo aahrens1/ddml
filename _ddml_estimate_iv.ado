@@ -1,91 +1,73 @@
 *** ddml estimation: partial linear model
 program _ddml_estimate_iv, eclass sortpreserve
 
-    syntax [anything] [if] [in] , /// 
+	syntax namelist(name=mname) [if] [in] , /// 
 								[  ///
-                                robust ///
-                                show(string) /// dertermines which to post
-                                clear /// deletes all tilde-variables (to be implemented)
-                                * ]
+								ROBust ///
+								show(string) /// dertermines which to post
+								clear /// deletes all tilde-variables (to be implemented)
+								avplot ///
+								* ]
 
-    *** set defaults
-    if ("`show'"=="") {
-        local show opt
-    }
-	
-    *** save everything that is needed in locals
-    local yestn = e(yest)
-    local destn = e(dest)
-    local zestn = e(zest)
-    local yoptid = e(yoptid)
-    local doptid = e(doptid)
-    local zoptid = e(zoptid)
-    local yvar = e(depvar)
-    local dvar = e(dvar)
-    local zvar = e(zvar)
-    
-    *** retrieve variable names
-    forvalues i = 1(1)`yestn' {
-        local ytilde`i' `e(y`i')'
-        local yname`i' `e(y`i')'
-        local ycmd`i' `e(ycmd`i')'
-    }
-    forvalues i = 1(1)`destn' {
-        local dtilde`i' `e(d`i')'
-        local dname`i' `e(d`i')'
-        local dcmd`i' `e(dcmd`i')'
-    }
-    forvalues i = 1(1)`zestn' {
-        local ztilde`i' `e(z`i')'
-        local zname`i' `e(z`i')'
-        local zcmd`i' `e(zcmd`i')'
-    }
 
-    *** do estimation
-    if ("`show'"=="all") {
-        forvalues i = 1(1)`yestn' {
-            forvalues j = 1(1)`destn' {
-                    forvalues l = 1(1)`zestn' {
-                        if (`i'==`yoptid' & `j'==`doptid' & `l'==`zoptid') {
-                            // do nothing: optimal model always comes last 
-                            // and is estimated below
-                            di "" _c
-                        }
-                        else {
-                            di as text "DML with `ycmd`i'' (`yname`i''), `dcmd`j'' (`dname`j'') and instrument `zcmd`j'' (`zname`j''):"
-                            qui ivreg2 `ytilde`i'' (`dtilde`j''=`ztilde`l''), nocons `robust' noheader
-                            // display
-                            tempname b
-                            tempname V 
-                            mat `b' = e(b)
-                            mat `V' = e(V)
-                            matrix colnames `b' = "`dvar'"
-                            matrix rownames `b' = "`yvar'"
-                            matrix colnames `V' = "`dvar'"
-                            matrix rownames `V' = "`dvar'"
-                            ereturn clear
-                            ereturn post `b' `V' 
-                            ereturn display
-                    }
-                }
+	// loop through all Ytildes and all possible combinations of Dtildes
+	mata: st_local("ylist",invtokens(`mname'.nameYtilde))
+	// allcombos program put combinations in r(oplists) separated by commas
+	allcombos `mname'.eqnlistD
+	local Dlists `r(oplists)'
+	di "`Dlists'"
+    allcombos `mname'.eqnlistZ
+	local Zlists `r(oplists)'
+	di "`Zlists'"
+
+	foreach yvar of varlist `ylist' {
+		tokenize "`Dlists'", parse(",")
+		local i 1
+		while "``i''" ~= "" {
+            tokenize "`Zlists'", parse(",")
+            local j 1
+            while "``j''" ~= "" {
+                di
+                di as res "DML with Y=`yvar' and D=``i'', Z=``j'':"
+                ivreg2 `yvar' (``i''=``j'') , nocons `robust' noheader
+                // since commas are in local2, increment by 2
+                local j = `j' + 2
             }
-        }
-    }
-    *** estimate best model
-    di as res "Optimal model: DML with `ycmd`yoptid'' (`yname`yoptid''), `dcmd`doptid'' (`dname`doptid'') and instrument `zcmd`zoptid'' (`zname`zoptid''):"
-    qui ivreg2 `ytilde`yoptid'' (`dtilde`doptid''=`ztilde`zoptid''), nocons `robust' noheader
+            // since commas are in local2, increment by 2
+            local i = `i'+2
+		}
+	}
+	
+   	mata: st_local("Yopt",`mname'.nameYopt)
+   	mata: st_local("Dopt",`mname'.nameDopt)
+    mata: st_local("Zopt",`mname'.nameZopt)
 
-    // display
+	*** estimate best model
+    di as res "DML with Y=`yvar' and D=`Dopt', Z=`Zopt':"
+    qui ivreg2 `yvar' (`Dopt'=`Zopt') , nocons `robust' noheader
+	
+    // plot
+	//if ("`avplot'"!="") {
+    //   // only works with one Dopt
+	//   twoway (scatter `Yopt' `Dopt') (lfit `Yopt' `Dopt')
+	//}
+
+	// display
 	tempname b
 	tempname V 
 	mat `b' = e(b)
 	mat `V' = e(V)
-	matrix colnames `b' = "`dvar'"
-	matrix rownames `b' = "`yvar'"
- 	matrix colnames `V' = "`dvar'"
-	matrix rownames `V' = "`dvar'"
+	matrix colnames `b' = `nameD'
+	matrix rownames `b' = `nameY'
+ 	matrix colnames `V' = `nameD'
+	matrix rownames `V' = `nameD'
 	ereturn clear
-	ereturn post `b' `V' 
+	ereturn post `b' `V', depname(`Yopt')
+	if "`robust'"~="" {
+		ereturn local vcetype	robust
+	}
+	di
+	di as res "Optimal model: DML with optimal Y=`Yopt' and optimal D= `Dopt':"
 	ereturn display
 
 end

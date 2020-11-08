@@ -1,3 +1,4 @@
+*** 8 nov, 2020, 14:14 
 
 program ddml2, eclass
 
@@ -25,6 +26,7 @@ program ddml2, eclass
 
 		mata: st_global("r(mstring)",`mname'.model)
 		di "Model: `r(mstring)'"
+		local model `r(mstring)'
 		mata: st_global("r(mstring)",`mname'.nameY)
 		di "Dependent variable (Y): `r(mstring)'"
 		mata: st_global("r(mstring)",invtokens(`mname'.nameYtilde))
@@ -37,6 +39,14 @@ program ddml2, eclass
 		di "Causal variable(s) (orthogonalized): `r(mstring)'"
 		mata: st_global("r(mstring)",invtokens(`mname'.nameDopt))
 		di "Minimum MSE orthogonalized causal var: `r(mstring)'"
+		if ("`model'"=="iv") {
+			mata: st_global("r(mstring)",invtokens(`mname'.nameZ))
+			di "Excluded instrumental variable(s) (D): `r(mstring)'"
+			mata: st_global("r(mstring)",invtokens(`mname'.nameZtilde))
+			di "Excluded instrumental variable(s) (orthogonalized): `r(mstring)'"
+			mata: st_global("r(mstring)",invtokens(`mname'.nameZopt))
+			di "Minimum MSE orthogonalized IVs: `r(mstring)'"
+		}
 		
 		// List equations
 		// blank eqn - declare this way so that it's a struct and not transmorphic
@@ -88,6 +98,31 @@ program ddml2, eclass
 			di _col(30) "Orthogonalized: `r(estring)'"
 			mata: st_global("r(estring)",`eqn'.eststring)
 			di "  Command: `r(estring)'"
+		}
+		if ("`model'"=="iv") {
+			mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistZ))
+			local numeqnsZ	= `r(numeqns)'
+			di
+			di "Number of Z estimating equations: `numeqnsZ'"
+			forvalues i=1/`numeqnsZ' {
+				mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
+				di "Estimating equation `i': " _c
+				mata: st_numscalar("r(MSE)",`eqn'.MSE)
+				di "MSE = " %10.6f `r(MSE)' _c
+				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
+				if `r(crossfit)'==0 {
+					di " (no crossfit)"
+				}
+				else {
+					di
+				}
+				mata: st_global("r(estring)",`eqn'.vname)
+				di "  Variable: `r(estring)'" _c
+				mata: st_global("r(estring)",`eqn'.vtilde)
+				di _col(30) "Orthogonalized: `r(estring)'"
+				mata: st_global("r(estring)",`eqn'.eststring)
+				di "  Command: `r(estring)'"
+			}
 		}
 
 		// clear this global from Mata
@@ -148,7 +183,6 @@ program ddml2, eclass
 				di as err "error - incompatible y variables"
 				exit 198
 			}
-
 		}
 		if "`subcmd'"=="deq" {
 			// check if nameD already has vname; if not, add it to the list
@@ -162,7 +196,19 @@ program ddml2, eclass
 				mata: `mname'.nameD		= tokens("`dlist'")
 			}
 		}
-
+		if "`subcmd'"=="zeq" {
+			// check if nameZ already has vname; if not, add it to the list
+			mata: st_global("r(vname)",invtokens(`mname'.nameZ))
+			if "`r(vname)'"=="" {
+				mata: `mname'.nameZ		= "`vname'"
+			}
+			else {
+				local zlist `r(vname)' `vname'
+				local zlist : list uniq zlist
+				mata: `mname'.nameZ		= tokens("`zlist'")
+			}
+		}
+		di as text "Equation successfully added."
 	}
 
 	*** cross-fitting
@@ -178,7 +224,7 @@ program ddml2, eclass
 		_ddml_crossfit_partial `restargs'
 		}
 		if ("`r(model)'"=="iv") {
-		_ddml_crossfit_iv `restargs'
+		_ddml_crossfit_partial `restargs'
 		}
 		if ("`r(model)'"=="interactive") {
 		_ddml_crossfit_interactive `restargs'
@@ -210,7 +256,7 @@ program ddml2, eclass
 			_ddml_estimate_partial `mname', `options'
 		}
 		if ("`r(model)'"=="iv") {
-			_ddml_estimate_iv, `options'
+			_ddml_estimate_iv `mname', `options'
 		}
 		if ("`r(model)'"=="interactive") {
 			_ddml_estimate_interactive, `options'
@@ -244,6 +290,9 @@ struct ddmlStruct init_ddmlStruct()
 	d.nameD			= ""
 	d.nameDtilde	= ""
 	d.nameDopt		= ""
+	d.nameZ			= ""
+	d.nameZtilde	= ""
+	d.nameZopt		= ""
 	return(d)
 }
 
@@ -283,6 +332,14 @@ void add_eqn(						struct ddmlStruct m,
 			m.eqnlistD	= (m.eqnlistD, &e)
 		}
 	}
+	else if (eqtype=="zeq") {
+		if (cols(m.eqnlistZ)==0) {
+			m.eqnlistZ	= &e
+		}
+		else {
+			m.eqnlistZ	= (m.eqnlistZ, &e)
+		}
+	}
 
 	if (eqtype=="yeq") {
 		if (m.nameYtilde=="") {
@@ -300,69 +357,14 @@ void add_eqn(						struct ddmlStruct m,
 			m.nameDtilde	= (m.nameDtilde, vtilde)
 		}
 	}
-}
-
-
-void ATE(   string scalar yvar,		// Y
-			string scalar dvar,	 // D
-			string scalar y0tilde,  // E[Y|X,D=0]
-			string scalar y1tilde,  // E[Y|X,D=1]
-			string scalar dtilde,   // E[D|X]
-			string scalar sample,   // sample
-			string scalar outate,   // output: name of matrix to store b
-			string scalar outatese  // output: name of matrix to store V
-			)
-{
-	st_view(my_d0x,.,y0tilde,sample)
-	st_view(my_d1x,.,y1tilde,sample)
-	st_view(md_x,.,dtilde,sample)
-	st_view(d,.,dvar,sample)
-	st_view(y,.,yvar,sample)
-
-	n = rows(y)
-
-	my_d0x = my_d0x :* (1:-d)
-	my_d1x = my_d1x :* d
-
-	te  = (d :* (y :- my_d1x) :/ md_x) :-  ((1 :- d) :* (y :- my_d0x) :/ (1 :- md_x)) :+ my_d1x :- my_d0x  
-	ate = mean(te)
-	ate_V =  variance(te)/n
-
-	st_matrix(outate,ate)
-	st_matrix(outatese,ate_V)
-}
-
-void LATE(  string scalar yvar,		 // Y
-			string scalar dvar,	  // D
-			string scalar zvar,	  // Z
-			string scalar y0tilde,   // E[Y|X,Z=0]
-			string scalar y1tilde,   // E[Y|X,Z=1]
-			string scalar d0tilde,   // E[D|X,Z=0]
-			string scalar d1tilde,   // E[D|X,Z=1]
-			string scalar ztilde,	// E[Z|X]
-			string scalar sample,	// sample
-			string scalar outlate,   // output: name of matrix to store b
-			string scalar outlatese  // output: name of matrix to store V
-			)
-{
-	st_view(my_z0x,.,y0tilde,sample)
-	st_view(my_z1x,.,y1tilde,sample)
-	st_view(md_z0x,.,d0tilde,sample)
-	st_view(md_z1x,.,d1tilde,sample)
-	st_view(mz_x,.,ztilde,sample)
-	st_view(d,.,dvar,sample)
-	st_view(y,.,yvar,sample)
-	st_view(z,.,zvar,sample)
-
-	n = rows(y)
-
-	late =  mean( z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x ) /
-				mean( z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x ) 
-	late_se = variance(( z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x ) :/ 
-			   mean( z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x )) / n
-
-	st_matrix(outlate,late)
-	st_matrix(outlatese,late_se)
+	else if (eqtype=="zeq") {
+		if (m.nameZtilde=="") {
+			m.nameZtilde	= vtilde
+		}
+		else {
+			m.nameZtilde	= (m.nameZtilde, vtilde)
+		}
+	}
 }
 
 end 

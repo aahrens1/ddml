@@ -15,6 +15,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 	// allcombos program put combinations in r(oplists) separated by commas
 	allcombos `mname'.eqnlistD
 	local xlists `r(oplists)'
+	di "`xlists'"
 
 	foreach yvar of varlist `ylist' {
 		tokenize "`xlists'", parse(",")
@@ -36,7 +37,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 
 	// plot
 	if ("`avplot'"!="") {
-	   twoway (scatter `ytilde`yoptid'' `dtilde`doptid'') (lfit `ytilde`yoptid'' `dtilde`doptid'')
+	   twoway (scatter `Yopt' `Dopt') (lfit `Yopt' `Dopt')
 	}
 
 	// display
