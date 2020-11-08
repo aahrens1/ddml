@@ -39,7 +39,7 @@ see model descriptions below.
 
 {pstd}
 where {it:eq} is either {it:yeq}, {it:deq} or {it:zeq}. {it:command} is a
-ML program that support the standard {it:reg y x}-type syntax. 
+ML program that supports the standard {it:reg y x}-type syntax. 
 {it:cmdopt} are specific to that program.
 See compatibility below.
 
@@ -53,17 +53,42 @@ See compatibility below.
 
         {cmd:ddml estimate} [, {it:estopt}] 
 
+{pstd}
+{ul:Other auxiliary commands:}
+     
+{pstd} 
+Update {cmd:ddml}:
+
+        {cmd:ddml update} 
+
+{pstd}
+Describe model:
+
+        {cmd:ddml desc} [, {opt mname()}]
+
+
 {marker syntax}{...}
 {title:Options}
 
 {synoptset 20}{...}
 {synopthdr:eqopt}
 {synoptline}
-{synopt:{cmdab:postl:ogit}}
-???
+{synopt:{opt mname(string)}}
+name of the DDML model. Allows to run multiple DDML
+models simultaneously. Defaults to {it:ddml1}.
 {p_end}
-{synopt:{cmdab:nocon:stant}}
-???
+{synopt:{opt vname(varname)}}
+name of the dependent variable for which the
+conditional expectation should be estimated. 
+If {opt yeq} is used, this will be the dependent variable; 
+if {opt deq} is used, this will be the treatment variable; 
+if {opt zeq} is used, this will be the (excluded) instrumental 
+variable.
+{p_end}
+{synopt:{cmdab:nocross:fit}}
+do not do cross-fitting for this specific equation. To be used with care 
+as cross-fitting is generally required for validity of the
+DDML approach. 
 {p_end}
 {synoptline}
 {p2colreset}{...}
@@ -143,7 +168,7 @@ where the aim is to estimate the average treatment effect or local average treat
 
 	Y = g(Z,X) + U
         D = m(Z,X) + V
-        Z = m(X) + V
+        Z = m(X) + E
 
 {pstd}
 where the aim is to estimate the average treatment effect or local average treatment effect.
@@ -151,8 +176,8 @@ where the aim is to estimate the average treatment effect or local average treat
 {pstd}
 {ul:{it:Optimal IV model:}}
 
-	Y = {it:a}.D + U
-        D = m(Z) + V 
+	Y = {it:a}.D + g(X) + U
+        D = m(Z) + g(X) + V 
 
 {pstd}
 where the aim is to estimate the average treatment effect or local average treatment effect.
