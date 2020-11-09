@@ -20,31 +20,43 @@ program _ddml_estimate_iv, eclass sortpreserve
 	local Zlists `r(oplists)'
 	di "`Zlists'"
 
-	foreach yvar of varlist `ylist' {
-		tokenize "`Dlists'", parse(",")
-		local i 1
-		while "``i''" ~= "" {
-            tokenize "`Zlists'", parse(",")
-            local j 1
-            while "``j''" ~= "" {
-                di
-                di as res "DML with Y=`yvar' and D=``i'', Z=``j'':"
-                ivreg2 `yvar' (``i''=``j'') , nocons `robust' noheader
-                // since commas are in local2, increment by 2
-                local j = `j' + 2
-            }
-            // since commas are in local2, increment by 2
-            local i = `i'+2
-		}
-	}
-	
-   	mata: st_local("Yopt",`mname'.nameYopt)
+	mata: st_local("Yopt",`mname'.nameYopt)
    	mata: st_local("Dopt",`mname'.nameDopt)
     mata: st_local("Zopt",`mname'.nameZopt)
 
+	foreach yvar of varlist `ylist' {
+		local i = 1
+		local d `Dlists'
+		while "`d'" ~= "" {
+			tokenize "`Dlists'", parse(",")
+			local d ``i''
+			local j = 1
+			local z `Zlists'
+            while "`z'" ~= "" {
+				tokenize "`Zlists'", parse(",")
+				local z ``j''
+				if ("`yvar'"=="`Yopt'"&"`d'"=="`Dopt'"&"`z'"=="`Zopt'") {
+					// do nothing; optimal model comes last
+					di "" _c
+				}
+				else {
+					di
+					di as res "DML with Y=`yvar' and D=`d', Z=`z':"
+					ivreg2 `yvar' (`d'=`z') , nocons `robust' noheader nofooter
+				}
+                // since commas are in local2, increment by 2
+                local j = `j' + 2
+				local z ``j''
+            }
+            // since commas are in local2, increment by 2
+            local i = `i' + 2
+			local d ``i''
+		}
+	}
+	
 	*** estimate best model
-    di as res "DML with Y=`yvar' and D=`Dopt', Z=`Zopt':"
-    qui ivreg2 `yvar' (`Dopt'=`Zopt') , nocons `robust' noheader
+    di as res "DML with Y=`Yopt' and D=`Dopt', Z=`Zopt':"
+    qui ivreg2 `Yopt' (`Dopt'=`Zopt') , nocons `robust' noheader nofooter
 	
     // plot
 	//if ("`avplot'"!="") {
