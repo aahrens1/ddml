@@ -29,6 +29,7 @@ struct ddmlStruct {
 	string scalar		nameY1opt		// name of optimal orthog. Y variable E[Y|D=1]
 	string colvector	nameD			// name of treatment variable(s)
 	string matrix		nameDtilde		// names of orthogonalized treatment variables OR name of optimal instrument
+	string colvector	nameDopt		// name of optimal orthog. D variable(s) (partial linear model)
 	string colvector	nameD0opt		// name of optimal orthog. D variable(s) E[D|Z=0]
 	string colvector	nameD1opt		// name of optimal orthog. D variable(s) E[D|Z=1]
 	string colvector	nameZ			// name of instrument(s)
