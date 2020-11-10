@@ -37,17 +37,10 @@ program ddml2, eclass
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
 		// fold variable is option; default is ddmlfold
-		syntax , mname(name) [ foldvar(name) ]
+		syntax , mname(name)
 		mata: `mname'=init_ddmlStruct()
 		// fill by hand
 		mata: `mname'.model			= "`model'"
-		if "`foldvar'"=="" {
-			// default
-			mata: `mname'.foldvar	= "ddmlfold"
-		}
-		else {
-			mata: `mname'.foldvar	= "`foldvar'"
-		}
 	}
 
 	*** add equation  

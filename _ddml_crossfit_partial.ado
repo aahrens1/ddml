@@ -46,11 +46,21 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	*** gen folds
 	// use foldvar if not empty
 	// populate provided foldvar if empty
-	mata: st_local("kid",`mname'.foldvar)
 	tempvar uni cuni
 	qui gen double `uni' = runiform()
 	qui cumul `uni', gen(`cuni')
+	if "`foldvar'"~="" {
+		// foldvar name provided so store on the model struct; can overwrite
+		mata: `mname'.foldvar	= "`foldvar'"
+	}
+	else {
+		// foldvar name not provided in foldvar(.) option so use default name
+		// store on model struct and drop the variable if it already exists
+		cap drop ddmlfold
+		mata: `mname'.foldvar	= "ddmlfold"
+	}
 	// does variable exist and is it numeric?
+	mata: st_local("kid",`mname'.foldvar)
 	cap sum `kid'
 	if _rc==0 {
 		// variable exists and is numeric
