@@ -2,11 +2,12 @@
 program _ddml_crossfit_partial, eclass sortpreserve
 
 	syntax [anything] [if] [in] , /// 
-							[ kfolds(integer 2)  ///
+							[ kfolds(integer 2) ///
 							NOIsily ///
 							debug /// 
 							Robust ///
 							TABFold ///
+							foldvar(name) ///
 							yrclass ///
 							drclass /// 
 							mname(name)	///
@@ -14,36 +15,57 @@ program _ddml_crossfit_partial, eclass sortpreserve
 
 	// no checks included yet
 	// no marksample yet
-	
+
+	local debugflag		= "`debug'"~=""
+		
 	*** extract details of estimation
 	
 	// model
 	mata: st_local("model",`mname'.model)
+	di "Model: `model'"
 	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistY))
 	local numeqnsY	= `r(numeqns)'
 	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistD))
 	local numeqnsD	= `r(numeqns)'
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("listYtilde",invtokens(`mname'.nameYtilde))
-	mata: st_local("listD",invtokens(`mname'.nameD))
-	mata: st_local("listDtilde",invtokens(`mname'.nameDtilde))
-	di "Model: `model'"
 	di "Number of Y estimating equations: `numeqnsY'"
-	di "Number of D estimating equations: `numeqnsD'"
-	if ("`model'"=="iv") {
-		mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistZ))
-		local numeqnsZ	= `r(numeqns)'
+	if `numeqnsD' {
+		mata: st_local("listD",invtokens(`mname'.nameD))
+		mata: st_local("listDtilde",invtokens(`mname'.nameDtilde))
+		di "Number of D estimating equations: `numeqnsD'"
+	}
+	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistZ))
+	local numeqnsZ	= `r(numeqns)'
+	if `numeqnsZ' {
 		mata: st_local("listZ",invtokens(`mname'.nameZ))
 		mata: st_local("listZtilde",invtokens(`mname'.nameZtilde))
 		di "Number of Z estimating equations: `numeqnsZ'"
-	}
-		
+	}		
 	
 	*** gen folds
-	tempvar kid uni cuni
-	gen double `uni' = runiform()
-	cumul `uni', gen(`cuni')
-	gen `kid' =ceil(`kfolds'*`cuni')
+	// use foldvar if not empty
+	// populate provided foldvar if empty
+	mata: st_local("kid",`mname'.foldvar)
+	tempvar uni cuni
+	qui gen double `uni' = runiform()
+	qui cumul `uni', gen(`cuni')
+	// does variable exist and is it numeric?
+	cap sum `kid'
+	if _rc==0 {
+		// variable exists and is numeric
+		// does it have a valid number of groups?
+		qui tab `kid'
+		if r(r) < 2 {
+			di as err "error - invalid fold variable"
+			exit 1
+		}
+	}
+	else {
+		// create variable with provided name
+		cap drop `kid'
+		qui gen `kid' =ceil(`kfolds'*`cuni')
+	}
 	if ("`tabfold'"!="") {
 		di ""
 		di "Overview of frequencies by fold:"
@@ -83,82 +105,110 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	}
 
 	*** estimate equations that do not require crossfitting
-	qui {
-		forvalues i=1/`numeqnsY' {
-			mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-			mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-			if r(crossfit)==0 {
-				mata: st_local("vtilde",`eqn'.vtilde)
-				mata: st_local("vname",`eqn'.vname)
-				mata: st_local("eststring",`eqn'.eststring)
-				local 0 "`eststring'"
-				syntax [anything] , [*]
-				local est_main `anything'
-				local est_options `options'
+	// also report estimates for full sample for debugging purposes
+	// Y equations
+	tempname crossfit
+	forvalues i=1/`numeqnsY' {
+		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
+		mata: st_numscalar("`crossfit'",`eqn'.crossfit)
+		if `crossfit'==0 | `debugflag' {
+			mata: st_local("vtilde",`eqn'.vtilde)
+			mata: st_local("vname",`eqn'.vname)
+			mata: st_local("eststring",`eqn'.eststring)
+			local 0 "`eststring'"
+			syntax [anything] , [*]
+			local est_main `anything'
+			local est_options `options'
+			if `crossfit'==0 {
+				di
+				di "Y estimating equation `i' (full sample, for debugging; no crossfit):"
+			}
+			else {
+				di
 				di "Y estimating equation `i' (no crossfit):"
-				di "  est_main: `est_main'"
-				di "  est_options: `est_options'"
-	
-				// estimate
-				`est_main', `est_options'
-				// get fitted values and residuals
+			}
+			di "  est_main: `est_main'"
+			di "  est_options: `est_options'"
+
+			// estimate
+			`est_main', `est_options'
+			// get fitted values and residuals for no-crossfit case
+			if `crossfit'==0 {
 				tempvar vtilde_i
 				qui predict double `vtilde_i'
 				qui replace `vtilde' = `vname' - `vtilde_i'
-			}
-		}
-		forvalues i=1/`numeqnsD' {
-			mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-			mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-			if r(crossfit)==0 {
-				mata: st_local("vtilde",`eqn'.vtilde)
-				mata: st_local("vname",`eqn'.vname)
-				mata: st_local("eststring",`eqn'.eststring)
-				local 0 "`eststring'"
-				syntax [anything] , [*]
-				local est_main `anything'
-				local est_options `options'
-				di "D estimating equation `i' (no crossfit):"
-				di "  est_main: `est_main'"
-				di "  est_options: `est_options'"
-	
-				// estimate
-				`est_main', `est_options'
-				// get fitted values and residuals
-				tempvar vtilde_i
-				qui predict double `vtilde_i'
-				qui replace `vtilde' = `vname' - `vtilde_i'
-			}
-		}
-		if ("`model'"=="iv") {
-			forvalues i=1/`numeqnsZ' {
-				mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-				if r(crossfit)==0 {
-					mata: st_local("vtilde",`eqn'.vtilde)
-					mata: st_local("vname",`eqn'.vname)
-					mata: st_local("eststring",`eqn'.eststring)
-					local 0 "`eststring'"
-					syntax [anything] , [*]
-					local est_main `anything'
-					local est_options `options'
-					di "Z estimating equation `i' (no crossfit):"
-					di "  est_main: `est_main'"
-					di "  est_options: `est_options'"
-		
-					// estimate
-					`est_main', `est_options'
-					// get fitted values and residuals
-					tempvar vtilde_i
-					qui predict double `vtilde_i'
-					qui replace `vtilde' = `vname' - `vtilde_i'
-				}
 			}
 		}
 	}
+	forvalues i=1/`numeqnsD' {
+		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
+		mata: st_numscalar("`crossfit'",`eqn'.crossfit)
+		if `crossfit'==0 | `debugflag' {
+			mata: st_local("vtilde",`eqn'.vtilde)
+			mata: st_local("vname",`eqn'.vname)
+			mata: st_local("eststring",`eqn'.eststring)
+			local 0 "`eststring'"
+			syntax [anything] , [*]
+			local est_main `anything'
+			local est_options `options'
+			if `crossfit'==0 {
+				di
+				di "D estimating equation `i' (no crossfit):"
+			}
+			else {
+				di
+				di "D estimating equation `i' (full sample, for debugging; no crossfit):"
+			}
+			di "  est_main: `est_main'"
+			di "  est_options: `est_options'"
+
+			// estimate
+			`est_main', `est_options'
+			// get fitted values and residuals for no-crossfit case
+			if `crossfit'==0 {
+				tempvar vtilde_i
+				qui predict double `vtilde_i'
+				qui replace `vtilde' = `vname' - `vtilde_i'
+			}
+		}
+	}
+	forvalues i=1/`numeqnsZ' {
+		mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
+		mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
+		if r(crossfit)==0 | `debugflag' {
+			mata: st_local("vtilde",`eqn'.vtilde)
+			mata: st_local("vname",`eqn'.vname)
+			mata: st_local("eststring",`eqn'.eststring)
+			local 0 "`eststring'"
+			syntax [anything] , [*]
+			local est_main `anything'
+			local est_options `options'
+			if `crossfit'==0 {
+				di
+				di "Z estimating equation `i' (no crossfit):"
+			}
+			else {
+				di
+				di "Z estimating equation `i' (full sample, for debugging; no crossfit):"
+			}
+			di "  est_main: `est_main'"
+			di "  est_options: `est_options'"
+
+			// estimate
+			`est_main', `est_options'
+			// get fitted values and residuals
+			if `crossfit'==0 {
+				tempvar vtilde_i
+				qui predict double `vtilde_i'
+				qui replace `vtilde' = `vname' - `vtilde_i'
+			}
+		}
+	}
+
 	
 	*** do cross-fitting
-	di "Cross-fitting fold " _c
+	di
+	di as text "Cross-fitting fold " _c
 	forvalues k = 1(1)`kfolds' {
 	
 		if (`k'==`kfolds') {
@@ -219,29 +269,27 @@ program _ddml_crossfit_partial, eclass sortpreserve
 				}
 			}
 			// Z equations
-			if ("`model'"=="iv") {
-				forvalues i=1/`numeqnsZ' {
-					mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-					mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-					if r(crossfit) {
-						mata: st_local("vtilde",`eqn'.vtilde)
-						mata: st_local("vname",`eqn'.vname)
-						mata: st_local("eststring",`eqn'.eststring)
-						local 0 "`eststring'"
-						syntax [anything] , [*]
-						local est_main `anything'
-						local est_options `options'
-						di "Z estimating equation `i':"
-						di "  est_main: `est_main'"
-						di "  est_options: `est_options'"
-		
-						// estimate excluding kth fold
-						`est_main' if `kid'!=`k', `est_options'
-						// get fitted values and residuals for kth fold	
-						tempvar vtilde_i
-						qui predict double `vtilde_i' if `kid'==`k' 
-						qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
-					}
+			forvalues i=1/`numeqnsZ' {
+				mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
+				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
+				if r(crossfit) {
+					mata: st_local("vtilde",`eqn'.vtilde)
+					mata: st_local("vname",`eqn'.vname)
+					mata: st_local("eststring",`eqn'.eststring)
+					local 0 "`eststring'"
+					syntax [anything] , [*]
+					local est_main `anything'
+					local est_options `options'
+					di "Z estimating equation `i':"
+					di "  est_main: `est_main'"
+					di "  est_options: `est_options'"
+	
+					// estimate excluding kth fold
+					`est_main' if `kid'!=`k', `est_options'
+					// get fitted values and residuals for kth fold	
+					tempvar vtilde_i
+					qui predict double `vtilde_i' if `kid'==`k' 
+					qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
 				}
 			}
 		}

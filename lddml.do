@@ -22,6 +22,7 @@ st_global("s(compiled_date)","`current_date")
 
 struct ddmlStruct {
 	string scalar		model			// model; partial, iv, late, etc
+	string scalar		foldvar			// name of Stata fold ID variable
 	string scalar		nameY			// dependent variable 
 	string colvector	nameYtilde		// names of orthogonalized variables
 	string scalar		nameYopt 		// name of optimal orthog. Y variable

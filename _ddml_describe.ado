@@ -10,6 +10,7 @@ program define _ddml_describe
 
 
 	mata: printf("{res}Model: %s\n", `mname'.model)
+	mata: printf("{res}Fold ID: %s\n", `mname'.foldvar)
 	mata: printf("{res}Dependent variable (Y): %s\n", `mname'.nameY)
 	mata: printf("{res}Dependent variable (orthogonalized): %s\n", invtokens(`mname'.nameYtilde))
 	di "Minimum MSE orthogonalized dep var: `Yopt'"
