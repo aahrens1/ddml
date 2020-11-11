@@ -129,19 +129,24 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			syntax [anything] , [*]
 			local est_main `anything'
 			local est_options `options'
-			if `crossfit'==0 {
-				di
-				di "Y estimating equation `i' (full sample, for debugging; no crossfit):"
+			if `debugflag' {
+				if `crossfit'==0 {
+					di
+					di "Y estimating equation `i' (full sample, for debugging; no crossfit):"
+				}
+				else {
+					di
+					di "Y estimating equation `i' (no crossfit):"
+				}
+				di "  est_main: `est_main'"
+				di "  est_options: `est_options'"
 			}
 			else {
-				di
-				di "Y estimating equation `i' (no crossfit):"
+				// set quietly flag
+				local yquietly quietly
 			}
-			di "  est_main: `est_main'"
-			di "  est_options: `est_options'"
-
 			// estimate
-			`est_main', `est_options'
+			`yquietly' `est_main', `est_options'
 			// get fitted values and residuals for no-crossfit case
 			if `crossfit'==0 {
 				tempvar vtilde_i
@@ -161,19 +166,24 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			syntax [anything] , [*]
 			local est_main `anything'
 			local est_options `options'
-			if `crossfit'==0 {
-				di
-				di "D estimating equation `i' (no crossfit):"
+			if `debugflag' {
+				if `crossfit'==0 {
+					di
+					di "D estimating equation `i' (full sample, for debugging; no crossfit):"
+				}
+				else {
+					di
+					di "D estimating equation `i' (no crossfit):"
+				}
+				di "  est_main: `est_main'"
+				di "  est_options: `est_options'"
 			}
 			else {
-				di
-				di "D estimating equation `i' (full sample, for debugging; no crossfit):"
+				// set quietly flag
+				local dquietly quietly
 			}
-			di "  est_main: `est_main'"
-			di "  est_options: `est_options'"
-
 			// estimate
-			`est_main', `est_options'
+			`dquietly' `est_main', `est_options'
 			// get fitted values and residuals for no-crossfit case
 			if `crossfit'==0 {
 				tempvar vtilde_i
@@ -193,19 +203,24 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			syntax [anything] , [*]
 			local est_main `anything'
 			local est_options `options'
-			if `crossfit'==0 {
-				di
-				di "Z estimating equation `i' (no crossfit):"
+			if `debugflag' {
+				if `crossfit'==0 {
+					di
+					di "Z estimating equation `i' (full sample, for debugging; no crossfit):"
+				}
+				else {
+					di
+					di "Z estimating equation `i' (no crossfit):"
+				}
+				di "  est_main: `est_main'"
+				di "  est_options: `est_options'"
 			}
 			else {
-				di
-				di "Z estimating equation `i' (full sample, for debugging; no crossfit):"
+				// set quietly flag
+				local zquietly quietly
 			}
-			di "  est_main: `est_main'"
-			di "  est_options: `est_options'"
-
 			// estimate
-			`est_main', `est_options'
+			`zquietly' `est_main', `est_options'
 			// get fitted values and residuals
 			if `crossfit'==0 {
 				tempvar vtilde_i
