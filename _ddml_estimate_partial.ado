@@ -15,17 +15,24 @@ program _ddml_estimate_partial, eclass sortpreserve
 	// allcombos program put combinations in r(oplists) separated by commas
 	allcombos `mname'.eqnlistD
 	local xlists `r(oplists)'
-	di "`xlists'"
-
-	foreach yvar of varlist `ylist' {
-		tokenize "`xlists'", parse(",")
-		local i 1
-		while "``i''" ~= "" {
-			di
-			di as res "DML with Y~ `yvar' and D~ ``i'':"
-			reg `yvar' ``i'' , nocons `robust' noheader
-			// since commas are in local2, increment by 2
-			local i = `i'+2
+	
+	// ylist is not separated by commas so just count the words
+	local ycount : word count `ylist'
+	// xlist is separated by commas unless there's only one list
+	local xlists : subinstr local xlists "," ",", all count(local xcount)
+	// multi=0 if there's only one estimation
+	local multi = `ycount' - 1 + `xcount'
+	if `multi' {
+		foreach yvar of varlist `ylist' {
+			tokenize "`xlists'", parse(",")
+			local i 1
+			while "``i''" ~= "" {
+				di
+				di as res "DML with Y~ `yvar' and D~ ``i'':"
+				reg `yvar' ``i'' , nocons `robust' noheader
+				// since commas are in local2, increment by 2
+				local i = `i'+2
+			}
 		}
 	}
 	
@@ -55,7 +62,12 @@ program _ddml_estimate_partial, eclass sortpreserve
 		ereturn local vcetype	robust
 	}
 	di
-	di as res "Optimal model: DML with optimal Y~ `Yopt' and optimal D~ `Dopt':"
+	if `multi' > 0 {
+		di as res "Optimal model: DML with optimal Y~ `Yopt' and optimal D~ `Dopt':"
+	}
+	else {
+		di as res "DML with Y~ `Yopt' and D~ `Dopt':"
+	}
 	ereturn display
 
 end
