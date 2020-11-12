@@ -1,7 +1,14 @@
 
 program define _ddml_describe
 
-	args mname
+	syntax name(name=mname), [NOCMD]
+	
+	if "`nocmd'"=="" {
+		local showcmd = 1
+	}
+	else {
+		local showcmd = 0
+	}
 	
 	// Will use for flagging minimized MSEs
 	mata: st_local("Yopt",`mname'.nameYopt)
@@ -50,7 +57,9 @@ program define _ddml_describe
 			di
 		}
 		mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.vname, `eqn'.vtilde)
-		mata: printf("{res}  Command: %s\n", `eqn'.eststring)
+		if `showcmd' {
+			mata: printf("{res}  Command: %s\n", `eqn'.eststring)
+		}
 	}
 	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistD))
 	local numeqnsD	= `r(numeqns)'
@@ -73,7 +82,9 @@ program define _ddml_describe
 			di
 		}
 		mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.vname, `eqn'.vtilde)
-		mata: printf("{res}  Command: %s\n", `eqn'.eststring)
+		if `showcmd' {
+			mata: printf("{res}  Command: %s\n", `eqn'.eststring)
+		}
 	}
 	if ("`model'"=="iv") {
 		mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistZ))
@@ -97,7 +108,9 @@ program define _ddml_describe
 				di
 			}
 			mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.vname, `eqn'.vtilde)
-			mata: printf("{res}  Command: %s\n", `eqn'.eststring)
+			if `showcmd' {
+				mata: printf("{res}  Command: %s\n", `eqn'.eststring)
+			}
 		}
 	}
 	

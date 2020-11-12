@@ -21,10 +21,9 @@ program ddml2, eclass
 	if "`subcmd'"=="desc" {
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
-		// remaining args are temporary and for debugging only
-		syntax , mname(name)
+		syntax , mname(name) [ * ]
 
-		_ddml_describe "`mname'"
+		_ddml_describe `mname', `options'
 	}
 	
 	*** initialize new estimation
