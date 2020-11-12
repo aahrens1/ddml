@@ -28,8 +28,10 @@ program _ddml_estimate_partial, eclass sortpreserve
 			local i 1
 			while "``i''" ~= "" {
 				di
-				di as res "DML with Y~ `yvar' and D~ ``i'':"
-				reg `yvar' ``i'' , nocons `robust' noheader
+				qui reg `yvar' ``i'' , nocons `robust' noheader
+				di as res "DML with Y~ `yvar' and D~ ``i'' (N=`e(N)'):"
+				// replay
+				reg, noheader
 				// since commas are in local2, increment by 2
 				local i = `i'+2
 			}
@@ -49,24 +51,25 @@ program _ddml_estimate_partial, eclass sortpreserve
 
 	// display
 	tempname b
-	tempname V 
+	tempname V
 	mat `b' = e(b)
 	mat `V' = e(V)
 	matrix colnames `b' = `nameD'
 	matrix rownames `b' = `nameY'
  	matrix colnames `V' = `nameD'
 	matrix rownames `V' = `nameD'
+	local N = e(N)
 	ereturn clear
-	ereturn post `b' `V', depname(`Yopt')
+	ereturn post `b' `V', depname(`Yopt') obs(`N')
 	if "`robust'"~="" {
 		ereturn local vcetype	robust
 	}
 	di
 	if `multi' > 0 {
-		di as res "Optimal model: DML with optimal Y~ `Yopt' and optimal D~ `Dopt':"
+		di as res "Optimal model: DML with optimal Y~ `Yopt' and optimal D~ `Dopt' (N=`N'):"
 	}
 	else {
-		di as res "DML with Y~ `Yopt' and D~ `Dopt':"
+		di as res "DML with Y~ `Yopt' and D~ `Dopt' (N=`N'):"
 	}
 	ereturn display
 

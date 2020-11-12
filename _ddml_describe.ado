@@ -36,7 +36,7 @@ program define _ddml_describe
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
 		di "Estimating equation `i': " _c
-		mata: printf("{res}MSE = %10.6f", `eqn'.MSE)
+		mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
 		mata: st_local("vtilde",`eqn'.vtilde)
 		local minMSE : list vtilde in Yopt
 		if `minMSE' {
@@ -59,7 +59,7 @@ program define _ddml_describe
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
 		di "Estimating equation `i': " _c
-		mata: printf("{res}MSE = %10.6f", `eqn'.MSE)
+		mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
 		mata: st_local("vtilde",`eqn'.vtilde)
 		local minMSE : list vtilde in Dopt
 		if `minMSE' {
@@ -82,22 +82,22 @@ program define _ddml_describe
 		di "Number of Z estimating equations: `numeqnsZ'"
 		forvalues i=1/`numeqnsZ' {
 			mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-			di "Estimating equation `i': " _c
-		mata: printf("{res}MSE = %10.6f", `eqn'.MSE)
-		mata: st_local("vtilde",`eqn'.vtilde)
-		local minMSE : list vtilde in Zopt
-		if `minMSE' {
-			di "*" _c
-		}
-		mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-		if `r(crossfit)'==0 {
-			di " (no crossfit)"
-		}
-		else {
-			di
-		}
-		mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.vname, `eqn'.vtilde)
-		mata: printf("{res}  Command: %s\n", `eqn'.eststring)
+			mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
+			mata: printf("{res}MSE = %10.6f", `eqn'.MSE)
+			mata: st_local("vtilde",`eqn'.vtilde)
+			local minMSE : list vtilde in Zopt
+			if `minMSE' {
+				di "*" _c
+			}
+			mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
+			if `r(crossfit)'==0 {
+				di " (no crossfit)"
+			}
+			else {
+				di
+			}
+			mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.vname, `eqn'.vtilde)
+			mata: printf("{res}  Command: %s\n", `eqn'.eststring)
 		}
 	}
 	
