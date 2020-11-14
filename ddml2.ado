@@ -21,10 +21,9 @@ program ddml2, eclass
 	if "`subcmd'"=="desc" {
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
-		// remaining args are temporary and for debugging only
-		syntax , mname(name)
+		syntax , mname(name) [ * ]
 
-		_ddml_describe "`mname'"
+		_ddml_describe `mname', `options'
 	}
 	
 	*** initialize new estimation
@@ -70,6 +69,7 @@ program ddml2, eclass
 
 		// subcmd macro tells add_eqn(.) which list to add it to
 		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'", "`eqn'", "`nocrossfit'")
+		local newentry `r(newentry)'
 		if "`subcmd'"=="yeq" {
 			// check if nameY is already there; if it is, must be identical to vname here
 			mata: st_global("r(vname)",`mname'.nameY)
@@ -105,7 +105,12 @@ program ddml2, eclass
 				mata: `mname'.nameZ		= tokens("`zlist'")
 			}
 		}
-		di as text "Equation successfully added."
+		if `newentry' {
+			di as text "Equation successfully added."
+		}
+		else {
+			di as text "Equation successfully replaced."
+		}
 	}
 
 	*** cross-fitting
@@ -206,19 +211,33 @@ void add_eqn(						struct ddmlStruct m,
 									string scalar estcmd,
 									string scalar nocrossfit)
 {
-	struct eqnStruct scalar		e
+	struct eqnStruct scalar		e, e0
 	e.vname			= vname
 	e.vtilde		= vtilde
 	e.eststring		= estcmd
 	e.command		= tokens(estcmd)[1,1]
 	e.crossfit		= (nocrossfit=="")
 
+	newentry		= 1
+	
 	if (eqtype=="yeq") {
 		if (cols(m.eqnlistY)==0) {
 			m.eqnlistY	= &e
 		}
 		else {
-			m.eqnlistY	= (m.eqnlistY, &e)
+			// look for existing entry
+			for (i=1;i<=cols(m.eqnlistY);i++) {
+				e0 = *(m.eqnlistY[i])
+				if (e0.vtilde==vtilde) {
+					// replace
+					m.eqnlistY[i] = &e
+					newentry = 0
+				}
+			}
+			if (newentry==1) {
+				// new entry
+				m.eqnlistY	= (m.eqnlistY, &e)
+			}
 		}
 	}
 	else if (eqtype=="deq") {
@@ -226,7 +245,19 @@ void add_eqn(						struct ddmlStruct m,
 			m.eqnlistD	= &e
 		}
 		else {
-			m.eqnlistD	= (m.eqnlistD, &e)
+			// look for existing entry
+			for (i=1;i<=cols(m.eqnlistD);i++) {
+				e0 = *(m.eqnlistD[i])
+				if (e0.vtilde==vtilde) {
+					// replace
+					m.eqnlistD[i] = &e
+					newentry = 0
+				}
+			}
+			if (newentry==1) {
+				// new entry
+				m.eqnlistD	= (m.eqnlistD, &e)
+			}
 		}
 	}
 	else if (eqtype=="zeq") {
@@ -234,34 +265,51 @@ void add_eqn(						struct ddmlStruct m,
 			m.eqnlistZ	= &e
 		}
 		else {
-			m.eqnlistZ	= (m.eqnlistZ, &e)
+			// look for existing entry
+			for (i=1;i<=cols(m.eqnlistZ);i++) {
+				e0 = *(m.eqnlistZ[i])
+				if (e0.vtilde==vtilde) {
+					// replace
+					m.eqnlistZ[i] = &e
+					newentry = 0
+				}
+			}
+			if (newentry==1) {
+				// new entry
+				m.eqnlistZ	= (m.eqnlistZ, &e)
+			}
 		}
 	}
 
-	if (eqtype=="yeq") {
-		if (m.nameYtilde=="") {
-			m.nameYtilde	= vtilde
+	// add to list of tilde variables if a new entry
+	if (newentry) {
+		if (eqtype=="yeq") {
+			if (m.nameYtilde=="") {
+				m.nameYtilde	= vtilde
+			}
+			else {
+				m.nameYtilde	= (m.nameYtilde, vtilde)
+			}
 		}
-		else {
-			m.nameYtilde	= (m.nameYtilde, vtilde)
+		else if (eqtype=="deq") {
+			if (m.nameDtilde=="") {
+				m.nameDtilde	= vtilde
+			}
+			else {
+				m.nameDtilde	= (m.nameDtilde, vtilde)
+			}
+		}
+		else if (eqtype=="zeq") {
+			if (m.nameZtilde=="") {
+				m.nameZtilde	= vtilde
+			}
+			else {
+				m.nameZtilde	= (m.nameZtilde, vtilde)
+			}
 		}
 	}
-	else if (eqtype=="deq") {
-		if (m.nameDtilde=="") {
-			m.nameDtilde	= vtilde
-		}
-		else {
-			m.nameDtilde	= (m.nameDtilde, vtilde)
-		}
-	}
-	else if (eqtype=="zeq") {
-		if (m.nameZtilde=="") {
-			m.nameZtilde	= vtilde
-		}
-		else {
-			m.nameZtilde	= (m.nameZtilde, vtilde)
-		}
-	}
+	
+	st_global("r(newentry)",strofreal(newentry))
 }
 
 end 

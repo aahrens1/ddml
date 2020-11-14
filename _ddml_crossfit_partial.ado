@@ -322,14 +322,14 @@ program _ddml_crossfit_partial, eclass sortpreserve
 
 	*** calculate MSE (or any other postestimation calculations)
 	
-	// insert MSE for each estimation
+	// insert stats for each estimation
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
 		mata: st_local("vtilde",`eqn'.vtilde)
 		tempvar vtilde_sq
 		qui gen double `vtilde_sq' = `vtilde'^2
 		qui sum `vtilde_sq', meanonly
-		mata: add_mse_Y(`mname',`i',`r(mean)')
+		mata: add_stats_Y(`mname',`i',`r(mean)',`r(N)')
 	}
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
@@ -337,7 +337,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		tempvar vtilde_sq
 		qui gen double `vtilde_sq' = `vtilde'^2
 		qui sum `vtilde_sq', meanonly
-		mata: add_mse_D(`mname',`i',`r(mean)')
+		mata: add_stats_D(`mname',`i',`r(mean)',`r(N)')
 	}
 	if ("`model'"=="iv") {
 		forvalues i=1/`numeqnsZ' {
@@ -346,7 +346,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			tempvar vtilde_sq
 			qui gen double `vtilde_sq' = `vtilde'^2
 			qui sum `vtilde_sq', meanonly
-			mata: add_mse_Z(`mname',`i',`r(mean)')
+			mata: add_stats_Z(`mname',`i',`r(mean)',`r(N)')
 		}
 	}
 	
@@ -358,7 +358,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	di _col(2) "Name" _c
 	di _col(20) "Orthogonalized" _c
 	di _col(40) "Command" _c
-	di _col(60) "MSPE"
+	di _col(54) "N" _c
+	di _col(65) "MSPE"
 	di "{hline 75}"
 	// initialize
 	local yminmse = .
@@ -368,7 +369,9 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		mata: st_local("vtilde",`eqn'.vtilde)
 		mata: st_local("command",`eqn'.command)
 		mata: st_numscalar("r(MSE)",`eqn'.MSE)
+		mata: st_numscalar("r(N)",`eqn'.N)
 		local MSE = `r(MSE)'
+		local N = `r(N)'
 		if `MSE' < `yminmse' {
 			local yopt `vtilde'
 			local yminmse `MSE'
@@ -376,7 +379,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		di _col(2) "`vname'" _c
 		di _col(20) "`vtilde'" _c
 		di _col(40) "`command'" _c
-		di _col(55) %10.6f `MSE'
+		di _col(50) %6.0f `N' _c
+		di _col(60) %10.6f `MSE'
 	}
 	mata: `mname'.nameYopt		= "`yopt'"
 
@@ -386,7 +390,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	di _col(2) "Name" _c
 	di _col(20) "Orthogonalized" _c
 	di _col(40) "Command" _c
-	di _col(60) "MSPE"
+	di _col(54) "N" _c
+	di _col(65) "MSPE"
 	di "{hline 75}"
 	// initialize
 	local first_dopt	=1
@@ -399,7 +404,9 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			mata: st_local("vtilde",`eqn'.vtilde)
 			mata: st_local("command",`eqn'.command)
 			mata: st_numscalar("r(MSE)",`eqn'.MSE)
+			mata: st_numscalar("r(N)",`eqn'.N)
 			local MSE = `r(MSE)'
+			local N = `r(N)'
 			if "`var'"=="`vname'" {
 				if `MSE' < `dminmse' {
 					local dopt `vtilde'
@@ -408,7 +415,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 				di _col(2) "`vname'" _c
 				di _col(20) "`vtilde'" _c
 				di _col(40) "`command'" _c
-				di _col(55) %10.6f `MSE'
+				di _col(50) %6.0f `N' _c
+				di _col(60) %10.6f `MSE'
 			}
 		}
 		// if nameDopt already has vname in it, then add it to the list
@@ -429,7 +437,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		di _col(2) "Name" _c
 		di _col(20) "Orthogonalized" _c
 		di _col(40) "Command" _c
-		di _col(60) "MSPE"
+		di _col(54) "N" _c
+		di _col(65) "MSPE"
 		di "{hline 75}"
 		// initialize
 		local first_zopt	=1
@@ -443,6 +452,9 @@ program _ddml_crossfit_partial, eclass sortpreserve
 				mata: st_local("command",`eqn'.command)
 				mata: st_numscalar("r(MSE)",`eqn'.MSE)
 				local MSE = `r(MSE)'
+				mata: st_numscalar("r(N)",`eqn'.N)
+				local MSE = `r(MSE)'
+				local N = `r(N)'
 				if "`var'"=="`vname'" {
 					if `MSE' < `zminmse' {
 						local zopt `vtilde'
@@ -451,7 +463,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 					di _col(2) "`vname'" _c
 					di _col(20) "`vtilde'" _c
 					di _col(40) "`command'" _c
-					di _col(55) %10.6f `MSE'
+					di _col(50) %6.0f `N' _c
+					di _col(60) %10.6f `MSE'
 				}
 			}
 			// if nameZopt already has vname in it, then add it to the list
@@ -536,34 +549,40 @@ struct eqnStruct init_eqnStruct()
 }
 
 
-void add_mse_Y(						struct ddmlStruct m,
+void add_stats_Y(					struct ddmlStruct m,
 									real scalar eqnumber,
-									real scalar mse)
+									real scalar mse,
+									real scalar n)
 {
 	pointer(struct eqnStruct) scalar p
 
 	p = m.eqnlistY[1,eqnumber]
 	(*p).MSE	= mse
+	(*p).N		= n
 }
 
-void add_mse_D(						struct ddmlStruct m,
+void add_stats_D(					struct ddmlStruct m,
 									real scalar eqnumber,
-									real scalar mse)
+									real scalar mse,
+									real scalar n)
 {
 	pointer(struct eqnStruct) scalar p
 
 	p = m.eqnlistD[1,eqnumber]
 	(*p).MSE	= mse
+	(*p).N		= n
 }
 
-void add_mse_Z(						struct ddmlStruct m,
+void add_stats_Z(					struct ddmlStruct m,
 									real scalar eqnumber,
-									real scalar mse)
+									real scalar mse,
+									real scalar n)
 {
 	pointer(struct eqnStruct) scalar p
 
 	p = m.eqnlistZ[1,eqnumber]
 	(*p).MSE	= mse
+	(*p).N		= n
 }
 
 

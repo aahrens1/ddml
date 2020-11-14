@@ -48,6 +48,7 @@ struct eqnStruct {
 	string scalar		eststring
 	string scalar		command
 	real scalar			MSE
+	real scalar			N
 	real scalar			crossfit		// boolean, 0 or 1
 }
 
