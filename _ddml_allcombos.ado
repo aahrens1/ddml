@@ -3,25 +3,44 @@
 program define _ddml_allcombos, rclass
 	version 13
 	
-	syntax anything , [putlast(string) debug]
+	syntax anything , [ putlast(string) ///
+						debug ///  
+						dpos_start(int 0) dpos_end(int 0) /// 
+						zpos_start(int 0) zpos_end(int 0) /// 
+						]
 	tokenize `anything' , parse("|")
 
 	tempname out
-	mata: `out' = get_combos("`anything'")
-	mata: `out' = put_last(`out',"`putlast'")
 	mata: st_rclear()
-	mata: mat_to_string(`out')
-	mata: mat_to_colstring(`out')
+	mata: `out' = get_combos("`anything'")
+	return scalar ncombos = `r(ncombos)'
 
+	mata: `out' = put_last(`out',"`putlast'")
 	if ("`debug'"!="") {
 		mata: `out'
 	}
 
+	mata: mat_to_string(`out'[,1])
+	return local ystr `r(str)'
+
+	mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'])
+	return local dstr `r(str)'
+	if (`dpos_start'>0 & `dpos_end'>0) {
+		mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'])
+		return local dstr `r(str)'
+	}
+	if (`zpos_start'>0 & `zpos_end'>0) {
+		mata: mat_to_string(`out'[,`zpos_start'..`zpos_end'])
+		return local zstr `r(str)'
+	}
+
+	mata: mat_to_colstring(`out')
+	return scalar nvars = `r(k)'
+
 	forvalues i = 1(1)`r(k)' {
 		return local colstr`i' `r(colstr`i')'
 	}
-	return local str `r(str)'
-	return local k `r(k)'
+	
 end
 
 mata: 
@@ -87,6 +106,8 @@ string matrix get_combos(string scalar input)
 		}
 
 	}
+
+	st_numscalar("r(ncombos)",rows(out))
 	
 	return(out)
 
@@ -98,11 +119,14 @@ void mat_to_string(string matrix inmat)
 	r = rows(inmat)
 	for (i=1;i<=r;i++) {
 
+		the_row = inmat[i,]
+
+		// put in string
 		if (i==1) {
-			str = invtokens(inmat[i,]) 
+			str = invtokens(the_row) 
 		}
 		else {
-			str = str + " | " + invtokens(inmat[i,]) 
+			str = str + " | " + invtokens(the_row) 
 		}
 	} 
 
