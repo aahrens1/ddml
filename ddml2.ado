@@ -143,7 +143,7 @@ program ddml2, eclass
 	if "`subcmd'" =="estimate" {
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
-		syntax , mname(name)
+		syntax , mname(name) [*]
 		
 		// check that mname is the name of a Mata ddmlStruct
 		mata: st_global("r(structname)",structname(`mname'))
@@ -161,13 +161,13 @@ program ddml2, eclass
 			_ddml_estimate_iv `mname', `options'
 		}
 		if ("`r(model)'"=="interactive") {
-			_ddml_estimate_interactive, `options'
+			_ddml_estimate_interactive `mname', `options'
 		}
 		if ("`r(model)'"=="late") {
-			_ddml_estimate_late, `options'
+			_ddml_estimate_late `mname', `options'
 		}
 		if ("`r(model)'"=="optimaliv") {
-			_ddml_estimate_optimaliv, `options'
+			_ddml_estimate_optimaliv `mname', `options'
 		}
 	}
 end
