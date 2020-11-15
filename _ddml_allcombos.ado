@@ -7,13 +7,18 @@ program define _ddml_allcombos, rclass
 						debug ///  
 						dpos_start(int 0) dpos_end(int 0) /// position of D variables
 						zpos_start(int 0) zpos_end(int 0) /// position of Z variables
+						sep(string) ///
 						]
-	tokenize `anything' , parse("|")
+	if ("`sep'"=="") {
+		local sep -
+	}
+
+	tokenize "`anything'" , parse("`sep'")
 
 	// obtain all combinations
 	tempname out
 	mata: st_rclear()
-	mata: `out' = get_combos("`anything'")
+	mata: `out' = get_combos("`anything'","`sep'")
 	return scalar ncombos = `r(ncombos)'
 
 	// put one specific order at the end (indended for optimal model)
@@ -23,17 +28,17 @@ program define _ddml_allcombos, rclass
 	}
 
 	// save all in one list separated by |
-	mata: mat_to_string(`out'[,1])
+	mata: mat_to_string(`out'[,1],"`sep'")
 	return local ystr `r(str)'
 
 	// save D variables in list separated by |
 	if (`dpos_start'!=0 & `dpos_end'!=0) {
-		mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'])
+		mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'],"`sep'")
 		return local dstr `r(str)'
 	}
 	// save Z variables in list separated by |
 	if (`zpos_start'!=0 & `zpos_end'!=0) {
-		mata: mat_to_string(`out'[,`zpos_start'..`zpos_end'])
+		mata: mat_to_string(`out'[,`zpos_start'..`zpos_end'],"`sep'")
 		return local zstr `r(str)'
 	}
 
@@ -77,10 +82,10 @@ string matrix put_last(string matrix mat,
 }
 
 // obtain full matrix of all combinations
-string matrix get_combos(string scalar input)
+string matrix get_combos(string scalar input,string scalar sep)
 {
 
-	input = tokens(input,"|")
+	input = tokens(input,sep)
 
 	for (i=1; i<=cols(input); i=i+2) {
 
@@ -119,7 +124,7 @@ string matrix get_combos(string scalar input)
 }
 
 // matrix to one string where combinations are seperated by "|"
-void mat_to_string(string matrix inmat)
+void mat_to_string(string matrix inmat, string scalar sep)
 {
 	r = rows(inmat)
 	for (i=1;i<=r;i++) {
@@ -131,7 +136,7 @@ void mat_to_string(string matrix inmat)
 			str = invtokens(the_row) 
 		}
 		else {
-			str = str + " | " + invtokens(the_row) 
+			str = str + " " + sep + " " + invtokens(the_row) 
 		}
 	} 
 

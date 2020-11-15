@@ -15,7 +15,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 		local show all 
 	}
 
-	mata: `mname'.nameDtilde
+	//mata: `mname'.nameDtilde
 	mata: st_local("ylist",invtokens(`mname'.nameYtilde))
 	mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
 	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
@@ -30,8 +30,8 @@ program _ddml_estimate_iv, eclass sortpreserve
     	di "`Dtilde'"
     }
 
-    _ddml_allcombos `Ytilde' | `Dtilde' | `Ztilde' , putlast(`Yopt' `Dopt' `Zopt') ///
-    													`debug' ///
+    _ddml_allcombos `Ytilde' - `Dtilde' - `Ztilde' , putlast(`Yopt' `Dopt' `Zopt') ///
+    													`debug' debug ///
     													dpos_start(2) dpos_end(2) ///
     													zpos_start(3) zpos_end(3)
 	return list
@@ -45,11 +45,11 @@ program _ddml_estimate_iv, eclass sortpreserve
 	    local j = 1
 	    di `tokenlen'
 	    forvalues i = 1(2)`tokenlen' {
-	    	tokenize `ylist' , parse("|")
+	    	tokenize `ylist' , parse("-")
 	    	local y ``i''
-	    	tokenize `Dlist' , parse("|")
+	    	tokenize `Dlist' , parse("-")
 	    	local d ``i''
-	    	tokenize `Zlist' , parse("|")
+	    	tokenize `Zlist' , parse("-")
 	    	local z ``i''
 	    	if (`j'==`ncombos') {
 	        	qui ivreg2 `y' (`d'=`z') , nocons `robust' noheader nofooter
