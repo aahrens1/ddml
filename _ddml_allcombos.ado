@@ -27,14 +27,12 @@ program define _ddml_allcombos, rclass
 	return local ystr `r(str)'
 
 	// save D variables in list separated by |
-	mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'])
-	return local dstr `r(str)'
-	if (`dpos_start'>0 & `dpos_end'>0) {
+	if (`dpos_start'!=0 & `dpos_end'!=0) {
 		mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'])
 		return local dstr `r(str)'
 	}
 	// save Z variables in list separated by |
-	if (`zpos_start'>0 & `zpos_end'>0) {
+	if (`zpos_start'!=0 & `zpos_end'!=0) {
 		mata: mat_to_string(`out'[,`zpos_start'..`zpos_end'])
 		return local zstr `r(str)'
 	}
