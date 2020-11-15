@@ -1,4 +1,5 @@
 *** ddml estimation: partial linear model
+
 program _ddml_estimate_iv, eclass sortpreserve
 
 	syntax namelist(name=mname) [if] [in] , /// 
@@ -7,31 +8,30 @@ program _ddml_estimate_iv, eclass sortpreserve
 								show(string) /// dertermines which to post
 								clear /// deletes all tilde-variables (to be implemented)
 								avplot ///
+								debug ///
 								* ]
 
+	if ("`show'"=="") {
+		local show all 
+	}
 
-	// loop through all Ytildes and all possible combinations of Dtildes
+	mata: `mname'.nameDtilde
 	mata: st_local("ylist",invtokens(`mname'.nameYtilde))
-	// allcombos program put combinations in r(oplists) separated by commas
-	//allcombos `mname'.eqnlistD
-	//local Dlists `r(oplists)'
-	//di "`Dlists'"
-    //allcombos `mname'.eqnlistZ
-	//local Zlists `r(oplists)'
-	//di "`Zlists'"
-
-	mata: st_local("Ztilde",mat_to_varlist(`mname'.nameZtilde))
-	mata: st_local("Dtilde",mat_to_varlist(`mname'.nameDtilde))
+	mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
+	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
 	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
 	mata: st_local("Yopt",`mname'.nameYopt)
    	mata: st_local("Dopt",`mname'.nameDopt)
     mata: st_local("Zopt",`mname'.nameZopt)
-    di "`Ztilde'"
-    di "`Dtilde'"
-    di "`Ytilde'"
+
+    if ("`debug'"!="") {
+    	di "`Ytilde'"
+    	di "`Ztilde'"
+    	di "`Dtilde'"
+    }
 
     _ddml_allcombos `Ytilde' | `Dtilde' | `Ztilde' , putlast(`Yopt' `Dopt' `Zopt') ///
-    													debug  ///
+    													`debug' ///
     													dpos_start(2) dpos_end(2) ///
     													zpos_start(3) zpos_end(3)
 	return list
@@ -45,14 +45,13 @@ program _ddml_estimate_iv, eclass sortpreserve
 	    local j = 1
 	    di `tokenlen'
 	    forvalues i = 1(2)`tokenlen' {
-	    	tokenize `ylist'
+	    	tokenize `ylist' , parse("|")
 	    	local y ``i''
 	    	tokenize `Dlist' , parse("|")
 	    	local d ``i''
 	    	tokenize `Zlist' , parse("|")
 	    	local z ``i''
 	    	if (`j'==`ncombos') {
-	    		di as res "Optimal model: DML with Y=`y' and D=`d', Z=`z':"
 	        	qui ivreg2 `y' (`d'=`z') , nocons `robust' noheader nofooter
 	    	}
 	    	else {
@@ -69,12 +68,6 @@ program _ddml_estimate_iv, eclass sortpreserve
     	di as res "DML with Y=`Yopt' and D=`Dopt', Z=`Zopt':"
     	qui ivreg2 `Yopt' (`Dopt'=`Zopt') , nocons `robust' noheader nofooter
 	}
-
-    // plot
-	//if ("`avplot'"!="") {
-    //   // only works with one Dopt
-	//   twoway (scatter `Yopt' `Dopt') (lfit `Yopt' `Dopt')
-	//}
 
 	// display
 	tempname b
@@ -96,6 +89,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 
 end
 
+/*
 mata:
 
 string scalar mat_to_varlist(string matrix inmat)

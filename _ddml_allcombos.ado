@@ -5,42 +5,49 @@ program define _ddml_allcombos, rclass
 	
 	syntax anything , [ putlast(string) ///
 						debug ///  
-						dpos_start(int 0) dpos_end(int 0) /// 
-						zpos_start(int 0) zpos_end(int 0) /// 
+						dpos_start(int 0) dpos_end(int 0) /// position of D variables
+						zpos_start(int 0) zpos_end(int 0) /// position of Z variables
 						]
 	tokenize `anything' , parse("|")
 
+	// obtain all combinations
 	tempname out
 	mata: st_rclear()
 	mata: `out' = get_combos("`anything'")
 	return scalar ncombos = `r(ncombos)'
 
+	// put one specific order at the end (indended for optimal model)
 	mata: `out' = put_last(`out',"`putlast'")
 	if ("`debug'"!="") {
 		mata: `out'
 	}
 
+	// save all in one list separated by |
 	mata: mat_to_string(`out'[,1])
 	return local ystr `r(str)'
 
+	// save D variables in list separated by |
 	mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'])
 	return local dstr `r(str)'
 	if (`dpos_start'>0 & `dpos_end'>0) {
 		mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'])
 		return local dstr `r(str)'
 	}
+	// save Z variables in list separated by |
 	if (`zpos_start'>0 & `zpos_end'>0) {
 		mata: mat_to_string(`out'[,`zpos_start'..`zpos_end'])
 		return local zstr `r(str)'
 	}
 
+	// one string per column
 	mata: mat_to_colstring(`out')
 	return scalar nvars = `r(k)'
-
 	forvalues i = 1(1)`r(k)' {
 		return local colstr`i' `r(colstr`i')'
 	}
-	
+
+	// clear
+	mata: mata drop `out'
 end
 
 mata: 

@@ -132,7 +132,7 @@ program ddml2, eclass
 		_ddml_crossfit_interactive `restargs'
 		}
 		if ("`r(model)'"=="late") {
-		_ddml_crossfit_late `restargs'
+		_ddml_crossfit_interactive `restargs'
 		}
 		if ("`r(model)'"=="optimaliv") {
 		_ddml_crossfit_optimaliv `restargs'
