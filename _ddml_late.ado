@@ -22,11 +22,6 @@ program _ddml_late, eclass
     tempname b
     tempname V 
     mata: LATE("`yvar'","`dvar'","`zvar'","`y0tilde'", "`y1tilde'", "`d0tilde'","`d1tilde'","`ztilde'","`touse'","`b'","`V'")
-    matrix colnames `b' = "`dvar'"
-    matrix rownames `b' = "`yvar'"
-    matrix colnames `V' = "`dvar'"
-    matrix rownames `V' = "`dvar'"
-
 
     // display
     local N = `r(N)'
