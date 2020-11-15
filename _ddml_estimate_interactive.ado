@@ -1,141 +1,89 @@
 *** ddml estimation: interactive model
+
 program _ddml_estimate_interactive, eclass sortpreserve
 
-    syntax [anything] [if] [in] , /// 
-								[  ///
-                                robust ///
+    syntax namelist(name=mname) [if] [in] , /// 
+                                [  ///
+                                ROBust ///
                                 show(string) /// dertermines which to post
                                 clear /// deletes all tilde-variables (to be implemented)
+                                avplot ///
+                                debug ///
                                 * ]
 
-    *** set defaults
     if ("`show'"=="") {
-        local show opt
+        local show all 
     }
-	
-    *** save everything that is needed in locals
-    local yestn = e(yest)
-    local destn = e(dest)
-    local y0optid = e(y0optid)
-    local y1optid = e(y1optid)
-    local doptid = e(doptid)
-    local yvar = e(depvar)
-    local dvar = e(dvar)
-    
-    *** retrieve variable names
-    local alltilde
-    forvalues i = 1(1)`yestn' {
-        local ytilde`i' `e(y`i')'
-        local yname`i' `e(y`i')'
-        local ycmd`i' `e(ycmd`i')'
-        local alltilde `alltilde' `ytilde`i''
-        di "`ytilde`i''"
-    }
-    forvalues i = 1(1)`destn' {
-        local dtilde`i' `e(d`i')'
-        local dname`i' `e(d`i')'
-        local dcmd`i' `e(dcmd`i')'
-        local alltilde `alltilde' `dtilde`i''
+    //mata: `mname'.nameDtilde
+    //mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
+    mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
+    mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
+    mata: st_local("nameD",invtokens(`mname'.nameD))
+    mata: st_local("nameY",invtokens(`mname'.nameY))
+    mata: st_local("Y0opt",`mname'.nameY0opt)
+    mata: st_local("Y1opt",`mname'.nameY1opt)
+    mata: st_local("Dopt",`mname'.nameDopt)
+    //mata: st_local("Zopt",`mname'.nameZopt)
+
+    if ("`debug'"!="") {
+        di "`Ytilde'"
+        di "`Ztilde'"
+        di "`Dtilde'"
     }
 
-    *** mark sample
-    marksample touse 
-    markout `touse' `yvar' `dvar' `alltilde'
+    _ddml_allcombos `Ytilde' - `Ytilde' - `Dtilde', ///
+                                                        putlast(`Y0opt' `Y1opt' `Dopt') ///
+                                                        `debug'  
+    return list
+    local ncombos = r(ncombos)
+    local tokenlen = `ncombos'*2 -1
+    local y0list `r(colstr1)'
+    local y1list `r(colstr2)'
+    local Dlist `r(colstr3)'
+    //local Zlist `r(zstr)' 
 
-    *** do estimation
     if ("`show'"=="all") {
-        forvalues i0 = 1(1)`yestn' {
-            forvalues i1 = 1(1)`yestn' {
-                forvalues j = 1(1)`destn' {
-                    if (`i0'==`y0optid' & `i1'==`y1optid' & `j'==`doptid') {
-                        // do nothing: optimal model always comes last 
-                        // and is estimated below
-                        di "" _c
-                    }
-                    else {
-                        di as res "Optimal model: DML with `ycmd`i0'' (`yname`i0''), `ycmd`i1'' (`yname`i1'') and `dcmd`j'' (`dname`j''):"
-                        tempname b
-                        tempname V 
-                        mata: ATE("`yvar'","`dvar'","`ytilde`i0''", "`ytilde`i1''", "`dtilde`j''","`touse'","`b'","`V'")
-
-                        // display
-                        matrix colnames `b' = "`dvar'"
-                        matrix rownames `b' = "`yvar'"
-                        matrix colnames `V' = "`dvar'"
-                        matrix rownames `V' = "`dvar'"
-                        ereturn clear
-                        ereturn post `b' `V' 
-                        ereturn display
-                    }
-                }
+        local j = 1
+        forvalues i = 1(2)`tokenlen' {
+            tokenize `y0list' , parse("-")
+            local y0 ``i''
+            tokenize `y1list' , parse("-")
+            local y1 ``i''
+            tokenize `Dlist' , parse("-")
+            local d ``i''
+            //tokenize `Zlist' , parse("-")
+            //local z ``i''
+            if (`j'==`ncombos') {
+                di as res "Optimal model: " _c
             }
-        }
+            di as res "DML with Y0=`y0', Y1=`y1' and D=`d':"
+            _ddml_ate, yvar(`nameY') dvar(`nameD') y0tilde(`y0') y1tilde(`y1') dtilde(`d')  
+
+            local j= `j'+1
+         }
     }
-    *** estimate best model
-    di as res "Optimal model: DML with `ycmd`y0optid'' (`yname`y0optid''), `ycmd`y1optid'' (`yname`y0optid'') and `dcmd`doptid'' (`dname`doptid''):"
-    tempname b
-	tempname V 
-    mata: ATE("`yvar'","`dvar'","`ytilde`y0optid''", "`ytilde`y1optid''", "`dtilde`doptid''","`touse'","`b'","`V'")
+
+    if ("`show'"=="opt") {
+        *** estimate best model
+        di as res "Optimal model: DML with Y=`Yopt' and D=`Dopt'"
+        qui _ddml_ate, yvar(`nameY') dvar(`nameD') y0tilde(`Y0opt') y1tilde(`Y1opt') dtilde(`Dopt')  
+    }
 
     // display
-	matrix colnames `b' = "`dvar'"
-	matrix rownames `b' = "`yvar'"
- 	matrix colnames `V' = "`dvar'"
-	matrix rownames `V' = "`dvar'"
-	ereturn clear
-	ereturn post `b' `V' 
-	ereturn display
+    tempname b
+    tempname V 
+    mat `b' = e(b)
+    mat `V' = e(V)
+    matrix colnames `b' = `nameD'
+    matrix rownames `b' = `nameY'
+    matrix colnames `V' = `nameD'
+    matrix rownames `V' = `nameD'
+    local N = e(N)
+    ereturn clear
+    ereturn post `b' `V', depname(`Yopt') obs(`N')
+    if "`robust'"~="" {
+        ereturn local vcetype   robust
+    }
+    ereturn display
 
 end
-
-
-
-********************************************************************************
-*** Mata section															 ***
-********************************************************************************
-
-mata:
-
-void ATE(   string scalar yvar,	    // Y
-            string scalar dvar,     // D
-            string scalar y0tilde,  // E[Y|X,D=0]
-            string scalar y1tilde,  // E[Y|X,D=1]
-            string scalar dtilde,   // E[D|X]
-            string scalar sample,   // sample
-            string scalar outate,   // output: name of matrix to store b
-            string scalar outatese  // output: name of matrix to store V
-            )
-{
-    st_view(my_d0x,.,y0tilde,sample)
-    st_view(my_d1x,.,y1tilde,sample)
-    st_view(md_x,.,dtilde,sample)
-    st_view(d,.,dvar,sample)
-    st_view(y,.,yvar,sample)
-
-    n = rows(y)
-
-    my_d0x = my_d0x :* (1:-d)
-    my_d1x = my_d1x :* d
-
-    te  = (d :* (y :- my_d1x) :/ md_x) :-  ((1 :- d) :* (y :- my_d0x) :/ (1 :- md_x)) :+ my_d1x :- my_d0x  
-    ate = mean(te)
-    ate_V =  variance(te)/n
-
-    st_matrix(outate,ate)
-    st_matrix(outatese,ate_V)
-}
-
-end
-
-/*
-
-ATE <- function(y, d, my_d1x, my_d0x, md_x)
-{
-  return( mean( (d * (y - my_d1x) / md_x) -  ((1 - d) * (y - my_d0x) / (1 - md_x)) + my_d1x - my_d0x ) );
-}
-
-SE.ATE <- function(y, d, my_d1x, my_d0x, md_x)
-{
-  return( sd( (d * (y - my_d1x) / md_x) -  ((1 - d) * (y - my_d0x) / (1 - md_x)) + my_d1x - my_d0x )/sqrt(length(y)) );
-}
-

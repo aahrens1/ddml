@@ -1,4 +1,4 @@
-*** ddml estimation: partial linear model
+*** ddml estimation: partial linear IV model
 
 program _ddml_estimate_iv, eclass sortpreserve
 
@@ -15,25 +15,25 @@ program _ddml_estimate_iv, eclass sortpreserve
 		local show all 
 	}
 
-	//mata: `mname'.nameDtilde
-	mata: st_local("ylist",invtokens(`mname'.nameYtilde))
-	mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
-	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
-	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
-	mata: st_local("Yopt",`mname'.nameYopt)
-   	mata: st_local("Dopt",`mname'.nameDopt)
+    //mata: `mname'.nameDtilde
+    mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
+    mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
+    mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
+    mata: st_local("Yopt",`mname'.nameYopt)
+    mata: st_local("Dopt",`mname'.nameDopt)
     mata: st_local("Zopt",`mname'.nameZopt)
 
     if ("`debug'"!="") {
-    	di "`Ytilde'"
-    	di "`Ztilde'"
-    	di "`Dtilde'"
+        di "`Ytilde'"
+        di "`Ztilde'"
+        di "`Dtilde'"
     }
 
     _ddml_allcombos `Ytilde' - `Dtilde' - `Ztilde' , putlast(`Yopt' `Dopt' `Zopt') ///
-    													`debug' debug ///
-    													dpos_start(2) dpos_end(2) ///
-    													zpos_start(3) zpos_end(3)
+                                                        `debug' ///
+                                                        dpos_start(2) dpos_end(2) ///
+                                                        zpos_start(3) zpos_end(3)
+
 	return list
 	local ncombos = r(ncombos)
 	local tokenlen = `ncombos'*2 -1
@@ -52,12 +52,10 @@ program _ddml_estimate_iv, eclass sortpreserve
 	    	tokenize `Zlist' , parse("-")
 	    	local z ``i''
 	    	if (`j'==`ncombos') {
-	        	qui ivreg2 `y' (`d'=`z') , nocons `robust' noheader nofooter
+	    		di as res "Optimal model: " _c
 	    	}
-	    	else {
-	    		di as res "DML with Y=`y' and D=`d', Z=`z':"
-	       		ivreg2 `y' (`d'=`z') , nocons `robust' noheader nofooter
-	    	}
+	    	di as res "DML with Y=`y' and D=`d', Z=`z':"
+	       	ivreg2 `y' (`d'=`z') , nocons `robust' noheader nofooter
 
 	        local j= `j'+1
 	     }
@@ -65,7 +63,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 
 	if ("`show'"=="opt") {
 		*** estimate best model
-    	di as res "DML with Y=`Yopt' and D=`Dopt', Z=`Zopt':"
+    	di as res "Optimal model: DML with Y=`Yopt' and D=`Dopt', Z=`Zopt':"
     	qui ivreg2 `Yopt' (`Dopt'=`Zopt') , nocons `robust' noheader nofooter
 	}
 
@@ -78,13 +76,12 @@ program _ddml_estimate_iv, eclass sortpreserve
 	matrix rownames `b' = `nameY'
  	matrix colnames `V' = `nameD'
 	matrix rownames `V' = `nameD'
+	local N = e(N)
 	ereturn clear
-	ereturn post `b' `V', depname(`Yopt')
+	ereturn post `b' `V', depname(`Yopt') obs(`N')
 	if "`robust'"~="" {
 		ereturn local vcetype	robust
 	}
-	di
-	di as res "Optimal model: DML with optimal Y=`Yopt' and optimal D= `Dopt':"
 	ereturn display
 
 end

@@ -5,6 +5,7 @@ program define _ddml_allcombos, rclass
 	
 	syntax anything , [ putlast(string) ///
 						debug ///  
+						ypos_start(int 1) ypos_end(int 1) /// position of D variables
 						dpos_start(int 0) dpos_end(int 0) /// position of D variables
 						zpos_start(int 0) zpos_end(int 0) /// position of Z variables
 						sep(string) ///
@@ -28,7 +29,7 @@ program define _ddml_allcombos, rclass
 	}
 
 	// save all in one list separated by |
-	mata: mat_to_string(`out'[,1],"`sep'")
+	mata: mat_to_string(`out'[,`ypos_start'..`ypos_end'],"`sep'")
 	return local ystr `r(str)'
 
 	// save D variables in list separated by |
@@ -43,7 +44,7 @@ program define _ddml_allcombos, rclass
 	}
 
 	// one string per column
-	mata: mat_to_colstring(`out')
+	mata: mat_to_colstring(`out',"`sep'")
 	return scalar nvars = `r(k)'
 	forvalues i = 1(1)`r(k)' {
 		return local colstr`i' `r(colstr`i')'
@@ -145,13 +146,13 @@ void mat_to_string(string matrix inmat, string scalar sep)
 }
 
 // matrix to one string per column
-void mat_to_colstring(string matrix inmat)
+void mat_to_colstring(string matrix inmat,string scalar sep)
 {
 	k = cols(inmat)
 	st_numscalar("r(k)",k)
 	for (j=1;j<=k;j++) {
 
-		str = invtokens(inmat[,j]') 
+		str = invtokens(inmat[,j]'," "+sep+" ") 
 		st_global("r(colstr"+strofreal(j)+")",str)
 
 	} 
