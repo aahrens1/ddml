@@ -57,8 +57,8 @@ void ATE(   string scalar yvar,     // Y
 
     n = rows(y)
 
-    my_d0x = my_d0x :* (1:-d)
-    my_d1x = my_d1x :* d
+    //my_d0x = my_d0x :* (1:-d)
+    //my_d1x = my_d1x :* d
 
     te  = (d :* (y :- my_d1x) :/ md_x) :-  ((1 :- d) :* (y :- my_d0x) :/ (1 :- md_x)) :+ my_d1x :- my_d0x  
     ate = mean(te)
