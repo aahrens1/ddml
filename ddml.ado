@@ -26,7 +26,26 @@ program ddml, eclass
 
 		_ddml_describe `mname', `options'
 	}
+
+	*** save model
+	if "`subcmd'"=="save" {
+		local fname: word 2 of `mainargs'
+		local 0 "`restargs'"
+		syntax , mname(name) [ replace ]
+		if "`replace'"~="" {
+			shell del `fname'
+		}
+		mata: save_model("`fname'",`mname')
+	}
 	
+	*** use model
+	if "`subcmd'"=="use" {
+		local fname: word 2 of `mainargs'
+		local 0 "`restargs'"
+		syntax , mname(name)
+		mata: `mname' = use_model("`fname'")
+	}
+
 	*** initialize new estimation
 	if "`subcmd'"=="init" {
 		local model: word 2 of `mainargs'
@@ -197,6 +216,23 @@ struct ddmlStruct init_ddmlStruct()
 	d.nameZtilde	= ""
 	d.nameZopt		= ""
 	return(d)
+}
+
+void save_model(					string scalar fname,
+									struct ddmlStruct m)
+{
+	fh = fopen(fname,"w")
+	fputmatrix(fh,m)
+	fclose(fh)
+}
+
+struct ddmlStruct use_model(		string scalar fname)
+{
+	struct ddmlStruct scalar	m
+	fh = fopen(fname,"r")
+	m = fgetmatrix(fh,1)	// nonzero second argument required for "strict"
+	fclose(fh)
+	return(m)
 }
 
 struct eqnStruct init_eqnStruct()
