@@ -2,14 +2,23 @@
 program _ddml_use
 	version 13
 
-	syntax , mname(name) fname(string)
+	syntax , mname(name) fname(string) [ replace ]
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	// used multiple times below
 	tempname eqn
 	mata: `eqn' = init_eqnStruct()
 
-	mata: `mname' = use_model("`fname'")
+	// does model already exist?
+	mata: st_local("isnull",strofreal(findexternal("`mname'")==NULL))
+
+	if `isnull' | "`replace'"=="replace" {
+		mata: `mname' = use_model("`fname'")
+	}
+	else {
+		di as err "error - `mname' already exists in Mata memory; use -replace- option"
+		exit 198
+	}
 
 	*** extract details of estimation
 	

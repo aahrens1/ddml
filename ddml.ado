@@ -56,9 +56,9 @@ program ddml, eclass
 	if "`subcmd'"=="use" {
 		local fname: word 2 of `mainargs'
 		local 0 "`restargs'"
-		syntax , mname(name)
+		syntax , mname(name) [ * ]
 		// no need to check name
-		_ddml_use, mname(`mname') fname(`fname')
+		_ddml_use, mname(`mname') fname(`fname') `options'
 	}
 
 	*** drop model
