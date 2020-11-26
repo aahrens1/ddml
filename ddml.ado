@@ -12,6 +12,12 @@ program ddml, eclass
 	local restargs `*'
 
 	local subcmd : word 1 of `mainargs'
+	
+	local allsubcmds	update describe save export use copy init yeq deq zeq crossfit estimate
+	if strpos("`allsubcmds'","`subcmd'")==0 {
+		di as err "error - unknown subcommand `subcmd'"
+		exit 198
+	}
 
 	*** get latest version
 	if "`subcmd'"=="update" {
@@ -19,11 +25,10 @@ program ddml, eclass
 	} 
 	
 	*** describe model
-	if "`subcmd'"=="desc" {
+	if abbrev("`subcmd'",4)=="desc" {
 		local 0 "`restargs'"
-		// mname is required; could make optional with a default name
 		syntax , mname(name) [ * ]
-
+		check_mname "`mname'"
 		_ddml_describe `mname', `options'
 	}
 
@@ -31,11 +36,20 @@ program ddml, eclass
 	if "`subcmd'"=="save" {
 		local fname: word 2 of `mainargs'
 		local 0 "`restargs'"
-		syntax , mname(name) [ replace ]
-		if "`replace'"~="" {
-			shell del `fname'
-		}
-		mata: save_model("`fname'",`mname')
+		syntax , mname(name) [ * ]
+		check_mname "`mname'"
+		_ddml_save, mname(`mname') fname(`fname') `options'
+
+	}
+	
+	*** export model
+	if "`subcmd'"=="export" {
+		local fname: word 2 of `mainargs'
+		local 0 "`restargs'"
+		syntax , mname(name) [ * ]
+		check_mname "`mname'"
+		_ddml_export, mname(`mname') fname(`fname') `options'
+
 	}
 	
 	*** use model
@@ -43,7 +57,24 @@ program ddml, eclass
 		local fname: word 2 of `mainargs'
 		local 0 "`restargs'"
 		syntax , mname(name)
-		mata: `mname' = use_model("`fname'")
+		check_mname "`mname'"
+		_ddml_use, mname(`mname') fname(`fname')
+	}
+
+	*** drop model
+	if "`subcmd'"=="drop" {
+		local 0 "`restargs'"
+		syntax , mname(name)
+		check_mname "`mname'"
+		_ddml_drop, mname(`mname')
+	}
+
+	*** copy model
+	if "`subcmd'"=="copy" {
+		local 0 "`restargs'"
+		syntax , mname(name) newmname(name)
+		check_mname "`mname'"
+		_ddml_copy, mname(`mname') newmname(`newmname')
 	}
 
 	*** initialize new estimation
@@ -58,6 +89,10 @@ program ddml, eclass
 		// fold variable is option; default is ddmlfold
 		syntax , mname(name)
 		mata: `mname'=init_ddmlStruct()
+		// create and store id variable
+		cap drop `mname'_id
+		qui gen double `mname'_id	= _n
+		mata: `mname'.id			= st_data(., "`mname'_id")
 		// fill by hand
 		mata: `mname'.model			= "`model'"
 	}
@@ -73,9 +108,6 @@ program ddml, eclass
 			di as err "not allowed; deq not allowed with `model'"
 		}
 
-		** check that ddml has been initialized
-		// to add
-
 		** parsing
 		// macro options has eqn to be estimated set off from the reset by a :
 		tokenize `" `restargs' "', parse(":")
@@ -86,6 +118,10 @@ program ddml, eclass
 					vname(name)		///
 					gen(name)		///
 					[ NOCROSSfit ]
+
+		** check that ddml has been initialized
+		// to add
+		check_mname "`mname'"
 
 		// subcmd macro tells add_eqn(.) which list to add it to
 		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'", "`eqn'", "`nocrossfit'")
@@ -139,6 +175,7 @@ program ddml, eclass
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
 		syntax , mname(name) [*]
+		check_mname "`mname'"
 
 		mata: st_global("r(model)",`mname'.model)
 
@@ -164,13 +201,7 @@ program ddml, eclass
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
 		syntax , mname(name) [*]
-		
-		// check that mname is the name of a Mata ddmlStruct
-		mata: st_global("r(structname)",structname(`mname'))
-		if ("`r(structname)'" ~= "ddmlStruct") {
-			di as err "you need to provide the name of the ddmlStruct with the crossfit results"
-			exit 198
-		}
+		check_mname "`mname'"
 
 		mata: st_global("r(model)",`mname'.model)
 
@@ -192,6 +223,29 @@ program ddml, eclass
 	}
 end
 
+prog define check_mname
+
+	args mname
+
+	mata: st_local("isnull",strofreal(findexternal("`mname'")==NULL))
+	if `isnull' {
+		di as err "model `mname' not found"
+		exit 3259
+	}
+	
+	mata: st_local("eltype",eltype(`mname'))
+	if "`eltype'"~="struct" {
+		di as err "model `mname' is not a struct"
+		exit 3259
+	}
+
+	mata: st_local("structname",structname(`mname'))
+	if "`structname'"~="ddmlStruct" {
+		di as err "model `mname' is not a ddmlStruct"
+		exit 3000
+	}
+
+end
 
 ********************************************************************************
 *** Mata section															 ***
@@ -216,14 +270,6 @@ struct ddmlStruct init_ddmlStruct()
 	d.nameZtilde	= ""
 	d.nameZopt		= ""
 	return(d)
-}
-
-void save_model(					string scalar fname,
-									struct ddmlStruct m)
-{
-	fh = fopen(fname,"w")
-	fputmatrix(fh,m)
-	fclose(fh)
 }
 
 struct ddmlStruct use_model(		string scalar fname)

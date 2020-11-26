@@ -1,15 +1,11 @@
 
 program define _ddml_describe
 
-	syntax name(name=mname), [NOCMD]
+	syntax name(name=mname), [NOCMD all]
 	
-	if "`nocmd'"=="" {
-		local showcmd = 1
-	}
-	else {
-		local showcmd = 0
-	}
-	
+	local showcmd	= ("`nocmd'"=="")
+	local showall	= ("`all'"~="")
+
 	// Will use for flagging minimized MSEs
 	mata: st_local("Yopt",`mname'.nameYopt)
 	mata: st_local("Dopt",invtokens(`mname'.nameDopt))
@@ -17,7 +13,8 @@ program define _ddml_describe
 
 
 	mata: printf("{res}Model: %s\n", `mname'.model)
-	mata: printf("{res}Fold ID: %s\n", `mname'.foldvar)
+	di as res "ID: `mname'_id"
+	di as res "Fold ID: `mname'_fid"
 	mata: printf("{res}Dependent variable (Y): %s\n", `mname'.nameY)
 	mata: printf("{res}Dependent variable (orthogonalized): %s\n", invtokens(`mname'.nameYtilde))
 	di "Minimum MSE orthogonalized dep var: `Yopt'"
@@ -118,7 +115,22 @@ program define _ddml_describe
 		di
 		di "* indicates minimim MSE estimation"
 	}
-	
+
+	if `showall' {
+		di
+		di as res "Other:"
+		di
+		di as res "liststruct(.):"
+		mata: liststruct(`mname')
+		di
+		di as res "Y equation pointers:"
+		mata: `mname'.eqnlistY
+		di as res "D equation pointers:"
+		mata: `mname'.eqnlistD
+		di as res "Z equation pointers:"
+		mata: `mname'.eqnlistZ
+	}
+
 	// clear this global from Mata
 	mata: mata drop `eqn'
 

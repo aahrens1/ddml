@@ -20,9 +20,12 @@ st_global("s(stata_version)","`stata_version'")
 st_global("s(compiled_date)","`current_date")
 }
 
+// inconsistency in use - nameD is being stored as a rowvector
+// but nameDopt is being stored as a single string (in the PLM code)
 struct ddmlStruct {
 	string scalar		model			// model; partial, iv, late, etc
-	string scalar		foldvar			// name of Stata fold ID variable
+	real colvector		id				// id variable (name in Stata will be modelname_id)
+	real matrix			idFold			// col 1 = id, col 2 = fold identifier
 	string scalar		nameY			// dependent variable 
 	string colvector	nameYtilde		// names of orthogonalized variables
 	string scalar		nameYopt 		// name of optimal orthog. Y variable
@@ -41,10 +44,11 @@ struct ddmlStruct {
 	pointer matrix		eqnlistZ
 }
 
-// to add: boolean to indicte min MSE / optimal orthogonalized var
+// to add: boolean to indicate min MSE / optimal orthogonalized var
 struct eqnStruct {
-	string scalar		vname
-	string scalar		vtilde
+	string scalar		vname			// should perhaps rename to nameV
+	string scalar		vtilde			// should perhaps rename to nameVtilde
+	real matrix			idVtilde		// col 1 = id, col 2 = orthogonalized
 	string scalar		eststring
 	string scalar		command
 	real scalar			MSE

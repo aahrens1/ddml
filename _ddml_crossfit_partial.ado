@@ -7,7 +7,6 @@ program _ddml_crossfit_partial, eclass sortpreserve
 							debug /// 
 							Robust ///
 							TABFold ///
-							foldvar(name) ///
 							yrclass ///
 							drclass /// 
 							mname(name)	///
@@ -22,11 +21,10 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	
 	// model
 	mata: st_local("model",`mname'.model)
+	mata: st_local("numeqnsY",strofreal(cols(`mname'.eqnlistY)))
+	mata: st_local("numeqnsD",strofreal(cols(`mname'.eqnlistD)))
+	mata: st_local("numeqnsZ",strofreal(cols(`mname'.eqnlistZ)))
 	di "Model: `model'"
-	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistY))
-	local numeqnsY	= `r(numeqns)'
-	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistD))
-	local numeqnsD	= `r(numeqns)'
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("listYtilde",invtokens(`mname'.nameYtilde))
 	di "Number of Y estimating equations: `numeqnsY'"
@@ -35,8 +33,6 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		mata: st_local("listDtilde",invtokens(`mname'.nameDtilde))
 		di "Number of D estimating equations: `numeqnsD'"
 	}
-	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistZ))
-	local numeqnsZ	= `r(numeqns)'
 	if `numeqnsZ' {
 		mata: st_local("listZ",invtokens(`mname'.nameZ))
 		mata: st_local("listZtilde",invtokens(`mname'.nameZtilde))
@@ -44,42 +40,23 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	}		
 	
 	*** gen folds
-	// use foldvar if not empty
-	// populate provided foldvar if empty
-	tempvar uni cuni
-	qui gen double `uni' = runiform()
-	qui cumul `uni', gen(`cuni')
-	if "`foldvar'"~="" {
-		// foldvar name provided so store on the model struct; can overwrite
-		mata: `mname'.foldvar	= "`foldvar'"
+	// create foldvar if not empty
+	// Stata name will be mname_fid
+	cap count if `mname'_fid < .
+	if _rc > 0 {
+		// fold var does not exist or is not a valid identifier
+		cap drop `mname'_fid
+		tempvar uni cuni
+		qui gen double `uni' = runiform()
+		qui cumul `uni', gen(`cuni')
+		qui gen int `mname'_fid = ceil(`kfolds'*`cuni')
 	}
-	else {
-		// foldvar name not provided in foldvar(.) option so use default name
-		// store on model struct and drop the variable if it already exists
-		cap drop ddmlfold
-		mata: `mname'.foldvar	= "ddmlfold"
-	}
-	// does variable exist and is it numeric?
-	mata: st_local("kid",`mname'.foldvar)
-	cap sum `kid'
-	if _rc==0 {
-		// variable exists and is numeric
-		// does it have a valid number of groups?
-		qui tab `kid'
-		if r(r) < 2 {
-			di as err "error - invalid fold variable"
-			exit 1
-		}
-	}
-	else {
-		// create variable with provided name
-		cap drop `kid'
-		qui gen `kid' =ceil(`kfolds'*`cuni')
-	}
+	// add fold id to model struct (col 1 = id, col 2 = fold id)
+	mata: `mname'.idFold = st_data(., ("`mname'_id", "`mname'_fid"))
 	if ("`tabfold'"!="") {
 		di ""
 		di "Overview of frequencies by fold:"
-		tab `kid'
+		tab `mname'_fid
 		di ""
 	}
 	//
@@ -94,23 +71,23 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
 		mata: st_local("vtilde",`eqn'.vtilde)
-		cap drop `vtilde'
-		qui gen double `vtilde'=.
+		cap drop `mname'_`vtilde'
+		qui gen double `mname'_`vtilde'=.
 	}
 	// D equations
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
 		mata: st_local("vtilde",`eqn'.vtilde)
-		cap drop `vtilde'
-		qui gen double `vtilde'=.
+		cap drop `mname'_`vtilde'
+		qui gen double `mname'_`vtilde'=.
 	}
 	// Z equations
 	if ("`model'"=="iv") {
 		forvalues i=1/`numeqnsZ' {
 			mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
 			mata: st_local("vtilde",`eqn'.vtilde)
-			cap drop `vtilde'
-			qui gen double `vtilde'=.
+			cap drop `mname'_`vtilde'
+			qui gen double `mname'_`vtilde'=.
 		}
 	}
 
@@ -151,7 +128,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			if `crossfit'==0 {
 				tempvar vtilde_i
 				qui predict double `vtilde_i'
-				qui replace `vtilde' = `vname' - `vtilde_i'
+				qui replace `mname'_`vtilde' = `vname' - `vtilde_i'
 			}
 		}
 	}
@@ -188,7 +165,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			if `crossfit'==0 {
 				tempvar vtilde_i
 				qui predict double `vtilde_i'
-				qui replace `vtilde' = `vname' - `vtilde_i'
+				qui replace `mname'_`vtilde' = `vname' - `vtilde_i'
 			}
 		}
 	}
@@ -225,7 +202,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			if `crossfit'==0 {
 				tempvar vtilde_i
 				qui predict double `vtilde_i'
-				qui replace `vtilde' = `vname' - `vtilde_i'
+				qui replace `mname'_`vtilde' = `vname' - `vtilde_i'
 			}
 		}
 	}
@@ -262,11 +239,11 @@ program _ddml_crossfit_partial, eclass sortpreserve
 					di "  est_options: `est_options'"
 	
 					// estimate excluding kth fold
-					`est_main' if `kid'!=`k', `est_options'
+					`est_main' if `mname'_fid!=`k', `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `kid'==`k' 
-					qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
+					qui predict double `vtilde_i' if `mname'_fid==`k' 
+					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k'
 				}
 			}
 			// D equations
@@ -286,11 +263,11 @@ program _ddml_crossfit_partial, eclass sortpreserve
 					di "  est_options: `est_options'"
 	
 					// estimate excluding kth fold
-					`est_main' if `kid'!=`k', `est_options'
+					`est_main' if `mname'_fid!=`k', `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `kid'==`k' 
-					qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
+					qui predict double `vtilde_i' if `mname'_fid==`k' 
+					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k'
 				}
 			}
 			// Z equations
@@ -310,43 +287,41 @@ program _ddml_crossfit_partial, eclass sortpreserve
 					di "  est_options: `est_options'"
 	
 					// estimate excluding kth fold
-					`est_main' if `kid'!=`k', `est_options'
+					`est_main' if `mname'_fid!=`k', `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `kid'==`k' 
-					qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
+					qui predict double `vtilde_i' if `mname'_fid==`k' 
+					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k'
 				}
 			}
 		}
 	}	
 
-	*** calculate MSE (or any other postestimation calculations)
-	
-	// insert stats for each estimation
+	*** calculate MSE, store orthogonalized variables, etc.
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
 		mata: st_local("vtilde",`eqn'.vtilde)
 		tempvar vtilde_sq
-		qui gen double `vtilde_sq' = `vtilde'^2
+		qui gen double `vtilde_sq' = `mname'_`vtilde'^2
 		qui sum `vtilde_sq', meanonly
-		mata: add_stats_Y(`mname',`i',`r(mean)',`r(N)')
+		mata: add_to_Yeqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
 	}
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
 		mata: st_local("vtilde",`eqn'.vtilde)
 		tempvar vtilde_sq
-		qui gen double `vtilde_sq' = `vtilde'^2
+		qui gen double `vtilde_sq' = `mname'_`vtilde'^2
 		qui sum `vtilde_sq', meanonly
-		mata: add_stats_D(`mname',`i',`r(mean)',`r(N)')
+		mata: add_to_Deqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
 	}
 	if ("`model'"=="iv") {
 		forvalues i=1/`numeqnsZ' {
 			mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
 			mata: st_local("vtilde",`eqn'.vtilde)
 			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `vtilde'^2
+			qui gen double `vtilde_sq' = `mname'_`vtilde'^2
 			qui sum `vtilde_sq', meanonly
-			mata: add_stats_Z(`mname',`i',`r(mean)',`r(N)')
+			mata: add_to_Zeqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
 		}
 	}
 	
@@ -548,41 +523,45 @@ struct eqnStruct init_eqnStruct()
 	return(e)
 }
 
-
-void add_stats_Y(					struct ddmlStruct m,
+void add_to_Yeqn(					struct ddmlStruct m,
 									real scalar eqnumber,
+									string scalar vnames,
 									real scalar mse,
 									real scalar n)
 {
 	pointer(struct eqnStruct) scalar p
-
-	p = m.eqnlistY[1,eqnumber]
-	(*p).MSE	= mse
-	(*p).N		= n
+	p				= m.eqnlistY[1,eqnumber]
+	(*p).idVtilde	= st_data(., tokens(vnames))
+	(*p).MSE		= mse
+	(*p).N			= n
 }
 
-void add_stats_D(					struct ddmlStruct m,
+void add_to_Deqn(					struct ddmlStruct m,
 									real scalar eqnumber,
+									string scalar vnames,
 									real scalar mse,
 									real scalar n)
 {
 	pointer(struct eqnStruct) scalar p
 
-	p = m.eqnlistD[1,eqnumber]
-	(*p).MSE	= mse
-	(*p).N		= n
+	p				= m.eqnlistD[1,eqnumber]
+	(*p).idVtilde	= st_data(., vnames)
+	(*p).MSE		= mse
+	(*p).N			= n
 }
 
-void add_stats_Z(					struct ddmlStruct m,
+void add_to_Zeqn(					struct ddmlStruct m,
 									real scalar eqnumber,
+									string scalar vnames,
 									real scalar mse,
 									real scalar n)
 {
 	pointer(struct eqnStruct) scalar p
 
-	p = m.eqnlistZ[1,eqnumber]
-	(*p).MSE	= mse
-	(*p).N		= n
+	p				= m.eqnlistZ[1,eqnumber]
+	(*p).idVtilde	= st_data(., vnames)
+	(*p).MSE		= mse
+	(*p).N			= n
 }
 
 
