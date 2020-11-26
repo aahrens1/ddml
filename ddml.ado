@@ -13,7 +13,7 @@ program ddml, eclass
 
 	local subcmd : word 1 of `mainargs'
 	
-	local allsubcmds	update describe save export use copy init yeq deq zeq crossfit estimate
+	local allsubcmds	update describe save export use drop copy init yeq deq zeq crossfit estimate
 	if strpos("`allsubcmds'","`subcmd'")==0 {
 		di as err "error - unknown subcommand `subcmd'"
 		exit 198

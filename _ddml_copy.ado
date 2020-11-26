@@ -26,34 +26,48 @@ program _ddml_copy
 		set obs `r(nobs)'
 	}
 	qui gen double `newmname'_id = .
-	qui gen double `newmname'_fid = .
-	mata: st_store( ., ("`newmname'_id", "`newmname'_fid"), (`newmname'.idFold))
+	// id variable always exists, fold ID may not
+	mata: st_numscalar("r(ncols)",cols(`newmname'.idFold))
+	if r(ncols) > 0 {
+		qui gen double `newmname'_fid = .
+		mata: st_store( ., ("`newmname'_id", "`newmname'_fid"), (`newmname'.idFold))
+	}
+	else {
+		mata: st_store( ., ("`newmname'_id"), (`newmname'.id))
+	}
 
 	*** loop through equations and create Stata variables
+	// note that variables may not exist
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`newmname'.eqnlistY[1,`i'])
 		mata: st_local("vtilde",`eqn'.vtilde)
 		cap drop `newmname'_`vtilde'
-		qui gen double `newmname'_`vtilde' = .
-		mata: st_store( ., ("`newmname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
+		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
+		if r(ncols) > 0 {
+			qui gen double `newmname'_`vtilde' = .
+			mata: st_store( ., ("`newmname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
+		}
 	}
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`newmname'.eqnlistD[1,`i'])
 		mata: st_local("vtilde",`eqn'.vtilde)
 		cap drop `newmname'_`vtilde'
-		qui gen double `newmname'_`vtilde' = .
-		mata: st_store( ., ("`newmname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
-	}
-	if ("`model'"=="iv") {
-		forvalues i=1/`numeqnsZ' {
-			mata: `eqn'=*(`newmname'.eqnlistZ[1,`i'])
-			mata: st_local("vtilde",`eqn'.vtilde)
-			cap drop `newmname'_`vtilde'
+		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
+		if r(ncols) > 0 {
 			qui gen double `newmname'_`vtilde' = .
 			mata: st_store( ., ("`newmname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
 		}
 	}
-
+	forvalues i=1/`numeqnsZ' {
+		mata: `eqn'=*(`newmname'.eqnlistZ[1,`i'])
+		mata: st_local("vtilde",`eqn'.vtilde)
+		cap drop `newmname'_`vtilde'
+		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
+		if r(ncols) > 0 {
+			qui gen double `newmname'_`vtilde' = .
+			mata: st_store( ., ("`newmname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
+		}
+	}
 
 end
 
