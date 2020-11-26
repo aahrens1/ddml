@@ -5,8 +5,8 @@ program _ddml_save
 	syntax , mname(name) fname(string) [ replace ]
 
 	if "`replace'"~="" {
-		// consider replacing this with Mata's unlink(.) function
-		shell del `fname'
+		// Mata function to delete file
+		mata: unlink("`fname'")
 	}
 	mata: save_model("`fname'",`mname')
 

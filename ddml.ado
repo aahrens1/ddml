@@ -57,7 +57,7 @@ program ddml, eclass
 		local fname: word 2 of `mainargs'
 		local 0 "`restargs'"
 		syntax , mname(name)
-		check_mname "`mname'"
+		// no need to check name
 		_ddml_use, mname(`mname') fname(`fname')
 	}
 
