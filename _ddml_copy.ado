@@ -19,8 +19,8 @@ program _ddml_copy
 	mata: st_local("numeqnsZ",strofreal(cols(`mname'.eqnlistZ)))
 
 	*** create id and fold id
-	cap drop `mname'_id
-	cap drop `mname'_fid
+	cap drop `newmname'_id
+	cap drop `newmname'_fid
 	mata: st_numscalar("r(nobs)",rows(`mname'.id))
 	if r(nobs) > _N {
 		set obs `r(nobs)'
