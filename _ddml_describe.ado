@@ -15,6 +15,11 @@ program define _ddml_describe
 	mata: printf("{res}Model: %s\n", `mname'.model)
 	di as res "ID: `mname'_id"
 	di as res "Fold ID: `mname'_fid"
+	di as res "Sample indicator: `mname'_esample" _c
+	cap count if `mname'_esample
+	if _rc==0 {
+		di as res " (N=`r(N)')"
+	} 
 	mata: printf("{res}Dependent variable (Y): %s\n", `mname'.nameY)
 	mata: printf("{res}Dependent variable (orthogonalized): %s\n", invtokens(`mname'.nameYtilde))
 	di "Minimum MSE orthogonalized dep var: `Yopt'"
@@ -41,7 +46,7 @@ program define _ddml_describe
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
 		di "Estimating equation `i': " _c
 		mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		local minMSE : list vtilde in Yopt
 		if `minMSE' {
 			di "*" _c
@@ -53,7 +58,7 @@ program define _ddml_describe
 		else {
 			di
 		}
-		mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.vname, `eqn'.vtilde)
+		mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.Vname, `eqn'.Vtilde)
 		if `showcmd' {
 			mata: printf("{res}  Command: %s\n", `eqn'.eststring)
 		}
@@ -66,7 +71,7 @@ program define _ddml_describe
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
 		di "Estimating equation `i': " _c
 		mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		local minMSE : list vtilde in Dopt
 		if `minMSE' {
 			di "*" _c
@@ -78,7 +83,7 @@ program define _ddml_describe
 		else {
 			di
 		}
-		mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.vname, `eqn'.vtilde)
+		mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.Vname, `eqn'.Vtilde)
 		if `showcmd' {
 			mata: printf("{res}  Command: %s\n", `eqn'.eststring)
 		}
@@ -92,7 +97,7 @@ program define _ddml_describe
 			mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
 			mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
 			mata: printf("{res}MSE = %10.6f", `eqn'.MSE)
-			mata: st_local("vtilde",`eqn'.vtilde)
+			mata: st_local("vtilde",`eqn'.Vtilde)
 			local minMSE : list vtilde in Zopt
 			if `minMSE' {
 				di "*" _c
@@ -104,7 +109,7 @@ program define _ddml_describe
 			else {
 				di
 			}
-			mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.vname, `eqn'.vtilde)
+			mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.Vname, `eqn'.Vtilde)
 			if `showcmd' {
 				mata: printf("{res}  Command: %s\n", `eqn'.eststring)
 			}

@@ -18,22 +18,22 @@ program _ddml_export
 	
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-		mata: st_local("vname",`eqn'.vname)
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vname",`eqn'.Vname)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		local vlist		`vlist' `vname'
 		local tildelist	`tildelist' `vtilde'
 	}
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-		mata: st_local("vname",`eqn'.vname)
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vname",`eqn'.Vname)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		local vlist		`vlist' `vname'
 		local tildelist	`tildelist' `vtilde'
 	}
 	forvalues i=1/`numeqnsZ' {
 		mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-		mata: st_local("vname",`eqn'.vname)
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vname",`eqn'.Vname)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		local vlist		`vlist' `vname'
 		local tildelist	`tildelist' `vtilde'
 	}

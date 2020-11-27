@@ -40,7 +40,7 @@ program _ddml_copy
 	// note that variables may not exist
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`newmname'.eqnlistY[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `newmname'_`vtilde'
 		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
 		if r(ncols) > 0 {
@@ -50,7 +50,7 @@ program _ddml_copy
 	}
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`newmname'.eqnlistD[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `newmname'_`vtilde'
 		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
 		if r(ncols) > 0 {
@@ -60,7 +60,7 @@ program _ddml_copy
 	}
 	forvalues i=1/`numeqnsZ' {
 		mata: `eqn'=*(`newmname'.eqnlistZ[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `newmname'_`vtilde'
 		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
 		if r(ncols) > 0 {

@@ -11,9 +11,14 @@ program ddml, eclass
 	macro shift
 	local restargs `*'
 
-	local subcmd : word 1 of `mainargs'
+	// local subcmd : word 1 of `mainargs'
+	tokenize "`mainargs'"
+	local subcmd `1'
+	macro shift
+	// restmainargs is main args minus the subcommand
+	local restmainargs `*'
 	
-	local allsubcmds	update describe save export use drop copy init yeq deq zeq crossfit estimate
+	local allsubcmds	update describe save export use drop copy sample init yeq deq zeq crossfit estimate
 	if strpos("`allsubcmds'","`subcmd'")==0 {
 		di as err "error - unknown subcommand `subcmd'"
 		exit 198
@@ -25,7 +30,7 @@ program ddml, eclass
 	} 
 	
 	*** describe model
-	if abbrev("`subcmd'",4)=="desc" {
+	if substr("`subcmd'",1,4)=="desc" {
 		local 0 "`restargs'"
 		syntax , mname(name) [ * ]
 		check_mname "`mname'"
@@ -95,6 +100,14 @@ program ddml, eclass
 		mata: `mname'.id			= st_data(., "`mname'_id")
 		// fill by hand
 		mata: `mname'.model			= "`model'"
+	}
+	
+	*** set sample, foldvar, etc.
+	if "`subcmd'"=="sample" {
+		local 0 "`restmainargs' `restargs'"
+		syntax [if] [in] , mname(name) [ * ]
+		check_mname "`mname'"
+		_ddml_sample `if' `in' , mname(`mname') `options'
 	}
 
 	*** add equation  
@@ -295,8 +308,8 @@ void add_eqn(						struct ddmlStruct m,
 									string scalar nocrossfit)
 {
 	struct eqnStruct scalar		e, e0
-	e.vname			= vname
-	e.vtilde		= vtilde
+	e.Vname			= vname
+	e.Vtilde		= vtilde
 	e.eststring		= estcmd
 	e.command		= tokens(estcmd)[1,1]
 	e.crossfit		= (nocrossfit=="")
@@ -311,7 +324,7 @@ void add_eqn(						struct ddmlStruct m,
 			// look for existing entry
 			for (i=1;i<=cols(m.eqnlistY);i++) {
 				e0 = *(m.eqnlistY[i])
-				if (e0.vtilde==vtilde) {
+				if (e0.Vtilde==vtilde) {
 					// replace
 					m.eqnlistY[i] = &e
 					newentry = 0
@@ -331,7 +344,7 @@ void add_eqn(						struct ddmlStruct m,
 			// look for existing entry
 			for (i=1;i<=cols(m.eqnlistD);i++) {
 				e0 = *(m.eqnlistD[i])
-				if (e0.vtilde==vtilde) {
+				if (e0.Vtilde==vtilde) {
 					// replace
 					m.eqnlistD[i] = &e
 					newentry = 0
@@ -351,7 +364,7 @@ void add_eqn(						struct ddmlStruct m,
 			// look for existing entry
 			for (i=1;i<=cols(m.eqnlistZ);i++) {
 				e0 = *(m.eqnlistZ[i])
-				if (e0.vtilde==vtilde) {
+				if (e0.Vtilde==vtilde) {
 					// replace
 					m.eqnlistZ[i] = &e
 					newentry = 0

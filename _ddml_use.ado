@@ -1,3 +1,6 @@
+// notes:
+// this can fail if the dataset in Stata memory doesn't match the dataset used in the model
+// will want to match on id if the sort order has changed
 
 program _ddml_use
 	version 13
@@ -64,7 +67,7 @@ program _ddml_use
 	// note that variables may not exist
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `mname'_`vtilde'
 		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
 		if r(ncols) > 0 {
@@ -74,7 +77,7 @@ program _ddml_use
 	}
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `mname'_`vtilde'
 		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
 		if r(ncols) > 0 {
@@ -84,7 +87,7 @@ program _ddml_use
 	}
 	forvalues i=1/`numeqnsZ' {
 		mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `mname'_`vtilde'
 		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
 		if r(ncols) > 0 {

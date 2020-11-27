@@ -13,7 +13,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
    	mata: st_local("Yopt",`mname'.nameYopt)
-   	mata: st_local("Dopt",`mname'.nameDopt)
+   	mata: st_local("Dopt",invtokens(`mname'.nameDopt))
 
 	make_varlists, mname(`mname')
 
@@ -108,8 +108,8 @@ program define make_varlists, sclass
 	// vno_list has list of all corresponding orthogonalized variables
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-		mata: st_local("vname",`eqn'.vname)
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vname",`eqn'.Vname)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		local vn_list `vn_list' `vname'
 		local vno_list `vno_list' `vtilde'
 	}

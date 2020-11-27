@@ -20,8 +20,8 @@ program _ddml_estimate_iv, eclass sortpreserve
     mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
     mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
     mata: st_local("Yopt",`mname'.nameYopt)
-    mata: st_local("Dopt",`mname'.nameDopt)
-    mata: st_local("Zopt",`mname'.nameZopt)
+    mata: st_local("Dopt",invtokens(`mname'.nameDopt))
+    mata: st_local("Zopt",invtokens(`mname'.nameZopt))
 
     if ("`debug'"!="") {
         di "`Ytilde'"

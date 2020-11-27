@@ -54,10 +54,10 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	// add fold id to model struct (col 1 = id, col 2 = fold id)
 	mata: `mname'.idFold = st_data(., ("`mname'_id", "`mname'_fid"))
 	if ("`tabfold'"!="") {
-		di ""
+		di
 		di "Overview of frequencies by fold:"
 		tab `mname'_fid
-		di ""
+		di
 	}
 	//
 
@@ -70,14 +70,14 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	// Y equations
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `mname'_`vtilde'
 		qui gen double `mname'_`vtilde'=.
 	}
 	// D equations
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `mname'_`vtilde'
 		qui gen double `mname'_`vtilde'=.
 	}
@@ -85,7 +85,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	if ("`model'"=="iv") {
 		forvalues i=1/`numeqnsZ' {
 			mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-			mata: st_local("vtilde",`eqn'.vtilde)
+			mata: st_local("vtilde",`eqn'.Vtilde)
 			cap drop `mname'_`vtilde'
 			qui gen double `mname'_`vtilde'=.
 		}
@@ -99,8 +99,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
 		mata: st_numscalar("`crossfit'",`eqn'.crossfit)
 		if `crossfit'==0 | `debugflag' {
-			mata: st_local("vtilde",`eqn'.vtilde)
-			mata: st_local("vname",`eqn'.vname)
+			mata: st_local("vtilde",`eqn'.Vtilde)
+			mata: st_local("vname",`eqn'.Vname)
 			mata: st_local("eststring",`eqn'.eststring)
 			local 0 "`eststring'"
 			syntax [anything] , [*]
@@ -136,8 +136,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
 		mata: st_numscalar("`crossfit'",`eqn'.crossfit)
 		if `crossfit'==0 | `debugflag' {
-			mata: st_local("vtilde",`eqn'.vtilde)
-			mata: st_local("vname",`eqn'.vname)
+			mata: st_local("vtilde",`eqn'.Vtilde)
+			mata: st_local("vname",`eqn'.Vname)
 			mata: st_local("eststring",`eqn'.eststring)
 			local 0 "`eststring'"
 			syntax [anything] , [*]
@@ -173,8 +173,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
 		mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
 		if r(crossfit)==0 | `debugflag' {
-			mata: st_local("vtilde",`eqn'.vtilde)
-			mata: st_local("vname",`eqn'.vname)
+			mata: st_local("vtilde",`eqn'.Vtilde)
+			mata: st_local("vname",`eqn'.Vname)
 			mata: st_local("eststring",`eqn'.eststring)
 			local 0 "`eststring'"
 			syntax [anything] , [*]
@@ -227,8 +227,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 				mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
 				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
 				if r(crossfit) {
-					mata: st_local("vtilde",`eqn'.vtilde)
-					mata: st_local("vname",`eqn'.vname)
+					mata: st_local("vtilde",`eqn'.Vtilde)
+					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
@@ -251,8 +251,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 				mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
 				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
 				if r(crossfit) {
-					mata: st_local("vtilde",`eqn'.vtilde)
-					mata: st_local("vname",`eqn'.vname)
+					mata: st_local("vtilde",`eqn'.Vtilde)
+					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
@@ -275,8 +275,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 				mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
 				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
 				if r(crossfit) {
-					mata: st_local("vtilde",`eqn'.vtilde)
-					mata: st_local("vname",`eqn'.vname)
+					mata: st_local("vtilde",`eqn'.Vtilde)
+					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
@@ -300,7 +300,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	*** calculate MSE, store orthogonalized variables, etc.
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		tempvar vtilde_sq
 		qui gen double `vtilde_sq' = `mname'_`vtilde'^2
 		qui sum `vtilde_sq', meanonly
@@ -308,7 +308,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	}
 	forvalues i=1/`numeqnsD' {
 		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		tempvar vtilde_sq
 		qui gen double `vtilde_sq' = `mname'_`vtilde'^2
 		qui sum `vtilde_sq', meanonly
@@ -317,7 +317,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	if ("`model'"=="iv") {
 		forvalues i=1/`numeqnsZ' {
 			mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-			mata: st_local("vtilde",`eqn'.vtilde)
+			mata: st_local("vtilde",`eqn'.Vtilde)
 			tempvar vtilde_sq
 			qui gen double `vtilde_sq' = `mname'_`vtilde'^2
 			qui sum `vtilde_sq', meanonly
@@ -340,8 +340,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	local yminmse = .
 	forvalues i=1/`numeqnsY' {
 		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-		mata: st_local("vname",`eqn'.vname)
-		mata: st_local("vtilde",`eqn'.vtilde)
+		mata: st_local("vname",`eqn'.Vname)
+		mata: st_local("vtilde",`eqn'.Vtilde)
 		mata: st_local("command",`eqn'.command)
 		mata: st_numscalar("r(MSE)",`eqn'.MSE)
 		mata: st_numscalar("r(N)",`eqn'.N)
@@ -375,8 +375,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		local dminmse = .
 		forvalues i=1/`numeqnsD' {
 			mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-			mata: st_local("vname",`eqn'.vname)
-			mata: st_local("vtilde",`eqn'.vtilde)
+			mata: st_local("vname",`eqn'.Vname)
+			mata: st_local("vtilde",`eqn'.Vtilde)
 			mata: st_local("command",`eqn'.command)
 			mata: st_numscalar("r(MSE)",`eqn'.MSE)
 			mata: st_numscalar("r(N)",`eqn'.N)
@@ -400,7 +400,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			local first_dopt	=0
 		}
 		else {
-			mata: `mname'.nameDopt	= `mname'.nameDopt + " `dopt'"
+			mata: `mname'.nameDopt	= (`mname'.nameDopt, "`dopt'")
 		}
 
 	}
@@ -422,8 +422,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			local zminmse = .
 			forvalues i=1/`numeqnsZ' {
 				mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-				mata: st_local("vname",`eqn'.vname)
-				mata: st_local("vtilde",`eqn'.vtilde)
+				mata: st_local("vname",`eqn'.Vname)
+				mata: st_local("vtilde",`eqn'.Vtilde)
 				mata: st_local("command",`eqn'.command)
 				mata: st_numscalar("r(MSE)",`eqn'.MSE)
 				local MSE = `r(MSE)'
@@ -448,7 +448,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 				local first_zopt	=0
 			}
 			else {
-				mata: `mname'.nameZopt	= `mname'.nameZopt + " `zopt'"
+				mata: `mname'.nameZopt	= (`mname'.nameZopt, "`zopt'")
 			}
 
 		}
