@@ -1,3 +1,4 @@
+// to add - option to save the raw data with varnames in `mname'.strDatavars
 
 program _ddml_export
 	version 13
