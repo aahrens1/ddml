@@ -40,13 +40,13 @@ struct ddmlStruct {
 	string colvector	nameZ			// name of instrument(s)
 	string matrix		nameZtilde		// names of orthogonalized instruments
 	string matrix		nameZopt		// names of optimal orthog. instruments
-	pointer matrix		eqnlistY
-	pointer matrix		eqnlistD
-	pointer matrix		eqnlistZ
+	pointer rowvector	eqnlist			// list of all orthog equations
+	string rowvector	eqnlistNames		// names of corresponding Vtilde variable
 }
 
 // to add: boolean to indicate min MSE / optimal orthogonalized var
 struct eqnStruct {
+	string scalar		eqntype			// yeq, deq, zeq
 	string scalar		Vname			// should perhaps rename to nameV
 	string scalar		Vtilde			// should perhaps rename to nameVtilde
 	real matrix			idVtilde		// col 1 = id, col 2 = orthogonalized

@@ -102,16 +102,20 @@ program define make_varlists, sclass
 	// locals used below
 	mata: st_local("numD",strofreal(cols(`mname'.nameD)))
  	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
+	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlist)))
+	mata: st_local("numeqnsD",strofreal(cols(`mname'.nameDtilde)))
 
-	mata: st_local("numeqnsD",strofreal(cols(`mname'.eqnlistD)))
-	// vn_list has list of all variables, original names
-	// vno_list has list of all corresponding orthogonalized variables
-	forvalues i=1/`numeqnsD' {
-		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
+	// vno_list has list of all orthogonalized variables
+	// vn_list has list of all corresponding variables, original names
+	forvalues i=1/`numeqns' {
+		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 		mata: st_local("vname",`eqn'.Vname)
 		mata: st_local("vtilde",`eqn'.Vtilde)
-		local vn_list `vn_list' `vname'
-		local vno_list `vno_list' `vtilde'
+		mata: st_local("eqntype",`eqn'.eqntype)
+		if "`eqntype'"=="deq" {
+			local vn_list `vn_list' `vname'
+			local vno_list `vno_list' `vtilde'
+		}
 	}
 
 	// get list of unique original varnames

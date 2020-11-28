@@ -14,9 +14,7 @@ program _ddml_copy
 
 	mata: `newmname' = use_model("`fname'")
 
-	mata: st_local("numeqnsY",strofreal(cols(`mname'.eqnlistY)))
-	mata: st_local("numeqnsD",strofreal(cols(`mname'.eqnlistD)))
-	mata: st_local("numeqnsZ",strofreal(cols(`mname'.eqnlistZ)))
+	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlist)))
 
 	*** create id and fold id
 	cap drop `newmname'_id
@@ -38,28 +36,8 @@ program _ddml_copy
 
 	*** loop through equations and create Stata variables
 	// note that variables may not exist
-	forvalues i=1/`numeqnsY' {
-		mata: `eqn'=*(`newmname'.eqnlistY[1,`i'])
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		cap drop `newmname'_`vtilde'
-		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
-		if r(ncols) > 0 {
-			qui gen double `newmname'_`vtilde' = .
-			mata: st_store( ., ("`newmname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
-		}
-	}
-	forvalues i=1/`numeqnsD' {
-		mata: `eqn'=*(`newmname'.eqnlistD[1,`i'])
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		cap drop `newmname'_`vtilde'
-		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
-		if r(ncols) > 0 {
-			qui gen double `newmname'_`vtilde' = .
-			mata: st_store( ., ("`newmname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
-		}
-	}
-	forvalues i=1/`numeqnsZ' {
-		mata: `eqn'=*(`newmname'.eqnlistZ[1,`i'])
+	forvalues i=1/`numeqns' {
+		mata: `eqn'=*(`newmname'.eqnlist[1,`i'])
 		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `newmname'_`vtilde'
 		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))

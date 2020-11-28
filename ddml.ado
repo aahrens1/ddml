@@ -270,18 +270,16 @@ struct ddmlStruct init_ddmlStruct()
 {
 	struct ddmlStruct scalar	d
 
-	d.eqnlistY		= J(0,0,NULL)
-	d.eqnlistD		= J(0,0,NULL)
-	d.eqnlistZ		= J(0,0,NULL)
+	d.eqnlist		= J(1,0,NULL)
 	d.nameY			= ""
-	d.nameYtilde	= ""
+	d.nameYtilde	= J(1,0,"")
 	d.nameYopt		= ""
-	d.nameD			= ""
-	d.nameDtilde	= ""
-	d.nameDopt		= ""
-	d.nameZ			= ""
-	d.nameZtilde	= ""
-	d.nameZopt		= ""
+	d.nameD			= J(1,0,"")
+	d.nameDtilde	= J(1,0,"")
+	d.nameDopt		= J(1,0,"")
+	d.nameZ			= J(1,0,"")
+	d.nameZtilde	= J(1,0,"")
+	d.nameZopt		= J(1,0,"")
 	return(d)
 }
 
@@ -301,13 +299,14 @@ struct eqnStruct init_eqnStruct()
 }
 
 void add_eqn(						struct ddmlStruct m,
-									string scalar eqtype,
+									string scalar eqntype,
 									string scalar vname,
 									string scalar vtilde,
 									string scalar estcmd,
 									string scalar nocrossfit)
 {
 	struct eqnStruct scalar		e, e0
+	e.eqntype		= eqntype
 	e.Vname			= vname
 	e.Vtilde		= vtilde
 	e.eststring		= estcmd
@@ -315,93 +314,40 @@ void add_eqn(						struct ddmlStruct m,
 	e.crossfit		= (nocrossfit=="")
 
 	newentry		= 1
-	
-	if (eqtype=="yeq") {
-		if (cols(m.eqnlistY)==0) {
-			m.eqnlistY	= &e
-		}
-		else {
-			// look for existing entry
-			for (i=1;i<=cols(m.eqnlistY);i++) {
-				e0 = *(m.eqnlistY[i])
-				if (e0.Vtilde==vtilde) {
-					// replace
-					m.eqnlistY[i] = &e
-					newentry = 0
-				}
-			}
-			if (newentry==1) {
-				// new entry
-				m.eqnlistY	= (m.eqnlistY, &e)
-			}
-		}
+
+	if (cols(m.eqnlist)==0) {
+		m.eqnlist		= &e
+		m.eqnlistNames	= vtilde
 	}
-	else if (eqtype=="deq") {
-		if (cols(m.eqnlistD)==0) {
-			m.eqnlistD	= &e
-		}
-		else {
-			// look for existing entry
-			for (i=1;i<=cols(m.eqnlistD);i++) {
-				e0 = *(m.eqnlistD[i])
-				if (e0.Vtilde==vtilde) {
-					// replace
-					m.eqnlistD[i] = &e
-					newentry = 0
-				}
-			}
-			if (newentry==1) {
-				// new entry
-				m.eqnlistD	= (m.eqnlistD, &e)
+	else {
+		// look for existing entry
+		for (i=1;i<=cols(m.eqnlist);i++) {
+			e0 = *(m.eqnlist[i])
+			if (e0.Vtilde==vtilde) {
+				// replace
+				m.eqnlist[i]		= &e
+				// unnecessary?
+				m.eqnlistNames[i]	= vtilde
+				newentry = 0
 			}
 		}
-	}
-	else if (eqtype=="zeq") {
-		if (cols(m.eqnlistZ)==0) {
-			m.eqnlistZ	= &e
-		}
-		else {
-			// look for existing entry
-			for (i=1;i<=cols(m.eqnlistZ);i++) {
-				e0 = *(m.eqnlistZ[i])
-				if (e0.Vtilde==vtilde) {
-					// replace
-					m.eqnlistZ[i] = &e
-					newentry = 0
-				}
-			}
-			if (newentry==1) {
-				// new entry
-				m.eqnlistZ	= (m.eqnlistZ, &e)
-			}
+		if (newentry==1) {
+			// new entry
+			m.eqnlist		= (m.eqnlist, &e)
+			m.eqnlistNames	= (m.eqnlistNames, vtilde)
 		}
 	}
 
-	// add to list of tilde variables if a new entry
+	// add to appropriate list of tilde variables if a new entry
 	if (newentry) {
-		if (eqtype=="yeq") {
-			if (m.nameYtilde=="") {
-				m.nameYtilde	= vtilde
-			}
-			else {
-				m.nameYtilde	= (m.nameYtilde, vtilde)
-			}
+		if (eqntype=="yeq") {
+			m.nameYtilde	= (m.nameYtilde, vtilde)
 		}
-		else if (eqtype=="deq") {
-			if (m.nameDtilde=="") {
-				m.nameDtilde	= vtilde
-			}
-			else {
-				m.nameDtilde	= (m.nameDtilde, vtilde)
-			}
+		else if (eqntype=="deq") {
+			m.nameDtilde	= (m.nameDtilde, vtilde)
 		}
-		else if (eqtype=="zeq") {
-			if (m.nameZtilde=="") {
-				m.nameZtilde	= vtilde
-			}
-			else {
-				m.nameZtilde	= (m.nameZtilde, vtilde)
-			}
+		else if (eqntype=="zeq") {
+			m.nameZtilde	= (m.nameZtilde, vtilde)
 		}
 	}
 	

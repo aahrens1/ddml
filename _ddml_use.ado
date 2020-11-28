@@ -28,9 +28,10 @@ program _ddml_use
 	// model
 	mata: st_local("model",`mname'.model)
 	di "Model: `model'"
-	mata: st_local("numeqnsY",strofreal(cols(`mname'.eqnlistY)))
-	mata: st_local("numeqnsD",strofreal(cols(`mname'.eqnlistD)))
-	mata: st_local("numeqnsZ",strofreal(cols(`mname'.eqnlistZ)))
+	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlist)))
+	mata: st_local("numeqnsY",strofreal(cols(`mname'.nameYtilde)))
+	mata: st_local("numeqnsD",strofreal(cols(`mname'.nameDtilde)))
+	mata: st_local("numeqnsZ",strofreal(cols(`mname'.nameZtilde)))
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("listYtilde",invtokens(`mname'.nameYtilde))
 	di "Number of Y estimating equations: `numeqnsY'"
@@ -65,8 +66,8 @@ program _ddml_use
 
 	*** loop through equations and create Stata variables
 	// note that variables may not exist
-	forvalues i=1/`numeqnsY' {
-		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
+	forvalues i=1/`numeqns' {
+		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `mname'_`vtilde'
 		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
@@ -75,27 +76,6 @@ program _ddml_use
 			mata: st_store( ., ("`mname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
 		}
 	}
-	forvalues i=1/`numeqnsD' {
-		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		cap drop `mname'_`vtilde'
-		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
-		if r(ncols) > 0 {
-			qui gen double `mname'_`vtilde' = .
-			mata: st_store( ., ("`mname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
-		}
-	}
-	forvalues i=1/`numeqnsZ' {
-		mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		cap drop `mname'_`vtilde'
-		mata: st_numscalar("r(ncols)",cols(`eqn'.idVtilde))
-		if r(ncols) > 0 {
-			qui gen double `mname'_`vtilde' = .
-			mata: st_store( ., ("`mname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
-		}
-	}
-
 
 end
 

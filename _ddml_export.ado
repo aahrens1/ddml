@@ -13,26 +13,10 @@ program _ddml_export
 	*** extract details of estimation
 	
 	// model
-	mata: st_local("numeqnsY",strofreal(cols(`mname'.eqnlistY)))
-	mata: st_local("numeqnsD",strofreal(cols(`mname'.eqnlistD)))
-	mata: st_local("numeqnsZ",strofreal(cols(`mname'.eqnlistZ)))
+	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlist)))
 	
-	forvalues i=1/`numeqnsY' {
-		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-		mata: st_local("vname",`eqn'.Vname)
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		local vlist		`vlist' `vname'
-		local tildelist	`tildelist' `vtilde'
-	}
-	forvalues i=1/`numeqnsD' {
-		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-		mata: st_local("vname",`eqn'.Vname)
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		local vlist		`vlist' `vname'
-		local tildelist	`tildelist' `vtilde'
-	}
-	forvalues i=1/`numeqnsZ' {
-		mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
+	forvalues i=1/`numeqns' {
+		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 		mata: st_local("vname",`eqn'.Vname)
 		mata: st_local("vtilde",`eqn'.Vtilde)
 		local vlist		`vlist' `vname'

@@ -11,7 +11,6 @@ program define _ddml_describe
 	mata: st_local("Dopt",invtokens(`mname'.nameDopt))
 	mata: st_local("Zopt",invtokens(`mname'.nameZopt))
 
-
 	mata: printf("{res}Model: %s\n", `mname'.model)
 	di as res "ID: `mname'_id"
 	di as res "Fold ID: `mname'_fid"
@@ -26,7 +25,6 @@ program define _ddml_describe
 	mata: printf("{res}Causal variable(s) (D): %s\n", invtokens(`mname'.nameD))
 	mata: printf("{res}Causal variable(s) (orthogonalized): %s\n", invtokens(`mname'.nameDtilde))
 	di "Minimum MSE orthogonalized causal var: `Dopt'"
-
 	if ("`model'"=="iv") {
 		mata: printf("{res}Excluded instrumental variable(s): %s\n", `mname'.nameZ)
 		mata: printf("{res}Excluded instrumental variable(s) (orthogonalized): %s\n", `mname'.nameZtilde)
@@ -34,71 +32,60 @@ program define _ddml_describe
 	}
 	
 	// List equations
-	// blank eqn - declare this way so that it's a struct and not transmorphic
+
+	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlist)))
+	mata: st_local("numeqnsY",strofreal(cols(`mname'.nameYtilde)))
+	mata: st_local("numeqnsD",strofreal(cols(`mname'.nameDtilde)))
+	mata: st_local("numeqnsZ",strofreal(cols(`mname'.nameZtilde)))
+	di
+	di "Number of Y estimating equations: `numeqnsY'"
+	desc_equation `mname', eqntype(yeq) optlist(`Yopt') showcmd(`showcmd')
+	di
+	di "Number of D estimating equations: `numeqnsD'"
+	desc_equation `mname', eqntype(deq) optlist(`Dopt') showcmd(`showcmd')
+	if ("`model'"=="iv") {
+		di
+		di "Number of Z estimating equations: `numeqnsZ'"
+		desc_equation `mname', eqntype(zeq) optlist(`Zopt') showcmd(`showcmd')
+	}
+
+	if "`Yopt'`Dopt'`Zopt'"~="" {
+		di
+		di "* indicates minimim MSE estimation"
+	}
+
+	if `showall' {
+		di
+		di as res "Other:"
+		di
+		di as res "liststruct(.):"
+		mata: liststruct(`mname')
+		di
+		di as res "Equation pointers:"
+		mata: `mname'.eqnlist
+		di as res "Corresponding tilde names:"
+		mata: `mname'.eqnlistNames
+	}
+
+end
+
+prog define desc_equation
+
+	syntax name(name=mname), eqntype(string) [ optlist(string) showcmd(integer 0) ]
+
 	tempname eqn
 	mata: `eqn' = init_eqnStruct()
 
-	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistY))
-	local numeqnsY	= `r(numeqns)'
-	di
-	di "Number of Y estimating equations: `numeqnsY'"
-	forvalues i=1/`numeqnsY' {
-		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-		di "Estimating equation `i': " _c
-		mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		local minMSE : list vtilde in Yopt
-		if `minMSE' {
-			di "*" _c
-		}
-		mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-		if `r(crossfit)'==0 {
-			di " (no crossfit)"
-		}
-		else {
-			di
-		}
-		mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.Vname, `eqn'.Vtilde)
-		if `showcmd' {
-			mata: printf("{res}  Command: %s\n", `eqn'.eststring)
-		}
-	}
-	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistD))
-	local numeqnsD	= `r(numeqns)'
-	di
-	di "Number of D estimating equations: `numeqnsD'"
-	forvalues i=1/`numeqnsD' {
-		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-		di "Estimating equation `i': " _c
-		mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		local minMSE : list vtilde in Dopt
-		if `minMSE' {
-			di "*" _c
-		}
-		mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-		if `r(crossfit)'==0 {
-			di " (no crossfit)"
-		}
-		else {
-			di
-		}
-		mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.Vname, `eqn'.Vtilde)
-		if `showcmd' {
-			mata: printf("{res}  Command: %s\n", `eqn'.eststring)
-		}
-	}
-	if ("`model'"=="iv") {
-		mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistZ))
-		local numeqnsZ	= `r(numeqns)'
-		di
-		di "Number of Z estimating equations: `numeqnsZ'"
-		forvalues i=1/`numeqnsZ' {
-			mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
+	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlist)))
+
+	forvalues i=1/`numeqns' {
+		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+		mata: st_global("r(eqntype)",`eqn'.eqntype)
+		if "`eqntype'"==r(eqntype) {
+			di "Estimating equation `i': " _c
 			mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
-			mata: printf("{res}MSE = %10.6f", `eqn'.MSE)
 			mata: st_local("vtilde",`eqn'.Vtilde)
-			local minMSE : list vtilde in Zopt
+			local minMSE : list vtilde in optlist
 			if `minMSE' {
 				di "*" _c
 			}
@@ -116,29 +103,9 @@ program define _ddml_describe
 		}
 	}
 	
-	if "`Yopt'`Dopt'`Zopt'"~="" {
-		di
-		di "* indicates minimim MSE estimation"
-	}
-
-	if `showall' {
-		di
-		di as res "Other:"
-		di
-		di as res "liststruct(.):"
-		mata: liststruct(`mname')
-		di
-		di as res "Y equation pointers:"
-		mata: `mname'.eqnlistY
-		di as res "D equation pointers:"
-		mata: `mname'.eqnlistD
-		di as res "Z equation pointers:"
-		mata: `mname'.eqnlistZ
-	}
-
 	// clear this global from Mata
 	mata: mata drop `eqn'
-
+	
 end
 
 mata:

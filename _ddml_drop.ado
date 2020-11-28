@@ -9,31 +9,17 @@ program _ddml_drop, eclass
 	tempname eqn
 	mata: `eqn' = init_eqnStruct()
 
-	mata: st_local("numeqnsY",strofreal(cols(`mname'.eqnlistY)))
-	mata: st_local("numeqnsD",strofreal(cols(`mname'.eqnlistD)))
-	mata: st_local("numeqnsZ",strofreal(cols(`mname'.eqnlistZ)))
+	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlist)))
 
 	*** drop id and fold id
 	cap drop `mname'_id
 	cap drop `mname'_fid
 
 	*** loop through equations and drop Stata variables
-	forvalues i=1/`numeqnsY' {
-		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
+	forvalues i=1/`numeqns' {
+		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 		mata: st_local("vtilde",`eqn'.Vtilde)
 		cap drop `mname'_`vtilde'
-	}
-	forvalues i=1/`numeqnsD' {
-		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		cap drop `mname'_`vtilde'
-	}
-	if ("`model'"=="iv") {
-		forvalues i=1/`numeqnsZ' {
-			mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-			mata: st_local("vtilde",`eqn'.Vtilde)
-			cap drop `mname'_`vtilde'
-		}
 	}
 	
 	mata: mata drop `mname'
