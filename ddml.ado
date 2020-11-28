@@ -129,15 +129,14 @@ program ddml, eclass
 		local 0 "`1'"
 		syntax ,	mname(name)		///
 					vname(name)		///
-					gen(name)		///
-					[ NOCROSSfit ]
+					gen(name)
 
 		** check that ddml has been initialized
 		// to add
 		check_mname "`mname'"
 
 		// subcmd macro tells add_eqn(.) which list to add it to
-		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'", "`eqn'", "`nocrossfit'")
+		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'", "`eqn'")
 		local newentry `r(newentry)'
 		if "`subcmd'"=="yeq" {
 			// check if nameY is already there; if it is, must be identical to vname here
@@ -302,8 +301,7 @@ void add_eqn(						struct ddmlStruct m,
 									string scalar eqntype,
 									string scalar vname,
 									string scalar vtilde,
-									string scalar estcmd,
-									string scalar nocrossfit)
+									string scalar estcmd)
 {
 	struct eqnStruct scalar		e, e0
 	e.eqntype		= eqntype
@@ -311,7 +309,6 @@ void add_eqn(						struct ddmlStruct m,
 	e.Vtilde		= vtilde
 	e.eststring		= estcmd
 	e.command		= tokens(estcmd)[1,1]
-	e.crossfit		= (nocrossfit=="")
 
 	newentry		= 1
 

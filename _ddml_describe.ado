@@ -89,10 +89,6 @@ prog define desc_equation
 			if `minMSE' {
 				di "*" _c
 			}
-			mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-			if `r(crossfit)'==0 {
-				di " (no crossfit)"
-			}
 			else {
 				di
 			}

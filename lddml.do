@@ -58,7 +58,6 @@ struct eqnStruct {
 	real scalar			N
 	real scalar 		N0
 	real scalar 		N1
-	real scalar			crossfit		// boolean, 0 or 1
 }
 
 mata mlib create lddml, dir(PERSONAL) replace

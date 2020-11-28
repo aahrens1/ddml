@@ -1,22 +1,27 @@
 *** ddml cross-fitting
 program _ddml_crossfit_partial, eclass sortpreserve
 
-	syntax [anything] [if] [in] , /// 
-							[ kfolds(integer 2) ///
-							NOIsily ///
-							debug /// 
-							Robust ///
-							TABFold ///
-							yrclass ///
-							drclass /// 
-							mname(name)	///
+	syntax [anything] [if] [in] ,					/// 
+							[ kfolds(integer 2)		///
+							NOIsily					///
+							debug					/// 
+							Robust					///
+							TABFold					///
+							mname(name)				///
+							eqnlist(namelist)		///
+							foldlist(numlist)		///
 							]
 
 	// no checks included yet
 	// no marksample yet
 
 	local debugflag		= "`debug'"~=""
-		
+
+	// if eqnlist is empty, populate with full list of eqn names
+	if "`eqnlist'"=="" {
+		mata: st_local("eqnlist",invtokens(`mname'.eqnlistNames))
+	}
+			
 	*** extract details of estimation
 	
 	// model
@@ -51,9 +56,9 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		qui gen double `uni' = runiform()
 		qui cumul `uni', gen(`cuni')
 		qui gen int `mname'_fid = ceil(`kfolds'*`cuni')
+		// add fold id to model struct (col 1 = id, col 2 = fold id)
+		mata: `mname'.idFold = st_data(., ("`mname'_id", "`mname'_fid"))
 	}
-	// add fold id to model struct (col 1 = id, col 2 = fold id)
-	mata: `mname'.idFold = st_data(., ("`mname'_id", "`mname'_fid"))
 	if ("`tabfold'"!="") {
 		di
 		di "Overview of frequencies by fold:"
@@ -67,73 +72,65 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	tempname eqn
 	mata: `eqn' = init_eqnStruct()
 
-	*** initialize tilde variables
-	forvalues i=1/`numeqns' {
-		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		cap drop `mname'_`vtilde'
-		qui gen double `mname'_`vtilde'=.
-	}
 
-	*** estimate equations that do not require crossfitting
-	// also report estimates for full sample for debugging purposes
-	tempname crossfit
-	forvalues i=1/`numeqns' {
-		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-		mata: st_numscalar("`crossfit'",`eqn'.crossfit)
-		if `crossfit'==0 | `debugflag' {
+	if `debugflag' {
+		*** report estimates for full sample for debugging purposes
+		forvalues i=1/`numeqns' {
+			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 			mata: st_local("vtilde",`eqn'.Vtilde)
-			mata: st_local("vname",`eqn'.Vname)
-			mata: st_local("eststring",`eqn'.eststring)
-			local 0 "`eststring'"
-			syntax [anything] , [*]
-			local est_main `anything'
-			local est_options `options'
-			if `debugflag' {
-				if `crossfit'==0 {
+			local do_eqn	: list posof "`vtilde'" in eqnlist
+			if `do_eqn' {
+				mata: st_local("vname",`eqn'.Vname)
+				mata: st_local("eststring",`eqn'.eststring)
+				local 0 "`eststring'"
+				syntax [anything] , [*]
+				local est_main `anything'
+				local est_options `options'
+				if "`foldlist'"=="" {
 					di
-					di "Estimating equation `i' (full sample, for debugging; no crossfit):"
+					di as res "Estimating equation `i', `vname'/`vtilde':"
+					di as res "(full sample, for debugging; no crossfit)"
+					// estimate
+					`est_main', `est_options'
 				}
 				else {
 					di
-					di "Estimating equation `i' (no crossfit):"
+					di as res "Estimating equation `i', `vname'/`vtilde':"
+					foreach k of numlist `foldlist' {
+						di
+						di as res "Fold=`k' (for debugging; no crossfit)"
+						// estimate
+						`est_main' if `mname'_fid!=`k', `est_options'
+					}
 				}
-				di "  est_main: `est_main'"
-				di "  est_options: `est_options'"
-			}
-			else {
-				// set quietly flag
-				local quietly quietly
-			}
-			// estimate
-			`quietly' `est_main', `est_options'
-			// get fitted values and residuals for no-crossfit case
-			if `crossfit'==0 {
-				tempvar vtilde_i
-				qui predict double `vtilde_i'
-				qui replace `mname'_`vtilde' = `vname' - `vtilde_i'
 			}
 		}
 	}
-	
-	*** do cross-fitting
-	di
-	di as text "Cross-fitting fold " _c
-	forvalues k = 1(1)`kfolds' {
-	
-		if (`k'==`kfolds') {
-			di as text "`k'"
+	else {
+		
+		*** initialize tilde variables
+		forvalues i=1/`numeqns' {
+			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+			mata: st_local("vtilde",`eqn'.Vtilde)
+			cap drop `mname'_`vtilde'
+			qui gen double `mname'_`vtilde'=.
 		}
-		else {
-			di as text "`k' " _c
-		}
-		// ML is applied to I^c sample (all data ex partition k)
-		qui {
 
-			forvalues i=1/`numeqns' {
-				mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-				if r(crossfit) {
+		*** do cross-fitting
+		di
+		di as text "Cross-fitting fold " _c
+		forvalues k = 1(1)`kfolds' {
+		
+			if (`k'==`kfolds') {
+				di as text "`k'"
+			}
+			else {
+				di as text "`k' " _c
+			}
+			// ML is applied to I^c sample (all data ex partition k)
+			qui {
+				forvalues i=1/`numeqns' {
+					mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 					mata: st_local("vtilde",`eqn'.Vtilde)
 					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
@@ -141,9 +138,9 @@ program _ddml_crossfit_partial, eclass sortpreserve
 					syntax [anything] , [*]
 					local est_main `anything'
 					local est_options `options'
-					di "Estimating equation `i':"
-					di "  est_main: `est_main'"
-					di "  est_options: `est_options'"
+					di as res "Estimating equation `i':"
+					di as res "  est_main: `est_main'"
+					di as res "  est_options: `est_options'"
 	
 					// estimate excluding kth fold
 					`est_main' if `mname'_fid!=`k', `est_options'
@@ -154,63 +151,62 @@ program _ddml_crossfit_partial, eclass sortpreserve
 				}
 			}
 		}
-	}
-
-	*** calculate MSE, store orthogonalized variables, etc.
-	forvalues i=1/`numeqns' {
-		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		tempvar vtilde_sq
-		qui gen double `vtilde_sq' = `mname'_`vtilde'^2
-		qui sum `vtilde_sq', meanonly
-		mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
-	}
-
-	// loop through equations, display results, and save names of tilde vars with smallest MSE
-	// dep var
-	di
-	di as res "Mean-squared error for y|X:"
-	di _col(2) "Name" _c
-	di _col(20) "Orthogonalized" _c
-	di _col(40) "Command" _c
-	di _col(54) "N" _c
-	di _col(65) "MSPE"
-	di "{hline 75}"
-	display_mspe `mname', vname(`nameY')
-	mata: `mname'.nameYopt		= "`r(optname)'"
-
-	// loop through D vars (if any)
-	if `numeqnsD' {
-		di
-		di as res "Mean-squared error for D|X:"
-		di _col(2) "Name" _c
-		di _col(20) "Orthogonalized" _c
-		di _col(40) "Command" _c
-		di _col(54) "N" _c
-		di _col(65) "MSPE"
-		di "{hline 75}"
-		foreach var of varlist `listD' {
-			display_mspe `mname', vname(`var')
-			mata: `mname'.nameDopt		= (`mname'.nameDopt, "`r(optname)'")
-		}
-	}
 	
-	// loop through Z vars (if any)
-	if `numeqnsZ' {
+		*** calculate MSE, store orthogonalized variables, etc.
+		forvalues i=1/`numeqns' {
+			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+			mata: st_local("vtilde",`eqn'.Vtilde)
+			tempvar vtilde_sq
+			qui gen double `vtilde_sq' = `mname'_`vtilde'^2
+			qui sum `vtilde_sq', meanonly
+			mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
+		}
+	
+		// loop through equations, display results, and save names of tilde vars with smallest MSE
+		// dep var
 		di
-		di as res "Mean-squared error for Z|X:"
+		di as res "Mean-squared error for y|X:"
 		di _col(2) "Name" _c
 		di _col(20) "Orthogonalized" _c
 		di _col(40) "Command" _c
 		di _col(54) "N" _c
 		di _col(65) "MSPE"
 		di "{hline 75}"
-		foreach var of varlist `listZ' {
-			display_mspe `mname', vname(`var')
-			mata: `mname'.nameZopt		= (`mname'.nameZopt, "`r(optname)'")
+		display_mspe `mname', vname(`nameY')
+		mata: `mname'.nameYopt		= "`r(optname)'"
+	
+		// loop through D vars (if any)
+		if `numeqnsD' {
+			di
+			di as res "Mean-squared error for D|X:"
+			di _col(2) "Name" _c
+			di _col(20) "Orthogonalized" _c
+			di _col(40) "Command" _c
+			di _col(54) "N" _c
+			di _col(65) "MSPE"
+			di "{hline 75}"
+			foreach var of varlist `listD' {
+				display_mspe `mname', vname(`var')
+				mata: `mname'.nameDopt = (`mname'.nameDopt, "`r(optname)'")
+			}
 		}
-	}
-
+		
+		// loop through Z vars (if any)
+		if `numeqnsZ' {
+			di
+			di as res "Mean-squared error for Z|X:"
+			di _col(2) "Name" _c
+			di _col(20) "Orthogonalized" _c
+			di _col(40) "Command" _c
+			di _col(54) "N" _c
+			di _col(65) "MSPE"
+			di "{hline 75}"
+			foreach var of varlist `listZ' {
+				display_mspe `mname', vname(`var')
+				mata: `mname'.nameZopt = (`mname'.nameZopt, "`r(optname)'")
+			}
+		}
+	}	// end crossfitting block
 
 end
 
