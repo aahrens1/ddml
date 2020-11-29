@@ -32,7 +32,8 @@ program _ddml_estimate_iv, eclass sortpreserve
     _ddml_allcombos `Ytilde' - `Dtilde' - `Ztilde' , putlast(`Yopt' `Dopt' `Zopt') ///
                                                         `debug' ///
                                                         dpos_start(2) dpos_end(2) ///
-                                                        zpos_start(3) zpos_end(3)
+                                                        zpos_start(3) zpos_end(3) ///
+                                                        addprefix("`mname'_")
 
 	return list
 	local ncombos = r(ncombos)

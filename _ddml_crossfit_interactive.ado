@@ -196,12 +196,13 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		*** calculate MSE, store orthogonalized variables, etc.
 		forvalues i=1/`numeqns' {
 			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+			mata: st_local("eqntype",`eqn'.eqntype)
 			mata: st_local("vtilde",`eqn'.Vtilde)
 			tempvar vtilde_sq
 			qui gen double `vtilde_sq' = `mname'_`vtilde'^2
 			if ("`eqntype'"=="yeq") {
 				// for D=1
-				qui sum `vtilde_sq' if `listD'==0, meanonly
+				sum `vtilde_sq' if `listD'==0, meanonly
 				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',0)
 				// for D=1
 				qui sum `vtilde_sq' if `listD'==1, meanonly
@@ -217,6 +218,7 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		*** calculate MSE, store orthogonalized variables, etc.
 		forvalues i=1/`numeqns' {
 			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+			mata: st_local("eqntype",`eqn'.eqntype)
 			mata: st_local("vtilde",`eqn'.Vtilde)
 			tempvar vtilde_sq
 			qui gen double `vtilde_sq' = `mname'_`vtilde'^2

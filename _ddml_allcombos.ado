@@ -9,6 +9,7 @@ program define _ddml_allcombos, rclass
 						dpos_start(int 0) dpos_end(int 0) /// position of D variables
 						zpos_start(int 0) zpos_end(int 0) /// position of Z variables
 						sep(string) ///
+						addprefix(string) ///
 						]
 	if ("`sep'"=="") {
 		local sep -
@@ -29,22 +30,22 @@ program define _ddml_allcombos, rclass
 	}
 
 	// save all in one list separated by |
-	mata: mat_to_string(`out'[,`ypos_start'..`ypos_end'],"`sep'")
+	mata: mat_to_string(`out'[,`ypos_start'..`ypos_end'],"`sep'","`addprefix'")
 	return local ystr `r(str)'
 
 	// save D variables in list separated by |
 	if (`dpos_start'!=0 & `dpos_end'!=0) {
-		mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'],"`sep'")
+		mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'],"`sep'","`addprefix'")
 		return local dstr `r(str)'
 	}
 	// save Z variables in list separated by |
 	if (`zpos_start'!=0 & `zpos_end'!=0) {
-		mata: mat_to_string(`out'[,`zpos_start'..`zpos_end'],"`sep'")
+		mata: mat_to_string(`out'[,`zpos_start'..`zpos_end'],"`sep'","`addprefix'")
 		return local zstr `r(str)'
 	}
 
 	// one string per column
-	mata: mat_to_colstring(`out',"`sep'")
+	mata: mat_to_colstring(`out',"`sep'","`addprefix'")
 	return scalar nvars = `r(k)'
 	forvalues i = 1(1)`r(k)' {
 		return local colstr`i' `r(colstr`i')'
@@ -125,8 +126,13 @@ string matrix get_combos(string scalar input,string scalar sep)
 }
 
 // matrix to one string where combinations are seperated by "|"
-void mat_to_string(string matrix inmat, string scalar sep)
+void mat_to_string(string matrix inmat, string scalar sep,string scalar prefix)
 {
+	
+	if (prefix!="") {
+		inmat = prefix :+ inmat 
+	}
+
 	r = rows(inmat)
 	for (i=1;i<=r;i++) {
 
@@ -146,8 +152,13 @@ void mat_to_string(string matrix inmat, string scalar sep)
 }
 
 // matrix to one string per column
-void mat_to_colstring(string matrix inmat,string scalar sep)
+void mat_to_colstring(string matrix inmat,string scalar sep,string scalar prefix)
 {
+	
+	if (prefix!="") {
+		inmat = prefix :+ inmat 
+	}
+
 	k = cols(inmat)
 	st_numscalar("r(k)",k)
 	for (j=1;j<=k;j++) {
