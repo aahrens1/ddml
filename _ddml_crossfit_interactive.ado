@@ -23,10 +23,10 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 	// model
 	mata: st_local("model",`mname'.model)
 	di "Model: `model'"
-	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistY))
-	local numeqnsY	= `r(numeqns)'
-	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistD))
-	local numeqnsD	= `r(numeqns)'
+	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlistNames)))
+	mata: st_local("numeqnsY",strofreal(cols(`mname'.nameYtilde)))
+	mata: st_local("numeqnsD",strofreal(cols(`mname'.nameDtilde)))
+	mata: st_local("numeqnsZ",strofreal(cols(`mname'.nameZtilde)))
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("listYtilde",invtokens(`mname'.nameYtilde))
 	di "Number of Y estimating equations: `numeqnsY'"
@@ -35,8 +35,6 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		mata: st_local("listDtilde",invtokens(`mname'.nameDtilde))
 		di "Number of D estimating equations: `numeqnsD'"
 	}
-	mata: st_numscalar("r(numeqns)",cols(`mname'.eqnlistZ))
-	local numeqnsZ	= `r(numeqns)'
 	if `numeqnsZ' {
 		mata: st_local("listZ",invtokens(`mname'.nameZ))
 		mata: st_local("listZtilde",invtokens(`mname'.nameZtilde))
@@ -44,44 +42,24 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 	}		 
 	
 	*** gen folds
-	// use foldvar if not empty
-	// populate provided foldvar if empty
-	tempvar uni cuni
-	qui gen double `uni' = runiform()
-	qui cumul `uni', gen(`cuni')
-	if "`foldvar'"~="" {
-		// foldvar name provided so store on the model struct; can overwrite
-		mata: `mname'.foldvar	= "`foldvar'"
-	}
-	else {
-		// foldvar name not provided in foldvar(.) option so use default name
-		// store on model struct and drop the variable if it already exists
-		cap drop ddmlfold
-		mata: `mname'.foldvar	= "ddmlfold"
-	}
-	// does variable exist and is it numeric?
-	mata: st_local("kid",`mname'.foldvar)
-	cap sum `kid'
-	if _rc==0 {
-		// variable exists and is numeric
-		// does it have a valid number of groups?
-		qui tab `kid'
-		if r(r) < 2 {
-			di as err "error - invalid fold variable"
-			exit 1
-		}
-	}
-	else {
-		// create variable with provided name
-		cap drop `kid'
-		qui gen `kid' =ceil(`kfolds'*`cuni')
+	// create foldvar if not empty
+	// Stata name will be mname_fid
+	cap count if `mname'_fid < .
+	if _rc > 0 {
+		// fold var does not exist or is not a valid identifier
+		cap drop `mname'_fid
+		tempvar uni cuni
+		qui gen double `uni' = runiform()
+		qui cumul `uni', gen(`cuni')
+		qui gen int `mname'_fid = ceil(`kfolds'*`cuni')
+		// add fold id to model struct (col 1 = id, col 2 = fold id)
+		mata: `mname'.idFold = st_data(., ("`mname'_id", "`mname'_fid"))
 	}
 	if ("`tabfold'"!="") {
-		di ""
+		di
 		di "Overview of frequencies by fold:"
-		tab `kid' `listZ'
-		tab `kid' `listD'
-		di ""
+		tab `mname'_fid
+		di
 	}
 	//
 
@@ -91,30 +69,12 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 	mata: `eqn' = init_eqnStruct()
 
 	*** initialize tilde variables
-	// Y equations
-	forvalues i=1/`numeqnsY' {
-		mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
-		cap drop `vtilde'
-		qui gen double `vtilde'=.
+	forvalues i=1/`numeqns' {
+		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+		mata: st_local("vtilde",`eqn'.Vtilde)
+		cap drop `mname'_`vtilde'
+		qui gen double `mname'_`vtilde'=.
 	}
-	// D equations
-	forvalues i=1/`numeqnsD' {
-		mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-		mata: st_local("vtilde",`eqn'.vtilde)
-		cap drop `vtilde'
-		qui gen double `vtilde'=.
-	}
-	// Z equations
-	if ("`model'"=="late") {
-		forvalues i=1/`numeqnsZ' {
-			mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-			mata: st_local("vtilde",`eqn'.vtilde)
-			cap drop `vtilde'
-			qui gen double `vtilde'=.
-		}
-	}
-
 	
 	*** do cross-fitting
 	di
@@ -130,13 +90,14 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		// ML is applied to I^c sample (all data ex partition k)
 		qui {
 		
-			// Y equations
-			forvalues i=1/`numeqnsY' {
-				mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-				if r(crossfit) {
-					mata: st_local("vtilde",`eqn'.vtilde)
-					mata: st_local("vname",`eqn'.vname)
+			// loop over equations
+			forvalues i=1/`numeqns' {
+				mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+				mata: st_local("eqntype",`eqn'.eqntype)
+				if ("`eqntype'"=="yeq") {
+					// Y equations
+					mata: st_local("vtilde",`eqn'.Vtilde)
+					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
@@ -148,28 +109,26 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					
 					// for D = 1
 					// estimate excluding kth fold
-					`est_main' if `kid'!=`k', `est_options'
+					`est_main' if `mname'_fid!=`k', `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `kid'==`k' & `listD' == 1
-					qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k' & `listD' == 1
+					qui predict double `vtilde_i' if `mname'_fid==`k' & `listD' == 1
+					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 1
 
 					// for D = 0
 					// estimate excluding kth fold
-					`est_main' if `kid'!=`k', `est_options'
+					`est_main' if `mname'_fid!=`k', `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `kid'==`k' & `listD' == 0
-					qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k' & `listD' == 0
+					qui predict double `vtilde_i' if `mname'_fid==`k' & `listD' == 0
+					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 0
+				
 				}
-			}
-			// D equations
-			forvalues i=1/`numeqnsD' {
-				mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-				if r(crossfit) {
-					mata: st_local("vtilde",`eqn'.vtilde)
-					mata: st_local("vname",`eqn'.vname)
+				else if ("`eqntype'"=="deq") {
+					// D equations
+					mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+					mata: st_local("vtilde",`eqn'.Vtilde)
+					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
@@ -178,42 +137,40 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					di "D estimating equation `i':"
 					di "  est_main: `est_main'"
 					di "  est_options: `est_options'"
-					
+						
 					if ("`model'"=="interactive") {
 						// estimate excluding kth fold
-						`est_main' if `kid'!=`k', `est_options'
+						`est_main' if `mname'_fid!=`k', `est_options'
 						// get fitted values and residuals for kth fold	
 						tempvar vtilde_i
-						qui predict double `vtilde_i' if `kid'==`k' 
-						qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
+						qui predict double `vtilde_i' if `mname'_fid==`k' 
+						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' 
 					}
 					else {
 
 						// for Z = 0
 						// estimate excluding kth fold
-						`est_main' if `kid'!=`k', `est_options'
+						`est_main' if `mname'_fid!=`k', `est_options'
 						// get fitted values and residuals for kth fold	
 						tempvar vtilde_i
-						qui predict double `vtilde_i' if `kid'==`k' & `listZ' == 0
-						qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k' & `listZ' == 0
+						qui predict double `vtilde_i' if `mname'_fid==`k' & `listZ' == 0
+						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k'  & `listZ' == 0
 
 						// for Z = 1
 						// estimate excluding kth fold
-						`est_main' if `kid'!=`k', `est_options'
+						`est_main' if `mname'_fid!=`k' , `est_options'
 						// get fitted values and residuals for kth fold	
 						tempvar vtilde_i
-						qui predict double `vtilde_i' if `kid'==`k' & `listZ' == 1
-						qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k' & `listZ' == 1
+						qui predict double `vtilde_i' if `mname'_fid==`k' & `listZ' == 1
+						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listZ' == 1
 					}
 				}
-			}
-			// Z equations
-			forvalues i=1/`numeqnsZ' {
-				mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-				mata: st_numscalar("r(crossfit)",`eqn'.crossfit)
-				if r(crossfit) {
-					mata: st_local("vtilde",`eqn'.vtilde)
-					mata: st_local("vname",`eqn'.vname)
+				else if ("`eqntype'"=="zeq") {
+
+					// Z equations
+					mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+					mata: st_local("vtilde",`eqn'.Vtilde)
+					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
@@ -222,236 +179,121 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					di "Z estimating equation `i':"
 					di "  est_main: `est_main'"
 					di "  est_options: `est_options'"
-	
+		
 					// estimate excluding kth fold
-					`est_main' if `kid'!=`k', `est_options'
+					`est_main' if `mname'_fid!=`k', `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `kid'==`k' 
-					qui replace `vtilde' = `vname' - `vtilde_i' if `kid'==`k'
+					qui predict double `vtilde_i' if `mname'_fid==`k' 
+					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' 
 				}
 			}
 		}
-	}	
+ 	}	
 
 	*** calculate MSE (or any other postestimation calculations)
-	
-	// insert stats for each estimation
-
 	if ("`model'"=="interactive") {
-		forvalues i=1/`numeqnsY' {
-			mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-			mata: st_local("vtilde",`eqn'.vtilde)
+		*** calculate MSE, store orthogonalized variables, etc.
+		forvalues i=1/`numeqns' {
+			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+			mata: st_local("vtilde",`eqn'.Vtilde)
 			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `vtilde'^2
-			// for D=0
-			qui sum `vtilde_sq' if `listD'==0, meanonly
-			mata: add_stats_Y01(`mname',`i',`r(mean)',`r(N)',0)
-			// for D=1
-			qui sum `vtilde_sq' if `listD'==1, meanonly
-			mata: add_stats_Y01(`mname',`i',`r(mean)',`r(N)',1)
-		}
-		forvalues i=1/`numeqnsD' {
-			mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-			mata: st_local("vtilde",`eqn'.vtilde)
-			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `vtilde'^2
-			qui sum `vtilde_sq', meanonly
-			mata: add_stats_D(`mname',`i',`r(mean)',`r(N)')
+			qui gen double `vtilde_sq' = `mname'_`vtilde'^2
+			if ("`eqntype'"=="yeq") {
+				// for D=1
+				qui sum `vtilde_sq' if `listD'==0, meanonly
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',0)
+				// for D=1
+				qui sum `vtilde_sq' if `listD'==1, meanonly
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',1)
+			} 
+			else if ("`eqntype'"=="deq") {
+				qui sum `vtilde_sq', meanonly
+				mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
+			}
 		}
 	}
 	if ("`model'"=="late") {
-		forvalues i=1/`numeqnsY' {
-			mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-			mata: st_local("vtilde",`eqn'.vtilde)
+		*** calculate MSE, store orthogonalized variables, etc.
+		forvalues i=1/`numeqns' {
+			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+			mata: st_local("vtilde",`eqn'.Vtilde)
 			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `vtilde'^2
-			// for D=0
-			qui sum `vtilde_sq' if `listZ'==0, meanonly
-			mata: add_stats_Y01(`mname',`i',`r(mean)',`r(N)',0)
-			// for D=1
-			qui sum `vtilde_sq' if `listZ'==1, meanonly
-			mata: add_stats_Y01(`mname',`i',`r(mean)',`r(N)',1)
-		}
-		forvalues i=1/`numeqnsD' {
-			mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-			mata: st_local("vtilde",`eqn'.vtilde)
-			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `vtilde'^2
-			// for Z = 0
-			sum `vtilde_sq' if `listZ'==0, meanonly
-			mata: add_stats_D01(`mname',`i',`r(mean)',`r(N)',0)
-			// for Z = 1
-			sum `vtilde_sq' if `listZ'==1, meanonly
-			mata: add_stats_D01(`mname',`i',`r(mean)',`r(N)',1)
-		}
-		forvalues i=1/`numeqnsZ' {
-			mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-			mata: st_local("vtilde",`eqn'.vtilde)
-			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `vtilde'^2
-			qui sum `vtilde_sq', meanonly
-			mata: add_stats_Z(`mname',`i',`r(mean)',`r(N)')
+			qui gen double `vtilde_sq' = `mname'_`vtilde'^2
+			if ("`eqntype'"=="yeq") {
+				// for Z=1
+				qui sum `vtilde_sq' if `listZ'==0, meanonly
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',0)
+				// for Z=1
+				qui sum `vtilde_sq' if `listZ'==1, meanonly
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',1)
+			} 
+			else if ("`eqntype'"=="deq") {
+				// for Z = 0
+				sum `vtilde_sq' if `listZ'==0, meanonly
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',0)
+				// for Z = 1
+				sum `vtilde_sq' if `listZ'==1, meanonly
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',1)
+			}
+			else if ("`eqntype'"=="zeq") {
+				qui sum `vtilde_sq', meanonly
+				mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
+			}
 		}
 	}
-	
+ 
 	*** print results & find optimal model
 
-	// Y|X,D=j or Y|X,Z=j
-	forvalues j= 0/1 {
-		di
-	    if "`model'"=="interactive" di as res "Mean-squared error for y|X,D=`j':"
-	    else  di as res "Mean-squared error for y|X,Z=`j':"
-		di _col(2) "Name" _c
-		di _col(20) "Orthogonalized" _c
-		di _col(40) "Command" _c
-		di _col(54) "N" _c
-		di _col(65) "MSPE"
-		di "{hline 75}"
-		// initialize
-		local yminmse`j' = .
-		local yopt`j'
-		forvalues i=1/`numeqnsY' {
-			mata: `eqn'=*(`mname'.eqnlistY[1,`i'])
-			mata: st_local("vname",`eqn'.vname)
-			mata: st_local("vtilde",`eqn'.vtilde)
-			mata: st_local("command",`eqn'.command)
-			mata: st_numscalar("r(MSE)",`eqn'.MSE`j')
-			mata: st_numscalar("r(N)",`eqn'.N`j')
-			local MSE = `r(MSE)'
-			local N = `r(N)'
-			if `MSE' < `yminmse`j'' {
-				local yopt`j' `vtilde'
-				local yminmse`j' `MSE'
-			}
-			di _col(2) "`vname'" _c
-			di _col(20) "`vtilde'" _c
-			di _col(40) "`command'" _c
-			di _col(50) %6.0f `N' _c
-			di _col(60) %10.6f `MSE'
-		}
-		mata: `mname'.nameY`j'opt	= "`yopt`j''"
-	}
-
-	// D vars
+	// interactive model
 	if "`model'"=="interactive" {
-		di
-		di as res "Mean-squared error for D|X:"
-		di _col(2) "Name" _c
-		di _col(20) "Orthogonalized" _c
-		di _col(40) "Command" _c
-		di _col(54) "N" _c
-		di _col(65) "MSPE"
-		di "{hline 75}"
-		// initialize
+
+		// dependent variable
+		display_header , str(y|X,D=0)
+		display_mspe `mname', vname(`nameY') zett(0)
+		mata: `mname'.nameY1opt		= "`r(optname)'"
+		display_header , str(y|X,D=1)
+		display_mspe `mname', vname(`nameY') zett(1)
+		mata: `mname'.nameY0opt		= "`r(optname)'"
+
+		// D variable
+		display_header , str(D|X)
 		foreach var of varlist `listD' {
-			// initialize
-			local dminmse = .
-			local dopt
-			forvalues i=1/`numeqnsD' {
-				mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-				mata: st_local("vname",`eqn'.vname)
-				mata: st_local("vtilde",`eqn'.vtilde)
-				mata: st_local("command",`eqn'.command)
-				mata: st_numscalar("r(MSE)",`eqn'.MSE)
-				mata: st_numscalar("r(N)",`eqn'.N)
-				local MSE = `r(MSE)'
-				local N = `r(N)'
-				if "`var'"=="`vname'" {
-					if `MSE' < `dminmse' {
-						local dopt `vtilde'
-						local dminmse `MSE'
-					}
-					di _col(2) "`vname'" _c
-					di _col(20) "`vtilde'" _c
-					di _col(40) "`command'" _c
-					di _col(50) %6.0f `N' _c
-					di _col(60) %10.6f `MSE'
-				}
-			}
-			mata: `mname'.nameDopt	= "`dopt'"
-		}
-	}
-	if "`model'"=="late" {
-		forvalues j= 0/1 {
-			di
-			di as res "Mean-squared error for D|X,Z=`j':"
-			di _col(2) "Name" _c
-			di _col(20) "Orthogonalized" _c
-			di _col(40) "Command" _c
-			di _col(54) "N" _c
-			di _col(65) "MSPE"
-			di "{hline 75}"
-			// initialize
-			local dminmse`j' = .
-			local dopt`j'
-			forvalues i=1/`numeqnsD' {
-				mata: `eqn'=*(`mname'.eqnlistD[1,`i'])
-				mata: st_local("vname",`eqn'.vname)
-				mata: st_local("vtilde",`eqn'.vtilde)
-				mata: st_local("command",`eqn'.command)
-				mata: st_numscalar("r(MSE)",`eqn'.MSE`j')
-				mata: st_numscalar("r(N)",`eqn'.N`j')
-				local MSE = `r(MSE)'
-				local N = `r(N)'
-				if `MSE' < `dminmse`j'' {
-					local dopt`j' `vtilde'
-					local dminmse`j' `MSE'
-				}
-				di _col(2) "`vname'" _c
-				di _col(20) "`vtilde'" _c
-				di _col(40) "`command'" _c
-				di _col(50) %6.0f `N' _c
-				di _col(60) %10.6f `MSE'
-			}
-			mata: `mname'.nameD`j'opt	= "`dopt`j''"
+			display_mspe `mname', vname(`var') 
+			mata: `mname'.nameDopt		= "`r(optname)'"
 		}
 	}
 
-	// Z vars
-	if ("`model'"=="late") {
-		di
-		di as res "Mean-squared error for Z|X:"
-		di _col(2) "Name" _c
-		di _col(20) "Orthogonalized" _c
-		di _col(40) "Command" _c
-		di _col(54) "N" _c
-		di _col(65) "MSPE"
-		di "{hline 75}"
-		// initialize
-		local first_zopt	=1
+	// late model
+	if "`model'"=="late" {
+
+		// dependent variable
+		display_header , str(y|X,Z=0)
+		display_mspe `mname', vname(`nameY') zett(0)
+		mata: `mname'.nameY1opt		= "`r(optname)'"
+		display_header , str(y|X,Z=1)
+		display_mspe `mname', vname(`nameY') zett(1)
+		mata: `mname'.nameY0opt		= "`r(optname)'"
+
+		// D variable
+		display_header , str(D|X,Z=0)
+		foreach var of varlist `listD' {
+			display_mspe `mname', vname(`var') zett(0)
+			mata: `mname'.nameD0opt		= "`r(optname)'"
+		}
+		display_header , str(D|X,Z=1)
+		foreach var of varlist `listD' {
+			display_mspe `mname', vname(`var') zett(1)
+			mata: `mname'.nameD1opt		= "`r(optname)'"
+		}
+
+		// Z variable
 		foreach var of varlist `listZ' {
-			// initialize
-			local zminmse = .
-			local zopt
-			forvalues i=1/`numeqnsZ' {
-				mata: `eqn'=*(`mname'.eqnlistZ[1,`i'])
-				mata: st_local("vname",`eqn'.vname)
-				mata: st_local("vtilde",`eqn'.vtilde)
-				mata: st_local("command",`eqn'.command)
-				mata: st_numscalar("r(MSE)",`eqn'.MSE)
-				local MSE = `r(MSE)'
-				mata: st_numscalar("r(N)",`eqn'.N)
-				local MSE = `r(MSE)'
-				local N = `r(N)'
-				if "`var'"=="`vname'" {
-					if `MSE' < `zminmse' {
-						local zopt `vtilde'
-						local zminmse `MSE'
-					}
-					di _col(2) "`vname'" _c
-					di _col(20) "`vtilde'" _c
-					di _col(40) "`command'" _c
-					di _col(50) %6.0f `N' _c
-					di _col(60) %10.6f `MSE'
-				}
-			}
-			// if nameZopt already has vname in it, then add it to the list
-			mata: `mname'.nameZopt	= "`zopt'"
+			display_mspe `mname', vname(`var')
+			mata: `mname'.nameZopt = (`mname'.nameZopt, "`r(optname)'")
 		}
 	}
 		
-
 /*
 	*** save all 
 	ereturn clear
@@ -520,68 +362,38 @@ struct eqnStruct init_eqnStruct()
 	return(e)
 }
 
-
-void add_stats_Y01(					struct ddmlStruct m,
+void add_to_eqn(					struct ddmlStruct m,
 									real scalar eqnumber,
-									real scalar mse,
-									real scalar n,
-									real scalar D)
-{
-	pointer(struct eqnStruct) scalar p
-
-	p = m.eqnlistY[1,eqnumber]
-	if (D==0) {
-		(*p).MSE0	= mse
-		(*p).N0		= n
-	}
-	else {
-		(*p).MSE1	= mse
-		(*p).N1		= n
-	}
-}
-
-void add_stats_D(					struct ddmlStruct m,
-									real scalar eqnumber,
+									string scalar vnames,
 									real scalar mse,
 									real scalar n)
 {
 	pointer(struct eqnStruct) scalar p
-
-	p = m.eqnlistD[1,eqnumber]
-	(*p).MSE	= mse
-	(*p).N		= n
+	p				= m.eqnlist[1,eqnumber]
+	(*p).idVtilde	= st_data(., tokens(vnames))
+	(*p).MSE		= mse
+	(*p).N			= n
 }
 
-void add_stats_D01(					struct ddmlStruct m,
+void add_to_eqn01(					struct ddmlStruct m,
 									real scalar eqnumber,
+									string scalar vnames,
 									real scalar mse,
-									real scalar n,
+									real scalar n, 
 									real scalar Z)
 {
 	pointer(struct eqnStruct) scalar p
-
-	p = m.eqnlistD[1,eqnumber]
+	p				= m.eqnlist[1,eqnumber]
+	(*p).idVtilde	= st_data(., tokens(vnames))
 	if (Z==0) {
-		(*p).MSE0	= mse
-		(*p).N0		= n
+		(*p).MSE0		= mse
+		(*p).N0			= n
 	}
 	else {
-		(*p).MSE1	= mse
-		(*p).N1		= n
+		(*p).MSE1		= mse
+		(*p).N1			= n
 	}
+
 }
-
-void add_stats_Z(					struct ddmlStruct m,
-									real scalar eqnumber,
-									real scalar mse,
-									real scalar n)
-{
-	pointer(struct eqnStruct) scalar p
-
-	p = m.eqnlistZ[1,eqnumber]
-	(*p).MSE	= mse
-	(*p).N		= n
-}
-
 
 end

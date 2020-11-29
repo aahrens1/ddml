@@ -1,7 +1,10 @@
 
 program define display_mspe, rclass
 
-	syntax name(name=mname), vname(varname) [Z(integer)]
+	syntax name(name=mname), vname(varname) ///
+								[ ///
+								zett(string) ///
+								]
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	// used multiple times below
@@ -17,8 +20,8 @@ program define display_mspe, rclass
 		mata: st_local("vtilde",`eqn'.Vtilde)
 		if "`vname'"==r(vname) {
 			mata: st_local("command",`eqn'.command)
-			mata: st_local("MSE",strofreal(`eqn'.MSE`Z'))
-			mata: st_local("N",strofreal(`eqn'.N`Z'))
+			mata: st_local("MSE",strofreal(`eqn'.MSE`zett'))
+			mata: st_local("N",strofreal(`eqn'.N`zett'))
 			if `MSE' < `minmse' {
 				local optname `vtilde'
 				local minmse `MSE'
@@ -36,4 +39,15 @@ program define display_mspe, rclass
 	
 	mata: mata drop `eqn'
 	
+end
+
+
+mata:
+
+struct eqnStruct init_eqnStruct()
+{
+	struct eqnStruct scalar		e
+	return(e)
+}
+
 end
