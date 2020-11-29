@@ -28,6 +28,7 @@ program _ddml_estimate_iv, eclass sortpreserve
         di "`Ztilde'"
         di "`Dtilde'"
     }
+    di "`Dtilde'"
 
     _ddml_allcombos `Ytilde' - `Dtilde' - `Ztilde' , putlast(`Yopt' `Dopt' `Zopt') ///
                                                         `debug' ///
