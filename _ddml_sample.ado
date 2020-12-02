@@ -1,17 +1,24 @@
 program _ddml_sample
 	version 13
 
-	syntax [if] [in] , mname(name) [ foldvar(varname) vars(varlist) kfolds(integer 2) tabfold ]
+	syntax [if] [in] , mname(name) [ foldvar(varname) vars(varlist) kfolds(integer 2) tabfold sreset ]
 	
 	marksample touse
-
-	cap drop `mname'_esample
+	
+	if "`sreset'"~="" {
+		// reset sample indicator
+		cap drop `mname'_sample
+		qui gen byte `mname'_sample = 1
+	}
+	
 	if "`vars'" ~= "" {
 		// set sample indicator to 0 if obs have missings
 		fvunab vars : `vars'
 		markout `touse' `vars'
+		// add list of vars to model struct
+		mata: `mname'.strDatavars = "`vars'"
 	}
-
+	
 	*** gen folds
 	// create foldvar
 	// Stata name will be mname_fid
@@ -38,17 +45,18 @@ program _ddml_sample
 		qui gen `mname'_fid = `foldvar'
 	}
 
+	// update sample indicator
+	qui replace `mname'_sample = `touse'
+
 	// add sample indicator to model struct (col 1 = id, col 2 = fold id)
-	qui gen byte `mname'_esample = `touse'
-	mata: `mname'.strDatavars = "`vars'"
-	mata: `mname'.idSample = st_data(., ("`mname'_id", "`mname'_esample"))
+	mata: `mname'.idSample = st_data(., ("`mname'_id", "`mname'_sample"))
 	// add fold id to model struct (col 1 = id, col 2 = fold id)
 	mata: `mname'.idFold = st_data(., ("`mname'_id", "`mname'_fid"))
 
 	if ("`tabfold'"!="") {
 		di
 		di "Overview of frequencies by fold and sample:"
-		tab `mname'_fid `mname'_esample, miss
+		tab `mname'_fid `mname'_sample, miss
 		di
 	}
 

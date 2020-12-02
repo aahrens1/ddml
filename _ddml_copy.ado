@@ -24,14 +24,13 @@ program _ddml_copy
 		set obs `r(nobs)'
 	}
 	qui gen double `newmname'_id = .
-	// id variable always exists, fold ID may not
+	qui gen byte `newmname'_sample = .
+	mata: st_store( ., ("`newmname'_id", "`newmname'_sample"), (`newmname'.idSample))
+	// id and sample variables always exist, fold ID may not
 	mata: st_numscalar("r(ncols)",cols(`newmname'.idFold))
 	if r(ncols) > 0 {
 		qui gen double `newmname'_fid = .
-		mata: st_store( ., ("`newmname'_id", "`newmname'_fid"), (`newmname'.idFold))
-	}
-	else {
-		mata: st_store( ., ("`newmname'_id"), (`newmname'.id))
+		mata: st_store( ., ("`newmname'_fid"), (`newmname'.idFold[.,2]))
 	}
 
 	*** loop through equations and create Stata variables

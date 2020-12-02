@@ -10,7 +10,7 @@ mata clear
 void whichddml()
 {
 ""
-"ddml ver xxx 3nov2020"
+"ddml ver xxx 2dec2020"
 "compiled under Stata " + "`stata_version'" + " born " + "`born_date'"
 "Mata library for ddml and related programs"
 "authors AA/MS"

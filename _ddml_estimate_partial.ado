@@ -1,13 +1,18 @@
 *** ddml estimation: partial linear model
 program _ddml_estimate_partial, eclass sortpreserve
 
-	syntax namelist(name=mname) [if] [in] , /// 
-								[  ///
-								ROBust ///
-								show(string) /// dertermines which to post
-								clear /// deletes all tilde-variables (to be implemented)
-								avplot ///
+	syntax namelist(name=mname) [if] [in] ,		/// 
+								[				///
+								ROBust			///
+								show(string)	/// dertermines which to post
+								clear			/// deletes all tilde-variables (to be implemented)
+								avplot			///
 								* ]
+	
+	// base sample for estimation - determined by if/in
+	marksample touse
+	// also exclude obs already excluded by ddml sample
+	qui replace `touse' = 0 if `mname'_sample==0
 
 	// locals used below
 	mata: st_local("nameY",`mname'.nameY)
@@ -30,7 +35,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 		local d ``i''
 		add_prefix `y' `d', prefix("`mname'_")
 		// do_regress is OLS but with original varnames
-		do_regress `s(vnames)' , nocons `robust' yname(`nameY') dnames(`nameD')
+		do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 		di
 		di as res "DML with Y=`y' and D=`d' (N=`e(N)'):"
 		ereturn di
@@ -40,7 +45,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 	*** estimate best model
 	add_prefix `Yopt' `Dopt', prefix("`mname'_")
 	// do_regress is OLS but with original varnames
-	do_regress `s(vnames)' , nocons `robust' yname(`Yopt') dnames(`Dopt')
+	do_regress `s(vnames)' if `touse' , nocons `robust' yname(`Yopt') dnames(`Dopt')
 
 	// plot
 	if ("`avplot'"!="") {
@@ -73,9 +78,11 @@ end
 
 // does OLS and reports with substitute yname and dnames
 program define do_regress, eclass
-	syntax anything, [ yname(name) dnames(namelist) * ]
+	syntax anything [if] [in] , [ yname(name) dnames(namelist) * ]
 
-	qui reg `anything' , `options'
+	marksample touse
+
+	qui reg `anything' if `touse', `options'
 
 	tempname b
 	tempname V
@@ -87,7 +94,7 @@ program define do_regress, eclass
 	matrix rownames `V' = `dnames'
 	local N = e(N)
 	ereturn clear
-	ereturn post `b' `V', depname(`yname') obs(`N')
+	ereturn post `b' `V', depname(`yname') obs(`N') esample(`touse')
 
 end
 

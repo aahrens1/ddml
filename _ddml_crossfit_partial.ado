@@ -1,7 +1,7 @@
 *** ddml cross-fitting
 program _ddml_crossfit_partial, eclass sortpreserve
 
-	syntax [anything] [if] [in] ,					/// 
+	syntax [anything] ,								/// 
 							[ kfolds(integer 2)		///
 							NOIsily					///
 							debug					/// 
@@ -13,7 +13,6 @@ program _ddml_crossfit_partial, eclass sortpreserve
 							]
 
 	// no checks included yet
-	// no marksample yet
 
 	local debugflag		= "`debug'"~=""
 
@@ -43,7 +42,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		mata: st_local("listZ",invtokens(`mname'.nameZ))
 		mata: st_local("listZtilde",invtokens(`mname'.nameZtilde))
 		di "Number of Z estimating equations: `numeqnsZ'"
-	}		
+	}
 	
 	*** gen folds
 	// create foldvar if not empty
@@ -53,16 +52,16 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		// fold var does not exist or is not a valid identifier
 		cap drop `mname'_fid
 		tempvar uni cuni
-		qui gen double `uni' = runiform()
-		qui cumul `uni', gen(`cuni')
-		qui gen int `mname'_fid = ceil(`kfolds'*`cuni')
+		qui gen double `uni' = runiform() if `mname'_sample
+		qui cumul `uni' if `mname'_sample, gen(`cuni')
+		qui gen int `mname'_fid = ceil(`kfolds'*`cuni') if `mname'_sample
 		// add fold id to model struct (col 1 = id, col 2 = fold id)
 		mata: `mname'.idFold = st_data(., ("`mname'_id", "`mname'_fid"))
 	}
 	if ("`tabfold'"!="") {
 		di
 		di "Overview of frequencies by fold:"
-		tab `mname'_fid
+		tab `mname'_fid if `mname'_sample
 		di
 	}
 	//
@@ -91,7 +90,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 					di as res "Estimating equation `i', `vname'/`vtilde':"
 					di as res "(full sample, for debugging; no crossfit)"
 					// estimate
-					`est_main', `est_options'
+					`est_main' if `mname'_sample, `est_options'
 				}
 				else {
 					di
@@ -100,7 +99,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 						di
 						di as res "Fold=`k' (for debugging; no crossfit)"
 						// estimate
-						`est_main' if `mname'_fid!=`k', `est_options'
+						`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 					}
 				}
 			}
@@ -143,11 +142,11 @@ program _ddml_crossfit_partial, eclass sortpreserve
 					di as res "  est_options: `est_options'"
 	
 					// estimate excluding kth fold
-					`est_main' if `mname'_fid!=`k', `est_options'
+					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `mname'_fid==`k' 
-					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k'
+					qui predict double `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
 				}
 			}
 		}
@@ -157,8 +156,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 			mata: st_local("vtilde",`eqn'.Vtilde)
 			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `mname'_`vtilde'^2
-			qui sum `vtilde_sq', meanonly
+			qui gen double `vtilde_sq' = `mname'_`vtilde'^2 if `mname'_sample
+			qui sum `vtilde_sq' if `mname'_sample, meanonly
 			mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
 		}
 	

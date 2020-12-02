@@ -14,11 +14,10 @@ program define _ddml_describe
 	mata: printf("{res}Model: %s\n", `mname'.model)
 	di as res "ID: `mname'_id"
 	di as res "Fold ID: `mname'_fid"
-	di as res "Sample indicator: `mname'_esample" _c
-	cap count if `mname'_esample
-	if _rc==0 {
-		di as res " (N=`r(N)')"
-	} 
+	di as res "Sample indicator: `mname'_sample" _c
+	qui count if `mname'_sample
+	di as res " (N=`r(N)')"
+
 	mata: printf("{res}Dependent variable (Y): %s\n", `mname'.nameY)
 	mata: printf("{res}Dependent variable (orthogonalized): %s\n", invtokens(`mname'.nameYtilde))
 	di "Minimum MSE orthogonalized dep var: `Yopt'"
