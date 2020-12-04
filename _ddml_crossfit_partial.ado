@@ -145,7 +145,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+					// "double" commented out so that rforest works
+					qui predict /* double */ `vtilde_i' if `mname'_fid==`k' & `mname'_sample
 					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
 				}
 			}
@@ -184,6 +185,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			di _col(54) "N" _c
 			di _col(65) "MSPE"
 			di "{hline 75}"
+			// clear opt list
+			mata: `mname'.nameDopt = J(1,0,"") 
 			foreach var of varlist `listD' {
 				display_mspe `mname', vname(`var')
 				mata: `mname'.nameDopt = (`mname'.nameDopt, "`r(optname)'")
@@ -200,6 +203,8 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			di _col(54) "N" _c
 			di _col(65) "MSPE"
 			di "{hline 75}"
+			// clear opt list
+			mata: `mname'.nameZopt = J(1,0,"") 
 			foreach var of varlist `listZ' {
 				display_mspe `mname', vname(`var')
 				mata: `mname'.nameZopt = (`mname'.nameZopt, "`r(optname)'")

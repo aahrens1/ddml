@@ -86,7 +86,7 @@ prog define desc_equation
 			mata: st_local("vtilde",`eqn'.Vtilde)
 			local minMSE : list vtilde in optlist
 			if `minMSE' {
-				di "*" _c
+				di "*"
 			}
 			else {
 				di
