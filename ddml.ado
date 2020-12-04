@@ -99,6 +99,7 @@ program ddml, eclass
 		qui gen double `mname'_id	= _n
 		mata: `mname'.id			= st_data(., "`mname'_id")
 		// create and store sample indicator; initialized so all obs are used
+		cap drop `mname'_sample
 		qui gen byte `mname'_sample = 1
 		// add sample indicator to model struct (col 1 = id, col 2 = fold id)
 		mata: `mname'.idSample		= st_data(., ("`mname'_id", "`mname'_sample"))
