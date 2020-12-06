@@ -4,9 +4,9 @@ program _ddml_optiv, eclass
 	version 13
 
 	syntax [anything] , yvar(varname) ///
-				dvar(varname) ///
-				dtilde(varname) ///
-                dhtilde(varname) ///
+				dvar(varlist) ///
+				dtilde(varlist) ///
+                dhtilde(varlist) ///
                 ytilde(varname) ///
 				[touse(varname)]
 
@@ -36,7 +36,10 @@ program _ddml_optiv, eclass
     matrix colnames `V' = "`dvar'"
     matrix rownames `V' = "`dvar'"
     ereturn clear
-    ereturn post `b' `V', depname(`yvar') obs(`N') esample(`touse')
+    tempvar esample
+    // ereturn post esample(vname) moves - doesn't copy! - vname into e(sample), so create a copy
+    qui gen byte `esample'=`touse'
+    ereturn post `b' `V', depname(`yvar') obs(`N') esample(`esample')
     ereturn display
 
 end

@@ -20,8 +20,6 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 	// also exclude obs already excluded by ddml sample
 	qui replace `touse' = 0 if `mname'_sample==0
 
-	di "`touse'"
-
     //mata: `mname'.nameDtilde
     mata: st_local("Yopt",`mname'.nameYopt)
     mata: st_local("Dopt",invtokens(`mname'.nameDopt))
@@ -63,7 +61,7 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 	    		di as res "Optimal model: " _c
 	    	}
 	    	di as res "DML with E[Y|X]=`y' and E[D|X]=`d', E[D|X,Y]=`dh':"
-	       	_ddml_optiv, yvar(`nameY') dvar(`nameD') dhtilde(`dh') ytilde(`y') dtilde(`d') //touse(`touse')
+	       	_ddml_optiv, yvar(`nameY') dvar(`nameD') dhtilde(`dh') ytilde(`y') dtilde(`d') touse(`touse')
 
 	        local j= `j'+1
 	     }
@@ -72,7 +70,7 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 	if ("`show'"=="opt") {
 		*** estimate best model
     	di as res "Optimal model: DML with E[Y|X]=`Yopt' and E[D|X]=`Dopt', E[D|X,Y]=`DHopt':"
-    	qui _ddml_optiv, yvar(`nameY') dvar(`nameD') dhtilde(`DHopt') ytilde(`Yopt') dtilde(`Dopt') //touse(`touse')
+    	qui _ddml_optiv, yvar(`nameY') dvar(`nameD') dhtilde(`DHopt') ytilde(`Yopt') dtilde(`Dopt') touse(`touse')
 	}
 
 	// display

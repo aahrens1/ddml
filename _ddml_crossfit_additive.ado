@@ -1,6 +1,6 @@
 *** ddml cross-fitting
 
-program _ddml_crossfit_partial, eclass sortpreserve
+program _ddml_crossfit_additive, eclass sortpreserve
 
 	syntax [anything] ,								/// 
 							[ kfolds(integer 2)		///

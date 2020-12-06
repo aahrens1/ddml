@@ -85,7 +85,7 @@ program ddml, eclass
 	*** initialize new estimation
 	if "`subcmd'"=="init" {
 		local model: word 2 of `mainargs'
-		if ("`model'"!="partial"&"`model'"!="iv"&"`model'"!="interactive"&"`model'"!="late"&"`model'"!="optimaliv") {
+		if ("`model'"!="additive"&"`model'"!="iv"&"`model'"!="interactive"&"`model'"!="late"&"`model'"!="optimaliv") {
 			di as err "no or wrong model specified." 
 			exit 1
 		}
@@ -119,7 +119,7 @@ program ddml, eclass
 	if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="zeq"|"`subcmd'"=="dheq" {
 
 		** check that equation is consistent with model
-		if ("`subcmd'"=="zeq"&("`model'"=="optimaliv"|"`model'"=="partial"|"`model'"=="interactive")) {
+		if ("`subcmd'"=="zeq"&("`model'"=="optimaliv"|"`model'"=="additive"|"`model'"=="interactive")) {
 			di as err "not allowed; zeq not allowed with `model'"
 		}
 		if ("`subcmd'"=="dheq"&("`model'"!="optimaliv")) {
@@ -208,11 +208,11 @@ program ddml, eclass
 
 		mata: st_global("r(model)",`mname'.model)
 
-		if ("`r(model)'"=="partial") {
-		_ddml_crossfit_partial `restargs'
+		if ("`r(model)'"=="additive") {
+		_ddml_crossfit_additive `restargs'
 		}
 		if ("`r(model)'"=="iv") {
-		_ddml_crossfit_partial `restargs'
+		_ddml_crossfit_additive `restargs'
 		}
 		if ("`r(model)'"=="interactive") {
 		_ddml_crossfit_interactive `restargs'
@@ -221,7 +221,7 @@ program ddml, eclass
 		_ddml_crossfit_interactive `restargs'
 		}
 		if ("`r(model)'"=="optimaliv") {
-		_ddml_crossfit_partial `restargs'
+		_ddml_crossfit_additive `restargs'
 		}
 	}
 
@@ -234,8 +234,8 @@ program ddml, eclass
 
 		mata: st_global("r(model)",`mname'.model)
 
-		if ("`r(model)'"=="partial") {
-			_ddml_estimate_partial `mname', `options'
+		if ("`r(model)'"=="additive") {
+			_ddml_estimate_additive `mname', `options'
 		}
 		if ("`r(model)'"=="iv") {
 			_ddml_estimate_iv `mname', `options'
