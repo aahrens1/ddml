@@ -37,6 +37,9 @@ struct ddmlStruct {
 	string matrix		nameDopt		// name of optimal orthog. D variable(s) (partial linear model)
 	string matrix		nameD0opt		// name of optimal orthog. D variable(s) E[D|Z=0]
 	string matrix		nameD1opt		// name of optimal orthog. D variable(s) E[D|Z=1]
+	string scalar		nameDH			// treatment variable 
+	string colvector	nameDHtilde		// E[D|X,Z]
+	string scalar		nameDHopt 		// E[D|X,Z] optimal 
 	string colvector	nameZ			// name of instrument(s)
 	string matrix		nameZtilde		// names of orthogonalized instruments
 	string matrix		nameZopt		// names of optimal orthog. instruments
@@ -46,7 +49,7 @@ struct ddmlStruct {
 
 // to add: boolean to indicate min MSE / optimal orthogonalized var
 struct eqnStruct {
-	string scalar		eqntype			// yeq, deq, zeq
+	string scalar		eqntype			// yeq, deq, zeq or dheq
 	string scalar		Vname			// should perhaps rename to nameV
 	string scalar		Vtilde			// should perhaps rename to nameVtilde
 	real matrix			idVtilde		// col 1 = id, col 2 = orthogonalized

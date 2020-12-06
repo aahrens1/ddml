@@ -18,7 +18,7 @@ program ddml, eclass
 	// restmainargs is main args minus the subcommand
 	local restmainargs `*'
 	
-	local allsubcmds	update describe save export use drop copy sample init yeq deq zeq crossfit estimate
+	local allsubcmds	update describe save export use drop copy sample init yeq deq zeq crossfit estimate dheq
 	if strpos("`allsubcmds'","`subcmd'")==0 {
 		di as err "error - unknown subcommand `subcmd'"
 		exit 198
@@ -116,14 +116,14 @@ program ddml, eclass
 	}
 
 	*** add equation  
-	if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="zeq" {
+	if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="zeq"|"`subcmd'"=="dheq" {
 
 		** check that equation is consistent with model
-		if ("`subcmd'"=="yeq"&"`model'"=="optimaliv") {
-			di as err "not allowed; yeq not allowed with `model'"
-		}
 		if ("`subcmd'"=="zeq"&("`model'"=="optimaliv"|"`model'"=="partial"|"`model'"=="interactive")) {
-			di as err "not allowed; deq not allowed with `model'"
+			di as err "not allowed; zeq not allowed with `model'"
+		}
+		if ("`subcmd'"=="dheq"&("`model'"!="optimaliv")) {
+			di as err "not allowed; dheq not allowed with `model'"
 		}
 
 		** parsing
@@ -164,6 +164,18 @@ program ddml, eclass
 				local dlist `r(vname)' `vname'
 				local dlist : list uniq dlist
 				mata: `mname'.nameD		= tokens("`dlist'")
+			}
+		}
+		if "`subcmd'"=="dheq" {
+			// check if nameDH already has vname; if not, add it to the list
+			mata: st_global("r(vname)",invtokens(`mname'.nameDH))
+			if "`r(vname)'"=="" {
+				mata: `mname'.nameDH	= "`vname'"
+			}
+			else {
+				local dhlist `r(vname)' `vname'
+				local dhlist : list uniq dhlist
+				mata: `mname'.nameDH	= tokens("`dhlist'")
 			}
 		}
 		if "`subcmd'"=="zeq" {
@@ -209,7 +221,7 @@ program ddml, eclass
 		_ddml_crossfit_interactive `restargs'
 		}
 		if ("`r(model)'"=="optimaliv") {
-		_ddml_crossfit_optimaliv `restargs'
+		_ddml_crossfit_partial `restargs'
 		}
 	}
 
@@ -281,6 +293,9 @@ struct ddmlStruct init_ddmlStruct()
 	d.nameD			= J(1,0,"")
 	d.nameDtilde	= J(1,0,"")
 	d.nameDopt		= J(1,0,"")
+	d.nameDH		= J(1,0,"")
+	d.nameDHtilde	= J(1,0,"")
+	d.nameDHopt		= J(1,0,"")
 	d.nameZ			= J(1,0,"")
 	d.nameZtilde	= J(1,0,"")
 	d.nameZopt		= J(1,0,"")

@@ -21,21 +21,15 @@ program _ddml_estimate_iv, eclass sortpreserve
 	qui replace `touse' = 0 if `mname'_sample==0
 
     //mata: `mname'.nameDtilde
-    mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
-    mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
-    mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
     mata: st_local("Yopt",`mname'.nameYopt)
     mata: st_local("Dopt",invtokens(`mname'.nameDopt))
     mata: st_local("Zopt",invtokens(`mname'.nameZopt))
 
-    if ("`debug'"!="") {
-        di "`Ytilde'"
-        di "`Ztilde'"
-        di "`Dtilde'"
-    }
-    di "`Dtilde'"
-
     make_varlists2, mname(`mname')
+    if ("`debug'"!="") {
+        returnlist
+    }
+
     _ddml_allcombos `r(eq)' , putlast(`Yopt' `Dopt' `Zopt') ///
                                                 `debug' ///
                                                 dpos_end(`r(dpos_end)') ///

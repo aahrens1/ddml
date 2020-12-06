@@ -29,6 +29,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlistNames)))
 	mata: st_local("numeqnsY",strofreal(cols(`mname'.nameYtilde)))
 	mata: st_local("numeqnsD",strofreal(cols(`mname'.nameDtilde)))
+	mata: st_local("numeqnsDH",strofreal(cols(`mname'.nameDHtilde)))
 	mata: st_local("numeqnsZ",strofreal(cols(`mname'.nameZtilde)))
 	di "Model: `model'"
 	mata: st_local("nameY",`mname'.nameY)
@@ -38,6 +39,11 @@ program _ddml_crossfit_partial, eclass sortpreserve
 		mata: st_local("listD",invtokens(`mname'.nameD))
 		mata: st_local("listDtilde",invtokens(`mname'.nameDtilde))
 		di "Number of D estimating equations: `numeqnsD'"
+	}
+	if `numeqnsDH' {
+		mata: st_local("listDH",invtokens(`mname'.nameDH))
+		mata: st_local("listDHtilde",invtokens(`mname'.nameDHtilde))
+		di "Number of DH estimating equations: `numeqnsDH'"
 	}
 	if `numeqnsZ' {
 		mata: st_local("listZ",invtokens(`mname'.nameZ))
@@ -134,6 +140,7 @@ program _ddml_crossfit_partial, eclass sortpreserve
 					mata: st_local("vtilde",`eqn'.Vtilde)
 					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
+					mata: st_local("eqntype",`eqn'.eqntype)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
 					local est_main `anything'
@@ -148,7 +155,14 @@ program _ddml_crossfit_partial, eclass sortpreserve
 					tempvar vtilde_i
 					// "double" commented out so that rforest works
 					qui predict /* double */ `vtilde_i' if `mname'_fid==`k' & `mname'_sample
-					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+					if ("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
+						// get predicted values if optimal IV model & deq or dheq
+						qui replace `mname'_`vtilde' = `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+					} 
+					else {
+						// get residuals
+						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+					}
 				}
 			}
 		}
@@ -194,6 +208,24 @@ program _ddml_crossfit_partial, eclass sortpreserve
 			}
 		}
 		
+		// loop through DH vars (if any)
+		if `numeqnsDH' {
+			di
+			di as res "Mean-squared error for D|X,Z:"
+			di _col(2) "Name" _c
+			di _col(20) "Orthogonalized" _c
+			di _col(40) "Command" _c
+			di _col(54) "N" _c
+			di _col(65) "MSPE"
+			di "{hline 75}"
+			// clear opt list
+			mata: `mname'.nameDopt = J(1,0,"") 
+			foreach var of varlist `listD' {
+				display_mspe `mname', vname(`var')
+				mata: `mname'.nameDopt = (`mname'.nameDopt, "`r(optname)'")
+			}
+		}
+
 		// loop through Z vars (if any)
 		if `numeqnsZ' {
 			di

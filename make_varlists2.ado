@@ -7,12 +7,14 @@ program define make_varlists2, rclass
 	mata: `eqn' = init_eqnStruct()
 
 	// locals used below
+	mata: st_local("numDH",strofreal(cols(`mname'.nameDH)))
 	mata: st_local("numD",strofreal(cols(`mname'.nameD)))
 	mata: st_local("numZ",strofreal(cols(`mname'.nameZ)))
  	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
 	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlist)))
 	mata: st_local("numeqnsY",strofreal(cols(`mname'.nameYtilde)))
 	mata: st_local("numeqnsD",strofreal(cols(`mname'.nameDtilde)))
+	mata: st_local("numeqnsDH",strofreal(cols(`mname'.nameDHtilde)))
 	mata: st_local("numeqnsZ",strofreal(cols(`mname'.nameZtilde)))
 
 	// vno_list has list of all orthogonalized variables
@@ -30,10 +32,15 @@ program define make_varlists2, rclass
 			local Zvn_list `Zvn_list' `vname'
 			local Zvno_list `Zvno_list' `vtilde'
 		}
+		if "`eqntype'"=="dheq" {
+			local DHvn_list `DHvn_list' `vname'
+			local DHvno_list `DHvno_list' `vtilde'
+		}
 	}
 
 	// get list of unique original varnames
 	local Dvn_uniq	: list uniq Dvn_list
+	local DHvn_uniq	: list uniq DHvn_list
 	local Zvn_uniq	: list uniq Zvn_list
 
 	// loop through unique original varnames and create varlists
@@ -69,6 +76,22 @@ program define make_varlists2, rclass
 		}
 	}
 
+	// do the same for DH
+	if (`numDH'>0) {
+		tempname DHv_list DHo_list
+		mata: `DHv_list' = tokens("`DHvn_list'")
+		mata: `DHo_list' = tokens("`DHvno_list'")
+		foreach vn in `DHvn_uniq' {
+			tempname DHo_index
+			mata: `DHo_index' = `DHv_list' :== "`vn'"
+			// select all orthogonalized variables for unique original varname vn
+			mata: st_local("DHo_sublist", invtokens(select(`DHo_list',`DHo_index')))
+			tempname DHt_list
+			local `DHt_list' `DHo_sublist'
+			local DHorthog_lists `DHorthog_lists' `DHt_list'
+		}
+	}
+
 	// di "numD: `numD'"
 	// di "numeqnsD: `numeqnsD'"
 	// di "unique original varnames: `vn_uniq'"
@@ -81,19 +104,26 @@ program define make_varlists2, rclass
 		// di "`vl' = ``vl''"
 		local Ztilde `Ztilde' - ``vl''
 	}
-
+	foreach vl in `DHorthog_lists' {
+		// di "`vl' = ``vl''"
+		local DHtilde `DHtilde' - ``vl''
+	}
 
 
 	// clear from Mata
 	mata: mata drop `eqn'
-	mata: mata drop `Dv_list' `Do_list' `Do_index' `Zv_list' `Zo_list' `Zo_index'
+	mata: mata drop `Dv_list' `Do_list' `Do_index' `Zv_list' `Zo_list' `Zo_index' `DHv_list' `DHo_list'
 
-	return local eq `Ytilde' `Dtilde' `Ztilde'
+	return local eq `Ytilde' `Dtilde' `Ztilde' `DHtilde'
 	return scalar dpos_end = `numD' + 1
 	return scalar dpos_start = 2
 	if (`numZ'>0) {
 		return scalar zpos_start = `numD' +2
 		return scalar zpos_end = `numD' + `numZ' + 1
+	}
+	if (`numDH'>0) {
+		return scalar zpos_start = `numD' +2
+		return scalar zpos_end = `numD' + `numDH' + 1
 	}
 end
 
