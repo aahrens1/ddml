@@ -15,6 +15,11 @@ program _ddml_estimate_iv, eclass sortpreserve
 		local show all 
 	}
 
+	// base sample for estimation - determined by if/in
+	marksample touse
+	// also exclude obs already excluded by ddml sample
+	qui replace `touse' = 0 if `mname'_sample==0
+
     //mata: `mname'.nameDtilde
     mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
     mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
@@ -30,11 +35,12 @@ program _ddml_estimate_iv, eclass sortpreserve
     }
     di "`Dtilde'"
 
-    _ddml_allcombos `Ytilde' - `Dtilde' - `Ztilde' , putlast(`Yopt' `Dopt' `Zopt') ///
-                                                        `debug' ///
-                                                        dpos_start(2) dpos_end(2) ///
-                                                        zpos_start(3) zpos_end(3) ///
-                                                        addprefix("`mname'_")
+    make_varlists2, mname(`mname')
+    _ddml_allcombos `r(eq)' , putlast(`Yopt' `Dopt' `Zopt') ///
+                                                `debug' ///
+                                                dpos_end(`r(dpos_end)') ///
+                                                zpos_start(`r(zpos_start)') zpos_end(`r(zpos_end)') ///
+                                                addprefix("`mname'_")
 
 	return list
 	local ncombos = r(ncombos)
@@ -57,7 +63,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 	    		di as res "Optimal model: " _c
 	    	}
 	    	di as res "DML with Y=`y' and D=`d', Z=`z':"
-	       	ivreg2 `y' (`d'=`z') , nocons `robust' noheader nofooter
+	       	ivreg2 `y' (`d'=`z') if `touse', nocons `robust' noheader nofooter
 
 	        local j= `j'+1
 	     }
@@ -66,7 +72,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 	if ("`show'"=="opt") {
 		*** estimate best model
     	di as res "Optimal model: DML with Y=`Yopt' and D=`Dopt', Z=`Zopt':"
-    	qui ivreg2 `Yopt' (`Dopt'=`Zopt') , nocons `robust' noheader nofooter
+    	qui ivreg2 `Yopt' (`Dopt'=`Zopt') if `touse', nocons `robust' noheader nofooter
 	}
 
 	// display
@@ -80,11 +86,11 @@ program _ddml_estimate_iv, eclass sortpreserve
 	matrix rownames `V' = `nameD'
 	local N = e(N)
 	ereturn clear
-	ereturn post `b' `V', depname(`Yopt') obs(`N')
+	ereturn post `b' `V', depname(`Yopt') obs(`N') esample(`touse')
 	if "`robust'"~="" {
 		ereturn local vcetype	robust
 	}
-	ereturn display
+	//ereturn display
 
 end
 

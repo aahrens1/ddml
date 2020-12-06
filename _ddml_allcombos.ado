@@ -5,8 +5,8 @@ program define _ddml_allcombos, rclass
 	
 	syntax anything , [ putlast(string) ///
 						debug ///  
-						ypos_start(int 1) ypos_end(int 1) /// position of D variables
-						dpos_start(int 0) dpos_end(int 0) /// position of D variables
+						ypos_start(int 1) ypos_end(int 1) /// position of Y variables
+						dpos_start(int 2) dpos_end(int 0) /// position of D variables
 						zpos_start(int 0) zpos_end(int 0) /// position of Z variables
 						sep(string) ///
 						addprefix(string) ///

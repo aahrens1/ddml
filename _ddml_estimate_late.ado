@@ -11,6 +11,11 @@ program _ddml_estimate_late, eclass sortpreserve
                                 debug ///
                                 * ]
 
+    // base sample for estimation - determined by if/in
+    marksample touse
+    // also exclude obs already excluded by ddml sample
+    qui replace `touse' = 0 if `mname'_sample==0
+
     if ("`show'"=="") {
         local show all 
     }
@@ -65,7 +70,8 @@ program _ddml_estimate_late, eclass sortpreserve
             di as res "DML with Y0=`y0', Y1=`y1' and D=`d':"
             _ddml_late, yvar(`nameY') y0tilde(`y0') y1tilde(`y1') ///
                         dvar(`nameD') d0tilde(`d0') d1tilde(`d1') ///
-                        zvar(`nameZ') ztilde(`z')  
+                        zvar(`nameZ') ztilde(`z')  ///
+                        touse(`touse')
 
             local j= `j'+1
          }
@@ -74,9 +80,10 @@ program _ddml_estimate_late, eclass sortpreserve
     if ("`show'"=="opt") {
         *** estimate best model
         di as res "Optimal model: DML with Y=`Yopt' and D=`Dopt'"
-        qui _ddml_late, yvar(`nameY') y0tilde(`Y0opt') y1tilde(`Y1opt') ///
+        qui _ddml_late if `touse', yvar(`nameY') y0tilde(`Y0opt') y1tilde(`Y1opt') ///
                         dvar(`nameD') d0tilde(`D0opt') d1tilde(`D1opt') ///
-                        zvar(`nameZ') ztilde(`Zopt')   
+                        zvar(`nameZ') ztilde(`Zopt')   ///
+                        touse(`touse')
     }
 
     // display
@@ -90,7 +97,7 @@ program _ddml_estimate_late, eclass sortpreserve
     matrix rownames `V' = `nameD'
     local N = e(N)
     ereturn clear
-    ereturn post `b' `V', depname(`Yopt') obs(`N')
+    ereturn post `b' `V', depname(`Yopt') obs(`N') esample(`touse')
     if "`robust'"~="" {
         ereturn local vcetype   robust
     }

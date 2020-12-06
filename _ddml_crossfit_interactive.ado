@@ -49,16 +49,16 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		// fold var does not exist or is not a valid identifier
 		cap drop `mname'_fid
 		tempvar uni cuni
-		qui gen double `uni' = runiform()
-		qui cumul `uni', gen(`cuni')
-		qui gen int `mname'_fid = ceil(`kfolds'*`cuni')
+		qui gen double `uni' = runiform() if `mname'_sample
+		qui cumul `uni' if `mname'_sample, gen(`cuni')
+		qui gen int `mname'_fid = ceil(`kfolds'*`cuni') if `mname'_sample
 		// add fold id to model struct (col 1 = id, col 2 = fold id)
 		mata: `mname'.idFold = st_data(., ("`mname'_id", "`mname'_fid"))
 	}
 	if ("`tabfold'"!="") {
 		di
 		di "Overview of frequencies by fold:"
-		tab `mname'_fid
+		tab `mname'_fid if `mname'_sample
 		di
 	}
 	//
@@ -109,19 +109,19 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					
 					// for D = 1
 					// estimate excluding kth fold
-					`est_main' if `mname'_fid!=`k', `est_options'
+					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `mname'_fid==`k' & `listD' == 1
-					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 1
+					qui predict double `vtilde_i' if `mname'_fid==`k' & `listD' == 1 & `mname'_sample
+					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 1 & `mname'_sample
 
 					// for D = 0
 					// estimate excluding kth fold
-					`est_main' if `mname'_fid!=`k', `est_options'
+					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `mname'_fid==`k' & `listD' == 0
-					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 0
+					qui predict double `vtilde_i' if `mname'_fid==`k' & `listD' == 0 & `mname'_sample
+					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 0 & `mname'_sample
 				
 				}
 				else if ("`eqntype'"=="deq") {
@@ -140,29 +140,29 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 						
 					if ("`model'"=="interactive") {
 						// estimate excluding kth fold
-						`est_main' if `mname'_fid!=`k', `est_options'
+						`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 						// get fitted values and residuals for kth fold	
 						tempvar vtilde_i
-						qui predict double `vtilde_i' if `mname'_fid==`k' 
-						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' 
+						qui predict double `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
 					}
 					else {
 
 						// for Z = 0
 						// estimate excluding kth fold
-						`est_main' if `mname'_fid!=`k', `est_options'
+						`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 						// get fitted values and residuals for kth fold	
 						tempvar vtilde_i
-						qui predict double `vtilde_i' if `mname'_fid==`k' & `listZ' == 0
-						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k'  & `listZ' == 0
+						qui predict double `vtilde_i' if `mname'_fid==`k' & `listZ' == 0 & `mname'_sample
+						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k'  & `listZ' == 0 & `mname'_sample
 
 						// for Z = 1
 						// estimate excluding kth fold
-						`est_main' if `mname'_fid!=`k' , `est_options'
+						`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 						// get fitted values and residuals for kth fold	
 						tempvar vtilde_i
-						qui predict double `vtilde_i' if `mname'_fid==`k' & `listZ' == 1
-						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listZ' == 1
+						qui predict double `vtilde_i' if `mname'_fid==`k' & `listZ' == 1 & `mname'_sample
+						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listZ' == 1 & `mname'_sample
 					}
 				}
 				else if ("`eqntype'"=="zeq") {
@@ -181,11 +181,11 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					di "  est_options: `est_options'"
 		
 					// estimate excluding kth fold
-					`est_main' if `mname'_fid!=`k', `est_options'
+					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `mname'_fid==`k' 
-					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' 
+					qui predict double `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
 				}
 			}
 		}
@@ -199,17 +199,17 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 			mata: st_local("eqntype",`eqn'.eqntype)
 			mata: st_local("vtilde",`eqn'.Vtilde)
 			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `mname'_`vtilde'^2
+			qui gen double `vtilde_sq' = `mname'_`vtilde'^2 if `mname'_sample
 			if ("`eqntype'"=="yeq") {
 				// for D=1
-				sum `vtilde_sq' if `listD'==0, meanonly
+				sum `vtilde_sq' if `listD'==0 & `mname'_sample, meanonly
 				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',0)
 				// for D=1
-				qui sum `vtilde_sq' if `listD'==1, meanonly
+				qui sum `vtilde_sq' if `listD'==1 & `mname'_sample, meanonly
 				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',1)
 			} 
 			else if ("`eqntype'"=="deq") {
-				qui sum `vtilde_sq', meanonly
+				qui sum `vtilde_sq' if `mname'_sample, meanonly
 				mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
 			}
 		}
@@ -221,25 +221,25 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 			mata: st_local("eqntype",`eqn'.eqntype)
 			mata: st_local("vtilde",`eqn'.Vtilde)
 			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `mname'_`vtilde'^2
+			qui gen double `vtilde_sq' = `mname'_`vtilde'^2 if `mname'_sample
 			if ("`eqntype'"=="yeq") {
 				// for Z=1
-				qui sum `vtilde_sq' if `listZ'==0, meanonly
+				qui sum `vtilde_sq' if `listZ'==0 & `mname'_sample, meanonly
 				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',0)
 				// for Z=1
-				qui sum `vtilde_sq' if `listZ'==1, meanonly
+				qui sum `vtilde_sq' if `listZ'==1 & `mname'_sample, meanonly
 				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',1)
 			} 
 			else if ("`eqntype'"=="deq") {
 				// for Z = 0
-				sum `vtilde_sq' if `listZ'==0, meanonly
+				sum `vtilde_sq' if `listZ'==0 & `mname'_sample, meanonly
 				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',0)
 				// for Z = 1
-				sum `vtilde_sq' if `listZ'==1, meanonly
+				sum `vtilde_sq' if `listZ'==1 & `mname'_sample, meanonly
 				mata: add_to_eqn01(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)',1)
 			}
 			else if ("`eqntype'"=="zeq") {
-				qui sum `vtilde_sq', meanonly
+				qui sum `vtilde_sq' if `mname'_sample, meanonly
 				mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
 			}
 		}
