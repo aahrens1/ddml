@@ -1,7 +1,7 @@
-## A simple Stata package for Double Debiased Machine Learning
+## A Stata package for Double Debiased Machine Learning
 
 This package implements the DDML estimator for a range of models. 
-It's an early incomplete version; so please use with care. 
+It's an early incomplete version.
 
 
 ### Installation:
