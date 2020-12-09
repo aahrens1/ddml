@@ -14,6 +14,7 @@ syntax varlist(min=2) [if] [in] [aweight fweight],	 ///
 					normalize						 /// use scikit's normalize
 					UNITLoadings					 /// don't prestandardize
 					STDCoef							 /// report standardized coefficients
+					NOCONStant						 /// standard option
 				]
 
 	// pylearn, check
@@ -44,7 +45,14 @@ syntax varlist(min=2) [if] [in] [aweight fweight],	 ///
 	local stdcoefflag	= ("`stdcoef'"~="")		// return coef estimates in std units
 	local stdflag		= ("`unitloadings'"=="") | `stdcoefflag'
 	local normflag		= ("`normalize'"~="")
-
+	local consmodel		= ("`noconstant'"=="")
+	if `stdcoefflag' | `consmodel'==0 {
+		local consflag	= 0
+	}
+	else {
+		local consflag = 1
+	}
+	
 	* Pass varlist into varlists called yvar and xvars
 	gettoken yvar xvars : varlist
 	local num_features : word count `xvars'
@@ -79,15 +87,16 @@ syntax varlist(min=2) [if] [in] [aweight fweight],	 ///
 		 `nonempty_test',					///
 		 `stdflag',							///
 		 `stdcoefflag',						///
+		 `consflag',						///
 		 `normflag')
 
 	tempname b
 	mat `b' = r(beta)
-	if `stdcoefflag' {
-		local cnames `xvars'
+	if `consflag' {
+		local cnames `xvars' _cons
 	}
 	else {
-		local cnames `xvars' _cons
+		local cnames `xvars'
 	}
 	mat colnames `b' = `cnames'
 	
@@ -163,7 +172,7 @@ random.seed(50)
 
 # MS: "lambda" probably a reserved word
 
-def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_start,prediction,training,nonempty_test,stdflag,stdcoefflag,normflag):
+def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_start,prediction,training,nonempty_test,stdflag,stdcoefflag,consflag,normflag):
 
 	#-------------------------------------------------------------
 	# Load data from Stata into Python
@@ -193,6 +202,11 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	y_scale = np.nanstd(y_insample)
 	x_mean = np.nanmean(x_insample,axis=0)
 	
+	# Always standardize y
+	y_insample = (y_insample-y_mean)/y_scale
+	# Need to rescale lambda penalty
+	lpenalty = lpenalty/y_scale
+	
 	# If standardizing, scale features to mean zero, std dev one
 	if stdflag==1:
 		scaler = preprocessing.StandardScaler().fit(x_insample)
@@ -203,14 +217,6 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 		x = DataFrame(x)
 		x.columns = features
 		x_scale = scaler.scale_
-		# now y
-		y_insample = (y_insample-y_mean)/y_scale
-		# Need to rescale lambda penalty
-		lpenalty = lpenalty/y_scale
-	
-	# Convert L1/L2 ratio (glmnet "alpha") to glmnet convention
-	if lratio<1:
-		lratio = lratio*y_scale / (1 - lratio + lratio*y_scale)
 	
 	Scalar.setValue("r(alpha)", lratio)
 	Scalar.setValue("r(lambda)", lpenalty)
@@ -219,9 +225,9 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 
 	# Initialize model object
 	if lratio>0:
-		model = ElasticNet(alpha=lpenalty, l1_ratio=lratio,random_state=0,normalize=normflag, tol=1e-10)
+		model = ElasticNet(alpha=lpenalty, l1_ratio=lratio, random_state=0, fit_intercept=consflag, normalize=normflag, tol=1e-10)
 	else:
-		model = Ridge(alpha=lpenalty, normalize=normflag, tol=1e-10)
+		model = Ridge(alpha=lpenalty, fit_intercept=consflag, normalize=normflag, tol=1e-10)
 
 	# Train model on training data
 	model.fit(x_insample, y_insample)
@@ -235,17 +241,23 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 
 	# Stata coefficient vectors are row vectors 
 	if stdflag==0:
-		b = np.append(model.coef_,model.intercept_)
+		if consflag==1:
+			b = np.append(model.coef_*y_scale,(model.intercept_*y_scale + y_mean))
+		else:
+			b = model.coef_
 		b = np.array([b])
 	else:
 		# estimation used standardization
 		if stdcoefflag==0:
 			# Unstandardize coefficients
 			b = model.coef_ / x_scale * y_scale
-			# Get constant; use prestandardized data
-			pred_insample_nostd = np.nansum(df_train[features] * b)/np.shape(x_insample)[0]
-			b = np.append(b,y_mean - pred_insample_nostd)
-			b = np.array([b])
+			if consflag==1:
+				# Get constant; use prestandardized data
+				pred_insample_nostd = np.nansum(df_train[features] * b)/np.shape(x_insample)[0]
+				b = np.append(b,y_mean - pred_insample_nostd)
+				b = np.array([b])
+			else:
+				b = np.array([b])
 		else:
 			b = np.array([model.coef_])
 	Matrix.store("r(beta)",b)
@@ -254,7 +266,7 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	insample_mae = metrics.mean_absolute_error(y_insample, pred_insample)
 	insample_mse = metrics.mean_squared_error(y_insample, pred_insample)
 	insample_rmse = np.sqrt(insample_mse)
-	if stdflag==1 and stdcoefflag==0:
+	if stdcoefflag==0:
 		insample_mae = insample_mae * y_scale
 		insample_rmse = insample_rmse * y_scale
 	Scalar.setValue("r(training_mae)", insample_mae, vtype='visible')

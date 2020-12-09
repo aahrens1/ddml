@@ -18,16 +18,22 @@ foreach var of varlist price mpg-foreign {
 // pylasso2 sd_price sd_mpg-sd_foreign, lambda(.1) standardize
 
 // match - prestandardized variables
-pylasso2 sd_price sd_mpg-sd_foreign, lambda(.1)
+pylasso2 sd_price sd_mpg-sd_foreign, lambda(.1) nocons
 mat list e(b)
-qui lasso2 sd_price sd_mpg-sd_foreign, lglmnet lambda(.1)
+mat b_pylasso2=e(b)
+qui lasso2 sd_price sd_mpg-sd_foreign, lglmnet lambda(.1) nocons
 mat list e(sbetaAll)
+mat b_lasso2=e(sbetaAll)
+assert mreldif(b_pylasso2,b_lasso2) < 1e-8
 
 // match - standardized coefs, programs do the standardizing
 pylasso2 price mpg-foreign, lambda(100) stdcoef
 mat list e(b)
+mat b_pylasso2=e(b)
 qui lasso2 price mpg-foreign, lglmnet lambda(100) stdcoef
 mat list e(sbetaAll)
+mat b_lasso2=e(sbetaAll)
+assert mreldif(b_pylasso2,b_lasso2) < 1e-8
 
 // standardizing already standardized X changes nothing
 pylasso2 sd_price sd_mpg-sd_foreign, lambda(.1) unitloadings
@@ -38,23 +44,34 @@ pylasso2 sd_price sd_mpg-sd_foreign, lambda(.1) unitloadings
 pylasso2 sd_price sd_mpg-sd_foreign, lambda(.1) unitloadings normalize
 
 // with a pre-standardized y, standardized is equiv to std+std coefs
-pylasso2 sd_price sd_mpg-sd_foreign, lambda(.1) unitloadings
+pylasso2 sd_price sd_mpg-sd_foreign, lambda(.1) unitloadings nocons
 pylasso2 sd_price mpg-foreign, lambda(.1) stdcoef
+mat b_pylasso2=e(b)
 // match
 qui lasso2 sd_price mpg-foreign, lglmnet lambda(.1) stdcoef
 mat list e(sbetaAll)
+mat b_lasso2=e(sbetaAll)
+assert mreldif(b_pylasso2,b_lasso2) < 1e-8
 
 // match - standardization and then unstandardized coefs
 pylasso2 price mpg-foreign, lambda(1000)
 mat list e(b)
+mat b_pylasso2=e(b)
 lasso2 price mpg-foreign, lglmnet lambda(1000)
 mat list e(betaAll)
+mat b_lasso2=e(betaAll)
+assert mreldif(b_pylasso2,b_lasso2) < 1e-8
 
 // match - no standardization at all
+// need to fix constant
 pylasso2 price mpg-foreign, lambda(1000) unitloadings
 mat list e(b)
+mat b_pylasso2=e(b)
 lasso2 price mpg-foreign, lglmnet lambda(1000) unitloadings
 mat list e(betaAll)
+mat b_lasso2=e(betaAll)
+// note lower tolerance
+assert mreldif(b_pylasso2,b_lasso2) < 1e-6
 
 // training
 cap drop training
@@ -77,25 +94,43 @@ ereturn list
 
 **** elastic net ****
 
-// match - programs do the standardizing
-pylasso2 price mpg-foreign, lambda(100) alpha(0.5) stdcoef
-mat list e(b)
-qui lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0.5) stdcoef
-mat list e(sbetaAll)
-
-// only standardization of dep var - match
+// only prestandardization of dep var - match
 pylasso2 sd_price mpg-foreign, lambda(1) alpha(0.5) unitloadings
+mat b_pylasso2=e(b)
 lasso2 sd_price mpg-foreign, lglmnet lambda(1) alpha(0.5) unitloadings
+mat b_lasso2=e(betaAll)
+// note lower tolerance
+assert mreldif(b_pylasso2,b_lasso2) < 1e-7
 
-// no standardization - no match but not hugely off
+// prestandardization of dep var, programs standardize X - match
+pylasso2 sd_price mpg-foreign, lambda(1) alpha(0.5)
+mat b_pylasso2=e(b)
+lasso2 sd_price mpg-foreign, lglmnet lambda(1) alpha(0.5)
+mat b_lasso2=e(betaAll)
+assert mreldif(b_pylasso2,b_lasso2) < 1e-8
+
+// programs do the standardizing - match
+pylasso2 price mpg-foreign, lambda(100) alpha(0.5)
+mat list e(b)
+mat b_pylasso2=e(b)
+qui lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0.5)
+mat list e(betaAll)
+mat b_lasso2=e(betaAll)
+// note lower tolerance
+assert mreldif(b_pylasso2,b_lasso2) < 1e-7
+
+// no standardization - match
 pylasso2 price mpg-foreign, lambda(100) alpha(0.5) unitloadings
+mat b_pylasso2=e(b)
 lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0.5) unitloadings
+mat b_lasso2=e(betaAll)
+assert mreldif(b_pylasso2,b_lasso2) < 1e-8
 
 // how it should behave - change scale of depvar and lambda
 lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0.5) unitloadings
 lasso2 price000 mpg-foreign, lglmnet lambda(0.100) alpha(0.5) unitloadings
 
-// how sklearn behaves - poorly
+// how sklearn behaves
 pylasso2 price mpg-foreign, lambda(100) alpha(0.5) unitloadings
 pylasso2 price000 mpg-foreign, lambda(0.100) alpha(0.5) unitloadings
 pylasso2 price0000 mpg-foreign, lambda(0.0100) alpha(0.5) unitloadings
@@ -116,7 +151,7 @@ lasso2 sd_price mpg-foreign, lglmnet lambda(1) alpha(0) unitloadings
 lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0) unitloadings
 lasso2 price000 mpg-foreign, lglmnet lambda(0.100) alpha(0) unitloadings
 
-// sklearn again behaves poorly
+// sklearn behaves poorly
 pylasso2 price mpg-foreign, lambda(100) alpha(0) unitloadings
 pylasso2 price000 mpg-foreign, lambda(0.100) alpha(0) unitloadings
 pylasso2 price0000 mpg-foreign, lambda(0.0100) alpha(0) unitloadings
