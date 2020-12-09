@@ -137,21 +137,34 @@ pylasso2 price0000 mpg-foreign, lambda(0.0100) alpha(0.5) unitloadings
 
 *** ridge ***
 
-// programs do the standardizing - NO MATCH
+// programs do the standardizing
 pylasso2 price mpg-foreign, lambda(100) alpha(0) stdcoef
 mat list e(b)
+mat b_pylasso2=e(b)
 qui lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0) stdcoef
 mat list e(sbetaAll)
+mat b_lasso2=e(sbetaAll)
+assert mreldif(b_pylasso2,b_lasso2) < 1e-8
 
-// only standardization of dep var - NO MATCH
+// only standardization of dep var - match
 pylasso2 sd_price mpg-foreign, lambda(1) alpha(0) unitloadings
+mat b_pylasso2=e(b)
 lasso2 sd_price mpg-foreign, lglmnet lambda(1) alpha(0) unitloadings
+mat b_lasso2=e(betaAll)
+assert mreldif(b_pylasso2,b_lasso2) < 1e-8
+
+// no standardization - match
+pylasso2 price mpg-foreign, lambda(100) alpha(0) unitloadings
+mat b_pylasso2=e(b)
+lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0) unitloadings
+mat b_lasso2=e(betaAll)
+assert mreldif(b_pylasso2,b_lasso2) < 1e-8
 
 // how it should behave - change scale of depvar and lambda
 lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0) unitloadings
 lasso2 price000 mpg-foreign, lglmnet lambda(0.100) alpha(0) unitloadings
 
-// sklearn behaves poorly
+// how sklearn behaves
 pylasso2 price mpg-foreign, lambda(100) alpha(0) unitloadings
 pylasso2 price000 mpg-foreign, lambda(0.100) alpha(0) unitloadings
 pylasso2 price0000 mpg-foreign, lambda(0.0100) alpha(0) unitloadings

@@ -201,6 +201,7 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	y_mean = np.nanmean(y_insample)
 	y_scale = np.nanstd(y_insample)
 	x_mean = np.nanmean(x_insample,axis=0)
+	n_insample = x_insample.shape[0]
 	
 	# Always standardize y
 	y_insample = (y_insample-y_mean)/y_scale
@@ -227,7 +228,8 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	if lratio>0:
 		model = ElasticNet(alpha=lpenalty, l1_ratio=lratio, random_state=0, fit_intercept=consflag, normalize=normflag, tol=1e-10)
 	else:
-		model = Ridge(alpha=lpenalty, fit_intercept=consflag, normalize=normflag, tol=1e-10)
+		# Ridge uses a different definition of the penalty
+		model = Ridge(alpha=lpenalty*n_insample, fit_intercept=consflag, normalize=normflag, tol=1e-10)
 
 	# Train model on training data
 	model.fit(x_insample, y_insample)
@@ -253,7 +255,7 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 			b = model.coef_ / x_scale * y_scale
 			if consflag==1:
 				# Get constant; use prestandardized data
-				pred_insample_nostd = np.nansum(df_train[features] * b)/np.shape(x_insample)[0]
+				pred_insample_nostd = np.nansum(df_train[features] * b)/n_insample
 				b = np.append(b,y_mean - pred_insample_nostd)
 				b = np.array([b])
 			else:
