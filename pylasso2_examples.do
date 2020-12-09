@@ -121,9 +121,8 @@ pylasso2 price mpg-foreign, lambda(100) alpha(0) unitloadings
 pylasso2 price000 mpg-foreign, lambda(0.100) alpha(0) unitloadings
 pylasso2 price0000 mpg-foreign, lambda(0.0100) alpha(0) unitloadings
 
-expand 100
+************* speed check *************
 
-// with standardization, lasso2 is faster
 timer clear
 timer on 1
 forvalues i=1/100 {
@@ -137,7 +136,6 @@ forvalues i=1/100 {
 timer off 2
 timer list
 
-// without standardization, lasso2 is faster
 timer clear
 timer on 1
 forvalues i=1/100 {
