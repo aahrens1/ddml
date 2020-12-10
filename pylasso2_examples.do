@@ -2,7 +2,8 @@ clear all
 cap prog drop pylasso2
 cap cd "C:\Users\ecomes\Documents\GitHub\lassopack\lassopack_v141"
 sysuse auto, clear
-drop if rep78==.
+// rep78 is missing for 5 obs; use to check mark/markout/etc.
+order rep78, before(mpg)
 gen double price000 = price/1000
 gen double price0000 = price/10000
 
@@ -27,10 +28,11 @@ mat b_lasso2=e(sbetaAll)
 assert mreldif(b_pylasso2,b_lasso2) < 1e-8
 
 // match - standardized coefs, programs do the standardizing
-pylasso2 price mpg-foreign, lambda(100) stdcoef
+// use rep78
+pylasso2 price rep78-foreign, lambda(100) stdcoef
 mat list e(b)
 mat b_pylasso2=e(b)
-qui lasso2 price mpg-foreign, lglmnet lambda(100) stdcoef
+qui lasso2 price rep78-foreign, lglmnet lambda(100) stdcoef
 mat list e(sbetaAll)
 mat b_lasso2=e(sbetaAll)
 assert mreldif(b_pylasso2,b_lasso2) < 1e-8
@@ -54,20 +56,21 @@ mat b_lasso2=e(sbetaAll)
 assert mreldif(b_pylasso2,b_lasso2) < 1e-8
 
 // match - standardization and then unstandardized coefs
-pylasso2 price mpg-foreign, lambda(1000)
+// use rep78
+pylasso2 price rep78-foreign, lambda(1000)
 mat list e(b)
 mat b_pylasso2=e(b)
-lasso2 price mpg-foreign, lglmnet lambda(1000)
+lasso2 price rep78-foreign, lglmnet lambda(1000)
 mat list e(betaAll)
 mat b_lasso2=e(betaAll)
 assert mreldif(b_pylasso2,b_lasso2) < 1e-8
 
 // match - no standardization at all
-// need to fix constant
-pylasso2 price mpg-foreign, lambda(1000) unitloadings
+// use rep78
+pylasso2 price rep78-foreign, lambda(1000) unitloadings
 mat list e(b)
 mat b_pylasso2=e(b)
-lasso2 price mpg-foreign, lglmnet lambda(1000) unitloadings
+lasso2 price rep78-foreign, lglmnet lambda(1000) unitloadings
 mat list e(betaAll)
 mat b_lasso2=e(betaAll)
 // note lower tolerance
@@ -91,6 +94,26 @@ pylasso2 price mpg-foreign if _n<=50, lambda(1000)
 ereturn list
 pylasso2 price mpg-foreign, lambda(1000) training(training)
 ereturn list
+
+// prediction
+// note that rep78 is missing for 5 obs
+cap drop phat*
+pylasso2 price rep78-foreign, lambda(1000) prediction(phat_pylasso2)
+mat list e(b)
+mat b_pylasso2=e(b)
+lasso2 price rep78-foreign, lglmnet lambda(1000)
+predict double phat_lasso2 if e(sample), xb
+assert reldif(phat_pylasso2,phat_pylasso2)<1e-12
+list phat* rep78 in 1/10
+// subsample
+cap drop phat*
+pylasso2 price rep78-foreign if _n<50, lambda(1000) prediction(phat_pylasso2)
+mat list e(b)
+mat b_pylasso2=e(b)
+lasso2 price rep78-foreign if _n<50, lglmnet lambda(1000)
+predict double phat_lasso2 if e(sample), xb
+assert reldif(phat_pylasso2,phat_pylasso2)<1e-12
+list phat* rep78 in 1/10
 
 **** elastic net ****
 

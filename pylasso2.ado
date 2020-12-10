@@ -19,7 +19,7 @@ syntax varlist(min=2) [if] [in] [aweight fweight],	 ///
 
 	// pylearn, check
 
-	**** code from pyforest ****
+	**** n_jobs and random_state code from pyforest ****
 	* n_jobs: number of processors to use
 	if "`n_jobs'"=="" local n_jobs -1
 	if `n_jobs'<1 & `n_jobs'!=-1 {
@@ -72,6 +72,11 @@ syntax varlist(min=2) [if] [in] [aweight fweight],	 ///
 
 	qui count if `training_var'==0 & `touse'
 	local nonempty_test = r(N)>0
+	
+	// create an empty prediction variable
+	if "`prediction'"~="" {
+		qui gen double `prediction' = .
+	}
 
 	python: run_elastic_net(				///
 		`alpha',							///
@@ -174,9 +179,7 @@ random.seed(50)
 
 def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_start,prediction,training,nonempty_test,stdflag,stdcoefflag,consflag,normflag):
 
-	#-------------------------------------------------------------
-	# Load data from Stata into Python
-	#-------------------------------------------------------------
+	##############################################################
 	
 	# Load into Pandas data frame
 	df = DataFrame(Data.get(vars,selectvar=touse))
@@ -187,7 +190,7 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 
 	# Split training data and test data into separate data frames
 	df_train, df_test = df[df[training]==1], df[df[training]==0]
-
+	
 	# Create list of feature names
 	features = df.columns[2:]
 	y        = df.columns[1]
@@ -197,27 +200,34 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	x_insample  = df_train[features]
 	y_insample  = df_train[y]
 
+	##############################################################
+
 	# Misc
-	y_mean = np.nanmean(y_insample)
-	y_scale = np.nanstd(y_insample)
-	x_mean = np.nanmean(x_insample,axis=0)
 	n_insample = x_insample.shape[0]
+	y_mean = np.nanmean(y_insample)
+	y_std = np.nanstd(y_insample)
+	x_mean = np.nanmean(x_insample,axis=0)
+	x_std = np.nanstd(x_insample,axis=0)
+	
+	# If SD is zero, replace with 1
+	x_std[x_std==0] = 1
 	
 	# Always standardize y
-	y_insample = (y_insample-y_mean)/y_scale
+	y_insample = (y_insample-y_mean)/y_std
+	
 	# Need to rescale lambda penalty
-	lpenalty = lpenalty/y_scale
+	lpenalty = lpenalty/y_std
 	
 	# If standardizing, scale features to mean zero, std dev one
 	if stdflag==1:
-		scaler = preprocessing.StandardScaler().fit(x_insample)
-		x_insample = scaler.transform(x_insample)
-		x_insample = DataFrame(x_insample)
-		x_insample.columns = features
-		x = scaler.transform(x)
-		x = DataFrame(x)
-		x.columns = features
-		x_scale = scaler.scale_
+		x_insample = (x_insample-x_mean)/x_std
+		x = (x-x_mean)/x_std
+	if nonempty_test==1:
+		x_test = df_test[features]
+		y_test = df_test[y]
+		if stdflag==1:
+			x_test = (x_test-x_mean)/x_std
+			y_test = (y_test-y_mean)/y_std
 	
 	Scalar.setValue("r(alpha)", lratio)
 	Scalar.setValue("r(lambda)", lpenalty)
@@ -234,17 +244,20 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	# Train model on training data
 	model.fit(x_insample, y_insample)
 
+	##############################################################
+
 	# Get in-sample prediction
-	pred_insample = model.predict(x_insample)
+	insample_predict = model.predict(x_insample)
 
 	# Get full-sample prediction
 	model_predict = model.predict(x)
 
+	##############################################################
 
 	# Stata coefficient vectors are row vectors 
 	if stdflag==0:
 		if consflag==1:
-			b = np.append(model.coef_*y_scale,(model.intercept_*y_scale + y_mean))
+			b = np.append(model.coef_*y_std,(model.intercept_*y_std + y_mean))
 		else:
 			b = model.coef_
 		b = np.array([b])
@@ -252,11 +265,11 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 		# estimation used standardization
 		if stdcoefflag==0:
 			# Unstandardize coefficients
-			b = model.coef_ / x_scale * y_scale
+			b = model.coef_ / x_std * y_std
 			if consflag==1:
 				# Get constant; use prestandardized data
-				pred_insample_nostd = np.nansum(df_train[features] * b)/n_insample
-				b = np.append(b,y_mean - pred_insample_nostd)
+				insample_predict_nostd = np.nansum(df_train[features] * b)/n_insample
+				b = np.append(b,y_mean - insample_predict_nostd)
 				b = np.array([b])
 			else:
 				b = np.array([b])
@@ -265,37 +278,34 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	Matrix.store("r(beta)",b)
 
 	# Get in sample (training sample) mae, rmse
-	insample_mae = metrics.mean_absolute_error(y_insample, pred_insample)
-	insample_mse = metrics.mean_squared_error(y_insample, pred_insample)
+	insample_mae = metrics.mean_absolute_error(y_insample, insample_predict)
+	insample_mse = metrics.mean_squared_error(y_insample, insample_predict)
 	insample_rmse = np.sqrt(insample_mse)
 	if stdcoefflag==0:
-		insample_mae = insample_mae * y_scale
-		insample_rmse = insample_rmse * y_scale
+		insample_mae = insample_mae * y_std
+		insample_rmse = insample_rmse * y_std
 	Scalar.setValue("r(training_mae)", insample_mae, vtype='visible')
 	Scalar.setValue("r(training_rmse)", insample_rmse, vtype='visible')
 
 	# If nonempty test sample, get out of sample stats
 	if nonempty_test==1:
-		x_test = df_test[features]
-		y_outsample = df_test[y]
-		if stdflag==1:
-			y_outsample = (y_outsample-y_mean)/y_scale
-			x_test = (x_test-x_mean)/x_scale
-		pred_outsample = model.predict(x_test)
-		outsample_mae = metrics.mean_absolute_error(y_outsample, pred_outsample)
-		outsample_mse = metrics.mean_squared_error(y_outsample, pred_outsample)
+		outsample_predict = model.predict(x_test)
+		outsample_mae = metrics.mean_absolute_error(y_test, outsample_predict)
+		outsample_mse = metrics.mean_squared_error(y_test, outsample_predict)
 		outsample_rmse = np.sqrt(outsample_mse)
 		if stdflag==1 and stdcoefflag==0:
-			outsample_mae = outsample_mae * y_scale
-			outsample_rmse = outsample_rmse * y_scale
+			outsample_mae = outsample_mae * y_std
+			outsample_rmse = outsample_rmse * y_std
 		Scalar.setValue("r(test_mae)", outsample_mae, vtype='visible')
 		Scalar.setValue("r(test_rmse)", outsample_rmse, vtype='visible')
 
-	# Pass objects back to __main__ namespace to interact w/ later
-	# Code from pyforest; not in use
-	__main__.model_object  = model
-	__main__.model_predict = model_predict
-	__main__.features = features
+	# Unstandardize predictions if required
+	if stdflag==1:
+		model_predict = model_predict * y_std + y_mean
+	
+	# Store in supplied variable
+	if prediction != "":
+		Data.store(var=prediction,obs=None,val=model_predict,selectvar=touse)
 
 	##############################################################
 
