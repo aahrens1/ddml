@@ -14,23 +14,29 @@ which ddml
 ********************************************************************************
 
 set obs 1000
-gen w = rnormal()
+gen wall = 0
 gen xall = 0
 gen zall = 0
-forvalues i= 1(1)20 {
+gen d1 = rnormal()
+gen d2 = rnormal()
+local p = 20
+forvalues i= 1(1)`p' {
+	gen w`i'=rnormal()
 	gen x`i'=rnormal()
-	replace xall = xall + x`i'*(0.9)^(`i')
-}
-forvalues i= 1(1)20 {
 	gen z`i'=rnormal()
+	replace wall = wall + w`i'
+	replace xall = xall + x`i'
+	replace d1 = d1 + x`i'*(0.9)^(`i') + w`i'*(0.9)^(`i') + z`i'*(0.9)^(21-`i')
+	replace d2 = d2 + x`i'*(0.9)^(`i') + w`i'*(0.9)^(`i') + z`i'*(0.9)^(`i')
 	replace zall = zall + z`i'*(0.9)^(`i')
 }
-gen d1 = rnormal() + zall + w +xall
-gen d2 = rnormal() + zall + w + xall
 gen e = rnormal() 
-gen y = w + d1 + d2 + e + xall
+gen y = d1 + d2 + e + xall + wall
 
-reg y d* x*
+order y d1 d2 w* z* x*
+reg y d1 d2 x1-x20 w1-w20
+reg y d1 d2 x1-x20
+ivreg2 y x1-x20 (d1 d2 = z1-z20)
 
 ********************************************************************************
 *** iv model																 ***
