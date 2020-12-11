@@ -139,7 +139,7 @@ mat b_pylasso2=e(b)
 qui lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0.5)
 mat list e(betaAll)
 mat b_lasso2=e(betaAll)
-// note lower tolerance
+// note looser tolerance
 assert mreldif(b_pylasso2,b_lasso2) < 1e-7
 
 // no standardization - match
@@ -147,7 +147,8 @@ pylasso2 price mpg-foreign, lambda(100) alpha(0.5) unitloadings
 mat b_pylasso2=e(b)
 lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0.5) unitloadings
 mat b_lasso2=e(betaAll)
-assert mreldif(b_pylasso2,b_lasso2) < 1e-8
+// note looser tolerance
+assert mreldif(b_pylasso2,b_lasso2) < 1e-7
 
 // how it should behave - change scale of depvar and lambda
 lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0.5) unitloadings

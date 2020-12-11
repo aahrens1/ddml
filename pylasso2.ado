@@ -30,7 +30,6 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 		di as error " If not -1, this has to be a positive integer. But you should probably not mess around with this."
 		exit 1
 	}
-
 	if "`random_state'"=="-1" local random_state None
 	if "`random_state'"!="" & "`random_state'"!="None" {
 		if `random_state'<1 {
@@ -54,7 +53,6 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 	else {
 		local consflag = 1
 	}
-	
 	
 	marksample touse
 	qui count if `touse'
@@ -292,7 +290,8 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	insample_predict = model.predict(x_insample)
 
 	# Get full-sample prediction
-	model_predict = model.predict(x)
+	if stdflag==1 and prediction != "":
+		model_predict = model.predict(x)
 
 	SFIToolkit.stata("timer off 54")
 
@@ -357,7 +356,7 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 		Scalar.setValue("r(test_rmse)", outsample_rmse, vtype='visible')
 
 	# Unstandardize predictions if required
-	if stdflag==1:
+	if stdflag==1 and prediction != "":
 		model_predict = model_predict * y_std + y_mean
 	
 	# Store in supplied variable
