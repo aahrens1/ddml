@@ -171,10 +171,19 @@ program _ddml_crossfit_additive, eclass sortpreserve
 		forvalues i=1/`numeqns' {
 			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 			mata: st_local("vtilde",`eqn'.Vtilde)
+			mata: st_local("vname",`eqn'.Vname)
 			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `mname'_`vtilde'^2 if `mname'_sample
-			qui sum `vtilde_sq' if `mname'_sample, meanonly
-			mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
+			if ("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
+				// need to use residuals here
+				qui gen double `vtilde_sq' = (`vname'-`mname'_`vtilde')^2 if `mname'_sample
+				qui sum `vtilde_sq' if `mname'_sample, meanonly
+				mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
+			} 
+			else {
+				qui gen double `vtilde_sq' = `mname'_`vtilde'^2 if `mname'_sample
+				qui sum `vtilde_sq' if `mname'_sample, meanonly
+				mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
+			}
 		}
 	
 		// loop through equations, display results, and save names of tilde vars with smallest MSE
