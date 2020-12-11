@@ -1,6 +1,6 @@
 program define pylasso2, eclass
 version 16.0
-syntax varlist(min=2) [if] [in] [aweight fweight],	 ///
+syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 				[									 ///
 					alpha(real 1)					 /// elastic net parameter, alpha=1 is lasso, alpha=0 is ridge
 					lambda(real 1)					 /// penalty
@@ -18,6 +18,8 @@ syntax varlist(min=2) [if] [in] [aweight fweight],	 ///
 				]
 
 	// pylearn, check
+	
+	timer on 40
 
 	**** n_jobs and random_state code from pyforest ****
 	* n_jobs: number of processors to use
@@ -53,14 +55,23 @@ syntax varlist(min=2) [if] [in] [aweight fweight],	 ///
 		local consflag = 1
 	}
 	
-	* Pass varlist into varlists called yvar and xvars
-	gettoken yvar xvars : varlist
-	local num_features : word count `xvars'
 	
 	marksample touse
 	qui count if `touse'
 	local N		= r(N)
 
+	* Deal with factor and time-series vars
+	// first expand and unabbreviate
+	fvexpand `varlist' if `touse'
+	local varlist `r(varlist)'
+	// now create a varlist with temps etc. that can be passed to Python
+	fvrevar `varlist' if `touse'
+	local varlist_t `r(varlist)'
+
+	* Pass varlist into varlists called yvar and xvars
+	gettoken yvar xvars : varlist
+	gettoken yvar_t xvars_t : varlist_t
+	
 	* Define a temporary variable for the training sample
 	tempvar training_var
 	if "`training'"=="" {
@@ -78,22 +89,28 @@ syntax varlist(min=2) [if] [in] [aweight fweight],	 ///
 		qui gen double `prediction' = .
 	}
 
-	python: run_elastic_net(				///
-		`alpha',							///
-		`lambda',							///
-		"`training_var' `yvar' `xvars'",	///
-		"`touse'",							///
-		`n_jobs',							///
-		`random_state',						///
-		`verbose',							///
-		`warm_start',						///
-		"`prediction'",						///
-		"`training_var'",					///
-		 `nonempty_test',					///
-		 `stdflag',							///
-		 `stdcoefflag',						///
-		 `consflag',						///
+	timer off 40
+	timer on 50
+	
+	python: run_elastic_net(					///
+		`alpha',								///
+		`lambda',								///
+		"`training_var' `yvar_t' `xvars_t'",	///
+		"`touse'",								///
+		`n_jobs',								///
+		`random_state',							///
+		`verbose',								///
+		`warm_start',							///
+		"`prediction'",							///
+		"`training_var'",						///
+		 `nonempty_test',						///
+		 `stdflag',								///
+		 `stdcoefflag',							///
+		 `consflag',							///
 		 `normflag')
+
+	timer off 50
+	timer on 60
 
 	tempname b
 	mat `b' = r(beta)
@@ -135,9 +152,11 @@ syntax varlist(min=2) [if] [in] [aweight fweight],	 ///
 	}
 
 	di
-	ereturn di, noomitted
+	ereturn di, noomitted vsquish nofvlabel
 	di "sklearn lambda=" _col(20) %10.4f `sk_lambda'
 	di "sklearn alpha=" _col(20) %10.4f `sk_alpha'
+
+	timer off 60
 
 end
 
@@ -156,7 +175,7 @@ python:
 # Import required Python modules (pandas, scikit-learn, sfi)
 from pandas import DataFrame
 from sklearn.ensemble import RandomForestClassifier,RandomForestRegressor
-from sfi import Data,Matrix,Scalar
+from sfi import Data,Matrix,Scalar,SFIToolkit
 from sklearn import metrics, preprocessing
 import numpy as np
 # MS
@@ -181,8 +200,19 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 
 	##############################################################
 	
+	# Start Stata timer
+	SFIToolkit.stata("timer on 50")
+
 	# Load into Pandas data frame
 	df = DataFrame(Data.get(vars,selectvar=touse))
+	
+	SFIToolkit.stata("timer off 50")
+
+	##############################################################
+	
+	# Start Stata timer
+	SFIToolkit.stata("timer on 51")
+
 	colnames = []
 	for var in vars.split():
 		 colnames.append(var)
@@ -200,14 +230,19 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	x_insample  = df_train[features]
 	y_insample  = df_train[y]
 
+	SFIToolkit.stata("timer off 51")
+
 	##############################################################
+
+	# Start Stata timer
+	SFIToolkit.stata("timer on 52")
 
 	# Misc
 	n_insample = x_insample.shape[0]
-	y_mean = np.nanmean(y_insample)
-	y_std = np.nanstd(y_insample)
-	x_mean = np.nanmean(x_insample,axis=0)
-	x_std = np.nanstd(x_insample,axis=0)
+	y_mean = np.mean(y_insample)
+	y_std = np.std(y_insample)
+	x_mean = np.mean(x_insample,axis=0)
+	x_std = np.std(x_insample,axis=0)
 	
 	# If SD is zero, replace with 1
 	x_std[x_std==0] = 1
@@ -228,11 +263,13 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 		if stdflag==1:
 			x_test = (x_test-x_mean)/x_std
 			y_test = (y_test-y_mean)/y_std
-	
-	Scalar.setValue("r(alpha)", lratio)
-	Scalar.setValue("r(lambda)", lpenalty)
+
+	SFIToolkit.stata("timer off 52")
 
 	##############################################################
+	
+	# Start Stata timer
+	SFIToolkit.stata("timer on 53")
 
 	# Initialize model object
 	if lratio>0:
@@ -243,17 +280,27 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 
 	# Train model on training data
 	model.fit(x_insample, y_insample)
+	
+	SFIToolkit.stata("timer off 53")
 
 	##############################################################
 
+	# Start Stata timer
+	SFIToolkit.stata("timer on 54")
+	
 	# Get in-sample prediction
 	insample_predict = model.predict(x_insample)
 
 	# Get full-sample prediction
 	model_predict = model.predict(x)
 
+	SFIToolkit.stata("timer off 54")
+
 	##############################################################
 
+	# Start Stata timer
+	SFIToolkit.stata("timer on 55")
+	
 	# Stata coefficient vectors are row vectors 
 	if stdflag==0:
 		if consflag==1:
@@ -276,6 +323,16 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 		else:
 			b = np.array([model.coef_])
 	Matrix.store("r(beta)",b)
+
+	SFIToolkit.stata("timer off 55")
+	
+	##############################################################
+
+	# Start Stata timer
+	SFIToolkit.stata("timer on 56")
+	
+	Scalar.setValue("r(alpha)", lratio)
+	Scalar.setValue("r(lambda)", lpenalty)
 
 	# Get in sample (training sample) mae, rmse
 	insample_mae = metrics.mean_absolute_error(y_insample, insample_predict)
@@ -306,6 +363,8 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	# Store in supplied variable
 	if prediction != "":
 		Data.store(var=prediction,obs=None,val=model_predict,selectvar=touse)
+
+	SFIToolkit.stata("timer off 56")
 
 	##############################################################
 
