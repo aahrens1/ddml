@@ -21,13 +21,11 @@ program _ddml_optiv, eclass
     tempname V 
 
     ** generate IVs
+    * model is exactly identified
     local NumEndog : word count `dtilde'
     local NumInstr : word count `dhtilde'
-
-    if ("`debug'"~="") {
-        di "Names: `dtilde'"
-        di "Names: `dhtilde'"
-        di "Names: `dvar'"
+    if (`NumEndog'!=`NumInstr') {
+        di as err "something is wrong. Number of IVs != number of endog. regressors"
     }
 
     local dlist
@@ -38,14 +36,14 @@ program _ddml_optiv, eclass
         local dh : word `i' of `dhtilde'
         local dt : word `i' of `dtilde'
         local dd : word `i' of `dvar'
-        if ("`debug'"~="") {
+        if ("`debug'"!="") {
             di "endog regressor `i' = `dd'-`dt'"
             di "instr `i' = `dh'-`dt'"
         }
-        gen double `zvar`i'' = `dh'-`dt'
-        gen double `dx`i'' = `dd'-`dt' 
-        local dlist `dlist' `zvar`i''
-        local zlist `zlist' `dx`i''
+        gen double `zvar`i'' = `dh'-`dt' // E[D|ZX]-E[D|X] = instrument
+        gen double `dx`i'' = `dd'-`dt' // D-E[D|X] = endogenous regressor
+        local dlist `dlist' `dx`i''
+        local zlist `zlist' `zvar`i''
     }
 
     qui ivreg2 `ytilde' (`dlist'=`zlist') if `touse', nocons `robust' noheader nofooter

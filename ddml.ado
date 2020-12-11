@@ -118,14 +118,6 @@ program ddml, eclass
 	*** add equation  
 	if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="zeq"|"`subcmd'"=="dheq" {
 
-		** check that equation is consistent with model
-		if ("`subcmd'"=="zeq"&("`model'"=="optimaliv"|"`model'"=="partial"|"`model'"=="interactive")) {
-			di as err "not allowed; zeq not allowed with `model'"
-		}
-		if ("`subcmd'"=="dheq"&("`model'"!="optimaliv")) {
-			di as err "not allowed; dheq not allowed with `model'"
-		}
-
 		** parsing
 		// macro options has eqn to be estimated set off from the reset by a :
 		tokenize `" `restargs' "', parse(":")
@@ -139,6 +131,15 @@ program ddml, eclass
 		** check that ddml has been initialized
 		// to add
 		check_mname "`mname'"
+
+		** check that equation is consistent with model
+		mata: st_local("model",`mname'.model)
+		if ("`subcmd'"=="zeq"&("`model'"=="optimaliv"|"`model'"=="partial"|"`model'"=="interactive")) {
+			di as err "not allowed; zeq not allowed with `model'"
+		}
+		if ("`subcmd'"=="dheq"&("`model'"!="optimaliv")) {
+			di as err "not allowed; dheq not allowed with `model'"
+		}
 
 		// subcmd macro tells add_eqn(.) which list to add it to
 		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'", "`eqn'")
