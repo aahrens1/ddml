@@ -1,5 +1,5 @@
 
-program define display_header, rclass
+program define _ddml_display_header, rclass
 
 	syntax [anything] , [	///
 							str(string) ///

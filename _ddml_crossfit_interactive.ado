@@ -251,15 +251,15 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 	if "`model'"=="interactive" {
 
 		// dependent variable
-		display_header , str(y|X,D=0)
-		display_mspe `mname', vname(`nameY') zett(0)
+		_ddml_display_header , str(y|X,D=0)
+		_ddml_display_mspe `mname', vname(`nameY') zett(0)
 		mata: `mname'.nameY1opt		= "`r(optname)'"
-		display_header , str(y|X,D=1)
-		display_mspe `mname', vname(`nameY') zett(1)
+		_ddml_display_header , str(y|X,D=1)
+		_ddml_display_mspe `mname', vname(`nameY') zett(1)
 		mata: `mname'.nameY0opt		= "`r(optname)'"
 
 		// D variable
-		display_header , str(D|X)
+		_ddml_display_header , str(D|X)
 		foreach var of varlist `listD' {
 			display_mspe `mname', vname(`var') 
 			mata: `mname'.nameDopt		= "`r(optname)'"
@@ -270,28 +270,28 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 	if "`model'"=="late" {
 
 		// dependent variable
-		display_header , str(y|X,Z=0)
-		display_mspe `mname', vname(`nameY') zett(0)
+		_ddml_display_header , str(y|X,Z=0)
+		_ddml_display_mspe `mname', vname(`nameY') zett(0)
 		mata: `mname'.nameY1opt		= "`r(optname)'"
-		display_header , str(y|X,Z=1)
-		display_mspe `mname', vname(`nameY') zett(1)
+		_ddml_display_header , str(y|X,Z=1)
+		_ddml_display_mspe `mname', vname(`nameY') zett(1)
 		mata: `mname'.nameY0opt		= "`r(optname)'"
 
 		// D variable
-		display_header , str(D|X,Z=0)
+		_ddml_display_header , str(D|X,Z=0)
 		foreach var of varlist `listD' {
-			display_mspe `mname', vname(`var') zett(0)
+			_ddml_display_mspe `mname', vname(`var') zett(0)
 			mata: `mname'.nameD0opt		= "`r(optname)'"
 		}
-		display_header , str(D|X,Z=1)
+		_ddml_display_header , str(D|X,Z=1)
 		foreach var of varlist `listD' {
-			display_mspe `mname', vname(`var') zett(1)
+			_ddml_display_mspe `mname', vname(`var') zett(1)
 			mata: `mname'.nameD1opt		= "`r(optname)'"
 		}
 
 		// Z variable
 		foreach var of varlist `listZ' {
-			display_mspe `mname', vname(`var')
+			_ddml_display_mspe `mname', vname(`var')
 			mata: `mname'.nameZopt = (`mname'.nameZopt, "`r(optname)'")
 		}
 	}

@@ -67,10 +67,11 @@ ddml deq, gen(d2t1) mname(myest) vname(d2) : rlasso d2 x*
 ddml deq, gen(d2t2) mname(myest) vname(d2) : reg d2 x*
 
 * z-equation:
-ddml dheq, gen(d1H1) mname(myest) vname(d1) : lasso2 d1 z* x*, lic(aicc) postres
-ddml dheq, gen(d1H2) mname(myest) vname(d1) : rlasso d1 z1-z20 x1-x20
 ddml dheq, gen(d2H1) mname(myest) vname(d2) : rlasso d2 z* x*
 ddml dheq, gen(d2H2) mname(myest) vname(d2) : reg d2 z* x*
+ddml dheq, gen(d1H1) mname(myest) vname(d1) : lasso2 d1 z* x*, lic(aicc) postres
+ddml dheq, gen(d1H2) mname(myest) vname(d1) : rlasso d1 z1-z20 x1-x20
+
 		
 *** cross-fitting and display mean-squared prediction error
 ddml crossfit, mname(myest)
@@ -79,5 +80,5 @@ ddml desc, mname(myest)
 
 
 *** estimation of parameter of interest
-ddml estimate,  mname(myest) // show(all)
+ddml estimate,  mname(myest) debug // show(all)
 

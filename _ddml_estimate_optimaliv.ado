@@ -33,7 +33,7 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
         di "`Dtilde'"
     }
 
-    make_varlists2, mname(`mname')
+    _ddml_make_varlists, mname(`mname')
     _ddml_allcombos `r(eq)' , putlast(`Yopt' `Dopt' `DHopt') ///
                                                 `debug' ///
                                                 dpos_end(`r(dpos_end)') ///
@@ -61,7 +61,7 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 	    		di as res "Optimal model: " _c
 	    	}
 	    	di as res "DML with E[Y|X]=`y' and E[D|X]=`d', E[D|X,Y]=`dh':"
-	       	_ddml_optiv, yvar(`nameY') dvar(`nameD') dhtilde(`dh') ytilde(`y') dtilde(`d') touse(`touse')
+	       	_ddml_optiv, yvar(`nameY') dvar(`nameD') dhtilde(`dh') ytilde(`y') dtilde(`d') touse(`touse')  `debug'
 
 	        local j= `j'+1
 	     }

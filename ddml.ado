@@ -236,7 +236,7 @@ program ddml, eclass
 		mata: st_global("r(model)",`mname'.model)
 
 		if ("`r(model)'"=="partial") {
-			_ddml_estimate_additive `mname', `options'
+			_ddml_estimate_partial `mname', `options'
 		}
 		if ("`r(model)'"=="iv") {
 			_ddml_estimate_iv `mname', `options'

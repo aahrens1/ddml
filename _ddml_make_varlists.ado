@@ -1,4 +1,4 @@
-program define make_varlists2, rclass
+program define _ddml_make_varlists, rclass
 
 	syntax [anything], mname(name)
 

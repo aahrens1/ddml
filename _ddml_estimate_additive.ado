@@ -1,5 +1,5 @@
 *** ddml estimation: partial linear model
-program _ddml_estimate_additive, eclass sortpreserve
+program _ddml_estimate_partial, eclass sortpreserve
 
 	syntax namelist(name=mname) [if] [in] ,		/// 
 								[				///

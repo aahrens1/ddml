@@ -196,7 +196,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 		di _col(54) "N" _c
 		di _col(65) "MSPE"
 		di "{hline 75}"
-		display_mspe `mname', vname(`nameY')
+		_ddml_display_mspe `mname', vname(`nameY')
 		mata: `mname'.nameYopt		= "`r(optname)'"
 	
 		// loop through D vars (if any)
@@ -212,7 +212,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			// clear opt list
 			mata: `mname'.nameDopt = J(1,0,"") 
 			foreach var of varlist `listD' {
-				display_mspe `mname', vname(`var')
+				_ddml_display_mspe `mname', vname(`var')
 				mata: `mname'.nameDopt = (`mname'.nameDopt, "`r(optname)'")
 			}
 		}
@@ -230,7 +230,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			// clear opt list
 			mata: `mname'.nameDopt = J(1,0,"") 
 			foreach var of varlist `listD' {
-				display_mspe `mname', vname(`var')
+				_ddml_display_mspe `mname', vname(`var')
 				mata: `mname'.nameDopt = (`mname'.nameDopt, "`r(optname)'")
 			}
 		}
@@ -248,7 +248,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			// clear opt list
 			mata: `mname'.nameZopt = J(1,0,"") 
 			foreach var of varlist `listZ' {
-				display_mspe `mname', vname(`var')
+				_ddml_display_mspe `mname', vname(`var')
 				mata: `mname'.nameZopt = (`mname'.nameZopt, "`r(optname)'")
 			}
 		}

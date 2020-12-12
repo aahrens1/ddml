@@ -25,7 +25,7 @@ program _ddml_estimate_iv, eclass sortpreserve
     mata: st_local("Dopt",invtokens(`mname'.nameDopt))
     mata: st_local("Zopt",invtokens(`mname'.nameZopt))
 
-    make_varlists2, mname(`mname')
+    _ddml_make_varlists, mname(`mname')
     if ("`debug'"!="") {
         returnlist
     }

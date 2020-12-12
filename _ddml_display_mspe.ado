@@ -1,5 +1,5 @@
 
-program define display_mspe, rclass
+program define _ddml_display_mspe, rclass
 
 	syntax name(name=mname), vname(varname) ///
 								[ ///
