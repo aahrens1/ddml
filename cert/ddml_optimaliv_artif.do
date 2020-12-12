@@ -80,5 +80,5 @@ ddml desc, mname(myest)
 
 
 *** estimation of parameter of interest
-ddml estimate,  mname(myest) debug // show(all)
+ddml estimate,  mname(myest)   // show(all)
 
