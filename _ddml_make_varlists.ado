@@ -47,7 +47,7 @@ program define _ddml_make_varlists, rclass
 	// varlists are stored in Stata macros
 	// each of these macros is a list of all orthogonalized vars for a given original var
 	// macro orthog_lists is a macro with these macro names in it
-	tempname Dv_list Do_list
+	tempname Dv_list Do_list Dv_list_order
 	mata: `Dv_list' = tokens("`Dvn_list'")
 	mata: `Do_list' = tokens("`Dvno_list'")
 	foreach vn in `Dvn_uniq' {
@@ -81,7 +81,7 @@ program define _ddml_make_varlists, rclass
 		tempname DHv_list DHo_list
 		mata: `DHv_list' = tokens("`DHvn_list'")
 		mata: `DHo_list' = tokens("`DHvno_list'")
-		foreach vn in `DHvn_uniq' {
+		foreach vn in `Dvn_uniq' { // use order of D variables!!
 			tempname DHo_index
 			mata: `DHo_index' = `DHv_list' :== "`vn'"
 			// select all orthogonalized variables for unique original varname vn

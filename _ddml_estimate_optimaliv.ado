@@ -34,6 +34,7 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
     }
 
     _ddml_make_varlists, mname(`mname')
+    return list
     _ddml_allcombos `r(eq)' , putlast(`Yopt' `Dopt' `DHopt') ///
                                                 `debug' ///
                                                 dpos_end(`r(dpos_end)') ///

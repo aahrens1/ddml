@@ -36,10 +36,8 @@ program _ddml_optiv, eclass
         local dh : word `i' of `dhtilde'
         local dt : word `i' of `dtilde'
         local dd : word `i' of `dvar'
-        if ("`debug'"!="") {
-            di "endog regressor `i' = `dd'-`dt'"
-            di "instr `i' = `dh'-`dt'"
-        }
+        di as text "Orthogonalised `dd' created as `dd'-`dt'."
+        di as text "Optimal instrument for `dd' created as `i' `dh'-`dt'."
         gen double `zvar`i'' = `dh'-`dt' // E[D|ZX]-E[D|X] = instrument
         gen double `dx`i'' = `dd'-`dt' // D-E[D|X] = endogenous regressor
         local dlist `dlist' `dx`i''

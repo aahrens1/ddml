@@ -261,7 +261,7 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		// D variable
 		_ddml_display_header , str(D|X)
 		foreach var of varlist `listD' {
-			display_mspe `mname', vname(`var') 
+			_ddml_display_mspe `mname', vname(`var') 
 			mata: `mname'.nameDopt		= "`r(optname)'"
 		}
 	}
