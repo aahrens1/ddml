@@ -3,9 +3,13 @@ version 16.0
 syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 	///
 					type(string) /// classification or regression
 				[									 		///
-					lasso /// 
-					rf /// 
-					gradboost ///
+					LASSO /// 
+					RF /// 
+					GRADboost ///
+					lassoopt(string) ///
+					rfopt(string) ///
+					gradboostopt(string) ///
+					seed(integer 0) ///
 				]
 
 	// pylearn, check
@@ -37,18 +41,19 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 	///
 
 	qui count if `training_var'==0 & `touse'
 	local nonempty_test = r(N)>0
-	
-	// create an empty prediction variable
-	if "`prediction'"~="" {
-		qui gen double `prediction' = .
-	}
+
+	tempvar idvar
+	gen byte `idvar'=_n
 
 	python: run_stacked(					///
 		"`type'",								///
 		"`lasso' `rf' `gradboost'", ///
 		"`training_var' `yvar_t' `xvars_t'",	///
 		"`training_var'", ///
-		"`touse'")
+		"`touse'", ///
+		"`idvar'", ///
+		`seed', ///
+		1)
 
 	ereturn local predict "pystacked_p"
 
@@ -76,7 +81,6 @@ from sklearn import metrics, preprocessing
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LassoCV,LassoLarsIC,RidgeCV
 import numpy as np
-# MS
 from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
@@ -84,15 +88,18 @@ from sklearn.pipeline import make_pipeline
 # To pass objects to Stata
 import __main__
 
-# Set random seed
+
 import random
-random.seed(50)
 
 #-------------------------------------------------------------------------------
 # Define Python function: run_stacked
 #-------------------------------------------------------------------------------
 
-def run_stacked(type,methods,vars,training,touse):
+def run_stacked(type,methods,vars,training,touse,idvar,seed,save_transform):
+
+	# Set random seed
+	if seed>0:
+		random.seed(seed)
 
 	##############################################################
 	### load data  											   ###
@@ -100,7 +107,9 @@ def run_stacked(type,methods,vars,training,touse):
 
 	# Load into Pandas data frame
 	df = DataFrame(Data.get(vars,selectvar=touse))
-	
+	id = Data.get(idvar,selectvar=touse)
+	print(id)
+
 	colnames = []
 	for var in vars.split():
 		 colnames.append(var)
@@ -131,13 +140,13 @@ def run_stacked(type,methods,vars,training,touse):
 		if "rf" in methods:
 			est_list.append(('rf',RandomForestRegressor()))
 		if "gradboost" in methods:
-			est_list.append(('rf',GradientBoostingRegressor()))
+			est_list.append(('gradboost',GradientBoostingRegressor()))
 		fin_est = RidgeCV()
 	elif type=="classify":
 		if "rf" in methods:
 			est_list.append(('rf',RandomForestClassifier()))
 		if "gradboost" in methods:
-			est_list.append(('rf',GradientBoostingClassifier()))
+			est_list.append(('gradboost',GradientBoostingClassifier()))
 		fin_est = LogisticRegression()
 
 	model = StackingRegressor(
@@ -161,7 +170,11 @@ def run_stacked(type,methods,vars,training,touse):
 	# Pass objects back to __main__ namespace to interact w/ later
 	__main__.model_object  = model
 	__main__.model_predict = model_predict
-	__main__.model_transform = model.transform(x)
+	__main__.model_touse = touse
+	__main__.model_id = id
 	__main__.features = features
+	__main__.methods = methods
+	if save_transform==1:
+		__main__.model_transform = model.transform(x)
 	
 end
