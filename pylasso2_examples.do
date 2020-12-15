@@ -76,25 +76,6 @@ mat b_lasso2=e(betaAll)
 // note lower tolerance
 assert mreldif(b_pylasso2,b_lasso2) < 1e-6
 
-// training
-cap drop training
-gen training=(_n<=50)
-// in std units
-pylasso2 price mpg-foreign if _n<=50, lambda(1000) stdcoef
-ereturn list
-pylasso2 price mpg-foreign, lambda(1000) training(training) stdcoef
-ereturn list
-// in natural units, no standardization
-pylasso2 price mpg-foreign if _n<=50, lambda(1000) unitloadings
-ereturn list
-pylasso2 price mpg-foreign, lambda(1000) training(training) unitloadings
-ereturn list
-// in natural units with standardization loadings
-pylasso2 price mpg-foreign if _n<=50, lambda(1000)
-ereturn list
-pylasso2 price mpg-foreign, lambda(1000) training(training)
-ereturn list
-
 // prediction
 // note that rep78 is missing for 5 obs
 cap drop phat*
@@ -139,7 +120,7 @@ mat b_pylasso2=e(b)
 qui lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0.5)
 mat list e(betaAll)
 mat b_lasso2=e(betaAll)
-// note looser tolerance
+// note lower tolerance
 assert mreldif(b_pylasso2,b_lasso2) < 1e-7
 
 // no standardization - match
@@ -147,7 +128,7 @@ pylasso2 price mpg-foreign, lambda(100) alpha(0.5) unitloadings
 mat b_pylasso2=e(b)
 lasso2 price mpg-foreign, lglmnet lambda(100) alpha(0.5) unitloadings
 mat b_lasso2=e(betaAll)
-// note looser tolerance
+// note lower tolerance
 assert mreldif(b_pylasso2,b_lasso2) < 1e-7
 
 // how it should behave - change scale of depvar and lambda
@@ -197,12 +178,12 @@ pylasso2 price0000 mpg-foreign, lambda(0.0100) alpha(0) unitloadings
 
 timer clear
 timer on 1
-forvalues i=1/100 {
+forvalues i=1/500 {
 	qui pylasso2 price mpg-foreign, lambda(100) stdcoef
 }
 timer off 1
 timer on 2
-forvalues i=1/100 {
+forvalues i=1/500 {
 	qui lasso2 price mpg-foreign, lglmnet lambda(100) stdcoef
 }
 timer off 2
@@ -210,12 +191,12 @@ timer list
 
 timer clear
 timer on 1
-forvalues i=1/100 {
+forvalues i=1/500 {
 	qui pylasso2 sd_price sd_mpg-sd_foreign, lambda(.1) unitloadings
 }
 timer off 1
 timer on 2
-forvalues i=1/100 {
+forvalues i=1/500 {
 	qui lasso2 sd_price sd_mpg-sd_foreign, lglmnet lambda(.1) unitloadings
 }
 timer off 2

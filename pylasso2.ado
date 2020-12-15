@@ -8,17 +8,15 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 					random_state(integer -1) 	 	 /// seed used by random number generator
 					verbose		 			 	 	 /// controls verbosity
 					warm_start(string asis)	 	 	 /// when set to true, reuse solution of previous call to fit
-				    training(varname) 	             /// training dataset identifier
 					prediction(string asis) 	     /// variable name to save predictions
 					standardize                  	 /// standardize features
 					normalize						 /// use scikit's normalize
 					UNITLoadings					 /// don't prestandardize
 					STDCoef							 /// report standardized coefficients
+					TOLOpt(real 1e-10)				 /// tol for optimization (ElasticNet default is 1e-4)
 					NOCONStant						 /// standard option
 				]
 
-	// pylearn, check
-	
 	timer on 40
 
 	**** n_jobs and random_state code from pyforest ****
@@ -70,18 +68,6 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 	gettoken yvar xvars : varlist
 	gettoken yvar_t xvars_t : varlist_t
 	
-	* Define a temporary variable for the training sample
-	tempvar training_var
-	if "`training'"=="" {
-		qui gen `training_var' = 1 if `touse'
-	}
-	else {
-		qui gen `training_var' = `training' if `touse'
-	}
-
-	qui count if `training_var'==0 & `touse'
-	local nonempty_test = r(N)>0
-	
 	// create an empty prediction variable
 	if "`prediction'"~="" {
 		qui gen double `prediction' = .
@@ -93,18 +79,18 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 	python: run_elastic_net(					///
 		`alpha',								///
 		`lambda',								///
-		"`training_var' `yvar_t' `xvars_t'",	///
+		"`yvar_t'",								///
+		"`xvars_t'",							///
 		"`touse'",								///
 		`n_jobs',								///
 		`random_state',							///
 		`verbose',								///
 		`warm_start',							///
 		"`prediction'",							///
-		"`training_var'",						///
-		 `nonempty_test',						///
 		 `stdflag',								///
 		 `stdcoefflag',							///
 		 `consflag',							///
+		 `tolopt',								///
 		 `normflag')
 
 	timer off 50
@@ -120,12 +106,9 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 	}
 	mat colnames `b' = `cnames'
 	
-	local training_mae	= r(training_mae)
-	local training_rmse	= r(training_rmse)
-	if `nonempty_test' {
-		local test_mae	= r(test_mae)
-		local test_rmse	= r(test_rmse)
-	}
+	local mae			= r(mae)
+	local rmse			= r(rmse)
+
 	local sk_lambda		= r(lambda)
 	local sk_alpha		= r(alpha)
 
@@ -142,12 +125,16 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 
 	ereturn post `b', depname(`yvar') esample(`touse') obs(`N') properties(b)
 
-	ereturn scalar training_mae		= `training_mae'
-	ereturn scalar training_rmse	= `training_rmse'
-	if `nonempty_test' {
-		ereturn scalar test_mae		= r(test_mae)
-		ereturn scalar test_rmse	= r(test_rmse)
-	}
+	ereturn scalar mae				= `mae'
+	ereturn scalar rmse				= `rmse'
+
+	ereturn local cmd				pylasso2
+	ereturn local predict			pylasso2_p
+	ereturn local depvar			`yvar'
+	
+	ereturn scalar cons				= `consflag'
+	ereturn scalar std				= `stdflag'
+	ereturn scalar stdcoef			= `stdcoefflag'
 
 	di
 	ereturn di, noomitted vsquish nofvlabel
@@ -194,111 +181,82 @@ random.seed(50)
 
 # MS: "lambda" probably a reserved word
 
-def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_start,prediction,training,nonempty_test,stdflag,stdcoefflag,consflag,normflag):
-
-	##############################################################
-	
-	# Start Stata timer
-	SFIToolkit.stata("timer on 50")
-
-	# Load into Pandas data frame
-	df = DataFrame(Data.get(vars,selectvar=touse))
-	
-	SFIToolkit.stata("timer off 50")
+def run_elastic_net(lratio,lpenalty,yvar,xvars,touse,n_jobs,random_state,verbose,warm_start,prediction,stdflag,stdcoefflag,consflag,tolopt,normflag):
 
 	##############################################################
 	
 	# Start Stata timer
 	SFIToolkit.stata("timer on 51")
-
-	colnames = []
-	for var in vars.split():
-		 colnames.append(var)
-	df.columns = colnames
-
-	# Split training data and test data into separate data frames
-	df_train, df_test = df[df[training]==1], df[df[training]==0]
 	
-	# Create list of feature names
-	features = df.columns[2:]
-	y        = df.columns[1]
-
-	# Split training data frame into features (x) and outcome (y)
-	x           = df[features]
-	x_insample  = df_train[features]
-	y_insample  = df_train[y]
-
+	# Load data
+	y = Data.get(yvar,selectvar=touse)
+	x = Data.get(xvars,selectvar=touse)
 	SFIToolkit.stata("timer off 51")
 
 	##############################################################
-
+	
 	# Start Stata timer
 	SFIToolkit.stata("timer on 52")
-
-	# Misc
-	n_insample = x_insample.shape[0]
-	y_mean = np.mean(y_insample)
-	y_std = np.std(y_insample)
-	x_mean = np.mean(x_insample,axis=0)
-	x_std = np.std(x_insample,axis=0)
-	
-	# If SD is zero, replace with 1
-	x_std[x_std==0] = 1
-	
-	# Always standardize y
-	y_insample = (y_insample-y_mean)/y_std
-	
-	# Need to rescale lambda penalty
-	lpenalty = lpenalty/y_std
 	
 	# If standardizing, scale features to mean zero, std dev one
 	if stdflag==1:
-		x_insample = (x_insample-x_mean)/x_std
+		x_mean = np.mean(x,axis=0)
+		x_std = np.std(x,axis=0)
+		# If SD is zero, replace with 1
+		x_std[x_std==0] = 1
 		x = (x-x_mean)/x_std
-	if nonempty_test==1:
-		x_test = df_test[features]
-		y_test = df_test[y]
-		if stdflag==1:
-			x_test = (x_test-x_mean)/x_std
-			y_test = (y_test-y_mean)/y_std
 
 	SFIToolkit.stata("timer off 52")
 
 	##############################################################
-	
+
 	# Start Stata timer
 	SFIToolkit.stata("timer on 53")
 
-	# Initialize model object
-	if lratio>0:
-		model = ElasticNet(alpha=lpenalty, l1_ratio=lratio, random_state=0, fit_intercept=consflag, normalize=normflag, tol=1e-10)
-	else:
-		# Ridge uses a different definition of the penalty
-		model = Ridge(alpha=lpenalty*n_insample, fit_intercept=consflag, normalize=normflag, tol=1e-10)
-
-	# Train model on training data
-	model.fit(x_insample, y_insample)
+	# Misc
+	n = len(y)
+	y_mean = np.mean(y)
+	y_std = np.std(y)
+	
+	# Always standardize y
+	y = (y-y_mean)/y_std
+	
+	# Need to rescale lambda penalty
+	lpenalty = lpenalty/y_std
 	
 	SFIToolkit.stata("timer off 53")
 
 	##############################################################
-
+	
 	# Start Stata timer
 	SFIToolkit.stata("timer on 54")
+
+	# Initialize model object
+	if lratio>0:
+		model = ElasticNet(alpha=lpenalty, l1_ratio=lratio, random_state=0, fit_intercept=consflag, normalize=normflag, tol=tolopt)
+	else:
+		# Ridge uses a different definition of the penalty
+		model = Ridge(alpha=lpenalty*n, fit_intercept=consflag, normalize=normflag, tol=tolopt)
+
+	# Estimate model
+	model.fit(x, y)
 	
-	# Get in-sample prediction
-	insample_predict = model.predict(x_insample)
-
-	# Get full-sample prediction
-	if stdflag==1 and prediction != "":
-		model_predict = model.predict(x)
-
 	SFIToolkit.stata("timer off 54")
 
 	##############################################################
 
 	# Start Stata timer
 	SFIToolkit.stata("timer on 55")
+	
+	# Get in-sample prediction
+	model_predict = model.predict(x)
+
+	SFIToolkit.stata("timer off 55")
+
+	##############################################################
+
+	# Start Stata timer
+	SFIToolkit.stata("timer on 56")
 	
 	# Stata coefficient vectors are row vectors 
 	if stdflag==0:
@@ -313,9 +271,9 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 			# Unstandardize coefficients
 			b = model.coef_ / x_std * y_std
 			if consflag==1:
-				# Get constant; use prestandardized data
-				insample_predict_nostd = np.nansum(df_train[features] * b)/n_insample
-				b = np.append(b,y_mean - insample_predict_nostd)
+				# Get constant; use prestandardized means
+				predict_nostd = np.sum(x_mean * b)
+				b = np.append(b,y_mean - predict_nostd)
 				b = np.array([b])
 			else:
 				b = np.array([b])
@@ -323,37 +281,25 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 			b = np.array([model.coef_])
 	Matrix.store("r(beta)",b)
 
-	SFIToolkit.stata("timer off 55")
+	SFIToolkit.stata("timer off 56")
 	
 	##############################################################
 
 	# Start Stata timer
-	SFIToolkit.stata("timer on 56")
+	SFIToolkit.stata("timer on 57")
 	
 	Scalar.setValue("r(alpha)", lratio)
 	Scalar.setValue("r(lambda)", lpenalty)
 
-	# Get in sample (training sample) mae, rmse
-	insample_mae = metrics.mean_absolute_error(y_insample, insample_predict)
-	insample_mse = metrics.mean_squared_error(y_insample, insample_predict)
-	insample_rmse = np.sqrt(insample_mse)
+	# Get mae, rmse
+	mae = metrics.mean_absolute_error(y, model_predict)
+	mse = metrics.mean_squared_error(y, model_predict)
+	rmse = np.sqrt(mse)
 	if stdcoefflag==0:
-		insample_mae = insample_mae * y_std
-		insample_rmse = insample_rmse * y_std
-	Scalar.setValue("r(training_mae)", insample_mae, vtype='visible')
-	Scalar.setValue("r(training_rmse)", insample_rmse, vtype='visible')
-
-	# If nonempty test sample, get out of sample stats
-	if nonempty_test==1:
-		outsample_predict = model.predict(x_test)
-		outsample_mae = metrics.mean_absolute_error(y_test, outsample_predict)
-		outsample_mse = metrics.mean_squared_error(y_test, outsample_predict)
-		outsample_rmse = np.sqrt(outsample_mse)
-		if stdflag==1 and stdcoefflag==0:
-			outsample_mae = outsample_mae * y_std
-			outsample_rmse = outsample_rmse * y_std
-		Scalar.setValue("r(test_mae)", outsample_mae, vtype='visible')
-		Scalar.setValue("r(test_rmse)", outsample_rmse, vtype='visible')
+		mae = mae * y_std
+		rmse = rmse * y_std
+	Scalar.setValue("r(mae)", mae, vtype='visible')
+	Scalar.setValue("r(rmse)", rmse, vtype='visible')
 
 	# Unstandardize predictions if required
 	if stdflag==1 and prediction != "":
@@ -363,9 +309,18 @@ def run_elastic_net(lratio,lpenalty,vars,touse,n_jobs,random_state,verbose,warm_
 	if prediction != "":
 		Data.store(var=prediction,obs=None,val=model_predict,selectvar=touse)
 
-	SFIToolkit.stata("timer off 56")
+	SFIToolkit.stata("timer off 57")
 
 	##############################################################
+
+	# Pass objects back to __main__ namespace to interact w/ later
+	__main__.model_object  = model
+	__main__.model_y_std = y_std
+	__main__.model_y_mean = y_mean
+	__main__.model_xvars = xvars
+	if stdflag==1:
+		__main__.model_x_std = x_std
+		__main__.model_x_mean = x_mean
 
 	
 end
