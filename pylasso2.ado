@@ -4,6 +4,7 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 				[									 ///
 					alpha(real 1)					 /// elastic net parameter, alpha=1 is lasso, alpha=0 is ridge
 					lambda(real 1)					 /// penalty
+					lars							 ///
 					n_jobs(integer -1)		 	 	 /// number of processors to use when computing stuff - default is all
 					random_state(integer -1) 	 	 /// seed used by random number generator
 					verbose		 			 	 	 /// controls verbosity
@@ -45,6 +46,7 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 	local stdflag		= ("`unitloadings'"=="") | `stdcoefflag'
 	local normflag		= ("`normalize'"~="")
 	local consmodel		= ("`noconstant'"=="")
+	local larsflag		= ("`lars'"~="")
 	if `stdcoefflag' | `consmodel'==0 {
 		local consflag	= 0
 	}
@@ -79,6 +81,7 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 ///
 	python: run_elastic_net(					///
 		`alpha',								///
 		`lambda',								///
+		`larsflag',								///
 		"`yvar_t'",								///
 		"`xvars_t'",							///
 		"`touse'",								///
@@ -164,8 +167,7 @@ from sfi import Data,Matrix,Scalar,SFIToolkit
 from sklearn import metrics, preprocessing
 import numpy as np
 # MS
-from sklearn.linear_model import ElasticNet
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import ElasticNet,Ridge,LassoLars
 from sklearn.pipeline import make_pipeline
 
 # To pass objects to Stata
@@ -181,7 +183,7 @@ random.seed(50)
 
 # MS: "lambda" probably a reserved word
 
-def run_elastic_net(lratio,lpenalty,yvar,xvars,touse,n_jobs,random_state,verbose,warm_start,prediction,stdflag,stdcoefflag,consflag,tolopt,normflag):
+def run_elastic_net(lratio,lpenalty,larsflag,yvar,xvars,touse,n_jobs,random_state,verbose,warm_start,prediction,stdflag,stdcoefflag,consflag,tolopt,normflag):
 
 	##############################################################
 	
@@ -232,7 +234,9 @@ def run_elastic_net(lratio,lpenalty,yvar,xvars,touse,n_jobs,random_state,verbose
 	SFIToolkit.stata("timer on 54")
 
 	# Initialize model object
-	if lratio>0:
+	if larsflag==1:
+		model = LassoLars(alpha=lpenalty, random_state=0, fit_intercept=consflag, normalize=normflag)
+	elif lratio>0:
 		model = ElasticNet(alpha=lpenalty, l1_ratio=lratio, random_state=0, fit_intercept=consflag, normalize=normflag, tol=tolopt)
 	else:
 		# Ridge uses a different definition of the penalty
