@@ -6,14 +6,54 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 	///
 					LASSO /// 
 					RF /// 
 					GRADboost ///
-					lassoopt(string) ///
-					rfopt(string) ///
-					gradboostopt(string) ///
+					SVM /// sklearn.svm.SVM
+					LINSvm /// sklearn.svm.LinearSVR
+					svmopt(string asis) ///
+					lassoopt(string asis) ///
+					rfopt(string asis) ///
+					gradboostopt(string asis) ///
+					linsvmopt(string asis) ///
 					seed(integer 0) ///
+					printopt ///
 				]
 
 	// pylearn, check
-	
+
+	*** lasso
+	if ("`lassoopt'"!="") {
+		local lasso lasso
+	}
+	parse_LassoIC `lassoopt'  
+	local lassoopt `r(optstr)'
+
+	*** random forest
+	if ("`rfopt'"!="") {
+		local rf rf
+	}
+	if "`rf'"!="" {
+		_pyparse , type(`type') method(rf)
+		local rfopt `r(optstr)'
+	}
+
+	*** SVM
+	if ("`svmopt'"!="") {
+		local svm svm
+	}
+	if "`svm'"!="" {
+		_pyparse , type(`type') method(svm)
+		local svmopt `r(optstr)'
+	}
+
+	*** gradboost 
+	if ("`gradboostopt'"!="") {
+		local gradboost gradboost
+	}
+	if "`gradboost'"!="" {
+		_pyparse , type(`type') method(gradboost)
+		local gradboostopt `r(optstr)'
+	}
+
+
 	marksample touse
 	qui count if `touse'
 	local N		= r(N)
@@ -50,15 +90,26 @@ syntax varlist(min=2 fv) [if] [in] [aweight fweight],	 	///
 		"`lasso' `rf' `gradboost'", ///
 		"`training_var' `yvar_t' `xvars_t'",	///
 		"`training_var'", ///
+		"`lassoopt'", ///
+		"`gradboostopt'", ///
+		"`rfopt'", ///
+		"`svmopt'", ///
 		"`touse'", ///
 		"`idvar'", ///
 		`seed', ///
 		1)
 
+	if ("`lasso'"!=""&"`printopt'"!="") di as text "`lassoopt'"
+	if ("`gradboost'"!=""&"`printopt'"!="") di as text "`gradboostopt'"
+	if ("`rf'"!=""&"`printopt'"!="") di as text "`rfopt'"
+	if ("`svm'"!=""&"`printopt'"!="") di as text "`svmopt'"
+
 	ereturn local predict "pystacked_p"
-
+	if ("`lasso'"!="") ereturn local lassoopt `lassoopt'
+	if ("`gradboost'"!="") ereturn local gradboostopt `gradboostopt'
+	if ("`rf'"!="") ereturn local rfopt `rfopt'
+	if ("`svm'"!="") ereturn local svmopt `svmopt'
 end
-
 
 *===============================================================================
 * Python helper function
@@ -84,6 +135,7 @@ import numpy as np
 from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
+from sklearn.svm import SVC
 
 # To pass objects to Stata
 import __main__
@@ -95,7 +147,7 @@ import random
 # Define Python function: run_stacked
 #-------------------------------------------------------------------------------
 
-def run_stacked(type,methods,vars,training,touse,idvar,seed,save_transform):
+def run_stacked(type,methods,vars,training,lassoopt,gradboostopt,rfopt,svmopt,touse,idvar,seed,save_transform):
 
 	# Set random seed
 	if seed>0:
@@ -108,7 +160,6 @@ def run_stacked(type,methods,vars,training,touse,idvar,seed,save_transform):
 	# Load into Pandas data frame
 	df = DataFrame(Data.get(vars,selectvar=touse))
 	id = Data.get(idvar,selectvar=touse)
-	print(id)
 
 	colnames = []
 	for var in vars.split():
@@ -132,21 +183,32 @@ def run_stacked(type,methods,vars,training,touse,idvar,seed,save_transform):
 	### fitting												   ###
 	##############################################################
 
+	lassoopt = eval(lassoopt)
+	gradboostopt = eval(gradboostopt)
+	rfopt = eval(rfopt)
+	svmopt = eval(svmopt)
+
 	methods = methods.split()
 	est_list = []
 	if type=="regress":
 		if "lasso" in methods:
-			est_list.append(('lasso',make_pipeline(StandardScaler(), LassoLarsIC())))
+			est_list.append(('lasso',make_pipeline(StandardScaler(), LassoLarsIC(**lassoopt))))
 		if "rf" in methods:
-			est_list.append(('rf',RandomForestRegressor()))
+			est_list.append(('rf',RandomForestRegressor(**rfopt)))
 		if "gradboost" in methods:
-			est_list.append(('gradboost',GradientBoostingRegressor()))
+			est_list.append(('gradboost',GradientBoostingRegressor(**gradboostopt)))
+		if "svm" in methods:
+			est_list.append(('svm',make_pipeline(StandardScaler(), SVR(**svmopt))))
 		fin_est = RidgeCV()
 	elif type=="classify":
+		if "lasso" in methods:
+			est_list.append(('lasso',make_pipeline(StandardScaler(), LassoLarsIC(**lassoopt))))
 		if "rf" in methods:
-			est_list.append(('rf',RandomForestClassifier()))
+			est_list.append(('rf',RandomForestClassifier(**rfopt)))
 		if "gradboost" in methods:
-			est_list.append(('gradboost',GradientBoostingClassifier()))
+			est_list.append(('gradboost',GradientBoostingClassifier(**gradboostopt)))
+		if "svm" in methods:
+			est_list.append(('svm',make_pipeline(StandardScaler(), SVM(**svmopt))))
 		fin_est = LogisticRegression()
 
 	model = StackingRegressor(
@@ -154,6 +216,9 @@ def run_stacked(type,methods,vars,training,touse,idvar,seed,save_transform):
 	   final_estimator=fin_est
 	)
 	
+	for i in range(len(est_list)):
+		print(est_list[i][1].get_params())
+
 	#-------------------------------------------------------------
 	# Fit model, get predictions, pass objects back to main
 	#-------------------------------------------------------------
