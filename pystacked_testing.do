@@ -10,7 +10,8 @@ insheet using https://web.stanford.edu/~hastie/ElemStatLearn/datasets/prostate.d
 
 //replace lcavol = . if _n ==30
  
-pystacked lpsa lcavol lweight age lbph svi lcp gleason pgg45, type(regress) lasso rf grad
+pystacked lpsa lcavol lweight age lbph svi lcp gleason pgg45, type(regress) lasso rf gradboost printopt
+ereturn list 
 
 predict xb if _n<95, xb  
 list xb*
