@@ -1,23 +1,14 @@
+*! pylasso2_p post-estimation prediction
+*! currently written to use Python namespace info if predicting a single variable
+
 program define pylasso2_p, rclass
 	version 16.0
-	syntax namelist(min=1 max=2) [if] [in], [		///
-											xb		/// default
-											Resid	/// not implemented yet
+	syntax namelist(min=1 max=2) [if] [in], [					///
+											xb					/// default
+											Resid				/// not implemented yet
+											Equation(string)	///
 											]
 	
-	* get var type & name
-	tokenize `namelist'
-	if "`2'"=="" {					//  only new varname provided
-		local predictvar `1'
-		qui gen `predictvar' = .
-	}
-	else {							//  datatype also provided
-		local vtype `1'
-		local predictvar `2'
-		qui gen `vtype' `predictvar' = .
-	}
-	*
-
 	local command=e(cmd)
 	if ("`command'"~="pylasso2") {
 		di as err "error: -pylasso2_p- supports only the -pylasso2- command"
@@ -27,17 +18,49 @@ program define pylasso2_p, rclass
 	
 	marksample touse, novarlist
 
-	* Get predictions (fitted values)
-	python: post_prediction("`predictvar'",`e(std)')
-	
-	* Replace with residuals if requested
-	if "`resid'"~="" {
-		qui replace `predictvar' = `e(depvar)' - `predictvar'
-	}
-	
-	* Set any obs not to be used to missing
-	qui replace `predictvar' = . if `touse'==0
+	_predict `namelist' if `touse', equation(`equation') `xb' `resid'
 
+	/*
+	* code fails if any fvars => tempvars were used
+	
+	tokenize `e(depvar)'
+	if									/// only one y, or it's the last one, so can use Python namespace
+		"`equation'"=="" |				///
+		e(nyvars)==1 |					///
+		"``e(nyvars)''"=="`equation'"	{
+
+		* get var type & name
+		tokenize `namelist'
+		if "`2'"=="" {					//  only new varname provided
+			local predictvar `1'
+			qui gen `predictvar' = .
+		}
+		else {							//  datatype also provided
+			local vtype `1'
+			local predictvar `2'
+			qui gen `vtype' `predictvar' = .
+		}
+		*
+
+		* Get predictions (fitted values)
+		python: post_prediction("`predictvar'",`e(std)')
+		
+		* Replace with residuals if requested
+		if "`resid'"~="" {
+			qui replace `predictvar' = `e(depvar)' - `predictvar'
+		}
+		
+		* Set any obs not to be used to missing
+		qui replace `predictvar' = . if `touse'==0
+	}
+	else {
+		
+		_predict `namelist' if `touse', equation(`equation') `xb' `resid'
+	
+	}
+	*/
+	
+	
 end
 
 python:
