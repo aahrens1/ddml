@@ -454,9 +454,6 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 				model = LassoLars(alpha=lpenalty[col], random_state=random_state, fit_intercept=consflag, normalize=normflag)
 			elif l1_ratio[col]>0:
 				model = ElasticNet(alpha=lpenalty[col], l1_ratio=l1_ratio[col], random_state=random_state, fit_intercept=consflag, normalize=normflag, tol=tolopt)
-			else:
-				# Ridge uses a different definition of the penalty
-				model = Ridge(alpha=lpenalty[col]*n, fit_intercept=consflag, normalize=normflag, tol=tolopt)
 
 			##############################################################
 			
