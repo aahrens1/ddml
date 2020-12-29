@@ -41,6 +41,7 @@ version 16.0
 					TOLOpt(real 1e-10)				 /// tol for optimization (ElasticNet default is 1e-4)
 					NOCONStant						 /// standard option
 					cv								 /// cross-validate
+					cvpipe							 ///
 				]
 	
 	local varlist `yvars' `xvars'
@@ -61,20 +62,15 @@ version 16.0
 
 	local normflag		= ("`normalize'"~="")
 	local stdcoefflag	= ("`stdcoef'"~="")			// return coef estimates in std units
-	local stdflag		= ("`unitloadings'"=="") | `stdcoefflag'
+	local stdflag		= ("`unitloadings'"=="")
 	if `normflag' {
 		local stdflag	= 0							// sklearn's normalize means no std-by-hand
 	}
-	local consmodel		= ("`noconstant'"=="")
+	local consflag		= ("`noconstant'"=="")
 	local icflag		= ("`ic'"~="")
 	local larsflag		= ("`lars'"~="") | `icflag'	// sklearn has IC selection only for LARS
 	local cvflag		= ("`cv'"~="")
-	if `stdcoefflag' | `consmodel'==0 {
-		local consflag	= 0
-	}
-	else {
-		local consflag = 1
-	}
+	local cvpipeflag	= ("`cvpipe'"~="")
 
 	marksample touse
 	markout `touse' `yvars' `xvars'
@@ -171,7 +167,8 @@ version 16.0
 		 `consflag',							///
 		 `tolopt',								///
 		 `normflag',							///
-		 `cvflag')
+		 `cvflag',								///
+		 `cvpipeflag')
 
 	timer off 50
 	timer on 60
@@ -186,7 +183,7 @@ version 16.0
 	mat `r2mat'			= r(r2)'
 
 	// colnames for b
-	if `consflag' {
+	if `consflag' & `stdcoefflag'==0 {
 		local cnames `xvars' _cons
 	}
 	else {
@@ -281,8 +278,10 @@ from pandas import DataFrame
 from sfi import Data,Matrix,Scalar,SFIToolkit
 from sklearn import metrics, preprocessing
 import numpy as np
-from sklearn.linear_model import ElasticNet,Ridge,RidgeCV,LassoLars,ElasticNetCV,LassoLarsCV,LassoLarsIC
-from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import ElasticNet,Ridge,RidgeCV,Lasso,LassoLars,ElasticNetCV,LassoLarsCV,LassoLarsIC
+from sklearn.pipeline import make_pipeline,Pipeline
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
 
 # To pass objects to Stata
 import __main__
@@ -297,7 +296,7 @@ random.seed(50)
 
 # MS: "lambda" probably a reserved word
 
-def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,touse,n_jobs,random_state,verbose,warm_start,stdflag,stdcoefflag,consflag,tolopt,normflag,cvflag):
+def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,touse,n_jobs,random_state,verbose,warm_start,stdflag,stdcoefflag,consflag,tolopt,normflag,cvflag,cvpipeflag):
 
 	##############################################################
 	
@@ -318,7 +317,7 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 	SFIToolkit.stata("timer on 52")
 	
 	# If standardizing, scale features to mean zero, std dev one
-	if stdflag==1:
+	if stdflag==1 or stdcoefflag==1:
 		SFIToolkit.stata("timer on 91")
 		x_mean = np.mean(x,axis=0)
 		SFIToolkit.stata("timer off 91")
@@ -327,6 +326,9 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 		SFIToolkit.stata("timer off 92")
 		# If SD is zero, replace with 1
 		x_std[x_std==0] = 1
+	if stdflag==1 and cvpipeflag==0:
+		if verbose==1:
+			print("Standardizing Xs...")
 		SFIToolkit.stata("timer on 93")
 		x = (x-x_mean)/x_std
 		SFIToolkit.stata("timer on 93")
@@ -363,8 +365,10 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 	cvl1_ratio = pycvalpha
 	# More rescaling
 	if ridgeflag==1 and normflag==0:
+		# Ridge uses a different definition of the penalty
 		lpenalty = lpenalty*n
 	elif ridgeflag==0 and normflag==1 and cvflag==0:
+		# For lasso, l1_ratio=1 so this reduces to lpenalty = lpenalty/np.sqrt(n)
 		a = lpenalty*l1_ratio*1/np.sqrt(n)
 		b = lpenalty*(1.0 - np.array(l1_ratio))*1/n
 		lpenalty = a+b
@@ -376,18 +380,29 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 		#lpenalty = a+b
 		#cvl1_ratio = a/(a+b)
 
+	# Intercept
+	if consflag==0:
+		fit_intercept=False
+	elif normflag==1:
+		fit_intercept=True
+	elif stdflag==1:
+		fit_intercept=False
+	else:
+		fit_intercept=True
+	
 	SFIToolkit.stata("timer off 53")
-
+	
+	###################################################################################################
+	
 	if ridgeflag==1:
 	
 		# All ridge
 		# Ridge handled separately because it can estimate multi-output with separate lambda penalties
 		
 		if cvflag==1:
-			model = RidgeCV(fit_intercept=consflag, normalize=normflag, alpha_per_target=True)
+			model = RidgeCV(fit_intercept=fit_intercept, normalize=normflag, alpha_per_target=True)
 		else:		
-			# Ridge uses a different definition of the penalty
-			model = Ridge(alpha=lpenalty, fit_intercept=consflag, normalize=normflag, tol=tolopt)
+			model = Ridge(alpha=lpenalty, fit_intercept=fit_intercept, normalize=normflag, tol=tolopt)
 		
 		SFIToolkit.stata("timer on 54")
 		# Estimate model
@@ -444,16 +459,50 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 			##############################################################
 	
 			# Initialize model object
-			if icflag==1:
-				model = LassoLarsIC(criterion=ic,fit_intercept=consflag, normalize=normflag)
+			
+			if cvpipeflag==1 and larsflag==1:
+				pipe = Pipeline([
+					('scale', StandardScaler()),
+					('regr', LassoLars())
+				])
+				param_grid = [
+					{
+						'regr': [LassoLars()],
+						'regr__alpha': np.logspace(-4, 1, 100),
+						'regr__normalize': [normflag],
+						'regr__fit_intercept': [fit_intercept],
+					},
+				]
+ 				model = GridSearchCV(pipe, param_grid=param_grid, cv=5, verbose=verbose)
+				
+			elif cvpipeflag==1:
+				pipe = Pipeline([
+					('scale', StandardScaler()),
+					('regr', ElasticNet())
+				])
+				param_grid = [
+					{
+						'regr': [ElasticNet()],
+						'regr__alpha': np.logspace(-4, 1, 100),
+						'regr__l1_ratio': cvl1_ratio,
+						'regr__normalize': [normflag],
+						'regr__random_state': [random_state],
+						'regr__fit_intercept': [fit_intercept],
+						'regr__tol': [tolopt],
+					},
+				]
+ 				model = GridSearchCV(pipe, param_grid=param_grid, cv=5, verbose=verbose)
+				
+			elif icflag==1:
+				model = LassoLarsIC(criterion=ic,fit_intercept=fit_intercept, normalize=normflag)
 			elif cvflag==1 and larsflag==1:
-				model = LassoLarsCV(fit_intercept=consflag, normalize=normflag)
+				model = LassoLarsCV(fit_intercept=fit_intercept, normalize=normflag)
 			elif cvflag==1:
-				model = ElasticNetCV(l1_ratio=cvl1_ratio, random_state=random_state, fit_intercept=consflag, normalize=normflag, tol=tolopt)
+				model = ElasticNetCV(l1_ratio=cvl1_ratio, random_state=random_state, fit_intercept=fit_intercept, normalize=normflag, tol=tolopt)
 			elif larsflag==1:
-				model = LassoLars(alpha=lpenalty[col], random_state=random_state, fit_intercept=consflag, normalize=normflag)
+				model = LassoLars(alpha=lpenalty[col], random_state=random_state, fit_intercept=fit_intercept, normalize=normflag)
 			elif l1_ratio[col]>0:
-				model = ElasticNet(alpha=lpenalty[col], l1_ratio=l1_ratio[col], random_state=random_state, fit_intercept=consflag, normalize=normflag, tol=tolopt)
+				model = ElasticNet(alpha=lpenalty[col], l1_ratio=l1_ratio[col], random_state=random_state, fit_intercept=fit_intercept, normalize=normflag, tol=tolopt)
 
 			##############################################################
 			
@@ -462,7 +511,20 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 			
 			# Estimate model
 			model.fit(x, y.T[col])
-
+			
+			# If using pipeline and GridSearchCV, re-estimate using the best lambda and alpha
+			if cvpipeflag==1 and larsflag==1:
+				lpenalty=model.best_estimator_[1].alpha
+				model = LassoLars(alpha=lpenalty, random_state=random_state, fit_intercept=fit_intercept, normalize=normflag)
+				# A bit wasteful to repeat standardization each time through the loop, but saves memory
+				model.fit((x-x_mean)/x_std, y.T[col])
+			elif cvpipeflag==1:
+				lpenalty=model.best_estimator_[1].alpha
+				l1_ratio=model.best_estimator_[1].l1_ratio
+				model = ElasticNet(alpha=lpenalty, l1_ratio=l1_ratio, random_state=random_state, fit_intercept=fit_intercept, normalize=normflag, tol=tolopt)
+				# A bit wasteful to repeat standardization each time through the loop, but saves memory
+				model.fit((x-x_mean)/x_std, y.T[col])
+			
 			SFIToolkit.stata("timer off 54")
 
 			##############################################################
@@ -471,11 +533,14 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 			SFIToolkit.stata("timer on 56")
 		
 			# Add constant, unstandardize, etc.
-			if stdflag==0:
+			if stdflag==0 and stdcoefflag==0:
 				if consflag==1:
 					b = np.append(model.coef_*y_std.T[col],(model.intercept_*y_std.T[col] + y_mean.T[col]))
 				else:
 					b = model.coef_
+			elif normflag==1 and stdcoefflag==1:
+				# normalize means coefs are in unstd units so must standardize them
+				b = model.coef_ * x_std
 			else:
 				# estimation used standardization
 				if stdcoefflag==0:
@@ -496,19 +561,30 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 						cvalpha = model.l1_ratio_
 					else:
 						cvalpha = cvl1_ratio
+				elif cvpipeflag==1:
+					cvlambda = lpenalty
+					cvalpha = l1_ratio
 			else:
 				ball = np.append(ball,b)
-				if cvflag==1 or icflag==1:
+				if cvflag==1 or icflag==1 or cvpipeflag==1:
 					cvlambda = np.append(cvlambda,model.alpha_)
 					if len(cvl1_ratio)>0 and larsflag==0:
 						cvalpha = np.append(cvalpha,model.l1_ratio_)
 					else:
 						cvalpha = np.append(cvalpha,cvl1_ratio)
+				elif cvpipeflag==1:
+					cvlambda = np.append(cvlambda,lpenalty)
+					cvalpha = np.append(cvalpha,l1_ratio)
 
-			if col==0:
-				r2 = model.score(x, y.T[col])
+			# R-squared
+			if cvpipeflag==1:
+				score = model.score((x-x_mean)/x_std, y.T[col])
 			else:
-				r2 = np.append(r2,model.score(x, y.T[col]))
+				score = model.score(x, y.T[col])
+			if col==0:
+				r2 = score
+			else:
+				r2 = np.append(r2,score)
 				
 			SFIToolkit.stata("timer off 56")
 	
@@ -529,7 +605,7 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 	#ball = np.array([ball])
 	Matrix.store("r(beta)",ball)
 	
-	if cvflag==1 or icflag==1:
+	if cvflag==1 or icflag==1 or cvpipeflag==1:
 		if ridgeflag==1 and normflag==0:
 			pylambda = cvlambda*y_std/n
 			pyalpha = cvalpha
