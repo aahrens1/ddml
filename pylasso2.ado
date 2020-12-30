@@ -282,6 +282,8 @@ from sklearn.linear_model import ElasticNet,Ridge,RidgeCV,Lasso,LassoLars,Elasti
 from sklearn.pipeline import make_pipeline,Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
+from joblib import Memory
+from shutil import rmtree
 
 # To pass objects to Stata
 import __main__
@@ -316,16 +318,18 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 	# Start Stata timer
 	SFIToolkit.stata("timer on 52")
 	
+	# if stdflag==1 or stdcoefflag==1:
+	# Need this for the default grid
+	SFIToolkit.stata("timer on 91")
+	x_mean = np.mean(x,axis=0)
+	SFIToolkit.stata("timer off 91")
+	SFIToolkit.stata("timer on 92")
+	x_std = np.std(x,axis=0)
+	SFIToolkit.stata("timer off 92")
+	# If SD is zero, replace with 1
+	x_std[x_std==0] = 1
+	
 	# If standardizing, scale features to mean zero, std dev one
-	if stdflag==1 or stdcoefflag==1:
-		SFIToolkit.stata("timer on 91")
-		x_mean = np.mean(x,axis=0)
-		SFIToolkit.stata("timer off 91")
-		SFIToolkit.stata("timer on 92")
-		x_std = np.std(x,axis=0)
-		SFIToolkit.stata("timer off 92")
-		# If SD is zero, replace with 1
-		x_std[x_std==0] = 1
 	if stdflag==1 and cvpipeflag==0:
 		if verbose==1:
 			print("Standardizing Xs...")
@@ -404,8 +408,12 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 		else:		
 			model = Ridge(alpha=lpenalty, fit_intercept=fit_intercept, normalize=normflag, tol=tolopt)
 		
-		SFIToolkit.stata("timer on 54")
 		# Estimate model
+
+		if verbose==1:
+			print('Model to estimate:\t{}'.format(model))
+
+		SFIToolkit.stata("timer on 54")
 		model.fit(x, y)
 		SFIToolkit.stata("timer off 54")
 		
@@ -460,30 +468,45 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 	
 			# Initialize model object
 			
-			if cvpipeflag==1 and larsflag==1:
+			# Seems to make almost no difference with the Boston dataset...
+			# See https://scikit-learn.org/stable/auto_examples/compose/plot_compare_reduction.html
+			# if cvpipeflag==1:
+			# 	memory = Memory()
+			#	# Create a temporary folder to store the transformers of the pipeline
+			#	location = 'cachedir'
+			#	memory = Memory(location=location, verbose=verbose)
+			
+			if cvpipeflag==1:
+				alphagrid = np.logspace(0, -3, 100)*max(abs(np.dot(((x-x_mean)/x_std).T,y.T[col])/n))
+				if normflag==1:
+					alphagrid = alphagrid*1/np.sqrt(n)
+			
+			if cvpipeflag==1 and larsflag==1 and normflag==0:
 				pipe = Pipeline([
 					('scale', StandardScaler()),
 					('regr', LassoLars())
-				])
+				# 	], memory=memory)
+					])
 				param_grid = [
 					{
 						'regr': [LassoLars()],
-						'regr__alpha': np.logspace(-4, 1, 100),
+						'regr__alpha': alphagrid,
 						'regr__normalize': [normflag],
 						'regr__fit_intercept': [fit_intercept],
 					},
 				]
  				model = GridSearchCV(pipe, param_grid=param_grid, cv=5, verbose=verbose)
 				
-			elif cvpipeflag==1:
+			elif cvpipeflag==1 and normflag==0:
 				pipe = Pipeline([
 					('scale', StandardScaler()),
 					('regr', ElasticNet())
-				])
+				#	], memory=memory)
+					])
 				param_grid = [
 					{
 						'regr': [ElasticNet()],
-						'regr__alpha': np.logspace(-4, 1, 100),
+						'regr__alpha': alphagrid,
 						'regr__l1_ratio': cvl1_ratio,
 						'regr__normalize': [normflag],
 						'regr__random_state': [random_state],
@@ -492,6 +515,29 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 					},
 				]
  				model = GridSearchCV(pipe, param_grid=param_grid, cv=5, verbose=verbose)
+				
+			elif cvpipeflag==1 and larsflag==1 and normflag==1:
+				param_grid = [
+					{
+						'alpha': alphagrid,
+						'normalize': [normflag],
+						'fit_intercept': [fit_intercept],
+					},
+				]
+ 				model = GridSearchCV(estimator=LassoLars(), param_grid=param_grid, cv=5, verbose=verbose)
+				
+			elif cvpipeflag==1 and normflag==1:
+				param_grid = [
+					{
+						'alpha': alphagrid,
+						'l1_ratio': cvl1_ratio,
+						'normalize': [normflag],
+						'random_state': [random_state],
+						'fit_intercept': [fit_intercept],
+						'tol': [tolopt],
+					},
+				]
+ 				model = GridSearchCV(estimator=ElasticNet(), param_grid=param_grid, cv=5, verbose=verbose)
 				
 			elif icflag==1:
 				model = LassoLarsIC(criterion=ic,fit_intercept=fit_intercept, normalize=normflag)
@@ -506,26 +552,50 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 
 			##############################################################
 			
+			if verbose==1:
+				print('Model to estimate:\t{}'.format(model))
+
 			# Start Stata timer
 			SFIToolkit.stata("timer on 54")
 			
 			# Estimate model
 			model.fit(x, y.T[col])
 			
+			if cvflag==1 and verbose==1:
+				print('L1 penalty grid:\t{}'.format(model.alphas_))
+
+			if cvpipeflag==1 and verbose==1:
+				print('CV pipeline - estimates:\t{}'.format(model))
+			
 			# If using pipeline and GridSearchCV, re-estimate using the best lambda and alpha
-			if cvpipeflag==1 and larsflag==1:
+			if cvpipeflag==1 and normflag==0 and larsflag==1:
 				lpenalty=model.best_estimator_[1].alpha
 				model = LassoLars(alpha=lpenalty, random_state=random_state, fit_intercept=fit_intercept, normalize=normflag)
 				# A bit wasteful to repeat standardization each time through the loop, but saves memory
 				model.fit((x-x_mean)/x_std, y.T[col])
-			elif cvpipeflag==1:
+			elif cvpipeflag==1 and normflag==0:
 				lpenalty=model.best_estimator_[1].alpha
 				l1_ratio=model.best_estimator_[1].l1_ratio
 				model = ElasticNet(alpha=lpenalty, l1_ratio=l1_ratio, random_state=random_state, fit_intercept=fit_intercept, normalize=normflag, tol=tolopt)
 				# A bit wasteful to repeat standardization each time through the loop, but saves memory
 				model.fit((x-x_mean)/x_std, y.T[col])
+			elif cvpipeflag==1 and normflag==1 and larsflag==1:
+				lpenalty=model.best_estimator_.alpha
+				model = LassoLars(alpha=lpenalty, fit_intercept=fit_intercept, normalize=normflag)
+				# A bit wasteful to repeat standardization each time through the loop, but saves memory
+				model.fit(x, y.T[col])
+			elif cvpipeflag==1 and normflag==1:
+				lpenalty=model.best_estimator_.alpha
+				l1_ratio=model.best_estimator_.l1_ratio
+				model = ElasticNet(alpha=lpenalty, l1_ratio=l1_ratio, random_state=random_state, fit_intercept=fit_intercept, normalize=normflag, tol=tolopt)
+				# A bit wasteful to repeat standardization each time through the loop, but saves memory
+				model.fit(x, y.T[col])
 			
 			SFIToolkit.stata("timer off 54")
+
+			if cvpipeflag and verbose==1:
+				print('CV pipeline - best estimator:\t{}'.format(model))
+				print(model.coef_)
 
 			##############################################################
 		
@@ -587,6 +657,11 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 				r2 = np.append(r2,score)
 				
 			SFIToolkit.stata("timer off 56")
+			
+			# if cvpipeflag==1:
+			# 	# Delete the temporary cache before exiting
+			#	Memory.clear(warn=False)
+			#	rmtree(location)
 	
 	##############################################################
 	
@@ -656,9 +731,6 @@ def run_elastic_net(amat,ridgeflag,lmat,cvamat,larsflag,icflag,ic,yvars,xvars,to
 	SFIToolkit.stata("timer off 57")
 
 	##############################################################
-
-	if verbose==1:
-		print(model)
 
 	##############################################################
 
