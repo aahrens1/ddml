@@ -14,36 +14,35 @@ which ddml
 ********************************************************************************
 *** iv model																 ***
 ********************************************************************************
- 
 
-*** initialise ddml and select model; 
-* currently only the partial linear model is supported
-ddml init iv, mname(myest)
+global Y logpgp95
+global X edes1975 avelf temp* humid* steplow-oilres
+global D avexpr 
+global Z logem4
 
-*** specify supervised machine learners for E[Y|X] ("yeq") and E[D|X] ("deq")
+*** initialise ddml and select model
+ddml init iv 
+
+*** specify supervised machine learners for E[Y|X] ("yeq"), E[D|X] ("deq")
+*** as well as E[Z|X] ("zeq")
 * y-equation:
-ddml yeq, gen(lassoy) mname(myest) vname(logpgp95) : ///
-		lasso2 logpgp95 edes1975 avelf temp* humid* steplow-oilres, lic(aicc) postres
-ddml yeq, gen(rigy) mname(myest) vname(logpgp95) : ///
-		rlasso logpgp95 edes1975 avelf temp* humid* steplow-oilres
-	
+ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
+ddml yeq, gen(rigy): rlasso $Y $X
+ddml yeq, gen(pystackedy): pystacked $Y $X, type(reg)
+
 * d-equation:
-ddml deq, gen(lassod1) mname(myest) vname(avexpr) : lasso2 avexpr edes1975 avelf temp* humid* steplow-oilres, lic(aicc) postres
-ddml deq, gen(rigd1) mname(myest) vname(avexpr) : rlasso avexpr edes1975 avelf temp* humid* steplow-oilres
-ddml deq, gen(rigdemo) mname(myest) vname(democ00a) : rlasso democ00a edes1975 avelf temp* humid* steplow-oilres
-ddml deq, gen(rigdemo2) mname(myest) vname(democ00a) : reg democ00a edes1975 avelf temp* humid* steplow-oilres
+ddml deq, gen(lassod1): lasso2 $D $X, lic(aicc) postres
+ddml deq, gen(rigd1): rlasso $D $X
+ddml deq, gen(pystackedd): pystacked $D $X, type(reg)
 
 * z-equation:
-ddml zeq, gen(lassoz) vname(logem4) mname(myest): ///
-	lasso2 logem4   temp* humid* steplow-oilres, lic(aicc) postres
-ddml zeq, gen(rigz) vname(logem4) mname(myest): ///
-	rlasso logem4  temp* humid* steplow-oilres
- 
-ddml desc, mname(myest)
-
+ddml zeq, gen(lassoz): lasso2 $Z $X, lic(aicc) postres
+ddml zeq, gen(pystackedd): pystacked $Z $X, type(reg)
 	
 *** cross-fitting and display mean-squared prediction error
-ddml crossfit, mname(myest)
+ddml crossfit
+
+ddml desc
 
 *** estimation of parameter of interest
-ddml estimate,  mname(myest) // show(all)
+ddml estimate

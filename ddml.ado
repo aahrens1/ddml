@@ -1,5 +1,5 @@
-*** 20 nov, 2020
-* ddml v0.2
+*** feb 1, 2021
+* ddml v0.3
 
 program ddml, eclass
 
@@ -132,7 +132,7 @@ program ddml, eclass
 	*** set sample, foldvar, etc.
 	if "`subcmd'"=="sample" {
 		local 0 "`restmainargs' `restargs'"
-		syntax [if] [in] , mname(name) [ * ]
+		syntax [if] [in] , [mname(name)  * ]
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}

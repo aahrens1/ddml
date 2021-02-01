@@ -15,7 +15,7 @@ which ddml
 
 *** initialise ddml and select model; 
 * currently only the partial linear model is supported
-ddml init interactive, mname(myest)
+ddml init interactive
 
 gen double mage_sq = mage^2
 
@@ -25,21 +25,19 @@ global X c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby med
 
 *** specify supervised machine learners for E[Y|X] ("yeq") and E[D|X] ("deq")
 * y-equation:
-ddml yeq, gen(lassoy) vname($Y)  : lasso2 $Y $X, lic(aicc) postres
-ddml yeq, gen(rlassoy) vname($Y)  : rlasso $Y $X 
-//ddml2 yeq, gen(rfy) vname($Y) mname(myest): rforest $Y $X, type(reg)
-//ddml2 yeq, gen(pfory) vname($Y) mname(myest): pyforest $Y $X, type(regress)
+ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
+ddml yeq, gen(rlassoy): rlasso $Y $X 
+ddml yeq, gen(pystackedy): pystacked $Y $X, type(reg) 
 
 * d-equation:
-ddml deq, gen(lassod) vname($D)  : lasso2 $D $X, lic(aicc) postres
-ddml deq, gen(rigd) vname($D)  : rlasso $D $X
+ddml deq, gen(lassod): lasso2 $D $X, lic(aicc) postres
+ddml deq, gen(rlassod): rlasso $D $X
+ddml deq, gen(pystackedd): pystacked $D $X, type(reg)
 
 *** cross-fitting and display mean-squared prediction error
 ddml crossfit, kfolds(2) 
 
-//_ddml_ate, yvar($Y) dvar($D) y0tilde(lassoy) y1tilde(rlassoy) dtilde(lassod)  
-			
+ddml desc
+
 *** estimation of parameter of interest
 ddml estimate, show(all) 
- 
-pdslasso $Y $D ($X)

@@ -15,7 +15,7 @@ which ddml
 
 *** initialise ddml and select model; 
 * currently only the partial linear model is supported
-ddml init late, mname(myest)
+ddml init late
 
 gen lnearnings = log(earnings) 
 global Y lnearnings
@@ -24,25 +24,27 @@ global Z assignmt
 global X sex-age4554
 
 *** specify supervised machine learners for E[Y|X] ("yeq") and E[D|X] ("deq")
+
 * y-equation:
-ddml yeq, gen(lassoy) vname($Y) mname(myest): lasso2 $Y $X, lic(aicc) postres
-ddml yeq, gen(rlassoy) vname($Y) mname(myest): rlasso $Y $X 
-//ddml yeq pfory: (pyadaboost $Y $X, type(regress))
+ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
+ddml yeq, gen(rlassoy): rlasso $Y $X 
+ddml yeq, gen(pystackedy): pystacked $Y $X, type(reg)
 
 * d-equation:
-ddml deq, gen(lassod) vname($D) mname(myest): lasso2 $D $X, lic(aicc) postres
-ddml deq, gen(rlassod) vname($D) mname(myest):  rlasso $D $X
+ddml deq, gen(lassod): lasso2 $D $X, lic(aicc) postres
+ddml deq, gen(rlassod): rlasso $D $X
+ddml deq, gen(pystackedd): pystacked $D $X, type(reg)
 
 * z-equation:
-ddml zeq, gen(lassoz) vname($Z) mname(myest): lasso2 $Z $X, lic(aicc) postres
-ddml zeq , gen(rlassoz) vname($Z) mname(myest): rlasso $Z $X
+ddml zeq, gen(lassoz): lasso2 $Z $X, lic(aicc) postres
+ddml zeq, gen(rlassoz): rlasso $Z $X
+ddml zeq, gen(pystackedz): pystacked $Z $X, type(reg)
 
 *** cross-fitting and display mean-squared prediction error
-ddml crossfit, kfolds(2) mname(myest) tabfold
+ddml crossfit, kfolds(2) tabfold
 
-//_ddml_late, yvar($Y) dvar($D) zvar($Z) y0tilde(lassoy) y1tilde(lassoy) ///
-//					d0tilde(lassod) d1tilde(lassod) ztilde(lassoz)
+ddml desc
 
 *** estimation of parameter of interest
-ddml estimate, show(all) mname(myest)
+ddml estimate, show(all) 
  

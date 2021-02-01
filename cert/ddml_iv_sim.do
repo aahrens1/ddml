@@ -35,30 +35,34 @@ reg y d* x*
  
 *** initialise ddml and select model; 
 * currently only the partial linear model is supported
-ddml init iv, mname(myest)
+ddml init iv
 
-*** specify supervised machine learners for E[Y|X] ("yeq") and E[D|X] ("deq")
-* y-equation:
-ddml yeq, gen(yt) mname(myest) vname(y) : lasso2 y x*, lic(aicc) postres
-ddml yeq, gen(yt2) mname(myest) vname(y) : rlasso y x*
+*** specify supervised machine learners for E[Y|X] ("yeq"), E[D|X] ("deq")
+*** as well as E[Z|X] ("zeq")* y-equation:
+ddml yeq, gen(yt1): lasso2 y x*, lic(aicc) postres
+ddml yeq, gen(yt2): rlasso y x*
+ddml yeq, gen(yt3): pystacked y x*, type(reg)
 	
 * d-equation:
-ddml deq, gen(d1t1) mname(myest) vname(d1) : lasso2 d1 x*, lic(aicc) postres
-ddml deq, gen(d1t2) mname(myest) vname(d1) : rlasso d1 x*
-ddml deq, gen(d2t1) mname(myest) vname(d2) : rlasso d2 x*
-ddml deq, gen(d2t2) mname(myest) vname(d2) : reg d2 x*
+ddml deq, gen(d1t1): lasso2 d1 x*, lic(aicc) postres
+ddml deq, gen(d1t2): rlasso d1 x*
+ddml deq, gen(d1t3): pystacked d1 x*, type(reg)
+ddml deq, gen(d2t1): rlasso d2 x*
+ddml deq, gen(d2t2): reg d2 x*
+ddml deq, gen(d2t2): pystacked d2 x*, type(reg)
 
 * z-equation:
-ddml zeq, gen(z1t1) vname(z1) mname(myest): lasso2 z1  x*, lic(aicc) postres
-ddml zeq, gen(z1t2) vname(z1) mname(myest):  rlasso z1 x*
-ddml zeq, gen(z2t1) vname(z2) mname(myest):  lasso2 z2  x*, lic(aicc) postres
-ddml zeq, gen(z2t2) vname(z2) mname(myest): rlasso z2 x*
-	
-ddml desc, mname(myest)
+ddml zeq, gen(z1t1): lasso2 z1 x*, lic(aicc) postres
+ddml zeq, gen(z1t2): rlasso z1 x*
+ddml zeq, gen(z1t3): pystacked z1 x*, type(reg)
+ddml zeq, gen(z2t1): lasso2 z2 x*, lic(aicc) postres
+ddml zeq, gen(z2t2): rlasso z2 x*
+ddml zeq, gen(z2t3): pystacked z2 x*, type(reg)
 
-	
 *** cross-fitting and display mean-squared prediction error
-ddml crossfit, mname(myest)
+ddml crossfit 
+	
+ddml desc 
 
 *** estimation of parameter of interest
-ddml estimate,  mname(myest) // show(all)
+ddml estimate // show(all)

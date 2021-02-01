@@ -7,34 +7,41 @@ if ("`c(username)'"=="kahrens") {
 // use Data/AJR.dta
 use https://statalasso.github.io/dta/AJR.dta, clear
 
-
 which ddml
  
 ********************************************************************************
 *** partial model														     ***
 ********************************************************************************
 
+global Y logpgp95
+global X edes1975 avelf temp* humid* steplow-oilres
+global D1 avexpr 
+global D2 lat_abst
+
 *** initialise ddml and select model; 
 * currently only the partial linear model is supported
-ddml init partial, mname(myest)
+ddml init partial 
 
 *** specify supervised machine learners for E[Y|X] ("yeq") and E[D|X] ("deq")
 * y-equation:
-ddml yeq, gen(lassoy) mname(myest) vname(logpgp95) : lasso2 logpgp95 edes1975 avelf temp* humid* steplow-oilres, lic(aicc) postres
-ddml yeq, gen(rigy) mname(myest) vname(logpgp95) : rlasso logpgp95 edes1975 avelf temp* humid* steplow-oilres
-	
+ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
+ddml yeq, gen(rigy): rlasso $Y $X
+ddml yeq, gen(pystackedy): pystacked $Y $X, type(regress) 
+
 * d-equation:
-ddml deq, gen(lassod1) mname(myest) vname(avexpr) : lasso2 avexpr edes1975 avelf temp* humid* steplow-oilres, lic(aicc) postres
-ddml deq, gen(rigd1) mname(myest) vname(lat_abst) : rlasso avexpr edes1975 avelf temp* humid* steplow-oilres
-ddml deq, gen(lassod2) mname(myest) vname(avexpr) : lasso2 lat_abst edes1975 avelf temp* humid* steplow-oilres, lic(aicc) postres
-ddml deq, gen(rigd2) mname(myest) vname(lat_abst) : rlasso lat_abst edes1975 avelf temp* humid* steplow-oilres
+ddml deq, gen(lassod1): lasso2 $D1 $X, lic(aicc) postres
+ddml deq, gen(rigd1): rlasso $D1 $X
+ddml deq, gen(pys1): pystacked $D1 $X, type(reg) 
+ddml deq, gen(lassod2): lasso2 $D2 $X, lic(aicc) postres
+ddml deq, gen(rigd2): rlasso $D2 $X
+ddml deq, gen(pystackedd): pystacked $D2 $X, type(regress)  
 
-ddml sample if democ1 < ., mname(myest) vars(logpgp95 avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres)
-
-ddml desc, mname(myest)
+ddml sample if democ1 < ., vars($Y $D1 $D2 $X) 
 
 *** cross-fitting and display mean-squared prediction error
-ddml crossfit, mname(myest)
+ddml crossfit 
+
+ddml desc 
 
 *** estimation of parameter of interest
-ddml estimate, mname(myest)
+ddml estimate 

@@ -44,7 +44,6 @@ reg y d1 d2 x1-x20 w1-w20
 reg y d1 d2 x1-x20
 
 ivreg2 y x1-x20 (d1 d2 = z1-z20), first
-
 ivreg2 y x1-x20 (d1 = z1-z20), first
 
 ********************************************************************************
@@ -53,32 +52,37 @@ ivreg2 y x1-x20 (d1 = z1-z20), first
  
 *** initialise ddml and select model; 
 * currently only the partial linear model is supported
-ddml init optimaliv, mname(myest)
+ddml init optimaliv 
 
-*** specify supervised machine learners for E[Y|X] ("yeq") and E[D|X] ("deq")
+*** specify supervised machine learners for E[Y|X] ("yeq"), E[D|X] ("deq")
+*** as well as E[D|ZX] ("zeq")
+
 * y-equation:
-ddml yeq, gen(yt) mname(myest) vname(y) : lasso2 y x*, lic(aicc) postres
-ddml yeq, gen(yt2) mname(myest) vname(y) : rlasso y x1-x20
-	
+ddml yeq, gen(yt1) : lasso2 y x1-x20, lic(aicc) postres
+ddml yeq, gen(yt2) : rlasso y x1-x20
+ddml yeq, gen(yt3) : pystacked y x1-x20, type(reg)
+
 * d-equation:
-ddml deq, gen(d1t1) mname(myest) vname(d1) : lasso2 d1 x*, lic(aicc) postres
-ddml deq, gen(d1t2) mname(myest) vname(d1) : rlasso d1 x1-x20
-ddml deq, gen(d2t1) mname(myest) vname(d2) : rlasso d2 x*
-ddml deq, gen(d2t2) mname(myest) vname(d2) : reg d2 x*
+ddml deq, gen(d1t1): lasso2 d1 x1-x20, lic(aicc) postres
+ddml deq, gen(d1t2): rlasso d1 x1-x20
+ddml deq, gen(d1t3): pystacked d1 x1-x20, type(reg)
+ddml deq, gen(d2t1): rlasso d2 x1-x20
+ddml deq, gen(d2t2): reg d2 x1-x20
+ddml deq, gen(d2t3): pystacked d2 x1-x20, type(reg)
 
 * z-equation:
-ddml dheq, gen(d2H1) mname(myest) vname(d2) : rlasso d2 z* x*
-ddml dheq, gen(d2H2) mname(myest) vname(d2) : reg d2 z* x*
-ddml dheq, gen(d1H1) mname(myest) vname(d1) : lasso2 d1 z* x*, lic(aicc) postres
-ddml dheq, gen(d1H2) mname(myest) vname(d1) : rlasso d1 z1-z20 x1-x20
+ddml dheq, gen(d2H1): rlasso d2 z1-z20 x1-x20
+ddml dheq, gen(d2H2): reg d2 z1-z20 x1-x20
+ddml dheq, gen(d2H3): pystacked d2 z1-z20 x1-x20, type(reg)
+ddml dheq, gen(d1H1): lasso2 d1 z1-z20 x1-x20, lic(aicc) postres
+ddml dheq, gen(d1H2): rlasso d1 z1-z20 x1-x20
+ddml dheq, gen(d1H3): pystacked d1 z1-z20 x1-x20, type(reg)
 
-		
 *** cross-fitting and display mean-squared prediction error
-ddml crossfit, mname(myest)
+ddml crossfit
 
-ddml desc, mname(myest)
-
+ddml desc
 
 *** estimation of parameter of interest
-ddml estimate,  mname(myest)   // show(all)
+ddml estimate 
 
