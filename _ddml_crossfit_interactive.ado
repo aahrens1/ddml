@@ -99,6 +99,7 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					mata: st_local("vtilde",`eqn'.Vtilde)
 					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
+					mata: st_local("vtype",`eqn'.vtype)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
 					local est_main `anything'
@@ -109,18 +110,18 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					
 					// for D = 1
 					// estimate excluding kth fold
-					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
+					`est_main' if `mname'_fid!=`k' & `listD' == 1 & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `mname'_fid==`k' & `listD' == 1 & `mname'_sample
+					qui predict `vtype'`vtilde_i' if `mname'_fid==`k' & `listD' == 1 & `mname'_sample
 					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 1 & `mname'_sample
 
 					// for D = 0
 					// estimate excluding kth fold
-					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
+					`est_main' if `mname'_fid!=`k' & `listD' == 0 & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `mname'_fid==`k' & `listD' == 0 & `mname'_sample
+					qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `listD' == 0 & `mname'_sample
 					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 0 & `mname'_sample
 				
 				}
@@ -130,6 +131,7 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					mata: st_local("vtilde",`eqn'.Vtilde)
 					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
+					mata: st_local("vtype",`eqn'.vtype)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
 					local est_main `anything'
@@ -143,25 +145,25 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 						`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 						// get fitted values and residuals for kth fold	
 						tempvar vtilde_i
-						qui predict double `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+						qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `mname'_sample
 						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
 					}
 					else {
 
 						// for Z = 0
 						// estimate excluding kth fold
-						`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
+						`est_main' if `mname'_fid!=`k' & `listZ' == 0 & `mname'_sample, `est_options'
 						// get fitted values and residuals for kth fold	
 						tempvar vtilde_i
-						qui predict double `vtilde_i' if `mname'_fid==`k' & `listZ' == 0 & `mname'_sample
+						qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `listZ' == 0 & `mname'_sample
 						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k'  & `listZ' == 0 & `mname'_sample
 
 						// for Z = 1
 						// estimate excluding kth fold
-						`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
+						`est_main' if `mname'_fid!=`k' & `listZ' == 1 & `mname'_sample, `est_options'
 						// get fitted values and residuals for kth fold	
 						tempvar vtilde_i
-						qui predict double `vtilde_i' if `mname'_fid==`k' & `listZ' == 1 & `mname'_sample
+						qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `listZ' == 1 & `mname'_sample
 						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listZ' == 1 & `mname'_sample
 					}
 				}
@@ -172,6 +174,7 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					mata: st_local("vtilde",`eqn'.Vtilde)
 					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
+					mata: st_local("vtype",`eqn'.vtype)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
 					local est_main `anything'
@@ -184,7 +187,7 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict double `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+					qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `mname'_sample
 					qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
 				}
 			}

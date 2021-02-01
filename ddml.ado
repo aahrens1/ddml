@@ -32,7 +32,10 @@ program ddml, eclass
 	*** describe model
 	if substr("`subcmd'",1,4)=="desc" {
 		local 0 "`restargs'"
-		syntax , mname(name) [ * ]
+		syntax , [ mname(name)  * ]
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
 		check_mname "`mname'"
 		_ddml_describe `mname', `options'
 	}
@@ -41,7 +44,10 @@ program ddml, eclass
 	if "`subcmd'"=="save" {
 		local fname: word 2 of `mainargs'
 		local 0 "`restargs'"
-		syntax , mname(name) [ * ]
+		syntax , [ mname(name) * ]
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
 		check_mname "`mname'"
 		_ddml_save, mname(`mname') fname(`fname') `options'
 
@@ -51,7 +57,10 @@ program ddml, eclass
 	if "`subcmd'"=="export" {
 		local fname: word 2 of `mainargs'
 		local 0 "`restargs'"
-		syntax , mname(name) [ * ]
+		syntax ,[ mname(name) * ]
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
 		check_mname "`mname'"
 		_ddml_export, mname(`mname') fname(`fname') `options'
 
@@ -61,7 +70,10 @@ program ddml, eclass
 	if "`subcmd'"=="use" {
 		local fname: word 2 of `mainargs'
 		local 0 "`restargs'"
-		syntax , mname(name) [ * ]
+		syntax , [ mname(name) * ]
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
 		// no need to check name
 		_ddml_use, mname(`mname') fname(`fname') `options'
 	}
@@ -69,7 +81,10 @@ program ddml, eclass
 	*** drop model
 	if "`subcmd'"=="drop" {
 		local 0 "`restargs'"
-		syntax , mname(name)
+		syntax , [mname(name)]
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
 		check_mname "`mname'"
 		_ddml_drop, mname(`mname')
 	}
@@ -78,6 +93,9 @@ program ddml, eclass
 	if "`subcmd'"=="copy" {
 		local 0 "`restargs'"
 		syntax , mname(name) newmname(name)
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
 		check_mname "`mname'"
 		_ddml_copy, mname(`mname') newmname(`newmname')
 	}
@@ -90,9 +108,13 @@ program ddml, eclass
 			exit 1
 		}
 		local 0 "`restargs'"
-		// mname is required; could make optional with a default name
 		// fold variable is option; default is ddmlfold
-		syntax , mname(name)
+		syntax , [mname(name)]
+
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
+
 		mata: `mname'=init_ddmlStruct()
 		// create and store id variable
 		cap drop `mname'_id
@@ -111,6 +133,9 @@ program ddml, eclass
 	if "`subcmd'"=="sample" {
 		local 0 "`restmainargs' `restargs'"
 		syntax [if] [in] , mname(name) [ * ]
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
 		check_mname "`mname'"
 		_ddml_sample `if' `in' , mname(`mname') `options'
 	}
@@ -124,13 +149,32 @@ program ddml, eclass
 		// parse character is in macro `2'
 		local eqn `3'
 		local 0 "`1'"
-		syntax ,	mname(name)		///
+		syntax ,	///			
+					gen(name)		///
+					[				///
 					vname(name)		///
-					gen(name)
+					mname(name)		///
+					vtype(string)   ///  "double", "float" etc
+					REPlace         ///
+					]
 
 		** check that ddml has been initialized
 		// to add
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
 		check_mname "`mname'"
+
+		** vname: use 2nd word of eq as the default 
+		di "`eqn'"
+		if "`vname'"=="" {
+			local vname : word 2 of `eqn'
+		}
+
+		** drop gen var if it already exists
+		if "`replace'"!="" {
+			cap drop `gen'
+		}
 
 		** check that equation is consistent with model
 		mata: st_local("model",`mname'.model)
@@ -142,7 +186,7 @@ program ddml, eclass
 		}
 
 		// subcmd macro tells add_eqn(.) which list to add it to
-		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'", "`eqn'")
+		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'", "`eqn'","`vtype'")
 		local newentry `r(newentry)'
 		if "`subcmd'"=="yeq" {
 			// check if nameY is already there; if it is, must be identical to vname here
@@ -204,25 +248,28 @@ program ddml, eclass
 
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
-		syntax , mname(name) [*]
+		syntax , [mname(name) *]
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
 		check_mname "`mname'"
 
 		mata: st_global("r(model)",`mname'.model)
 
 		if ("`r(model)'"=="partial") {
-		_ddml_crossfit_additive `restargs'
+		_ddml_crossfit_additive , `options' mname(`mname') 
 		}
 		if ("`r(model)'"=="iv") {
-		_ddml_crossfit_additive `restargs'
+		_ddml_crossfit_additive , `options' mname(`mname') 
 		}
 		if ("`r(model)'"=="interactive") {
-		_ddml_crossfit_interactive `restargs'
+		_ddml_crossfit_interactive , `options' mname(`mname') 
 		}
 		if ("`r(model)'"=="late") {
-		_ddml_crossfit_interactive `restargs'
+		_ddml_crossfit_interactive , `options' mname(`mname') 
 		}
 		if ("`r(model)'"=="optimaliv") {
-		_ddml_crossfit_additive `restargs'
+		_ddml_crossfit_additive , `options' mname(`mname') 
 		}
 	}
 
@@ -230,7 +277,12 @@ program ddml, eclass
 	if "`subcmd'" =="estimate" {
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
-		syntax , mname(name) [*]
+		syntax , [mname(name) *]
+
+		if "`mname'"=="" {
+			local mname m0 // sets the default name
+		}
+
 		check_mname "`mname'"
 
 		mata: st_global("r(model)",`mname'.model)
@@ -322,7 +374,8 @@ void add_eqn(						struct ddmlStruct m,
 									string scalar eqntype,
 									string scalar vname,
 									string scalar vtilde,
-									string scalar estcmd)
+									string scalar estcmd,
+									string scalar vtype)
 {
 	struct eqnStruct scalar		e, e0
 	e.eqntype		= eqntype
@@ -330,6 +383,7 @@ void add_eqn(						struct ddmlStruct m,
 	e.Vtilde		= vtilde
 	e.eststring		= estcmd
 	e.command		= tokens(estcmd)[1,1]
+	e.vtype		 	= vtype
 
 	newentry		= 1
 

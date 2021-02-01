@@ -141,6 +141,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					mata: st_local("vname",`eqn'.Vname)
 					mata: st_local("eststring",`eqn'.eststring)
 					mata: st_local("eqntype",`eqn'.eqntype)
+					mata: st_local("vtype",`eqn'.vtype)
 					local 0 "`eststring'"
 					syntax [anything] , [*]
 					local est_main `anything'
@@ -148,13 +149,15 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					di as res "Estimating equation `i':"
 					di as res "  est_main: `est_main'"
 					di as res "  est_options: `est_options'"
-	
+					
+					tempvar vtilde_i
+
 					// estimate excluding kth fold
 					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
-					tempvar vtilde_i
-					// "double" commented out so that rforest works
-					qui predict /* double */ `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+					qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+
+
 					if ("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
 						// get predicted values if optimal IV model & deq or dheq
 						qui replace `mname'_`vtilde' = `vtilde_i' if `mname'_fid==`k' & `mname'_sample
