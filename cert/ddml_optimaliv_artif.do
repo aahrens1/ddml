@@ -1,4 +1,3 @@
- 
 
 clear all
  
@@ -51,7 +50,6 @@ ivreg2 y x1-x20 (d1 = z1-z20), first
 ********************************************************************************
  
 *** initialise ddml and select model; 
-* currently only the partial linear model is supported
 ddml init optimaliv 
 
 *** specify supervised machine learners for E[Y|X] ("yeq"), E[D|X] ("deq")
@@ -85,4 +83,3 @@ ddml desc
 
 *** estimation of parameter of interest
 ddml estimate 
-

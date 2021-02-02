@@ -27,20 +27,22 @@ program _ddml_estimate_partial, eclass sortpreserve
 	local ncombos	= s(ncombos)
 	local tokenlen	= `ncombos'*2 -1
 
-	local j = 1
-	forvalues i = 1(2)`tokenlen' {
-		tokenize `ylist' , parse("-")
-		local y ``i''
-		tokenize `Dlist' , parse("-")
-		local d ``i''
-		add_prefix `y' `d', prefix("`mname'_")
-		// do_regress is OLS but with original varnames
-		do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
-		di
-		di as res "DML with Y=`y' and D=`d' (N=`e(N)'):"
-		ereturn di
-        local j= `j'+1
-     }
+	if "`show'"=="all" {
+		local j = 1
+		forvalues i = 1(2)`tokenlen' {
+			tokenize `ylist' , parse("-")
+			local y ``i''
+			tokenize `Dlist' , parse("-")
+			local d ``i''
+			add_prefix `y' `d', prefix("`mname'_")
+			// do_regress is OLS but with original varnames
+			do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+			di
+			di as res "DML with Y=`y' and D=`d' (N=`e(N)'):"
+			ereturn di
+	        local j= `j'+1
+	     }
+	}
 
 	*** estimate best model
 	add_prefix `Yopt' `Dopt', prefix("`mname'_")

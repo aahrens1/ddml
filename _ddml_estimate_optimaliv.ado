@@ -34,14 +34,12 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
     }
 
     _ddml_make_varlists, mname(`mname')
-    return list
     _ddml_allcombos `r(eq)' , putlast(`Yopt' `Dopt' `DHopt') ///
                                                 `debug' ///
                                                 dpos_end(`r(dpos_end)') ///
                                                 zpos_start(`r(zpos_start)') zpos_end(`r(zpos_end)') ///
                                                 addprefix("`mname'_")
 
-	return list
 	local ncombos = r(ncombos)
 	local tokenlen = `ncombos'*2 -1
 	local ylist `r(ystr)'
@@ -50,7 +48,6 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 
 	if ("`show'"=="all") {
 	    local j = 1
-	    di `tokenlen'
 	    forvalues i = 1(2)`tokenlen' {
 	    	tokenize `ylist' , parse("-")
 	    	local y ``i''
