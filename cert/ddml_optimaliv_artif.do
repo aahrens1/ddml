@@ -53,7 +53,7 @@ ivreg2 y x1-x20 (d1 = z1-z20), first
 ddml init optimaliv 
 
 *** specify supervised machine learners for E[Y|X] ("yeq"), E[D|X] ("deq")
-*** as well as E[D|ZX] ("zeq")
+*** as well as E[D|ZX] ("dheq")
 
 * y-equation:
 ddml yeq, gen(yt1) : lasso2 y x1-x20, lic(aicc) postres
@@ -68,7 +68,7 @@ ddml deq, gen(d2t1): rlasso d2 x1-x20
 ddml deq, gen(d2t2): reg d2 x1-x20
 ddml deq, gen(d2t3): pystacked d2 x1-x20, type(reg)
 
-* z-equation:
+* dh-equation:
 ddml dheq, gen(d2H1): rlasso d2 z1-z20 x1-x20
 ddml dheq, gen(d2H2): reg d2 z1-z20 x1-x20
 ddml dheq, gen(d2H3): pystacked d2 z1-z20 x1-x20, type(reg)

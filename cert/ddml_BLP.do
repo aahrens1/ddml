@@ -21,6 +21,7 @@ global X hpwt-spaceu_tu
 global Z z1-z28
  
 *** initialise ddml and select model
+set seed 123
 ddml init optimaliv 
 
 *** specify supervised machine learners for E[Y|X] ("yeq"), E[D|X] ("deq")
@@ -28,7 +29,7 @@ ddml init optimaliv
 
 * "y-equation":
 ddml yeq, gen(yt1) : rlasso $Y $X
-ddml yeq, gen(yt2) : pystacked $Y $X, type(reg)
+ddml yeq, gen(yt2) : pystacked $Y $X, type(reg) seed(99)
 ddml yeq, gen(yt3) : pyvote $Y $X, type(reg)
 
 * "d-equation":
@@ -50,3 +51,6 @@ ddml desc
 *** estimation of parameter of interest
 ddml estimate 
 
+*** now, do the same using the one-line command (qddml) 
+*** .. which uses only pystacked
+qddml $Y ($X) ($D = $Z), model(optimaliv) debug seed(99)
