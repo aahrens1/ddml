@@ -3,13 +3,14 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		[										///
 		model(name)								///
 		method(string)							///
-		voting 									/// using VotingRegressor instead
 		verbose 								///
 		mname(name)								///
-		lasso									/// use lasso instead (not implemented yet)
-		type(string)							///
+		///lasso								/// use lasso instead (not implemented yet)
+		///type(string)							///
 		debug 									///
 		seed(int 0)								///
+		cmd(name)								///
+		CMDOPTions(string asis)					///
 		* ]
 
 	mata: s_ivparse("`anything'")
@@ -30,6 +31,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if ("`type'"=="") local type reg
 
 	if "`verbose'"=="" local qui qui
+	if "`cmd'"=="" local cmd pystacked
 
 	`qui' ddml init `model', mname(`mname')
 	if ("`model'"=="optimaliv") {
@@ -37,39 +39,39 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 			di as error "not allowed"
 			exit 198
 		}
-		`qui' ddml yeq, gen(y) mname(`mname'): pystacked `depvar' `xctrl', type(`type') `voting' seed(`seed')
-		`qui' ddml deq, gen(d) mname(`mname'): pystacked `dendog' `xctrl', type(`type') `voting'
-		`qui' ddml dheq, gen(z) mname(`mname'): pystacked `dendog' `xctrl' `exexog', type(reg) `voting'
+		`qui' ddml yeq, gen(y) mname(`mname'): `cmd' `depvar' `xctrl', `cmdoptions' seed(`seed')
+		`qui' ddml deq, gen(d) mname(`mname'): `cmd' `dendog' `xctrl', `cmdoptions' 
+		`qui' ddml dheq, gen(z) mname(`mname'): `cmd' `dendog' `xctrl' `exexog', `cmdoptions' 
 	} 
 	else if ("`model'"=="iv") {
-		`qui' ddml yeq, gen(y) mname(`mname'): pystacked `depvar' `xctrl', type(`type') `voting'
+		`qui' ddml yeq, gen(y) mname(`mname'): `cmd' `depvar' `xctrl', `cmdoptions' 
 		local j = 1
 		foreach d in `dendog' {
-			`qui' ddml deq, gen(d`j') mname(`mname'): pystacked `d' `xctrl', type(`type') `voting'
+			`qui' ddml deq, gen(d`j') mname(`mname'): `cmd' `d' `xctrl', `cmdoptions' 
 			local j = `j' + 1
 		}
 		local j = 1
 		foreach z in `exexog' {
-			`qui' ddml zeq, gen(z`j') mname(`mname'): pystacked `z' `xctrl', type(`type') `voting'
+			`qui' ddml zeq, gen(z`j') mname(`mname'): `cmd' `z' `xctrl', `cmdoptions' 
 			local j = `j' + 1
 		}
 	}
 	else if ("`model'"=="late") {
-		`qui' ddml yeq, gen(y) mname(`mname'): pystacked `depvar' `xctrl', type(`type') `voting'
-		`qui' ddml deq, gen(d) mname(`mname'): pystacked `dendog' `xctrl', type(`type') `voting'
-		`qui' ddml zeq, gen(z) mname(`mname'): pystacked `exexog' `xctrl', type(`type') `voting'
+		`qui' ddml yeq, gen(y) mname(`mname'): `cmd' `depvar' `xctrl', `cmdoptions' 
+		`qui' ddml deq, gen(d) mname(`mname'): `cmd' `dendog' `xctrl', `cmdoptions' 
+		`qui' ddml zeq, gen(z) mname(`mname'): `cmd' `exexog' `xctrl', `cmdoptions' 
 	}
 	else if ("`model'"=="partial") {
-		`qui' ddml yeq, gen(y) mname(`mname'): pystacked `depvar' `xctrl', type(`type') `voting'
+		`qui' ddml yeq, gen(y) mname(`mname'): `cmd' `depvar' `xctrl', `cmdoptions' 
 		local j = 1
 		foreach d in `dexog' {
-			`qui' ddml deq, gen(d`j') mname(`mname'): pystacked `d' `xctrl', type(`type') `voting'
+			`qui' ddml deq, gen(d`j') mname(`mname'): `cmd' `d' `xctrl', `cmdoptions' 
 			local j = `j' + 1
 		}
 	}
 	else if ("`model'"=="interactive") {
-		`qui' ddml yeq, gen(y) mname(`mname'): pystacked `depvar' `xctrl', type(`type') `voting'
-		`qui' ddml deq, gen(d) mname(`mname'): pystacked `dexog' `xctrl', type(`type') `voting'
+		`qui' ddml yeq, gen(y) mname(`mname'): `cmd' `depvar' `xctrl', `cmdoptions' 
+		`qui' ddml deq, gen(d) mname(`mname'): `cmd' `dexog' `xctrl', `cmdoptions' 
 	}		
 	`qui' ddml crossfit, mname(`mname')
 	ddml estimate, mname(`mname')
