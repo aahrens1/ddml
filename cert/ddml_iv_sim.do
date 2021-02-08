@@ -34,7 +34,6 @@ reg y d* x*
 
  
 *** initialise ddml and select model; 
-* currently only the partial linear model is supported
 ddml init iv
 
 *** specify supervised machine learners for E[Y|X] ("yeq"), E[D|X] ("deq")
@@ -66,3 +65,6 @@ ddml desc
 
 *** estimation of parameter of interest
 ddml estimate // show(all)
+
+*** now, using one-line command:
+qddml y (x*) (d1 d2 = z1 z2), model(iv)

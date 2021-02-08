@@ -38,7 +38,7 @@ see model descriptions below.
         {cmd:ddml} {it:eq} {it:newvarname} [, {it:eqopt}]: {it:command} {it:depvar} {it:vars} [, {it:cmdopt}]
 
 {pstd}
-where {it:eq} is either {it:yeq}, {it:deq}, {it:dheq} or {it:zeq}. {it:command} is a
+where {it:eq} is either {it:yeq}, {it:deq} or {it:zeq}. {it:command} is a
 ML program that supports the standard {it:reg y x}-type syntax. 
 {it:cmdopt} are specific to that program.
 See compatibility below.
@@ -86,7 +86,6 @@ name of the dependent variable for which the
 conditional expectation should be estimated. 
 If {opt yeq} is used, this will be the dependent variable; 
 if {opt deq} is used, this will be the treatment variable; 
-if {opt dheq} is used, this will be the treatment variable; 
 if {opt zeq} is used, this will be the (excluded) instrumental 
 variable.
 {p_end}
@@ -147,11 +146,7 @@ The following models are implemented:
         D = m(X) + V
 
 {pstd}
-where the aim is to estimate {it:a} while controlling for X. To this end, 
-we estimate the conditional expectations
-E[Y|X] ("{opt yeq}")
-and E[D|X] ("{opt deq}")
-using a supervised machine learner.
+where the aim is to estimate {it:a} while controlling for X.
 
 {pstd}
 {ul:{it:Interactive model:}}
@@ -161,11 +156,7 @@ using a supervised machine learner.
 
 {pstd}
 where we are, as in the Partial Linear Model interested in the ATE, but do not 
-assume that X and D are separable. D is a binary treatment variable. 
-We estimate the conditional expectations 
-E[Y|X,D=0] and E[Y|X,D=1] (jointly referred to as "{opt yeq}")
-as well as E[D|X] ("{deq}") using a supervised machine
-learner.
+assume that X and D are separable.
 
 {pstd}
 {ul:{it:Partial linear IV model:}}
@@ -174,10 +165,7 @@ learner.
         Z = m(X) + V
 
 {pstd}
-where the aim is to estimate the average treatment effect.
-We estimate the conditional expectations E[Y|X] ("{opt yeq}"), 
-E[D|X] ("{opt deq}") and E[Z|X] ("{opt zeq}") using a supervised machine
-learner.
+where the aim is to estimate the average treatment effect or local average treatment effect.
 
 {pstd}
 {ul:{it:LATE model:}}
@@ -187,12 +175,7 @@ learner.
         Z = m(X) + E
 
 {pstd}
-where the aim is to estimate the local average treatment effect.
-We estimate, using a supervised machine
-learner, the following conditional expectations:
-E[Y|X,Z=0] and E[Y|X,Z=1] (jointly referred to as "{opt yeq}");
-E[D|X,Z=0] and E[D|X,Z=1] (jointly referred to as "{opt deq}");
-E[Z|X] ("zeq").
+where the aim is to estimate the average treatment effect or local average treatment effect.
 
 {pstd}
 {ul:{it:Optimal IV model:}}
@@ -202,10 +185,7 @@ E[Z|X] ("zeq").
 
 {pstd}
 where the aim is to estimate the average treatment effect or local average treatment effect.
-To this end, we estimate the conditional expectations
-E[Y|X] ("{opt yeq}"), 
-E[D|X] ("{opt deq}") and E[D|Z,X] ("{opt dheq}") using a supervised machine
-learner.
+
 
 {marker compatibility}{...}
 {title:Compatible programs}
@@ -220,10 +200,6 @@ It has been tested with
 {p 7 9 0} 
 - the {helpb pylearn} package by Michael Droste (see {helpb pytree}, {helpb pyforest}, {helpb pymlp}, {helpb pyadaboost}, {helpb pygradboost}). 
 Note that {helpb pylearn} requires Stata 16.
-
-{p 7 9 0} 
-- the {helpb pylearn2} package (see {helpb pytree}, {helpb pystacked}, {helpb pyvote}, {helpb pylasso}. 
-Note that {helpb pylearn2} requires Stata 16.
 
 {p 7 9 0} 
 - {helpb rforest} by Zou & Schonlau.

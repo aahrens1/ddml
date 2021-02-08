@@ -1,5 +1,4 @@
  
-
 clear all
 
 use Data/AJR.dta // https://statalasso.github.io/dta/AJR.dta
@@ -46,3 +45,6 @@ ddml desc
 
 *** estimation of parameter of interest
 ddml estimate
+
+*** now, using one-line command:
+qddml $Y ($X) ($D = $Z), model(iv)

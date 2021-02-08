@@ -2,6 +2,7 @@ clear all
  
 if ("`c(username)'"=="kahrens") {
 	adopath + "/Users/kahrens/MyProjects/ddml"
+	adopath + "/Users/kahrens/MyProjects/pylearn2"
 	cd "/Users/kahrens/Dropbox (PP)/ddml"
 }
 webuse cattaneo2
@@ -14,7 +15,6 @@ which ddml
 ********************************************************************************
 
 *** initialise ddml and select model; 
-* currently only the partial linear model is supported
 ddml init interactive
 
 gen double mage_sq = mage^2
@@ -41,3 +41,6 @@ ddml desc
 
 *** estimation of parameter of interest
 ddml estimate, show(all) 
+
+*** now, do the same using one-line command
+qddml $Y $D ($X), model(interactive)

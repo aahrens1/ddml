@@ -28,30 +28,81 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		di "`exexog'"		
 	}
 
-	if ("`type'"=="") local type reg
-
 	if "`verbose'"=="" local qui qui
 	if "`cmd'"=="" local cmd pystacked
 
-	`qui' ddml init `model', mname(`mname')
+	**** syntax checks
 	if ("`model'"=="optimaliv") {
 		if "`dexog'"!="" {
-			di as error "not allowed"
+			di as error "no exogenous treatments allowed"
 			exit 198
 		}
-		`qui' ddml yeq, gen(y) mname(`mname'): `cmd' `depvar' `xctrl', `cmdoptions' seed(`seed')
+	} 
+	else if ("`model'"=="iv") {
+		if "`dexog'"!="" {
+			di as error "no exogenous treatments allowed"
+			exit 198
+		}
+		if ("`xctrl'"=="") {
+			di as error "no (high-dimensional) controls specified"
+			exit 198
+		}
+	}
+	else if ("`model'"=="late") {
+		if "`dexog'"!="" {
+			di as error "no exogenous treatments allowed"
+			exit 198
+		}
+		if ("`xctrl'"=="") {
+			di as error "no (high-dimensional) controls specified"
+			exit 198
+		}
+	}
+	else if ("`model'"=="partial") {
+		if "`dendog'"!="" {
+			di as error "no endogenous treatments allowed"
+			exit 198
+		}
+		if "`exexog'"!="" {
+			di as error "no excluded instruments allowed"
+			exit 198
+		}
+		if ("`xctrl'"=="") {
+			di as error "no (high-dimensional) controls specified"
+			exit 198
+		}
+	}
+	else if ("`model'"=="interactive") {
+		if "`dendog'"!="" {
+			di as error "no endogenous treatments allowed"
+			exit 198
+		}
+		if "`exexog'"!="" {
+			di as error "no excluded instruments allowed"
+			exit 198
+		}
+		if ("`xctrl'"=="") {
+			di as error "no (high-dimensional) controls specified"
+			exit 198
+		}
+	}		
+
+	*** estimation
+	`qui' ddml init `model', mname(`mname')
+	if ("`model'"=="optimaliv") {
+		`qui' ddml yeq, gen(y) mname(`mname'): `cmd' `depvar' `xctrl', `cmdoptions'  
 		`qui' ddml deq, gen(d) mname(`mname'): `cmd' `dendog' `xctrl', `cmdoptions' 
 		`qui' ddml dheq, gen(z) mname(`mname'): `cmd' `dendog' `xctrl' `exexog', `cmdoptions' 
 	} 
 	else if ("`model'"=="iv") {
 		`qui' ddml yeq, gen(y) mname(`mname'): `cmd' `depvar' `xctrl', `cmdoptions' 
 		local j = 1
-		foreach d in `dendog' {
+		foreach d of varlist `dendog' {
 			`qui' ddml deq, gen(d`j') mname(`mname'): `cmd' `d' `xctrl', `cmdoptions' 
 			local j = `j' + 1
 		}
 		local j = 1
-		foreach z in `exexog' {
+		foreach z of varlist `exexog' {
 			`qui' ddml zeq, gen(z`j') mname(`mname'): `cmd' `z' `xctrl', `cmdoptions' 
 			local j = `j' + 1
 		}
@@ -64,7 +115,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	else if ("`model'"=="partial") {
 		`qui' ddml yeq, gen(y) mname(`mname'): `cmd' `depvar' `xctrl', `cmdoptions' 
 		local j = 1
-		foreach d in `dexog' {
+		foreach d of varlist `dexog' {
 			`qui' ddml deq, gen(d`j') mname(`mname'): `cmd' `d' `xctrl', `cmdoptions' 
 			local j = `j' + 1
 		}

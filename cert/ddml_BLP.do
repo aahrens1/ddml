@@ -27,17 +27,17 @@ ddml init optimaliv
 *** specify supervised machine learners for E[Y|X] ("yeq"), E[D|X] ("deq")
 *** as well as E[D|Z,X] ("zeq")
 
-* "y-equation":
+* "y"-equation:
 ddml yeq, gen(yt1) : rlasso $Y $X
 ddml yeq, gen(yt2) : pystacked $Y $X, type(reg) seed(99)
 ddml yeq, gen(yt3) : pyvote $Y $X, type(reg)
 
-* "d-equation":
+* "d"-equation:
 ddml deq, gen(d1t1): rlasso $D $X
 ddml deq, gen(d1t2): pystacked $D $X, type(reg)
 ddml deq, gen(d1t3): pyvote $D $X, type(reg)
 
-* "z-equation":
+* "dheq"-equation:
 ddml dheq, gen(d2H1): rlasso $D $X $Z
 ddml dheq, gen(d2H2): pystacked $D $X $Z, type(reg)
 ddml dheq, gen(d2H3): pyvote $D $X $Z, type(reg)
@@ -53,4 +53,5 @@ ddml estimate
 
 *** now, do the same using the one-line command (qddml) 
 *** .. which uses only pystacked
-qddml $Y ($X) ($D = $Z), model(optimaliv) debug seed(99)
+qddml $Y ($X) ($D = $Z), model(optimaliv)  
+qddml $Y ($X) ($D = $Z), model(optimaliv) cmd(rlasso)

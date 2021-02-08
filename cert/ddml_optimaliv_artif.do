@@ -79,7 +79,8 @@ ddml dheq, gen(d1H3): pystacked d1 z1-z20 x1-x20, type(reg)
 *** cross-fitting and display mean-squared prediction error
 ddml crossfit
 
-ddml desc
-
 *** estimation of parameter of interest
 ddml estimate 
+
+*** now using the one-line command:
+qddml y (x1-x20) (d1 d2 = z1-z20), model(optimaliv)

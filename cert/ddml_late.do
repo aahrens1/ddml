@@ -47,4 +47,7 @@ ddml desc
 
 *** estimation of parameter of interest
 ddml estimate, show(all) 
+
+*** now, do the same using one-line command
+qddml $Y ($X) ($D=$Z), model(late) debug
  

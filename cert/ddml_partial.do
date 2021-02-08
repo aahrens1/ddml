@@ -19,7 +19,6 @@ global D1 avexpr
 global D2 lat_abst
 
 *** initialise ddml and select model; 
-* currently only the partial linear model is supported
 ddml init partial 
 
 *** specify supervised machine learners for E[Y|X] ("yeq") and E[D|X] ("deq")
@@ -45,3 +44,6 @@ ddml desc
 
 *** estimation of parameter of interest
 ddml estimate 
+
+*** now using the one-line command
+qddml $Y $D ($X), model(partial) 
