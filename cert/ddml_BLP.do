@@ -9,7 +9,13 @@ if ("`c(username)'"=="kahrens") {
   
 which ddml
 
-insheet using "/Users/kahrens/MyProjects/ddml/cert/BLP1995.csv"
+if ("`c(username)'"=="kahrens") {
+	insheet using "/Users/kahrens/MyProjects/ddml/cert/BLP1995.csv"
+}
+if ("`c(username)'"=="ecomes") {
+	insheet using "C:\Users\ecomes\Documents\GitHub\ddml\cert\BLP1995.csv"
+}
+
 
 ********************************************************************************
 *** ddml 																	 ***
