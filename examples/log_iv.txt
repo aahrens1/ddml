@@ -1,0 +1,158 @@
+--------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /Users/kahrens/MyProjects/ddml/examples/log_iv.txt
+  log type:  text
+ opened on:   9 Feb 2021, 18:42:10
+
+.  
+. use https://statalasso.github.io/dta/AJR.dta
+
+.   
+. which ddml
+/Users/kahrens/MyProjects/ddml/ddml.ado
+
+. which pystacked
+/Users/kahrens/MyProjects/pylearn2/pystacked.ado
+
+. 
+. ********************************************************************************
+. *** iv model                                                                                                      
+>                        ***
+. ********************************************************************************
+. 
+. global Y logpgp95
+
+. global X edes1975 avelf temp* humid* steplow-oilres
+
+. global D avexpr 
+
+. global Z logem4
+
+. 
+. *** initialise ddml and select model
+. ddml init iv 
+
+. 
+. *** specify supervised machine learners for E[Y|X] ("yeq"), E[D|X] ("deq")
+. *** as well as E[Z|X] ("zeq")
+. * y-equation:
+. ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
+lasso2 logpgp95 edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
+Equation successfully added.
+
+. ddml yeq, gen(rigy): rlasso $Y $X
+rlasso logpgp95 edes1975 avelf temp* humid* steplow-oilres
+Equation successfully added.
+
+. ddml yeq, gen(pystackedy): pystacked $Y $X, type(reg) method(rf gradboost)
+pystacked logpgp95 edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
+Equation successfully added.
+
+. 
+. * d-equation:
+. ddml deq, gen(lassod1): lasso2 $D $X, lic(aicc) postres
+lasso2 avexpr edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
+Equation successfully added.
+
+. ddml deq, gen(rigd1): rlasso $D $X
+rlasso avexpr edes1975 avelf temp* humid* steplow-oilres
+Equation successfully added.
+
+. ddml deq, gen(pystackedd): pystacked $D $X, type(reg) method(rf gradboost)
+pystacked avexpr edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
+Equation successfully added.
+
+. 
+. * z-equation:
+. ddml zeq, gen(lassoz): lasso2 $Z $X, lic(aicc) postres
+lasso2 logem4 edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
+Equation successfully added.
+
+. ddml zeq, gen(pystackedd): pystacked $Z $X, type(reg) method(rf gradboost)
+pystacked logem4 edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
+Equation successfully replaced.
+
+.         
+. *** cross-fitting and display mean-squared prediction error
+. ddml crossfit
+Model: iv
+Number of Y estimating equations: 3
+Number of D estimating equations: 3
+Number of Z estimating equations: 1
+
+Cross-fitting fold 1 2
+
+Mean-squared error for y|X:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ logpgp95          lassoy              lasso2        64      0.605052
+ logpgp95          rigy                rlasso        64      0.841703
+ logpgp95          pystackedy          pystacked     64      0.656339
+
+Mean-squared error for D|X:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ avexpr            lassod1             lasso2        64      1.613977
+ avexpr            rigd1               rlasso        64      2.203972
+
+Mean-squared error for Z|X:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ logem4            pystackedd          pystacked     64      0.971257
+ logem4            lassoz              lasso2        64      1.050260
+
+. ddml desc
+Model: iv
+ID: m0_id
+Fold ID: m0_fid
+Sample indicator: m0_sample (N=64)
+Dependent variable (Y): logpgp95
+Dependent variable (orthogonalized): lassoy rigy pystackedy
+Minimum MSE orthogonalized dep var: lassoy
+Causal variable(s) (D): avexpr
+Causal variable(s) (orthogonalized): lassod1 rigd1 pystackedd
+Minimum MSE orthogonalized causal var: lassod1
+
+Number of Y estimating equations: 3
+Estimating equation 1: N =     64     MSE =   0.605052*
+  Variable: logpgp95         Orthogonalized: lassoy
+  Command: lasso2 logpgp95 edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
+Estimating equation 2: N =     64     MSE =   0.841703
+  Variable: logpgp95         Orthogonalized: rigy
+  Command: rlasso logpgp95 edes1975 avelf temp* humid* steplow-oilres
+Estimating equation 3: N =     64     MSE =   0.656340
+  Variable: logpgp95         Orthogonalized: pystackedy
+  Command: pystacked logpgp95 edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
+
+Number of D estimating equations: 3
+Estimating equation 4: N =     64     MSE =   1.613977*
+  Variable: avexpr           Orthogonalized: lassod1
+  Command: lasso2 avexpr edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
+Estimating equation 5: N =     64     MSE =   2.203972
+  Variable: avexpr           Orthogonalized: rigd1
+  Command: rlasso avexpr edes1975 avelf temp* humid* steplow-oilres
+
+* indicates minimum MSE estimation
+
+. 
+. *** estimation of parameter of interest
+. ddml estimate
+DML with Y=m0_lassoy and D=m0_lassod1, Z=m0_pystackedd:
+------------------------------------------------------------------------------
+      lassoy |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+  m0_lassod1 |   1.027107   .3709011     2.77   0.006     .3001546     1.75406
+------------------------------------------------------------------------------
+
+. 
+. *** now, using one-line command:
+. qddml $Y ($X) ($D = $Z), model(iv) cmdopt(method(rf gradboost))
+DML with Y=m0_y and D=m0_d1, Z=m0_z1:
+------------------------------------------------------------------------------
+           y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       m0_d1 |   .7065415   .1287076     5.49   0.000     .4542793    .9588037
+------------------------------------------------------------------------------
+
+. 
+. cap log close

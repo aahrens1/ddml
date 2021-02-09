@@ -164,7 +164,7 @@ where we are, as in the Partial Linear Model interested in the ATE, but do not
 assume that X and D are separable. D is a binary treatment variable. 
 We estimate the conditional expectations 
 E[Y|X,D=0] and E[Y|X,D=1] (jointly referred to as "{opt yeq}")
-as well as E[D|X] ("{deq}") using a supervised machine
+as well as E[D|X] ("{opt deq}") using a supervised machine
 learner.
 
 {pstd}

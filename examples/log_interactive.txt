@@ -1,0 +1,156 @@
+--------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /Users/kahrens/MyProjects/ddml/examples/log_interactive.txt
+  log type:  text
+ opened on:   9 Feb 2021, 18:41:04
+
+.  
+. webuse cattaneo2
+(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+
+.   
+. which ddml
+/Users/kahrens/MyProjects/ddml/ddml.ado
+
+. which pystacked
+/Users/kahrens/MyProjects/pylearn2/pystacked.ado
+
+.   
+. ********************************************************************************
+. *** interactive model                                                                                             
+>                ***
+. ********************************************************************************
+. 
+. *** initialise ddml and select model; 
+. ddml init interactive
+
+. 
+. gen double mage_sq = mage^2
+
+. 
+. global Y bweight
+
+. global D mbsmoke
+
+. global X c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu)
+
+. 
+. *** specify supervised machine learners for E[Y|X,D=1] & E[Y|X,D=0] ("yeq") and E[D|X] ("deq")
+. 
+. * y-equation:
+. ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
+lasso2 bweight c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , lic(aicc) postres
+Equation successfully added.
+
+. ddml yeq, gen(rlassoy): rlasso $Y $X 
+rlasso bweight c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu)
+Equation successfully added.
+
+. ddml yeq, gen(pystackedy): pystacked $Y $X, type(reg) 
+pystacked bweight c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , type(reg)
+Equation successfully added.
+
+. 
+. * d-equation:
+. ddml deq, gen(lassod): lasso2 $D $X, lic(aicc) postres
+lasso2 mbsmoke c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , lic(aicc) postres
+Equation successfully added.
+
+. ddml deq, gen(rlassod): rlasso $D $X
+rlasso mbsmoke c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu)
+Equation successfully added.
+
+. ddml deq, gen(pystackedd): pystacked $D $X, type(reg)
+pystacked mbsmoke c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , type(reg)
+Equation successfully added.
+
+. 
+. *** cross-fitting and display mean-squared prediction error
+. ddml crossfit, kfolds(2) 
+Model: interactive
+Number of Y estimating equations: 3
+Number of D estimating equations: 3
+
+Cross-fitting fold 1 2
+
+Mean-squared error for y|X,D=0:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ bweight           lassoy              lasso2      3778     3.171e+05
+ bweight           rlassoy             rlasso      3778     3.198e+05
+ bweight           pystackedy          pystacked   3778     3.182e+05
+
+Mean-squared error for y|X,D=1:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ bweight           lassoy              lasso2       864     3.117e+05
+ bweight           rlassoy             rlasso       864     3.143e+05
+ bweight           pystackedy          pystacked    864     3.117e+05
+
+Mean-squared error for D|X:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ mbsmoke           lassod              lasso2      4642      0.136550
+ mbsmoke           rlassod             rlasso      4642      0.141197
+ mbsmoke           pystackedd          pystacked   4642      0.135154
+
+. ddml desc
+Model: interactive
+ID: m0_id
+Fold ID: m0_fid
+Sample indicator: m0_sample (N=4642)
+Dependent variable (Y): bweight
+Dependent variable (orthogonalized): lassoy rlassoy pystackedy
+Minimum MSE orthogonalized dep var: 
+Causal variable(s) (D): mbsmoke
+Causal variable(s) (orthogonalized): lassod rlassod pystackedd
+Minimum MSE orthogonalized causal var: pystackedd
+
+Number of Y estimating equations: 3
+Estimating equation 1: N =      .     MSE =          .
+  Variable: bweight          Orthogonalized: lassoy
+  Command: lasso2 bweight c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , lic(aicc) post
+> res
+Estimating equation 2: N =      .     MSE =          .
+  Variable: bweight          Orthogonalized: rlassoy
+  Command: rlasso bweight c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu)
+Estimating equation 3: N =      .     MSE =          .
+  Variable: bweight          Orthogonalized: pystackedy
+  Command: pystacked bweight c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , type(reg)
+
+Number of D estimating equations: 3
+Estimating equation 4: N =   4642     MSE =   0.136550
+  Variable: mbsmoke          Orthogonalized: lassod
+  Command: lasso2 mbsmoke c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , lic(aicc) post
+> res
+Estimating equation 5: N =   4642     MSE =   0.141197
+  Variable: mbsmoke          Orthogonalized: rlassod
+  Command: rlasso mbsmoke c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu)
+Estimating equation 6: N =   4642     MSE =   0.135154*
+  Variable: mbsmoke          Orthogonalized: pystackedd
+  Command: pystacked mbsmoke c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , type(reg)
+
+* indicates minimum MSE estimation
+
+. 
+. *** estimation of parameter of interest
+. ddml estimate
+DML with Y0=m0_lassoy, Y1=m0_lassoy and D=m0_pystackedd:
+------------------------------------------------------------------------------
+             |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -1578.376   42.50139   -37.14   0.000    -1661.678   -1495.075
+------------------------------------------------------------------------------
+
+. 
+. *** now, do the same using one-line command
+. qddml $Y $D ($X), model(interactive)
+DML with Y0=m0_y, Y1=m0_y and D=m0_d:
+------------------------------------------------------------------------------
+             |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -1575.407   42.53404   -37.04   0.000    -1658.772   -1492.042
+------------------------------------------------------------------------------
+
+. 
+. cap log close

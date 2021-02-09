@@ -3,6 +3,7 @@ clear all
  
 if ("`c(username)'"=="kahrens") {
 	adopath + "/Users/kahrens/MyProjects/ddml"
+	adopath + "/Users/kahrens/MyProjects/pylearn2"
 	cd "/Users/kahrens/Dropbox (PP)/ddml"
 }
   

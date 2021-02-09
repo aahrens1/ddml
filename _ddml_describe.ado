@@ -50,7 +50,7 @@ program define _ddml_describe
 
 	if "`Yopt'`Dopt'`Zopt'"~="" {
 		di
-		di "* indicates minimim MSE estimation"
+		di "* indicates minimum MSE estimation"
 	}
 
 	if `showall' {

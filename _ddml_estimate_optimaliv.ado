@@ -12,7 +12,7 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 								* ]
 
 	if ("`show'"=="") {
-		local show all 
+		local show opt 
 	}
 
 	// base sample for estimation - determined by if/in
@@ -46,29 +46,26 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 	local Dlist `r(dstr)'
 	local DHlist `r(zstr)' 
 
-	if ("`show'"=="all") {
-	    local j = 1
-	    forvalues i = 1(2)`tokenlen' {
-	    	tokenize `ylist' , parse("-")
-	    	local y ``i''
-	    	tokenize `Dlist' , parse("-")
-	    	local d ``i''
-	    	tokenize `DHlist' , parse("-")
-	    	local dh ``i''
-	    	if (`j'==`ncombos') {
-	    		di as res "Optimal model: " _c
-	    	}
-	    	di as res "DML with E[Y|X]=`y' and E[D|X]=`d', E[D|X,Y]=`dh':"
-	       	_ddml_optiv, yvar(`nameY') dvar(`nameD') dhtilde(`dh') ytilde(`y') dtilde(`d') touse(`touse')  `debug'
-
-	        local j= `j'+1
-	     }
-	}
-
-	if ("`show'"=="opt") {
-		*** estimate best model
-    	di as res "Optimal model: DML with E[Y|X]=`Yopt' and E[D|X]=`Dopt', E[D|X,Y]=`DHopt':"
-    	qui _ddml_optiv, yvar(`nameY') dvar(`nameD') dhtilde(`DHopt') ytilde(`Yopt') dtilde(`Dopt') touse(`touse') `debug'
+	local j = 1
+	forvalues i = 1(2)`tokenlen' {
+		if ("`show'"=="all"|`i'==`tokenlen') {
+		   	tokenize `ylist' , parse("-")
+		    local y ``i''
+		    tokenize `Dlist' , parse("-")
+		    local d ``i''
+		    tokenize `DHlist' , parse("-")
+		    local dh ``i''
+		    if (`j'==`ncombos') {
+		        if "`show'"=="all" di as res "Optimal model: " _c
+		    	local qui qui
+		    } 
+		    else {
+		    	local qui
+		    }
+		    di as res "DML with E[Y|X]=`y' and E[D|X]=`d', E[D|X,Y]=`dh':"
+		     `qui' _ddml_optiv, yvar(`nameY') dvar(`nameD') dhtilde(`dh') ytilde(`y') dtilde(`d') touse(`touse')  `debug'
+		}
+	    local j= `j'+1
 	}
 
 	// display
@@ -86,6 +83,6 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 	if "`robust'"~="" {
 		ereturn local vcetype	robust
 	}
-	//ereturn display
+    ereturn display
 
 end

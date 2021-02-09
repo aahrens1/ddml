@@ -1,0 +1,145 @@
+--------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /Users/kahrens/MyProjects/ddml/examples/log_partial.txt
+  log type:  text
+ opened on:   9 Feb 2021, 18:47:36
+
+.  
+. use https://statalasso.github.io/dta/AJR.dta, clear
+
+. 
+. which ddml
+/Users/kahrens/MyProjects/ddml/ddml.ado
+
+. which pystacked
+/Users/kahrens/MyProjects/pylearn2/pystacked.ado
+
+.  
+. ********************************************************************************
+. *** partial model                                                                                                 
+>                    ***
+. ********************************************************************************
+. 
+. global Y logpgp95
+
+. global X lat_abst edes1975 avelf temp* humid* steplow-oilres
+
+. global D avexpr 
+
+. 
+. *** initialise ddml and select model; 
+. ddml init partial 
+
+. 
+. *** specify supervised machine learners for E[Y|X] ("yeq") and E[D|X] ("deq")
+. * y-equation:
+. ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
+lasso2 logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
+Equation successfully added.
+
+. ddml yeq, gen(rigy): rlasso $Y $X
+rlasso logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres
+Equation successfully added.
+
+. ddml yeq, gen(pystackedy): pystacked $Y $X, type(regress) method(rf gradboost)
+pystacked logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres , type(regress) method(rf gradboost)
+Equation successfully added.
+
+. 
+. * d-equation:
+. ddml deq, gen(lassod1): lasso2 $D $X, lic(aicc) postres
+lasso2 avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
+Equation successfully added.
+
+. ddml deq, gen(rigd1): rlasso $D $X
+rlasso avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres
+Equation successfully added.
+
+. ddml deq, gen(pys1): pystacked $D $X, type(reg) method(rf gradboost)
+pystacked avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
+Equation successfully added.
+
+. 
+. *** cross-fitting and display mean-squared prediction error
+. ddml crossfit 
+Model: partial
+Number of Y estimating equations: 3
+Number of D estimating equations: 3
+
+Cross-fitting fold 1 2
+
+Mean-squared error for y|X:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ logpgp95          lassoy              lasso2        64      2.784377
+ logpgp95          rigy                rlasso        64      0.949631
+ logpgp95          pystackedy          pystacked     64      0.805226
+
+Mean-squared error for D|X:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ avexpr            lassod1             lasso2        64      2.182920
+ avexpr            rigd1               rlasso        64      2.239658
+ avexpr            pys1                pystacked     64      2.321823
+
+. ddml desc 
+Model: partial
+ID: m0_id
+Fold ID: m0_fid
+Sample indicator: m0_sample (N=64)
+Dependent variable (Y): logpgp95
+Dependent variable (orthogonalized): lassoy rigy pystackedy
+Minimum MSE orthogonalized dep var: pystackedy
+Causal variable(s) (D): avexpr
+Causal variable(s) (orthogonalized): lassod1 rigd1 pys1
+Minimum MSE orthogonalized causal var: lassod1
+
+Number of Y estimating equations: 3
+Estimating equation 1: N =     64     MSE =   2.784377
+  Variable: logpgp95         Orthogonalized: lassoy
+  Command: lasso2 logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
+Estimating equation 2: N =     64     MSE =   0.949631
+  Variable: logpgp95         Orthogonalized: rigy
+  Command: rlasso logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres
+Estimating equation 3: N =     64     MSE =   0.805226*
+  Variable: logpgp95         Orthogonalized: pystackedy
+  Command: pystacked logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres , type(regress) method(rf gradboos
+> t)
+
+Number of D estimating equations: 3
+Estimating equation 4: N =     64     MSE =   2.182920*
+  Variable: avexpr           Orthogonalized: lassod1
+  Command: lasso2 avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
+Estimating equation 5: N =     64     MSE =   2.239658
+  Variable: avexpr           Orthogonalized: rigd1
+  Command: rlasso avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres
+Estimating equation 6: N =     64     MSE =   2.321823
+  Variable: avexpr           Orthogonalized: pys1
+  Command: pystacked avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
+
+* indicates minimum MSE estimation
+
+. 
+. *** estimation of parameter of interest
+. ddml estimate 
+
+Optimal model: DML with optimal Y=pystackedy and optimal D=lassod1 (N=64):
+------------------------------------------------------------------------------
+  pystackedy |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     lassod1 |   .4442336   .0521798     8.51   0.000      .341963    .5465041
+------------------------------------------------------------------------------
+
+. 
+. *** now using the one-line command
+. qddml $Y $D ($X), model(partial) cmdopt(method(rf gradboost))
+
+DML with Y=y and D=d1 (N=):
+------------------------------------------------------------------------------
+           y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+          d1 |   .4657897   .0485424     9.60   0.000     .3706483    .5609312
+------------------------------------------------------------------------------
+
+. 
+. cap log close

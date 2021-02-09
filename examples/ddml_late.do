@@ -2,19 +2,23 @@ clear all
  
 if ("`c(username)'"=="kahrens") {
 	adopath + "/Users/kahrens/MyProjects/ddml"
-	cd "/Users/kahrens/Dropbox (PP)/ddml"
+	adopath + "/Users/kahrens/MyProjects/pylearn2"
+	cd "/Users/kahrens/MyProjects/ddml/examples"
 }
-//use Data/jtpa.dta //
+
+cap log close
+log using "log_late.txt", replace text  
+ 
 use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
 
 which ddml
+which pystacked
   
 ********************************************************************************
 *** interactive model	 													 ***
 ********************************************************************************
 
 *** initialise ddml and select model; 
-* currently only the partial linear model is supported
 ddml init late
 
 gen lnearnings = log(earnings) 
@@ -23,7 +27,8 @@ global D training
 global Z assignmt 
 global X sex-age4554
 
-*** specify supervised machine learners for E[Y|X] ("yeq") and E[D|X] ("deq")
+*** specify supervised machine learners for E[Y|X,Z=1] & E[Y|X,Z=0] ("yeq")
+*** and E[D|X,Z=0] & E[D|X,Z=1] ("deq")
 
 * y-equation:
 ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
@@ -46,8 +51,9 @@ ddml crossfit, kfolds(2) tabfold
 ddml desc
 
 *** estimation of parameter of interest
-ddml estimate, show(all) 
+ddml estimate 
 
 *** now, do the same using one-line command
-qddml $Y ($X) ($D=$Z), model(late) debug
+qddml $Y ($X) ($D=$Z), model(late)
  
+cap log close

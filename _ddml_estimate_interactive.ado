@@ -17,7 +17,7 @@ program _ddml_estimate_interactive, eclass sortpreserve
     qui replace `touse' = 0 if `mname'_sample==0
 
     if ("`show'"=="") {
-        local show all 
+        local show opt 
     }
     //mata: `mname'.nameDtilde
     //mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
@@ -40,39 +40,32 @@ program _ddml_estimate_interactive, eclass sortpreserve
                                                         putlast(`Y0opt' `Y1opt' `Dopt') ///
                                                         addprefix("`mname'_")
                                                         `debug'  
-    return list
     local ncombos = r(ncombos)
     local tokenlen = `ncombos'*2 -1
     local y0list `r(colstr1)'
     local y1list `r(colstr2)'
     local Dlist `r(colstr3)'
-    //local Zlist `r(zstr)' 
 
-    if ("`show'"=="all") {
-        local j = 1
-        forvalues i = 1(2)`tokenlen' {
+    local j = 1
+    forvalues i = 1(2)`tokenlen' {
+        if ("`show'"=="all"|`i'==`tokenlen') {
             tokenize `y0list' , parse("-")
             local y0 ``i''
             tokenize `y1list' , parse("-")
             local y1 ``i''
             tokenize `Dlist' , parse("-")
             local d ``i''
-            //tokenize `Zlist' , parse("-")
-            //local z ``i''
             if (`j'==`ncombos') {
-                di as res "Optimal model: " _c
+                if "`show'"=="all" di as res "Optimal model: " _c
+                local qui qui
+            } 
+            else {
+                local qui
             }
             di as res "DML with Y0=`y0', Y1=`y1' and D=`d':"
-            _ddml_ate, yvar(`nameY') dvar(`nameD') y0tilde(`y0') y1tilde(`y1') dtilde(`d') touse(`touse')
-
-            local j= `j'+1
-         }
-    }
-
-    if ("`show'"=="opt") {
-        *** estimate best model
-        di as res "Optimal model: DML with Y=`Yopt' and D=`Dopt'"
-        qui _ddml_ate, yvar(`nameY') dvar(`nameD') y0tilde(`Y0opt') y1tilde(`Y1opt') dtilde(`Dopt') touse(`touse') 
+            `qui' _ddml_ate, yvar(`nameY') dvar(`nameD') y0tilde(`y0') y1tilde(`y1') dtilde(`d') touse(`touse')
+        }
+        local j= `j'+1
     }
 
     // display

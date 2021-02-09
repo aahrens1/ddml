@@ -3,12 +3,16 @@ clear all
 if ("`c(username)'"=="kahrens") {
 	adopath + "/Users/kahrens/MyProjects/ddml"
 	adopath + "/Users/kahrens/MyProjects/pylearn2"
-	cd "/Users/kahrens/Dropbox (PP)/ddml"
+	cd "/Users/kahrens/MyProjects/ddml/examples"
 }
+
+cap log close
+log using "log_interactive.txt", replace text  
+ 
 webuse cattaneo2
-//use Data/cattaneo2.dta
   
 which ddml
+which pystacked
   
 ********************************************************************************
 *** interactive model	 													 ***
@@ -23,7 +27,8 @@ global Y bweight
 global D mbsmoke
 global X c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu)
 
-*** specify supervised machine learners for E[Y|X] ("yeq") and E[D|X] ("deq")
+*** specify supervised machine learners for E[Y|X,D=1] & E[Y|X,D=0] ("yeq") and E[D|X] ("deq")
+
 * y-equation:
 ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
 ddml yeq, gen(rlassoy): rlasso $Y $X 
@@ -36,11 +41,12 @@ ddml deq, gen(pystackedd): pystacked $D $X, type(reg)
 
 *** cross-fitting and display mean-squared prediction error
 ddml crossfit, kfolds(2) 
-
 ddml desc
 
 *** estimation of parameter of interest
-ddml estimate, show(all) 
+ddml estimate
 
 *** now, do the same using one-line command
 qddml $Y $D ($X), model(interactive)
+
+cap log close

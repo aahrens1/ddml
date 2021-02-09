@@ -1,14 +1,18 @@
- 
 clear all
 
-use Data/AJR.dta // https://statalasso.github.io/dta/AJR.dta
- 
 if ("`c(username)'"=="kahrens") {
 	adopath + "/Users/kahrens/MyProjects/ddml"
-	cd "/Users/kahrens/Dropbox (PP)/ddml"
+	adopath + "/Users/kahrens/MyProjects/pylearn2"
+	cd "/Users/kahrens/MyProjects/ddml/examples"
 }
+
+cap log close
+log using "log_iv.txt", replace text  
+ 
+use https://statalasso.github.io/dta/AJR.dta
   
 which ddml
+which pystacked
 
 ********************************************************************************
 *** iv model																 ***
@@ -27,24 +31,25 @@ ddml init iv
 * y-equation:
 ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
 ddml yeq, gen(rigy): rlasso $Y $X
-ddml yeq, gen(pystackedy): pystacked $Y $X, type(reg)
+ddml yeq, gen(pystackedy): pystacked $Y $X, type(reg) method(rf gradboost)
 
 * d-equation:
 ddml deq, gen(lassod1): lasso2 $D $X, lic(aicc) postres
 ddml deq, gen(rigd1): rlasso $D $X
-ddml deq, gen(pystackedd): pystacked $D $X, type(reg)
+ddml deq, gen(pystackedd): pystacked $D $X, type(reg) method(rf gradboost)
 
 * z-equation:
 ddml zeq, gen(lassoz): lasso2 $Z $X, lic(aicc) postres
-ddml zeq, gen(pystackedd): pystacked $Z $X, type(reg)
+ddml zeq, gen(pystackedd): pystacked $Z $X, type(reg) method(rf gradboost)
 	
 *** cross-fitting and display mean-squared prediction error
 ddml crossfit
-
 ddml desc
 
 *** estimation of parameter of interest
 ddml estimate
 
 *** now, using one-line command:
-qddml $Y ($X) ($D = $Z), model(iv)
+qddml $Y ($X) ($D = $Z), model(iv) cmdopt(method(rf gradboost))
+
+cap log close

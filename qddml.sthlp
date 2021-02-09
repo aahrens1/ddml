@@ -7,210 +7,52 @@
 {title:Title}
 
 {p2colset 5 19 21 2}{...}
-{p2col:{hi: ddml} {hline 2}}Stata package for Double Debiased Machine Learning{p_end}
+{p2col:{hi: qddml} {hline 2}}Stata program for Double Debiased Machine Learning{p_end}
 {p2colreset}{...}
 
 {pstd}
-{opt ddml} implements algorithms for causal inference aided by supervised
+{opt qddml} implements algorithms for causal inference aided by supervised
 machine learning as proposed in 
 {it:Double/debiased machine learning for treatment and structural parameters}
 (Econometrics Journal, 2018). Five different models are supported; allowing for 
 binary or continous treatment variables and endogeneity. 
-{opt ddml} supports a variety of different ML programs, including
-but not limited to {helpb lassopack} and {helpb pylearn}. 
+{opt qddml} uses stacking regression ({helpb pystacked}) as the default machine learning algorithm. 
+{opt qddml} is a wrapper for {opt ddml}, which offers more flexibility.
 
-{marker syntax}{...}
-{title:Syntax}
-
-{pstd}
-{ul:Step 1:} Initialise {cmd:ddml} and select model:
-
-        {cmd:ddml init} {it:model}
-
-{pstd}
-where {it:model} is either {it:partial}, 
-{it:iv}, {it:interactive}, {it:optimaliv}, {it:late};
-see model descriptions below.
-
-{pstd}
-{ul:Step 2:} Add supervisd ML programs for estimating conditional expectations:
-
-        {cmd:ddml} {it:eq} {it:newvarname} [, {it:eqopt}]: {it:command} {it:depvar} {it:vars} [, {it:cmdopt}]
+{p 8 14 2}
+{cmd:qddml}
+{it:depvar} {it:regressors} [{cmd:(}{it:hd_controls}{cmd:)}]
+{cmd:(}{it:endog}{cmd:=}{it:instruments}{cmd:)}
+[{cmd:if} {it:exp}] [{cmd:in} {it:range}]
+{opt model(name)}
+{bind:[ {cmd:,}}
+{opt cmd(varlist)}
+{opt cmdopt(varlist)}
+{opt mname(string)}
+{bind:{cmdab:noc:onstant} ]}
 
 {pstd}
-where {it:eq} is either {it:yeq}, {it:deq} or {it:zeq}. {it:command} is a
-ML program that supports the standard {it:reg y x}-type syntax. 
-{it:cmdopt} are specific to that program.
-See compatibility below.
-
-{pstd}
-{ul:Step 3:} Cross-fitting
-
-        {cmd:ddml crossfit} [, {it:crossfitopt}] 
-
-{pstd}
-{ul:Step 4:} Estimate causal effects
-
-        {cmd:ddml estimate} [, {it:estopt}] 
-
-{pstd}
-{ul:Auxiliary sub-programs:}
-     
-{pstd} 
-Update {cmd:ddml}:
-
-        {cmd:ddml update} 
-
-{pstd}
-Describe model:
-
-        {cmd:ddml desc} [, {opt mname()}]
-
-{pstd}
-Set-up Mata library:
-
-        {cmd:ddml setup} 
+Since {opt qddml} uses {helpb pystacked} per default, 
+it requires Stata 16 and Python in the default setting. See HERE for how to set up
+Python your system.
+If you don't have Stata 16,
+you need to change the ML program used for estimating conditional expectations, e.g., 
+using the option {opt cmd(rlasso)}.
 
 {marker syntax}{...}
 {title:Options}
 
 {synoptset 20}{...}
-{synopthdr:eqopt}
+{synopthdr:Option}
 {synoptline}
+{synopt:{opt model(name)}}
+the model to be estimated; allows for {it:partial}, {it:interactive},
+{it:iv}, {it:optimaliv}, {it:late}. See {helpb ddml##models:here} for a description.
+{p_end}
 {synopt:{opt mname(string)}}
 name of the DDML model. Allows to run multiple DDML
 models simultaneously. Defaults to {it:ddml1}.
 {p_end}
-{synopt:{opt vname(varname)}}
-name of the dependent variable for which the
-conditional expectation should be estimated. 
-If {opt yeq} is used, this will be the dependent variable; 
-if {opt deq} is used, this will be the treatment variable; 
-if {opt zeq} is used, this will be the (excluded) instrumental 
-variable.
-{p_end}
-{synopt:{cmdab:nocross:fit}}
-do not do cross-fitting for this specific equation. To be used with care 
-as cross-fitting is generally required for validity of the
-DDML approach. 
-{p_end}
-{synoptline}
-{p2colreset}{...}
-{pstd}
-
-{synoptset 20}{...}
-{synopthdr:crossfitopt}
-{synoptline}
-{synopt:{opt k(integer)}}
-number of folds for cross-fitting / sample splitting. 
-The default is 2. The theory of DDML does not
-depend on the number of folds; yet, we recommend 
-to consider test higher number of folds (e.g., 5, 10)
-to check robustness of your results.
-{p_end}
-{synopt:{opt absorb(varlist)}}
-partial out fixed effects
-{p_end}
-{synopt:{opt tabf:old}}
-show number of observations per fold
-{p_end}
-{synoptline}
-{p2colreset}{...}
-{pstd}
-
-{synoptset 20}{...}
-{synopthdr:estopt}
-{synoptline}
-{synopt:{opt robust}}
-report SEs that are robust to the
-presence of arbitrary heteroskedasticity
-{p_end}
-{synopt:{opt show(string)}}
-all if all combinations should be estimated. default is opt which 
-only shows the optimal combatination. 
-{p_end}
-{synoptline}
-{p2colreset}{...}
-{pstd}
-
-{marker models}{...}
-{title:Models}
-
-{pstd}
-The following models are implemented: 
-
-{pstd}
-{ul:{it:Partial linear model:}}
-
-	Y = {it:a}.D + g(X) + U
-        D = m(X) + V
-
-{pstd}
-where the aim is to estimate {it:a} while controlling for X.
-
-{pstd}
-{ul:{it:Interactive model:}}
-
-	Y = g(X,D) + U
-        D = m(X) + V
-
-{pstd}
-where we are, as in the Partial Linear Model interested in the ATE, but do not 
-assume that X and D are separable.
-
-{pstd}
-{ul:{it:Partial linear IV model:}}
-
-	Y = {it:a}.D + g(X) + U
-        Z = m(X) + V
-
-{pstd}
-where the aim is to estimate the average treatment effect or local average treatment effect.
-
-{pstd}
-{ul:{it:LATE model:}}
-
-	Y = g(Z,X) + U
-        D = m(Z,X) + V
-        Z = m(X) + E
-
-{pstd}
-where the aim is to estimate the average treatment effect or local average treatment effect.
-
-{pstd}
-{ul:{it:Optimal IV model:}}
-
-	Y = {it:a}.D + g(X) + U
-        D = m(Z) + g(X) + V 
-
-{pstd}
-where the aim is to estimate the average treatment effect or local average treatment effect.
-
-
-{marker compatibility}{...}
-{title:Compatible programs}
-
-{pstd}
-{opt ddml} is compatible with a large set of user-written Stata commands. 
-It has been tested with 
-
-{p 7 9 0} 
-- {opt lassopack} for regularized regression (see {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}).
-
-{p 7 9 0} 
-- the {helpb pylearn} package by Michael Droste (see {helpb pytree}, {helpb pyforest}, {helpb pymlp}, {helpb pyadaboost}, {helpb pygradboost}). 
-Note that {helpb pylearn} requires Stata 16.
-
-{p 7 9 0} 
-- {helpb rforest} by Zou & Schonlau.
-
-{pstd}
-Beyond these, it is compatible with almost any Stata program that uses the standard {it:reg y x}-type Syntax,
-supports {it:if}-conditions and comes with predict post-estimation programs.
-
-{pstd}
-If you are aware of a program that is not compatible with {opt ddml}, but think it should be, please
-do not hesitate to contact us.
 
 {marker examples}{...}
 {title:Examples}

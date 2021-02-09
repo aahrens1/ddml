@@ -1,15 +1,18 @@
- 
-
 clear all
  
 if ("`c(username)'"=="kahrens") {
 	adopath + "/Users/kahrens/MyProjects/ddml"
-	cd "/Users/kahrens/Dropbox (PP)/ddml"
+	adopath + "/Users/kahrens/MyProjects/pylearn2"
+	cd "/Users/kahrens/MyProjects/ddml/examples"
 }
   
+cap log close
+log using "log_BLP.txt", replace text  
+ 
 which ddml
+which pystacked 
 
-insheet using "/Users/kahrens/MyProjects/ddml/cert/BLP1995.csv"
+insheet using "https://statalasso.github.io/dta/BLP1995-prepared.csv", comma clear
 
 ********************************************************************************
 *** ddml 																	 ***
@@ -54,4 +57,7 @@ ddml estimate
 *** now, do the same using the one-line command (qddml) 
 *** .. which uses only pystacked
 qddml $Y ($X) ($D = $Z), model(optimaliv)  
+*** use only rlasso:
 qddml $Y ($X) ($D = $Z), model(optimaliv) cmd(rlasso)
+
+cap log close

@@ -12,7 +12,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 								* ]
 
 	if ("`show'"=="") {
-		local show all 
+		local show opt 
 	}
 
 	// base sample for estimation - determined by if/in
@@ -36,37 +36,33 @@ program _ddml_estimate_iv, eclass sortpreserve
                                                 zpos_start(`r(zpos_start)') zpos_end(`r(zpos_end)') ///
                                                 addprefix("`mname'_")
 
-	return list
+	//return list
 	local ncombos = r(ncombos)
 	local tokenlen = `ncombos'*2 -1
 	local ylist `r(ystr)'
 	local Dlist `r(dstr)'
 	local Zlist `r(zstr)' 
 
-	if ("`show'"=="all") {
-	    local j = 1
-	    di `tokenlen'
-	    forvalues i = 1(2)`tokenlen' {
+	local j = 1
+	forvalues i = 1(2)`tokenlen' {
+	    if ("`show'"=="all"|`i'==`tokenlen') {
 	    	tokenize `ylist' , parse("-")
 	    	local y ``i''
 	    	tokenize `Dlist' , parse("-")
 	    	local d ``i''
 	    	tokenize `Zlist' , parse("-")
 	    	local z ``i''
-	    	if (`j'==`ncombos') {
-	    		di as res "Optimal model: " _c
-	    	}
+            if (`j'==`ncombos') {
+                if "`show'"=="all" di as res "Optimal model: " _c
+                local qui qui
+            } 
+            else {
+                local qui
+            }
 	    	di as res "DML with Y=`y' and D=`d', Z=`z':"
-	       	ivreg2 `y' (`d'=`z') if `touse', nocons `robust' noheader nofooter
-
-	        local j= `j'+1
+	       	`qui' ivreg2 `y' (`d'=`z') if `touse', nocons `robust' noheader nofooter
 	     }
-	}
-
-	if ("`show'"=="opt") {
-		*** estimate best model
-    	di as res "Optimal model: DML with Y=`Yopt' and D=`Dopt', Z=`Zopt':"
-    	qui ivreg2 `Yopt' (`Dopt'=`Zopt') if `touse', nocons `robust' noheader nofooter
+	     local j= `j'+1
 	}
 
 	// display
@@ -84,7 +80,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 	if "`robust'"~="" {
 		ereturn local vcetype	robust
 	}
-	//ereturn display
+	ereturn display
 
 end
 

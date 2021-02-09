@@ -17,7 +17,7 @@ program _ddml_estimate_late, eclass sortpreserve
     qui replace `touse' = 0 if `mname'_sample==0
 
     if ("`show'"=="") {
-        local show all 
+        local show opt
     }
     //mata: `mname'.nameDtilde
     mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
@@ -42,7 +42,6 @@ program _ddml_estimate_late, eclass sortpreserve
                                                         putlast(`Y0opt' `Y1opt' `D0opt' `D1opt' `Zopt') ///
                                                         `debug'  ///
                                                         addprefix("`mname'_")
-    return list
     local ncombos = r(ncombos)
     local tokenlen = `ncombos'*2 -1
     local y0list `r(colstr1)'
@@ -51,9 +50,10 @@ program _ddml_estimate_late, eclass sortpreserve
     local d1list `r(colstr4)'
     local Zlist `r(colstr5)' 
 
-    if ("`show'"=="all") {
-        local j = 1
-        forvalues i = 1(2)`tokenlen' {
+    
+    local j = 1
+    forvalues i = 1(2)`tokenlen' {
+        if ("`show'"=="all"|`i'==`tokenlen') {
             tokenize `y0list' , parse("-")
             local y0 ``i''
             tokenize `y1list' , parse("-")
@@ -65,25 +65,19 @@ program _ddml_estimate_late, eclass sortpreserve
             tokenize `Zlist' , parse("-")
             local z ``i''
             if (`j'==`ncombos') {
-                di as res "Optimal model: " _c
+                if "`show'"=="all" di as res "Optimal model: " _c
+                local qui qui
+            } 
+            else {
+                local qui
             }
-            di as res "DML with Y0=`y0', Y1=`y1' and D=`d':"
-            _ddml_late, yvar(`nameY') y0tilde(`y0') y1tilde(`y1') ///
+            di as res "DML with Y0=`y0', Y1=`y1', D0=`d0', D1=`d1':"
+            `qui' _ddml_late, yvar(`nameY') y0tilde(`y0') y1tilde(`y1') ///
                         dvar(`nameD') d0tilde(`d0') d1tilde(`d1') ///
                         zvar(`nameZ') ztilde(`z')  ///
                         touse(`touse')
-
-            local j= `j'+1
-         }
-    }
-
-    if ("`show'"=="opt") {
-        *** estimate best model
-        di as res "Optimal model: DML with Y=`Yopt' and D=`Dopt'"
-        qui _ddml_late if `touse', yvar(`nameY') y0tilde(`Y0opt') y1tilde(`Y1opt') ///
-                        dvar(`nameD') d0tilde(`D0opt') d1tilde(`D1opt') ///
-                        zvar(`nameZ') ztilde(`Zopt')   ///
-                        touse(`touse')
+        }
+        local j= `j'+1
     }
 
     // display

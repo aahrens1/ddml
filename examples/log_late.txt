@@ -1,0 +1,192 @@
+--------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /Users/kahrens/MyProjects/ddml/examples/log_late.txt
+  log type:  text
+ opened on:   9 Feb 2021, 18:42:58
+
+.  
+. use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
+
+. 
+. which ddml
+/Users/kahrens/MyProjects/ddml/ddml.ado
+
+. which pystacked
+/Users/kahrens/MyProjects/pylearn2/pystacked.ado
+
+.   
+. ********************************************************************************
+. *** interactive model                                                                                             
+>                ***
+. ********************************************************************************
+. 
+. *** initialise ddml and select model; 
+. ddml init late
+
+. 
+. gen lnearnings = log(earnings) 
+(1,332 missing values generated)
+
+. global Y lnearnings
+
+. global D training
+
+. global Z assignmt 
+
+. global X sex-age4554
+
+. 
+. *** specify supervised machine learners for E[Y|X,Z=1] & E[Y|X,Z=0] ("yeq")
+. *** and E[D|X,Z=0] & E[D|X,Z=1] ("deq")
+. 
+. * y-equation:
+. ddml yeq, gen(lassoy): lasso2 $Y $X, lic(aicc) postres
+lasso2 lnearnings sex-age4554 , lic(aicc) postres
+Equation successfully added.
+
+. ddml yeq, gen(rlassoy): rlasso $Y $X 
+rlasso lnearnings sex-age4554
+Equation successfully added.
+
+. ddml yeq, gen(pystackedy): pystacked $Y $X, type(reg)
+pystacked lnearnings sex-age4554 , type(reg)
+Equation successfully added.
+
+. 
+. * d-equation:
+. ddml deq, gen(lassod): lasso2 $D $X, lic(aicc) postres
+lasso2 training sex-age4554 , lic(aicc) postres
+Equation successfully added.
+
+. ddml deq, gen(rlassod): rlasso $D $X
+rlasso training sex-age4554
+Equation successfully added.
+
+. ddml deq, gen(pystackedd): pystacked $D $X, type(reg)
+pystacked training sex-age4554 , type(reg)
+Equation successfully added.
+
+. 
+. * z-equation:
+. ddml zeq, gen(lassoz): lasso2 $Z $X, lic(aicc) postres
+lasso2 assignmt sex-age4554 , lic(aicc) postres
+Equation successfully added.
+
+. ddml zeq, gen(rlassoz): rlasso $Z $X
+rlasso assignmt sex-age4554
+Equation successfully added.
+
+. ddml zeq, gen(pystackedz): pystacked $Z $X, type(reg)
+pystacked assignmt sex-age4554 , type(reg)
+Equation successfully added.
+
+. 
+. *** cross-fitting and display mean-squared prediction error
+. ddml crossfit, kfolds(2) tabfold
+Model: late
+Number of Y estimating equations: 3
+Number of D estimating equations: 3
+Number of Z estimating equations: 3
+
+Overview of frequencies by fold:
+
+     m0_fid |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |      5,602       50.00       50.00
+          2 |      5,602       50.00      100.00
+------------+-----------------------------------
+      Total |     11,204      100.00
+
+
+Cross-fitting fold 1 2
+
+Mean-squared error for y|X,Z=0:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ lnearnings        lassoy              lasso2      3252      0.903158
+ lnearnings        rlassoy             rlasso      3252      0.908028
+ lnearnings        pystackedy          pystacked   3252      0.000217
+
+Mean-squared error for y|X,Z=1:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ lnearnings        lassoy              lasso2      6620      0.958136
+ lnearnings        rlassoy             rlasso      6620      0.965964
+ lnearnings        pystackedy          pystacked   6620      0.000361
+
+Mean-squared error for D|X,Z=0:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ training          lassod              lasso2      3717      0.014251
+ training          rlassod             rlasso      3717      0.014316
+ training          pystackedd          pystacked   3717      0.014319
+
+Mean-squared error for D|X,Z=1:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ training          lassod              lasso2      7487      0.218267
+ training          rlassod             rlasso      7487      0.221416
+ training          pystackedd          pystacked   7487      0.214847
+ assignmt          lassoz              lasso2     11204      0.221677
+ assignmt          rlassoz             rlasso     11204      0.221743
+ assignmt          pystackedz          pystacked  11204      0.221847
+
+. 
+. ddml desc
+Model: late
+ID: m0_id
+Fold ID: m0_fid
+Sample indicator: m0_sample (N=11204)
+Dependent variable (Y): lnearnings
+Dependent variable (orthogonalized): lassoy rlassoy pystackedy
+Minimum MSE orthogonalized dep var: 
+Causal variable(s) (D): training
+Causal variable(s) (orthogonalized): lassod rlassod pystackedd
+Minimum MSE orthogonalized causal var: 
+
+Number of Y estimating equations: 3
+Estimating equation 1: N =      .     MSE =          .
+  Variable: lnearnings       Orthogonalized: lassoy
+  Command: lasso2 lnearnings sex-age4554 , lic(aicc) postres
+Estimating equation 2: N =      .     MSE =          .
+  Variable: lnearnings       Orthogonalized: rlassoy
+  Command: rlasso lnearnings sex-age4554
+Estimating equation 3: N =      .     MSE =          .
+  Variable: lnearnings       Orthogonalized: pystackedy
+  Command: pystacked lnearnings sex-age4554 , type(reg)
+
+Number of D estimating equations: 3
+Estimating equation 4: N =      .     MSE =          .
+  Variable: training         Orthogonalized: lassod
+  Command: lasso2 training sex-age4554 , lic(aicc) postres
+Estimating equation 5: N =      .     MSE =          .
+  Variable: training         Orthogonalized: rlassod
+  Command: rlasso training sex-age4554
+Estimating equation 6: N =      .     MSE =          .
+  Variable: training         Orthogonalized: pystackedd
+  Command: pystacked training sex-age4554 , type(reg)
+
+* indicates minimum MSE estimation
+
+. 
+. *** estimation of parameter of interest
+. ddml estimate 
+DML with Y0=m0_pystackedy, Y1=m0_pystackedy, D0=m0_lassod, D1=m0_pystackedd:
+------------------------------------------------------------------------------
+             |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    training |   12.95838   .1174613   110.32   0.000     12.72816     13.1886
+------------------------------------------------------------------------------
+
+. 
+. *** now, do the same using one-line command
+. qddml $Y ($X) ($D=$Z), model(late)
+DML with Y0=m0_y, Y1=m0_y, D0=m0_d, D1=m0_d:
+------------------------------------------------------------------------------
+             |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    training |   12.90647   .1167697   110.53   0.000      12.6776    13.13533
+------------------------------------------------------------------------------
+
+.  
+. cap log close
