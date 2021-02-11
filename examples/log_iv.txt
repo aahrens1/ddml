@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_iv.txt
   log type:  text
- opened on:   9 Feb 2021, 18:42:10
+ opened on:  11 Feb 2021, 21:10:13
 
 .  
 . use https://statalasso.github.io/dta/AJR.dta
@@ -85,21 +85,21 @@ Cross-fitting fold 1 2
 Mean-squared error for y|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- logpgp95          lassoy              lasso2        64      0.605052
- logpgp95          rigy                rlasso        64      0.841703
- logpgp95          pystackedy          pystacked     64      0.656339
+ logpgp95          lassoy              lasso2        64      0.636883
+ logpgp95          rigy                rlasso        64      0.947380
+ logpgp95          pystackedy          pystacked     64      0.817205
 
 Mean-squared error for D|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- avexpr            lassod1             lasso2        64      1.613977
- avexpr            rigd1               rlasso        64      2.203972
+ avexpr            lassod1             lasso2        64      2.897435
+ avexpr            rigd1               rlasso        64      2.101253
 
 Mean-squared error for Z|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- logem4            pystackedd          pystacked     64      0.971257
- logem4            lassoz              lasso2        64      1.050260
+ logem4            pystackedd          pystacked     64      0.993182
+ logem4            lassoz              lasso2        64      0.905352
 
 . ddml desc
 Model: iv
@@ -111,24 +111,24 @@ Dependent variable (orthogonalized): lassoy rigy pystackedy
 Minimum MSE orthogonalized dep var: lassoy
 Causal variable(s) (D): avexpr
 Causal variable(s) (orthogonalized): lassod1 rigd1 pystackedd
-Minimum MSE orthogonalized causal var: lassod1
+Minimum MSE orthogonalized causal var: rigd1
 
 Number of Y estimating equations: 3
-Estimating equation 1: N =     64     MSE =   0.605052*
+Estimating equation 1: N =     64     MSE =   0.636883*
   Variable: logpgp95         Orthogonalized: lassoy
   Command: lasso2 logpgp95 edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
-Estimating equation 2: N =     64     MSE =   0.841703
+Estimating equation 2: N =     64     MSE =   0.947380
   Variable: logpgp95         Orthogonalized: rigy
   Command: rlasso logpgp95 edes1975 avelf temp* humid* steplow-oilres
-Estimating equation 3: N =     64     MSE =   0.656340
+Estimating equation 3: N =     64     MSE =   0.817205
   Variable: logpgp95         Orthogonalized: pystackedy
   Command: pystacked logpgp95 edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
 
 Number of D estimating equations: 3
-Estimating equation 4: N =     64     MSE =   1.613977*
+Estimating equation 4: N =     64     MSE =   2.897435
   Variable: avexpr           Orthogonalized: lassod1
   Command: lasso2 avexpr edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
-Estimating equation 5: N =     64     MSE =   2.203972
+Estimating equation 5: N =     64     MSE =   2.101253*
   Variable: avexpr           Orthogonalized: rigd1
   Command: rlasso avexpr edes1975 avelf temp* humid* steplow-oilres
 
@@ -137,11 +137,11 @@ Estimating equation 5: N =     64     MSE =   2.203972
 . 
 . *** estimation of parameter of interest
 . ddml estimate
-DML with Y=m0_lassoy and D=m0_lassod1, Z=m0_pystackedd:
+DML with Y=m0_lassoy and D=m0_rigd1, Z=m0_lassoz:
 ------------------------------------------------------------------------------
       lassoy |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-  m0_lassod1 |   1.027107   .3709011     2.77   0.006     .3001546     1.75406
+    m0_rigd1 |   .8854201   .3599111     2.46   0.014     .1800073    1.590833
 ------------------------------------------------------------------------------
 
 . 
@@ -151,7 +151,7 @@ DML with Y=m0_y and D=m0_d1, Z=m0_z1:
 ------------------------------------------------------------------------------
            y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-       m0_d1 |   .7065415   .1287076     5.49   0.000     .4542793    .9588037
+       m0_d1 |   .7435766   .1229451     6.05   0.000     .5026087    .9845445
 ------------------------------------------------------------------------------
 
 . 

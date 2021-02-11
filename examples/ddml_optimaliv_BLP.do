@@ -17,17 +17,7 @@ log using "log_BLP.txt", replace text
 which ddml
 which pystacked 
 
-<<<<<<< HEAD:examples/ddml_optimaliv_BLP.do
 insheet using "https://statalasso.github.io/dta/BLP1995-prepared.csv", comma clear
-=======
-if ("`c(username)'"=="kahrens") {
-	insheet using "/Users/kahrens/MyProjects/ddml/cert/BLP1995.csv"
-}
-if ("`c(username)'"=="ecomes") {
-	insheet using "C:\Users\ecomes\Documents\GitHub\ddml\cert\BLP1995.csv"
-}
-
->>>>>>> b4bba063741bc341fd046952b9bd2fafb78f78d5:cert/ddml_BLP.do
 
 ********************************************************************************
 *** ddml 																	 ***

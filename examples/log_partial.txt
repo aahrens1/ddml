@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_partial.txt
   log type:  text
- opened on:   9 Feb 2021, 18:47:36
+ opened on:  11 Feb 2021, 21:16:08
 
 .  
 . use https://statalasso.github.io/dta/AJR.dta, clear
@@ -73,14 +73,14 @@ Mean-squared error for y|X:
 ---------------------------------------------------------------------------
  logpgp95          lassoy              lasso2        64      2.784377
  logpgp95          rigy                rlasso        64      0.949631
- logpgp95          pystackedy          pystacked     64      0.805226
+ logpgp95          pystackedy          pystacked     64      0.832424
 
 Mean-squared error for D|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
  avexpr            lassod1             lasso2        64      2.182920
  avexpr            rigd1               rlasso        64      2.239658
- avexpr            pys1                pystacked     64      2.321823
+ avexpr            pys1                pystacked     64      2.339423
 
 . ddml desc 
 Model: partial
@@ -101,7 +101,7 @@ Estimating equation 1: N =     64     MSE =   2.784377
 Estimating equation 2: N =     64     MSE =   0.949631
   Variable: logpgp95         Orthogonalized: rigy
   Command: rlasso logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres
-Estimating equation 3: N =     64     MSE =   0.805226*
+Estimating equation 3: N =     64     MSE =   0.832424*
   Variable: logpgp95         Orthogonalized: pystackedy
   Command: pystacked logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres , type(regress) method(rf gradboos
 > t)
@@ -113,7 +113,7 @@ Estimating equation 4: N =     64     MSE =   2.182920*
 Estimating equation 5: N =     64     MSE =   2.239658
   Variable: avexpr           Orthogonalized: rigd1
   Command: rlasso avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres
-Estimating equation 6: N =     64     MSE =   2.321823
+Estimating equation 6: N =     64     MSE =   2.339423
   Variable: avexpr           Orthogonalized: pys1
   Command: pystacked avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
 
@@ -127,7 +127,7 @@ Optimal model: DML with optimal Y=pystackedy and optimal D=lassod1 (N=64):
 ------------------------------------------------------------------------------
   pystackedy |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     lassod1 |   .4442336   .0521798     8.51   0.000      .341963    .5465041
+     lassod1 |   .4472475   .0536456     8.34   0.000      .342104     .552391
 ------------------------------------------------------------------------------
 
 . 
@@ -138,7 +138,7 @@ DML with Y=y and D=d1 (N=):
 ------------------------------------------------------------------------------
            y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-          d1 |   .4657897   .0485424     9.60   0.000     .3706483    .5609312
+          d1 |   .4661611   .0467715     9.97   0.000     .3744906    .5578317
 ------------------------------------------------------------------------------
 
 . 

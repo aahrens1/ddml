@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_BLP.txt
   log type:  text
- opened on:   9 Feb 2021, 19:39:18
+ opened on:  11 Feb 2021, 21:13:36
 
 .  
 . which ddml
@@ -93,18 +93,18 @@ Mean-squared error for y|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
  share             yt1                 rlasso      2217     57.171980
- share             yt2                 pystacked   2217     56.732260
- share             yt3                 pyvote      2217     57.713640
+ share             yt2                 pystacked   2217     56.808380
+ share             yt3                 pyvote      2217     57.722410
 
 Mean-squared error for D|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
  price             d1t1                rlasso      2217     31.183760
- price             d1t2                pystacked   2217     16.740380
- price             d1t3                pyvote      2217     17.121120
+ price             d1t2                pystacked   2217     16.768220
+ price             d1t3                pyvote      2217     17.072100
  price             d2H1                rlasso      2217     30.418450
- price             d2H2                pystacked   2217     12.369230
- price             d2H3                pyvote      2217     11.747250
+ price             d2H2                pystacked   2217     12.077220
+ price             d2H3                pyvote      2217     11.723470
 
 . 
 . *** get an overview of "equations" and MSE
@@ -124,10 +124,10 @@ Number of Y estimating equations: 3
 Estimating equation 1: N =   2217     MSE =  57.171984
   Variable: share            Orthogonalized: yt1
   Command: rlasso share hpwt-spaceu_tu
-Estimating equation 2: N =   2217     MSE =  56.732256*
+Estimating equation 2: N =   2217     MSE =  56.808381*
   Variable: share            Orthogonalized: yt2
   Command: pystacked share hpwt-spaceu_tu , type(reg) seed(99)
-Estimating equation 3: N =   2217     MSE =  57.713636
+Estimating equation 3: N =   2217     MSE =  57.722412
   Variable: share            Orthogonalized: yt3
   Command: pyvote share hpwt-spaceu_tu , type(reg)
 
@@ -135,10 +135,10 @@ Number of D estimating equations: 3
 Estimating equation 4: N =   2217     MSE =  31.183759
   Variable: price            Orthogonalized: d1t1
   Command: rlasso price hpwt-spaceu_tu
-Estimating equation 5: N =   2217     MSE =  16.740377
+Estimating equation 5: N =   2217     MSE =  16.768224
   Variable: price            Orthogonalized: d1t2
   Command: pystacked price hpwt-spaceu_tu , type(reg)
-Estimating equation 6: N =   2217     MSE =  17.121124
+Estimating equation 6: N =   2217     MSE =  17.072103
   Variable: price            Orthogonalized: d1t3
   Command: pyvote price hpwt-spaceu_tu , type(reg)
 
@@ -151,7 +151,7 @@ DML with E[Y|X]=m0_yt3 and E[D|X]=m0_d1t3, E[D|X,Y]=m0_d2H3:
 ------------------------------------------------------------------------------
          yt2 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-       price |  -.1369709   .0092462   -14.81   0.000    -.1550931   -.1188488
+       price |  -.1374959   .0092767   -14.82   0.000    -.1556778   -.1193139
 ------------------------------------------------------------------------------
 
 . 
@@ -162,7 +162,7 @@ DML with E[Y|X]=m0_y and E[D|X]=m0_d, E[D|X,Y]=m0_z:
 ------------------------------------------------------------------------------
            y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-       price |  -.1225792   .0099523   -12.32   0.000    -.1420854   -.1030731
+       price |  -.1224237   .0102665   -11.92   0.000    -.1425457   -.1023017
 ------------------------------------------------------------------------------
 
 . *** use only rlasso:
