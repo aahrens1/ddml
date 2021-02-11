@@ -5,7 +5,12 @@ if ("`c(username)'"=="kahrens") {
 	adopath + "/Users/kahrens/MyProjects/pylearn2"
 	cd "/Users/kahrens/MyProjects/ddml/examples"
 }
-  
+
+** Note that you need to run the file "lddml.do" to install
+** required Mata structures.
+** This only needs to be done once.
+//run "/Users/kahrens/MyProjects/ddml/lddml.do"
+
 cap log close
 log using "log_BLP.txt", replace text  
  
