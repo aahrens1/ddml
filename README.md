@@ -1,17 +1,18 @@
-## A Stata package for Double Debiased Machine Learning
-
-This package implements the DDML estimator for a range of models. 
-It's an early incomplete version.
-
-
 ### Installation:
-For now the recommended way is to download the packages files and add the folder 
-to your adopath, for example:
+For `ddml` to run, you need to download the `ddml` repository and add the folder 
+to the `adopath`, for example:
 ```
 adopath + "/Users/kahrens/MyProjects/ddml"
 ```
 
-The package can also be installed by `net install`: 
+You also need to run the do file `lddml.do`:
 ```
-net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/master/)
+run "/Users/kahrens/MyProjects/ddml/lddml.do"
+```
+This is required to define Mata structures that the package
+relies on. 
+
+You will also need `pylearn2` for full functionality:
+```
+adopath + "/Users/kahrens/MyProjects/pylearn2"
 ```
