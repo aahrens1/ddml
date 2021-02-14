@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_interactive.txt
   log type:  text
- opened on:  11 Feb 2021, 21:09:00
+ opened on:  14 Feb 2021, 15:54:13
 
 .  
 . webuse cattaneo2
@@ -76,23 +76,23 @@ Cross-fitting fold 1 2
 Mean-squared error for y|X,D=0:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- bweight           lassoy              lasso2      3778     3.167e+05
- bweight           rlassoy             rlasso      3778     3.197e+05
- bweight           pystackedy          pystacked   3778     3.175e+05
+ bweight           m0_lassoy           lasso2      3778     3.174e+05
+ bweight           m0_rlassoy          rlasso      3778     3.207e+05
+ bweight           m0_pystackedy       pystacked   3778     3.189e+05
 
 Mean-squared error for y|X,D=1:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- bweight           lassoy              lasso2       864     3.149e+05
- bweight           rlassoy             rlasso       864     3.154e+05
- bweight           pystackedy          pystacked    864     3.175e+05
+ bweight           m0_lassoy           lasso2       864     3.157e+05
+ bweight           m0_rlassoy          rlasso       864     3.156e+05
+ bweight           m0_pystackedy       pystacked    864     3.163e+05
 
 Mean-squared error for D|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- mbsmoke           lassod              lasso2      4642      0.137242
- mbsmoke           rlassod             rlasso      4642      0.141647
- mbsmoke           pystackedd          pystacked   4642      0.135959
+ mbsmoke           m0_lassod           lasso2      4642      0.137570
+ mbsmoke           m0_rlassod          rlasso      4642      0.141276
+ mbsmoke           m0_pystackedd       pystacked   4642      0.136412
 
 . ddml desc
 Model: interactive
@@ -100,34 +100,34 @@ ID: m0_id
 Fold ID: m0_fid
 Sample indicator: m0_sample (N=4642)
 Dependent variable (Y): bweight
-Dependent variable (orthogonalized): lassoy rlassoy pystackedy
+Dependent variable (orthogonalized): m0_lassoy m0_rlassoy m0_pystackedy
 Minimum MSE orthogonalized dep var: 
 Causal variable(s) (D): mbsmoke
-Causal variable(s) (orthogonalized): lassod rlassod pystackedd
-Minimum MSE orthogonalized causal var: pystackedd
+Causal variable(s) (orthogonalized): m0_lassod m0_rlassod m0_pystackedd
+Minimum MSE orthogonalized causal var: m0_pystackedd
 
 Number of Y estimating equations: 3
-Estimating equation 1: N =      .     MSE =          .
-  Variable: bweight          Orthogonalized: lassoy
+Estimating equation 1: (not cross-fitted)
+  Variable: bweight          Orthogonalized: m0_lassoy
   Command: lasso2 bweight c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , lic(aicc) post
 > res
-Estimating equation 2: N =      .     MSE =          .
-  Variable: bweight          Orthogonalized: rlassoy
+Estimating equation 2: (not cross-fitted)
+  Variable: bweight          Orthogonalized: m0_rlassoy
   Command: rlasso bweight c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu)
-Estimating equation 3: N =      .     MSE =          .
-  Variable: bweight          Orthogonalized: pystackedy
+Estimating equation 3: (not cross-fitted)
+  Variable: bweight          Orthogonalized: m0_pystackedy
   Command: pystacked bweight c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , type(reg)
 
 Number of D estimating equations: 3
-Estimating equation 4: N =   4642     MSE =   0.137242
-  Variable: mbsmoke          Orthogonalized: lassod
+Estimating equation 4: (not cross-fitted)
+  Variable: mbsmoke          Orthogonalized: m0_lassod
   Command: lasso2 mbsmoke c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , lic(aicc) post
 > res
-Estimating equation 5: N =   4642     MSE =   0.141647
-  Variable: mbsmoke          Orthogonalized: rlassod
+Estimating equation 5: (not cross-fitted)
+  Variable: mbsmoke          Orthogonalized: m0_rlassod
   Command: rlasso mbsmoke c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu)
-Estimating equation 6: N =   4642     MSE =   0.135959*
-  Variable: mbsmoke          Orthogonalized: pystackedd
+Estimating equation 6: (not cross-fitted)*
+  Variable: mbsmoke          Orthogonalized: m0_pystackedd
   Command: pystacked mbsmoke c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu) , type(reg)
 
 * indicates minimum MSE estimation
@@ -135,11 +135,11 @@ Estimating equation 6: N =   4642     MSE =   0.135959*
 . 
 . *** estimation of parameter of interest
 . ddml estimate
-DML with Y0=m0_lassoy, Y1=m0_lassoy and D=m0_pystackedd:
+DML with Y0=m0_rlassoy, Y1=m0_lassoy and D=m0_pystackedd:
 ------------------------------------------------------------------------------
              |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -1574.454   42.68654   -36.88   0.000    -1658.118    -1490.79
+     mbsmoke |  -1572.201   42.67259   -36.84   0.000    -1655.838   -1488.564
 ------------------------------------------------------------------------------
 
 . 
@@ -149,7 +149,7 @@ DML with Y0=m0_y, Y1=m0_y and D=m0_d:
 ------------------------------------------------------------------------------
              |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -1573.895   42.71338   -36.85   0.000    -1657.611   -1490.178
+     mbsmoke |  -1573.243   42.67852   -36.86   0.000    -1656.891   -1489.594
 ------------------------------------------------------------------------------
 
 . 

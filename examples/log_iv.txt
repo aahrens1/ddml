@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_iv.txt
   log type:  text
- opened on:  11 Feb 2021, 21:10:13
+ opened on:  14 Feb 2021, 15:55:13
 
 .  
 . use https://statalasso.github.io/dta/AJR.dta
@@ -80,26 +80,26 @@ Number of Y estimating equations: 3
 Number of D estimating equations: 3
 Number of Z estimating equations: 1
 
-Cross-fitting fold 1 2
+Cross-fitting equation 1 2 3 4 5 6 7
 
 Mean-squared error for y|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- logpgp95          lassoy              lasso2        64      0.636883
- logpgp95          rigy                rlasso        64      0.947380
- logpgp95          pystackedy          pystacked     64      0.817205
+ logpgp95          m0_lassoy           lasso2        64      1.081008
+ logpgp95          m0_rigy             rlasso        64      1.008805
+ logpgp95          m0_pystackedy       pystacked     64      0.865570
 
 Mean-squared error for D|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- avexpr            lassod1             lasso2        64      2.897435
- avexpr            rigd1               rlasso        64      2.101253
+ avexpr            m0_lassod1          lasso2        64      3.368706
+ avexpr            m0_rigd1            rlasso        64      2.387282
 
 Mean-squared error for Z|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- logem4            pystackedd          pystacked     64      0.993182
- logem4            lassoz              lasso2        64      0.905352
+ logem4            m0_pystackedd       pystacked     64      1.200271
+ logem4            m0_lassoz           lasso2        64      1.133101
 
 . ddml desc
 Model: iv
@@ -107,41 +107,49 @@ ID: m0_id
 Fold ID: m0_fid
 Sample indicator: m0_sample (N=64)
 Dependent variable (Y): logpgp95
-Dependent variable (orthogonalized): lassoy rigy pystackedy
-Minimum MSE orthogonalized dep var: lassoy
+Dependent variable (orthogonalized): m0_lassoy m0_rigy m0_pystackedy
+Minimum MSE orthogonalized dep var: m0_pystackedy
 Causal variable(s) (D): avexpr
-Causal variable(s) (orthogonalized): lassod1 rigd1 pystackedd
-Minimum MSE orthogonalized causal var: rigd1
+Causal variable(s) (orthogonalized): m0_lassod1 m0_rigd1 m0_pystackedd
+Minimum MSE orthogonalized causal var: m0_rigd1
 
 Number of Y estimating equations: 3
-Estimating equation 1: N =     64     MSE =   0.636883*
-  Variable: logpgp95         Orthogonalized: lassoy
+Estimating equation 1: N =     64     MSE =   1.081008
+  Variable: logpgp95         Orthogonalized: m0_lassoy
   Command: lasso2 logpgp95 edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
-Estimating equation 2: N =     64     MSE =   0.947380
-  Variable: logpgp95         Orthogonalized: rigy
+Estimating equation 2: N =     64     MSE =   1.008805
+  Variable: logpgp95         Orthogonalized: m0_rigy
   Command: rlasso logpgp95 edes1975 avelf temp* humid* steplow-oilres
-Estimating equation 3: N =     64     MSE =   0.817205
-  Variable: logpgp95         Orthogonalized: pystackedy
+Estimating equation 3: N =     64     MSE =   0.865570*
+  Variable: logpgp95         Orthogonalized: m0_pystackedy
   Command: pystacked logpgp95 edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
 
 Number of D estimating equations: 3
-Estimating equation 4: N =     64     MSE =   2.897435
-  Variable: avexpr           Orthogonalized: lassod1
+Estimating equation 4: N =     64     MSE =   3.368706
+  Variable: avexpr           Orthogonalized: m0_lassod1
   Command: lasso2 avexpr edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
-Estimating equation 5: N =     64     MSE =   2.101253*
-  Variable: avexpr           Orthogonalized: rigd1
+Estimating equation 5: N =     64     MSE =   2.387282*
+  Variable: avexpr           Orthogonalized: m0_rigd1
   Command: rlasso avexpr edes1975 avelf temp* humid* steplow-oilres
+
+Number of Z estimating equations: 1
+Estimating equation 6: N =     64     MSE =   1.200271
+  Variable: logem4           Orthogonalized: m0_pystackedd
+  Command: pystacked logem4 edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
+Estimating equation 7: N =     64     MSE =   1.133101*
+  Variable: logem4           Orthogonalized: m0_lassoz
+  Command: lasso2 logem4 edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
 
 * indicates minimum MSE estimation
 
 . 
 . *** estimation of parameter of interest
 . ddml estimate
-DML with Y=m0_lassoy and D=m0_rigd1, Z=m0_lassoz:
+DML with Y=m0_pystackedy and D=m0_rigd1, Z=m0_lassoz:
 ------------------------------------------------------------------------------
-      lassoy |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+m0_pystack~y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    m0_rigd1 |   .8854201   .3599111     2.46   0.014     .1800073    1.590833
+    m0_rigd1 |   .5596932   .1367977     4.09   0.000     .2915746    .8278118
 ------------------------------------------------------------------------------
 
 . 
@@ -149,9 +157,9 @@ DML with Y=m0_lassoy and D=m0_rigd1, Z=m0_lassoz:
 . qddml $Y ($X) ($D = $Z), model(iv) cmdopt(method(rf gradboost))
 DML with Y=m0_y and D=m0_d1, Z=m0_z1:
 ------------------------------------------------------------------------------
-           y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+        m0_y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-       m0_d1 |   .7435766   .1229451     6.05   0.000     .5026087    .9845445
+       m0_d1 |   .5155777   .1255902     4.11   0.000     .2694254    .7617299
 ------------------------------------------------------------------------------
 
 . 

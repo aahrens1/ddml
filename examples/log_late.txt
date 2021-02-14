@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_late.txt
   log type:  text
- opened on:  11 Feb 2021, 21:10:39
+ opened on:  14 Feb 2021, 15:55:41
 
 .  
 . use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
@@ -103,33 +103,33 @@ Cross-fitting fold 1 2
 Mean-squared error for y|X,Z=0:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- lnearnings        lassoy              lasso2      3252      0.902515
- lnearnings        rlassoy             rlasso      3252      0.908425
- lnearnings        pystackedy          pystacked   3252      0.000216
+ lnearnings        m0_lassoy           lasso2      3252      0.905081
+ lnearnings        m0_rlassoy          rlasso      3252      0.908747
+ lnearnings        m0_pystackedy       pystacked   3252      0.000240
 
 Mean-squared error for y|X,Z=1:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- lnearnings        lassoy              lasso2      6620      0.957704
- lnearnings        rlassoy             rlasso      6620      0.965780
- lnearnings        pystackedy          pystacked   6620      0.000927
+ lnearnings        m0_lassoy           lasso2      6620      0.962151
+ lnearnings        m0_rlassoy          rlasso      6620      0.969688
+ lnearnings        m0_pystackedy       pystacked   6620      0.001505
 
 Mean-squared error for D|X,Z=0:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- training          lassod              lasso2      3717      0.014299
- training          rlassod             rlasso      3717      0.014324
- training          pystackedd          pystacked   3717      0.014335
+ training          m0_lassod           lasso2      3717      0.014254
+ training          m0_rlassod          rlasso      3717      0.014320
+ training          m0_pystackedd       pystacked   3717      0.014317
 
 Mean-squared error for D|X,Z=1:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- training          lassod              lasso2      7487      0.218970
- training          rlassod             rlasso      7487      0.221692
- training          pystackedd          pystacked   7487      0.213968
- assignmt          lassoz              lasso2     11204      0.221706
- assignmt          rlassoz             rlasso     11204      0.221789
- assignmt          pystackedz          pystacked  11204      0.221889
+ training          m0_lassod           lasso2      7487      0.219413
+ training          m0_rlassod          rlasso      7487      0.221745
+ training          m0_pystackedd       pystacked   7487      0.215790
+ assignmt          m0_lassoz           lasso2     11204      0.221552
+ assignmt          m0_rlassoz          rlasso     11204      0.221694
+ assignmt          m0_pystackedz       pystacked  11204      0.221759
 
 . 
 . ddml desc
@@ -138,33 +138,44 @@ ID: m0_id
 Fold ID: m0_fid
 Sample indicator: m0_sample (N=11204)
 Dependent variable (Y): lnearnings
-Dependent variable (orthogonalized): lassoy rlassoy pystackedy
+Dependent variable (orthogonalized): m0_lassoy m0_rlassoy m0_pystackedy
 Minimum MSE orthogonalized dep var: 
 Causal variable(s) (D): training
-Causal variable(s) (orthogonalized): lassod rlassod pystackedd
+Causal variable(s) (orthogonalized): m0_lassod m0_rlassod m0_pystackedd
 Minimum MSE orthogonalized causal var: 
 
 Number of Y estimating equations: 3
-Estimating equation 1: N =      .     MSE =          .
-  Variable: lnearnings       Orthogonalized: lassoy
+Estimating equation 1: (not cross-fitted)
+  Variable: lnearnings       Orthogonalized: m0_lassoy
   Command: lasso2 lnearnings sex-age4554 , lic(aicc) postres
-Estimating equation 2: N =      .     MSE =          .
-  Variable: lnearnings       Orthogonalized: rlassoy
+Estimating equation 2: (not cross-fitted)
+  Variable: lnearnings       Orthogonalized: m0_rlassoy
   Command: rlasso lnearnings sex-age4554
-Estimating equation 3: N =      .     MSE =          .
-  Variable: lnearnings       Orthogonalized: pystackedy
+Estimating equation 3: (not cross-fitted)
+  Variable: lnearnings       Orthogonalized: m0_pystackedy
   Command: pystacked lnearnings sex-age4554 , type(reg)
 
 Number of D estimating equations: 3
-Estimating equation 4: N =      .     MSE =          .
-  Variable: training         Orthogonalized: lassod
+Estimating equation 4: (not cross-fitted)
+  Variable: training         Orthogonalized: m0_lassod
   Command: lasso2 training sex-age4554 , lic(aicc) postres
-Estimating equation 5: N =      .     MSE =          .
-  Variable: training         Orthogonalized: rlassod
+Estimating equation 5: (not cross-fitted)
+  Variable: training         Orthogonalized: m0_rlassod
   Command: rlasso training sex-age4554
-Estimating equation 6: N =      .     MSE =          .
-  Variable: training         Orthogonalized: pystackedd
+Estimating equation 6: (not cross-fitted)
+  Variable: training         Orthogonalized: m0_pystackedd
   Command: pystacked training sex-age4554 , type(reg)
+
+Number of Z estimating equations: 3
+Estimating equation 7: (not cross-fitted)*
+  Variable: assignmt         Orthogonalized: m0_lassoz
+  Command: lasso2 assignmt sex-age4554 , lic(aicc) postres
+Estimating equation 8: (not cross-fitted)
+  Variable: assignmt         Orthogonalized: m0_rlassoz
+  Command: rlasso assignmt sex-age4554
+Estimating equation 9: (not cross-fitted)
+  Variable: assignmt         Orthogonalized: m0_pystackedz
+  Command: pystacked assignmt sex-age4554 , type(reg)
 
 * indicates minimum MSE estimation
 
@@ -175,7 +186,7 @@ DML with Y0=m0_pystackedy, Y1=m0_pystackedy, D0=m0_lassod, D1=m0_pystackedd:
 ------------------------------------------------------------------------------
              |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |   13.02725   .1185953   109.85   0.000     12.79481     13.2597
+    training |   13.00282   .1181864   110.02   0.000     12.77118    13.23446
 ------------------------------------------------------------------------------
 
 . 
@@ -185,7 +196,7 @@ DML with Y0=m0_y, Y1=m0_y, D0=m0_d, D1=m0_d:
 ------------------------------------------------------------------------------
              |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |   12.94826   .1174459   110.25   0.000     12.71807    13.17845
+    training |   12.94052   .1170861   110.52   0.000     12.71104    13.17001
 ------------------------------------------------------------------------------
 
 .  

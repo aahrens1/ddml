@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_BLP.txt
   log type:  text
- opened on:  11 Feb 2021, 21:13:36
+ opened on:  14 Feb 2021, 15:58:14
 
 .  
 . which ddml
@@ -17,8 +17,8 @@
 
 . 
 . ********************************************************************************
-. *** ddml                                                                                                          
->                                ***
+. *** DDML-IV (*not* LIE-confirm)                                                                                  *
+> **
 . ********************************************************************************
 . 
 . global Y share
@@ -37,7 +37,7 @@
 
 . 
 . *** specify supervised machine learners for E[Y|X] ("yeq"), E[D|X] ("deq")
-. *** as well as E[D|Z,X] ("zeq")
+. *** as well as E[D|Z,X] ("dheq")
 . 
 . * "y"-equation:
 . ddml yeq, gen(yt1) : rlasso $Y $X
@@ -86,25 +86,36 @@ Equation successfully added.
 Model: optimaliv
 Number of Y estimating equations: 3
 Number of D estimating equations: 3
+Number of DH estimating equations: 3
 
-Cross-fitting fold 1 2
+Cross-fitting equation 1 2 3 4 5 6 7 8 9
 
 Mean-squared error for y|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- share             yt1                 rlasso      2217     57.171980
- share             yt2                 pystacked   2217     56.808380
- share             yt3                 pyvote      2217     57.722410
+ share             m0_yt1              rlasso      2217     57.171980
+ share             m0_yt2              pystacked   2217     56.803450
+ share             m0_yt3              pyvote      2217     57.711710
 
 Mean-squared error for D|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- price             d1t1                rlasso      2217     31.183760
- price             d1t2                pystacked   2217     16.768220
- price             d1t3                pyvote      2217     17.072100
- price             d2H1                rlasso      2217     30.418450
- price             d2H2                pystacked   2217     12.077220
- price             d2H3                pyvote      2217     11.723470
+ price             m0_d1t1             rlasso      2217     31.183760
+ price             m0_d1t2             pystacked   2217     16.751240
+ price             m0_d1t3             pyvote      2217     16.952000
+ price             m0_d2H1             rlasso      2217     30.418450
+ price             m0_d2H2             pystacked   2217     12.470820
+ price             m0_d2H3             pyvote      2217     11.776120
+
+Mean-squared error for D|X,Z:
+ Name              Orthogonalized      Command       N          MSPE
+---------------------------------------------------------------------------
+ price             m0_d1t1             rlasso      2217     31.183760
+ price             m0_d1t2             pystacked   2217     16.751240
+ price             m0_d1t3             pyvote      2217     16.952000
+ price             m0_d2H1             rlasso      2217     30.418450
+ price             m0_d2H2             pystacked   2217     12.470820
+ price             m0_d2H3             pyvote      2217     11.776120
 
 . 
 . *** get an overview of "equations" and MSE
@@ -114,33 +125,44 @@ ID: m0_id
 Fold ID: m0_fid
 Sample indicator: m0_sample (N=2217)
 Dependent variable (Y): share
-Dependent variable (orthogonalized): yt1 yt2 yt3
-Minimum MSE orthogonalized dep var: yt2
+Dependent variable (orthogonalized): m0_yt1 m0_yt2 m0_yt3
+Minimum MSE orthogonalized dep var: m0_yt2
 Causal variable(s) (D): price
-Causal variable(s) (orthogonalized): d1t1 d1t2 d1t3
-Minimum MSE orthogonalized causal var: d2H3
+Causal variable(s) (orthogonalized): m0_d1t1 m0_d1t2 m0_d1t3
+Minimum MSE orthogonalized causal var: m0_d2H3
 
 Number of Y estimating equations: 3
 Estimating equation 1: N =   2217     MSE =  57.171984
-  Variable: share            Orthogonalized: yt1
+  Variable: share            Orthogonalized: m0_yt1
   Command: rlasso share hpwt-spaceu_tu
-Estimating equation 2: N =   2217     MSE =  56.808381*
-  Variable: share            Orthogonalized: yt2
+Estimating equation 2: N =   2217     MSE =  56.803451*
+  Variable: share            Orthogonalized: m0_yt2
   Command: pystacked share hpwt-spaceu_tu , type(reg) seed(99)
-Estimating equation 3: N =   2217     MSE =  57.722412
-  Variable: share            Orthogonalized: yt3
+Estimating equation 3: N =   2217     MSE =  57.711713
+  Variable: share            Orthogonalized: m0_yt3
   Command: pyvote share hpwt-spaceu_tu , type(reg)
 
 Number of D estimating equations: 3
 Estimating equation 4: N =   2217     MSE =  31.183759
-  Variable: price            Orthogonalized: d1t1
+  Variable: price            Orthogonalized: m0_d1t1
   Command: rlasso price hpwt-spaceu_tu
-Estimating equation 5: N =   2217     MSE =  16.768224
-  Variable: price            Orthogonalized: d1t2
+Estimating equation 5: N =   2217     MSE =  16.751241
+  Variable: price            Orthogonalized: m0_d1t2
   Command: pystacked price hpwt-spaceu_tu , type(reg)
-Estimating equation 6: N =   2217     MSE =  17.072103
-  Variable: price            Orthogonalized: d1t3
+Estimating equation 6: N =   2217     MSE =  16.952000
+  Variable: price            Orthogonalized: m0_d1t3
   Command: pyvote price hpwt-spaceu_tu , type(reg)
+
+Number of DH estimating equations: 3
+Estimating equation 7: N =   2217     MSE =  30.418450
+  Variable: price            Orthogonalized: m0_d2H1
+  Command: rlasso price hpwt-spaceu_tu z1-z28
+Estimating equation 8: N =   2217     MSE =  12.470820
+  Variable: price            Orthogonalized: m0_d2H2
+  Command: pystacked price hpwt-spaceu_tu z1-z28 , type(reg)
+Estimating equation 9: N =   2217     MSE =  11.776122*
+  Variable: price            Orthogonalized: m0_d2H3
+  Command: pyvote price hpwt-spaceu_tu z1-z28 , type(reg)
 
 * indicates minimum MSE estimation
 
@@ -149,27 +171,27 @@ Estimating equation 6: N =   2217     MSE =  17.072103
 . ddml estimate 
 DML with E[Y|X]=m0_yt3 and E[D|X]=m0_d1t3, E[D|X,Y]=m0_d2H3:
 ------------------------------------------------------------------------------
-         yt2 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+      m0_yt2 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-       price |  -.1374959   .0092767   -14.82   0.000    -.1556778   -.1193139
+       price |  -.1389302   .0094571   -14.69   0.000    -.1574659   -.1203946
 ------------------------------------------------------------------------------
 
 . 
 . *** now, do the same using the one-line command (qddml) 
 . *** .. which uses only pystacked
-. qddml $Y ($X) ($D = $Z), model(optimaliv)  
-DML with E[Y|X]=m0_y and E[D|X]=m0_d, E[D|X,Y]=m0_z:
+. qddml $Y ($X) ($D = $Z), model(optimaliv) nolie 
+DML with E[Y|X]=m0_y and E[D|X]=m0_d, E[D|X,Y]=m0_dh:
 ------------------------------------------------------------------------------
-           y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+        m0_y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-       price |  -.1224237   .0102665   -11.92   0.000    -.1425457   -.1023017
+       price |  -.1268014   .0101997   -12.43   0.000    -.1467923   -.1068104
 ------------------------------------------------------------------------------
 
 . *** use only rlasso:
-. qddml $Y ($X) ($D = $Z), model(optimaliv) cmd(rlasso)
-DML with E[Y|X]=m0_y and E[D|X]=m0_d, E[D|X,Y]=m0_z:
+. qddml $Y ($X) ($D = $Z), model(optimaliv) nolie cmd(rlasso)
+DML with E[Y|X]=m0_y and E[D|X]=m0_d, E[D|X,Y]=m0_dh:
 ------------------------------------------------------------------------------
-           y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+        m0_y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
        price |  -.4255649   .0454737    -9.36   0.000    -.5146916   -.3364382
 ------------------------------------------------------------------------------

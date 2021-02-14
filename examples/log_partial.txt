@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_partial.txt
   log type:  text
- opened on:  11 Feb 2021, 21:16:08
+ opened on:  14 Feb 2021, 16:02:35
 
 .  
 . use https://statalasso.github.io/dta/AJR.dta, clear
@@ -66,21 +66,21 @@ Model: partial
 Number of Y estimating equations: 3
 Number of D estimating equations: 3
 
-Cross-fitting fold 1 2
+Cross-fitting equation 1 2 3 4 5 6
 
 Mean-squared error for y|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- logpgp95          lassoy              lasso2        64      2.784377
- logpgp95          rigy                rlasso        64      0.949631
- logpgp95          pystackedy          pystacked     64      0.832424
+ logpgp95          m0_lassoy           lasso2        64      2.784377
+ logpgp95          m0_rigy             rlasso        64      0.949631
+ logpgp95          m0_pystackedy       pystacked     64      0.705240
 
 Mean-squared error for D|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- avexpr            lassod1             lasso2        64      2.182920
- avexpr            rigd1               rlasso        64      2.239658
- avexpr            pys1                pystacked     64      2.339423
+ avexpr            m0_lassod1          lasso2        64      2.182920
+ avexpr            m0_rigd1            rlasso        64      2.239658
+ avexpr            m0_pys1             pystacked     64      2.365779
 
 . ddml desc 
 Model: partial
@@ -88,33 +88,33 @@ ID: m0_id
 Fold ID: m0_fid
 Sample indicator: m0_sample (N=64)
 Dependent variable (Y): logpgp95
-Dependent variable (orthogonalized): lassoy rigy pystackedy
-Minimum MSE orthogonalized dep var: pystackedy
+Dependent variable (orthogonalized): m0_lassoy m0_rigy m0_pystackedy
+Minimum MSE orthogonalized dep var: m0_pystackedy
 Causal variable(s) (D): avexpr
-Causal variable(s) (orthogonalized): lassod1 rigd1 pys1
-Minimum MSE orthogonalized causal var: lassod1
+Causal variable(s) (orthogonalized): m0_lassod1 m0_rigd1 m0_pys1
+Minimum MSE orthogonalized causal var: m0_lassod1
 
 Number of Y estimating equations: 3
 Estimating equation 1: N =     64     MSE =   2.784377
-  Variable: logpgp95         Orthogonalized: lassoy
+  Variable: logpgp95         Orthogonalized: m0_lassoy
   Command: lasso2 logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
 Estimating equation 2: N =     64     MSE =   0.949631
-  Variable: logpgp95         Orthogonalized: rigy
+  Variable: logpgp95         Orthogonalized: m0_rigy
   Command: rlasso logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres
-Estimating equation 3: N =     64     MSE =   0.832424*
-  Variable: logpgp95         Orthogonalized: pystackedy
+Estimating equation 3: N =     64     MSE =   0.705240*
+  Variable: logpgp95         Orthogonalized: m0_pystackedy
   Command: pystacked logpgp95 lat_abst edes1975 avelf temp* humid* steplow-oilres , type(regress) method(rf gradboos
 > t)
 
 Number of D estimating equations: 3
 Estimating equation 4: N =     64     MSE =   2.182920*
-  Variable: avexpr           Orthogonalized: lassod1
+  Variable: avexpr           Orthogonalized: m0_lassod1
   Command: lasso2 avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres , lic(aicc) postres
 Estimating equation 5: N =     64     MSE =   2.239658
-  Variable: avexpr           Orthogonalized: rigd1
+  Variable: avexpr           Orthogonalized: m0_rigd1
   Command: rlasso avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres
-Estimating equation 6: N =     64     MSE =   2.339423
-  Variable: avexpr           Orthogonalized: pys1
+Estimating equation 6: N =     64     MSE =   2.365779
+  Variable: avexpr           Orthogonalized: m0_pys1
   Command: pystacked avexpr lat_abst edes1975 avelf temp* humid* steplow-oilres , type(reg) method(rf gradboost)
 
 * indicates minimum MSE estimation
@@ -123,22 +123,22 @@ Estimating equation 6: N =     64     MSE =   2.339423
 . *** estimation of parameter of interest
 . ddml estimate 
 
-Optimal model: DML with optimal Y=pystackedy and optimal D=lassod1 (N=64):
+Optimal model: DML with optimal Y=m0_pystackedy and optimal D=m0_lassod1 (N=64):
 ------------------------------------------------------------------------------
-  pystackedy |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+m0_pystack~y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     lassod1 |   .4472475   .0536456     8.34   0.000      .342104     .552391
+  m0_lassod1 |   .3976684   .0511661     7.77   0.000     .2973848     .497952
 ------------------------------------------------------------------------------
 
 . 
 . *** now using the one-line command
 . qddml $Y $D ($X), model(partial) cmdopt(method(rf gradboost))
 
-DML with Y=y and D=d1 (N=):
+DML with Y=m0_y and D=m0_d1 (N=):
 ------------------------------------------------------------------------------
-           y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+        m0_y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-          d1 |   .4661611   .0467715     9.97   0.000     .3744906    .5578317
+       m0_d1 |    .465982   .0482611     9.66   0.000     .3713921     .560572
 ------------------------------------------------------------------------------
 
 . 
