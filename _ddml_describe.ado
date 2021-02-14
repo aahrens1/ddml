@@ -10,6 +10,7 @@ program define _ddml_describe
 	mata: st_local("Yopt",`mname'.nameYopt)
 	mata: st_local("Dopt",invtokens(`mname'.nameDopt))
 	mata: st_local("Zopt",invtokens(`mname'.nameZopt))
+	mata: st_local("DHopt",invtokens(`mname'.nameDHopt))
 
 	mata: printf("{res}Model: %s\n", `mname'.model)
 	di as res "ID: `mname'_id"
@@ -35,20 +36,30 @@ program define _ddml_describe
 	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlist)))
 	mata: st_local("numeqnsY",strofreal(cols(`mname'.nameYtilde)))
 	mata: st_local("numeqnsD",strofreal(cols(`mname'.nameDtilde)))
+	mata: st_local("numeqnsDH",strofreal(cols(`mname'.nameDHtilde)))
 	mata: st_local("numeqnsZ",strofreal(cols(`mname'.nameZtilde)))
-	di
-	di "Number of Y estimating equations: `numeqnsY'"
-	desc_equation `mname', eqntype(yeq) optlist(`Yopt') showcmd(`showcmd')
-	di
-	di "Number of D estimating equations: `numeqnsD'"
-	desc_equation `mname', eqntype(deq) optlist(`Dopt') showcmd(`showcmd')
-	if ("`model'"=="iv") {
+	if `numeqnsY'>0 {
+		di
+		di "Number of Y estimating equations: `numeqnsY'"
+		desc_equation `mname', eqntype(yeq) optlist(`Yopt') showcmd(`showcmd')
+	}
+	if `numeqnsD'>0 {
+		di
+		di "Number of D estimating equations: `numeqnsD'"
+		desc_equation `mname', eqntype(deq) optlist(`Dopt') showcmd(`showcmd')
+	}
+	if `numeqnsZ'>0 {
 		di
 		di "Number of Z estimating equations: `numeqnsZ'"
 		desc_equation `mname', eqntype(zeq) optlist(`Zopt') showcmd(`showcmd')
 	}
+	if `numeqnsDH'>0 {
+		di
+		di "Number of DH estimating equations: `numeqnsDH'"
+		desc_equation `mname', eqntype(dheq) optlist(`DHopt') showcmd(`showcmd')
+	}
 
-	if "`Yopt'`Dopt'`Zopt'"~="" {
+	if "`Yopt'`Dopt'`Zopt'`DHopt'"~="" {
 		di
 		di "* indicates minimum MSE estimation"
 	}
@@ -82,7 +93,13 @@ prog define desc_equation
 		mata: st_global("r(eqntype)",`eqn'.eqntype)
 		if "`eqntype'"==r(eqntype) {
 			di "Estimating equation `i': " _c
-			mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
+			mata: st_local("cvdone",strofreal(`eqn'.crossfitted))
+			if ("`cvdone'"=="1") {
+				mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
+			}
+			else {
+				mata: printf("(not cross-fitted)\r")
+			}
 			mata: st_local("vtilde",`eqn'.Vtilde)
 			local minMSE : list vtilde in optlist
 			if `minMSE' {

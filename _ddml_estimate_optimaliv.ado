@@ -27,18 +27,13 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
     mata: st_local("nameD",invtokens(`mname'.nameD))
     mata: st_local("nameY",invtokens(`mname'.nameY))
 
-    if ("`debug'"!="") {
-        di "`Ytilde'"
-        di "`DHtilde'"
-        di "`Dtilde'"
-    }
-
     _ddml_make_varlists, mname(`mname')
+    if "`debug'"!="" return list
     _ddml_allcombos `r(eq)' , putlast(`Yopt' `Dopt' `DHopt') ///
                                                 `debug' ///
                                                 dpos_end(`r(dpos_end)') ///
                                                 zpos_start(`r(zpos_start)') zpos_end(`r(zpos_end)') ///
-                                                addprefix("`mname'_")
+                                                addprefix("")
 
 	local ncombos = r(ncombos)
 	local tokenlen = `ncombos'*2 -1

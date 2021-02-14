@@ -156,6 +156,7 @@ program ddml, eclass
 					mname(name)		///
 					vtype(string)   ///  "double", "float" etc
 					REPlace         ///
+					NOPrefix 		/// don't add model name as prefix
 					]
 
 		** check that ddml has been initialized
@@ -185,8 +186,16 @@ program ddml, eclass
 			di as err "not allowed; dheq not allowed with `model'"
 		}
 
+		** add prefix to vtilde
+		if "`noprefix'"=="" {
+			local prefix `mname'_
+		}
+		else {
+			local prefix
+		}
+
 		// subcmd macro tells add_eqn(.) which list to add it to
-		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'", "`eqn'","`vtype'")
+		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`prefix'`gen'", "`eqn'","`vtype'","`noprefix'")
 		local newentry `r(newentry)'
 		if "`subcmd'"=="yeq" {
 			// check if nameY is already there; if it is, must be identical to vname here
@@ -375,7 +384,8 @@ void add_eqn(						struct ddmlStruct m,
 									string scalar vname,
 									string scalar vtilde,
 									string scalar estcmd,
-									string scalar vtype)
+									string scalar vtype,
+									string scalar noprefix)
 {
 	struct eqnStruct scalar		e, e0
 	e.eqntype		= eqntype
@@ -384,6 +394,7 @@ void add_eqn(						struct ddmlStruct m,
 	e.eststring		= estcmd
 	e.command		= tokens(estcmd)[1,1]
 	e.vtype		 	= vtype
+	e.crossfitted	= 0
 
 	newentry		= 1
 
@@ -417,6 +428,9 @@ void add_eqn(						struct ddmlStruct m,
 		}
 		else if (eqntype=="deq") {
 			m.nameDtilde	= (m.nameDtilde, vtilde)
+		}
+		else if (eqntype=="dheq") {
+			m.nameDHtilde	= (m.nameDHtilde, vtilde)
 		}
 		else if (eqntype=="zeq") {
 			m.nameZtilde	= (m.nameZtilde, vtilde)

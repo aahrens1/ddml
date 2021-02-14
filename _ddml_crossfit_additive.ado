@@ -118,56 +118,67 @@ program _ddml_crossfit_additive, eclass sortpreserve
 		forvalues i=1/`numeqns' {
 			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 			mata: st_local("vtilde",`eqn'.Vtilde)
-			cap drop `mname'_`vtilde'
-			qui gen double `mname'_`vtilde'=.
+			mata: st_local("cvdone",strofreal(`eqn'.crossfitted))
+			if (`cvdone'!=1) {
+				cap drop `vtilde'
+				qui gen double `vtilde'=.
+			}
 		}
 
 		*** do cross-fitting
 		di
-		di as text "Cross-fitting fold " _c
-		forvalues k = 1(1)`kfolds' {
-		
-			if (`k'==`kfolds') {
-				di as text "`k'"
+		di as text "Cross-fitting equation " _c
+		forvalues i=1/`numeqns' {
+
+			if (`i'==`numeqns') {
+				di as text "`i'"
 			}
 			else {
-				di as text "`k' " _c
+				di as text "`i' " _c
 			}
-			// ML is applied to I^c sample (all data ex partition k)
-			qui {
-				forvalues i=1/`numeqns' {
-					mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-					mata: st_local("vtilde",`eqn'.Vtilde)
-					mata: st_local("vname",`eqn'.Vname)
-					mata: st_local("eststring",`eqn'.eststring)
-					mata: st_local("eqntype",`eqn'.eqntype)
-					mata: st_local("vtype",`eqn'.vtype)
-					local 0 "`eststring'"
-					syntax [anything] , [*]
-					local est_main `anything'
-					local est_options `options'
-					di as res "Estimating equation `i':"
-					di as res "  est_main: `est_main'"
-					di as res "  est_options: `est_options'"
+
+			// has the equation already been crossfitted?
+			mata: st_numscalar("cvdone",`eqn'.crossfitted)
+			if ("`cvdone'"=="1") continue
+
+			forvalues k = 1(1)`kfolds' {
+			
+				// ML is applied to I^c sample (all data ex partition k)
+				qui {
 					
-					tempvar vtilde_i
+						mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+						mata: st_local("vtilde",`eqn'.Vtilde)
+						mata: st_local("vname",`eqn'.Vname)
+						mata: st_local("eststring",`eqn'.eststring)
+						mata: st_local("eqntype",`eqn'.eqntype)
+						mata: st_local("vtype",`eqn'.vtype)
+						local 0 "`eststring'"
+						syntax [anything] , [*]
+						local est_main `anything'
+						local est_options `options'
+						di as res "Estimating equation `i':"
+						di as res "  est_main: `est_main'"
+						di as res "  est_options: `est_options'"
+						
+						tempvar vtilde_i
 
-					// estimate excluding kth fold
-					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
-					// get fitted values and residuals for kth fold	
-					qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+						// estimate excluding kth fold
+						`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
+						// get fitted values and residuals for kth fold	
+						qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `mname'_sample
 
 
-					if ("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
-						// get predicted values if optimal IV model & deq or dheq
-						qui replace `mname'_`vtilde' = `vtilde_i' if `mname'_fid==`k' & `mname'_sample
-					} 
-					else {
-						// get residuals
-						qui replace `mname'_`vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+						if ("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
+							// get predicted values if optimal IV model & deq or dheq
+							qui replace `vtilde' = `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+						} 
+						else {
+							// get residuals
+							qui replace `vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
+						}
 					}
 				}
-			}
+				mata: set_crossfit(`mname',`i',1) // indicate that cross-validation has been done
 		}
 	
 		*** calculate MSE, store orthogonalized variables, etc.
@@ -178,14 +189,14 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			tempvar vtilde_sq
 			if ("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
 				// need to use residuals here
-				qui gen double `vtilde_sq' = (`vname'-`mname'_`vtilde')^2 if `mname'_sample
+				qui gen double `vtilde_sq' = (`vname'-`vtilde')^2 if `mname'_sample
 				qui sum `vtilde_sq' if `mname'_sample, meanonly
-				mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
+				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)')
 			} 
 			else {
-				qui gen double `vtilde_sq' = `mname'_`vtilde'^2 if `mname'_sample
+				qui gen double `vtilde_sq' = `vtilde'^2 if `mname'_sample
 				qui sum `vtilde_sq' if `mname'_sample, meanonly
-				mata: add_to_eqn(`mname',`i',"`mname'_id `mname'_`vtilde'", `r(mean)',`r(N)')
+				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)')
 			}
 		}
 	
@@ -231,10 +242,10 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			di _col(65) "MSPE"
 			di "{hline 75}"
 			// clear opt list
-			mata: `mname'.nameDopt = J(1,0,"") 
-			foreach var of varlist `listD' {
+			mata: `mname'.nameDHopt = J(1,0,"") 
+			foreach var of varlist `listDH' {
 				_ddml_display_mspe `mname', vname(`var')
-				mata: `mname'.nameDopt = (`mname'.nameDopt, "`r(optname)'")
+				mata: `mname'.nameDHopt = (`mname'.nameDHopt, "`r(optname)'")
 			}
 		}
 
@@ -278,6 +289,16 @@ void add_to_eqn(					struct ddmlStruct m,
 	(*p).idVtilde	= st_data(., tokens(vnames))
 	(*p).MSE		= mse
 	(*p).N			= n
+}
+
+// function to set crossfit dummy indicating whether crossfit has been done already
+void set_crossfit(					struct ddmlStruct m,
+									real scalar eqnumber,
+									real scalar cf)
+{
+	pointer(struct eqnStruct) scalar p
+	p				= m.eqnlist[1,eqnumber]
+	(*p).crossfitted = cf
 }
 
 end

@@ -41,7 +41,7 @@ program _ddml_estimate_late, eclass sortpreserve
     _ddml_allcombos `Ytilde' - `Ytilde' - `Dtilde' - `Dtilde' - `Ztilde' , ///
                                                         putlast(`Y0opt' `Y1opt' `D0opt' `D1opt' `Zopt') ///
                                                         `debug'  ///
-                                                        addprefix("`mname'_")
+                                                        addprefix("")
     local ncombos = r(ncombos)
     local tokenlen = `ncombos'*2 -1
     local y0list `r(colstr1)'

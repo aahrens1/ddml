@@ -34,7 +34,7 @@ program _ddml_estimate_iv, eclass sortpreserve
                                                 `debug' ///
                                                 dpos_end(`r(dpos_end)') ///
                                                 zpos_start(`r(zpos_start)') zpos_end(`r(zpos_end)') ///
-                                                addprefix("`mname'_")
+                                                addprefix("")
 
 	//return list
 	local ncombos = r(ncombos)

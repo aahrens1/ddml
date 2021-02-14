@@ -62,6 +62,7 @@ struct eqnStruct {
 	real scalar			N
 	real scalar 		N0
 	real scalar 		N1
+	real scalar 		crossfitted   	// =1 if crossvalidation has been done; 0 if not
 }
 
 mata mlib create lddml, dir(PERSONAL) replace

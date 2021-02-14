@@ -34,9 +34,9 @@ program _ddml_estimate_partial, eclass sortpreserve
 			local y ``i''
 			tokenize `Dlist' , parse("-")
 			local d ``i''
-			add_prefix `y' `d', prefix("`mname'_")
+			//add_prefix `y' `d', prefix("")
 			// do_regress is OLS but with original varnames
-			do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+			do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 			di
 			di as res "DML with Y=`y' and D=`d' (N=`e(N)'):"
 			ereturn di
@@ -45,9 +45,9 @@ program _ddml_estimate_partial, eclass sortpreserve
 	}
 
 	*** estimate best model
-	add_prefix `Yopt' `Dopt', prefix("`mname'_")
+	//add_prefix `Yopt' `Dopt', prefix("")
 	// do_regress is OLS but with original varnames
-	do_regress `s(vnames)' if `touse' , nocons `robust' yname(`Yopt') dnames(`Dopt')
+	do_regress `Yopt' `Dopt' if `touse' , nocons `robust' yname(`Yopt') dnames(`Dopt')
 
 	// plot
 	if ("`avplot'"!="") {
