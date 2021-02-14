@@ -106,11 +106,11 @@ DDML approach.
 number of folds for cross-fitting / sample splitting. 
 The default is 2. The theory of DDML does not
 depend on the number of folds; yet, we recommend 
-to consider test higher number of folds (e.g., 5, 10)
+to also test higher number of folds (e.g., 5, 10)
 to check robustness of your results.
 {p_end}
 {synopt:{opt absorb(varlist)}}
-partial out fixed effects
+partial out fixed effects (not yet implemented)
 {p_end}
 {synopt:{opt tabf:old}}
 show number of observations per fold
@@ -160,7 +160,7 @@ using a supervised machine learner.
         D = m(X) + V
 
 {pstd}
-where we are, as in the Partial Linear Model interested in the ATE, but do not 
+where we are, as in the Partial Linear Model, interested in the ATE, but do not 
 assume that X and D are separable. D is a binary treatment variable. 
 We estimate the conditional expectations 
 E[Y|X,D=0] and E[Y|X,D=1] (jointly referred to as "{opt yeq}")
@@ -174,7 +174,7 @@ learner.
         Z = m(X) + V
 
 {pstd}
-where the aim is to estimate the average treatment effect.
+where the aim is to estimate the average treatment effect {it:a}. 
 We estimate the conditional expectations E[Y|X] ("{opt yeq}"), 
 E[D|X] ("{opt deq}") and E[Z|X] ("{opt zeq}") using a supervised machine
 learner.
@@ -201,11 +201,14 @@ E[Z|X] ("zeq").
         D = m(Z) + g(X) + V 
 
 {pstd}
-where the aim is to estimate the average treatment effect or local average treatment effect.
-To this end, we estimate the conditional expectations
+where the estimand of interest is {it:a}. 
+We estimate the conditional expectations
 E[Y|X] ("{opt yeq}"), 
-E[D|X] ("{opt deq}") and E[D|Z,X] ("{opt dheq}") using a supervised machine
-learner.
+E[D^|X] ("{opt deq}") and D^:=E[D|Z,X] ("{opt dheq}") using a supervised machine
+learner. The instrument is then formed as D^-E^[D^|X] where E^[D^|X] denotes
+the estimate of E[D^|X].
+If {opt nolie} is specified, "{opt deq}" estimates E[D|X] and
+the instrument is formed as D^-E^[D|X].  
 
 {marker compatibility}{...}
 {title:Compatible programs}

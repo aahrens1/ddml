@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_interactive.txt
   log type:  text
- opened on:  14 Feb 2021, 15:54:13
+ opened on:  14 Feb 2021, 19:39:08
 
 .  
 . webuse cattaneo2
@@ -76,23 +76,23 @@ Cross-fitting fold 1 2
 Mean-squared error for y|X,D=0:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- bweight           m0_lassoy           lasso2      3778     3.174e+05
- bweight           m0_rlassoy          rlasso      3778     3.207e+05
- bweight           m0_pystackedy       pystacked   3778     3.189e+05
+ bweight           m0_lassoy           lasso2      3778     3.192e+05
+ bweight           m0_rlassoy          rlasso      3778     3.197e+05
+ bweight           m0_pystackedy       pystacked   3778     3.200e+05
 
 Mean-squared error for y|X,D=1:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- bweight           m0_lassoy           lasso2       864     3.157e+05
- bweight           m0_rlassoy          rlasso       864     3.156e+05
- bweight           m0_pystackedy       pystacked    864     3.163e+05
+ bweight           m0_lassoy           lasso2       864     3.144e+05
+ bweight           m0_rlassoy          rlasso       864     3.163e+05
+ bweight           m0_pystackedy       pystacked    864     3.164e+05
 
 Mean-squared error for D|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- mbsmoke           m0_lassod           lasso2      4642      0.137570
- mbsmoke           m0_rlassod          rlasso      4642      0.141276
- mbsmoke           m0_pystackedd       pystacked   4642      0.136412
+ mbsmoke           m0_lassod           lasso2      4642      0.137936
+ mbsmoke           m0_rlassod          rlasso      4642      0.141400
+ mbsmoke           m0_pystackedd       pystacked   4642      0.136585
 
 . ddml desc
 Model: interactive
@@ -135,11 +135,11 @@ Estimating equation 6: (not cross-fitted)*
 . 
 . *** estimation of parameter of interest
 . ddml estimate
-DML with Y0=m0_rlassoy, Y1=m0_lassoy and D=m0_pystackedd:
+DML with Y0=m0_lassoy, Y1=m0_lassoy and D=m0_pystackedd:
 ------------------------------------------------------------------------------
              |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -1572.201   42.67259   -36.84   0.000    -1655.838   -1488.564
+     mbsmoke |  -1579.953   42.51675   -37.16   0.000    -1663.284   -1496.622
 ------------------------------------------------------------------------------
 
 . 
@@ -149,7 +149,7 @@ DML with Y0=m0_y, Y1=m0_y and D=m0_d:
 ------------------------------------------------------------------------------
              |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -1573.243   42.67852   -36.86   0.000    -1656.891   -1489.594
+     mbsmoke |  -1579.119   42.54511   -37.12   0.000    -1662.506   -1495.732
 ------------------------------------------------------------------------------
 
 . 

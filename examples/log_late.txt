@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_late.txt
   log type:  text
- opened on:  14 Feb 2021, 15:55:41
+ opened on:  14 Feb 2021, 19:40:31
 
 .  
 . use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
@@ -103,33 +103,33 @@ Cross-fitting fold 1 2
 Mean-squared error for y|X,Z=0:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- lnearnings        m0_lassoy           lasso2      3252      0.905081
- lnearnings        m0_rlassoy          rlasso      3252      0.908747
- lnearnings        m0_pystackedy       pystacked   3252      0.000240
+ lnearnings        m0_lassoy           lasso2      3252      0.911419
+ lnearnings        m0_rlassoy          rlasso      3252      0.908990
+ lnearnings        m0_pystackedy       pystacked   3252      0.000164
 
 Mean-squared error for y|X,Z=1:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- lnearnings        m0_lassoy           lasso2      6620      0.962151
- lnearnings        m0_rlassoy          rlasso      6620      0.969688
- lnearnings        m0_pystackedy       pystacked   6620      0.001505
+ lnearnings        m0_lassoy           lasso2      6620      0.959685
+ lnearnings        m0_rlassoy          rlasso      6620      0.967051
+ lnearnings        m0_pystackedy       pystacked   6620      0.000404
 
 Mean-squared error for D|X,Z=0:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- training          m0_lassod           lasso2      3717      0.014254
- training          m0_rlassod          rlasso      3717      0.014320
- training          m0_pystackedd       pystacked   3717      0.014317
+ training          m0_lassod           lasso2      3717      0.014322
+ training          m0_rlassod          rlasso      3717      0.014365
+ training          m0_pystackedd       pystacked   3717      0.014365
 
 Mean-squared error for D|X,Z=1:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
- training          m0_lassod           lasso2      7487      0.219413
- training          m0_rlassod          rlasso      7487      0.221745
- training          m0_pystackedd       pystacked   7487      0.215790
- assignmt          m0_lassoz           lasso2     11204      0.221552
- assignmt          m0_rlassoz          rlasso     11204      0.221694
- assignmt          m0_pystackedz       pystacked  11204      0.221759
+ training          m0_lassod           lasso2      7487      0.218726
+ training          m0_rlassod          rlasso      7487      0.221540
+ training          m0_pystackedd       pystacked   7487      0.214510
+ assignmt          m0_lassoz           lasso2     11204      0.221716
+ assignmt          m0_rlassoz          rlasso     11204      0.221772
+ assignmt          m0_pystackedz       pystacked  11204      0.221768
 
 . 
 . ddml desc
@@ -186,7 +186,7 @@ DML with Y0=m0_pystackedy, Y1=m0_pystackedy, D0=m0_lassod, D1=m0_pystackedd:
 ------------------------------------------------------------------------------
              |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |   13.00282   .1181864   110.02   0.000     12.77118    13.23446
+    training |   12.95132   .1173489   110.37   0.000     12.72132    13.18132
 ------------------------------------------------------------------------------
 
 . 
@@ -196,7 +196,7 @@ DML with Y0=m0_y, Y1=m0_y, D0=m0_d, D1=m0_d:
 ------------------------------------------------------------------------------
              |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |   12.94052   .1170861   110.52   0.000     12.71104    13.17001
+    training |   12.92597   .1169358   110.54   0.000     12.69678    13.15516
 ------------------------------------------------------------------------------
 
 .  

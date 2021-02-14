@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/examples/log_BLP_LIE.txt
   log type:  text
- opened on:  14 Feb 2021, 16:00:25
+ opened on:  14 Feb 2021, 19:45:08
 
 .  
 . which ddml
@@ -148,28 +148,28 @@ Mean-squared error for y|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
  share             m0_yt1              rlasso      2217     57.171980
- share             m0_yt2              pystacked   2217     56.720410
- share             m0_yt3              pyvote      2217     57.719700
+ share             m0_yt2              pystacked   2217     56.619480
+ share             m0_yt3              pyvote      2217     57.712170
 
 Mean-squared error for D|X:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
  price             d2H1                rlasso      2217     30.418450
- price             d2H2                pystacked   2217     12.312900
- price             d2H3                pyvote      2217     11.821200
+ price             d2H2                pystacked   2217     12.292450
+ price             d2H3                pyvote      2217     11.822010
  price             m0_d1t1             rlasso      2217     31.188800
- price             m0_d1t2             pystacked   2217     18.966850
- price             m0_d1t3             pyvote      2217     19.429820
+ price             m0_d1t2             pystacked   2217     18.849450
+ price             m0_d1t3             pyvote      2217     19.572150
 
 Mean-squared error for D|X,Z:
  Name              Orthogonalized      Command       N          MSPE
 ---------------------------------------------------------------------------
  price             d2H1                rlasso      2217     30.418450
- price             d2H2                pystacked   2217     12.312900
- price             d2H3                pyvote      2217     11.821200
+ price             d2H2                pystacked   2217     12.292450
+ price             d2H3                pyvote      2217     11.822010
  price             m0_d1t1             rlasso      2217     31.188800
- price             m0_d1t2             pystacked   2217     18.966850
- price             m0_d1t3             pyvote      2217     19.429820
+ price             m0_d1t2             pystacked   2217     18.849450
+ price             m0_d1t3             pyvote      2217     19.572150
 
 . 
 . *** get an overview of "equations" and MSE
@@ -189,10 +189,10 @@ Number of Y estimating equations: 3
 Estimating equation 1: N =   2217     MSE =  57.171984
   Variable: share            Orthogonalized: m0_yt1
   Command: rlasso share hpwt-spaceu_tu
-Estimating equation 2: N =   2217     MSE =  56.720409*
+Estimating equation 2: N =   2217     MSE =  56.619484*
   Variable: share            Orthogonalized: m0_yt2
   Command: pystacked share hpwt-spaceu_tu , type(reg) seed(99)
-Estimating equation 3: N =   2217     MSE =  57.719698
+Estimating equation 3: N =   2217     MSE =  57.712169
   Variable: share            Orthogonalized: m0_yt3
   Command: pyvote share hpwt-spaceu_tu , type(reg)
 
@@ -200,10 +200,10 @@ Number of D estimating equations: 3
 Estimating equation 7: N =   2217     MSE =  31.188802
   Variable: price            Orthogonalized: m0_d1t1
   Command: rlasso d2H1 hpwt-spaceu_tu
-Estimating equation 8: N =   2217     MSE =  18.966847
+Estimating equation 8: N =   2217     MSE =  18.849449
   Variable: price            Orthogonalized: m0_d1t2
   Command: pystacked d2H2 hpwt-spaceu_tu , type(reg)
-Estimating equation 9: N =   2217     MSE =  19.429823
+Estimating equation 9: N =   2217     MSE =  19.572154
   Variable: price            Orthogonalized: m0_d1t3
   Command: pyvote d2H3 hpwt-spaceu_tu , type(reg)
 
@@ -211,10 +211,10 @@ Number of DH estimating equations: 3
 Estimating equation 4: N =   2217     MSE =  30.418450
   Variable: price            Orthogonalized: d2H1
   Command: rlasso price hpwt-spaceu_tu z1-z28
-Estimating equation 5: N =   2217     MSE =  12.312905
+Estimating equation 5: N =   2217     MSE =  12.292446
   Variable: price            Orthogonalized: d2H2
   Command: pystacked price hpwt-spaceu_tu z1-z28 , type(reg)
-Estimating equation 6: N =   2217     MSE =  11.821205*
+Estimating equation 6: N =   2217     MSE =  11.822012*
   Variable: price            Orthogonalized: d2H3
   Command: pyvote price hpwt-spaceu_tu z1-z28 , type(reg)
 
@@ -227,7 +227,7 @@ DML with E[Y|X]=m0_yt3 and E[D|X]=m0_d1t3, E[D|X,Y]=d2H3:
 ------------------------------------------------------------------------------
       m0_yt2 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-       price |  -.1143339   .0076834   -14.88   0.000    -.1293931   -.0992747
+       price |    -.11245   .0075933   -14.81   0.000    -.1273327   -.0975673
 ------------------------------------------------------------------------------
 
 . 
@@ -238,7 +238,7 @@ DML with E[Y|X]=m0_y and E[D|X]=m0_d, E[D|X,Y]=m0_dh:
 ------------------------------------------------------------------------------
         m0_y |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-       price |   -.078261   .0083546    -9.37   0.000    -.0946357   -.0618862
+       price |  -.0766659   .0086408    -8.87   0.000    -.0936016   -.0597303
 ------------------------------------------------------------------------------
 
 . *** use only rlasso:

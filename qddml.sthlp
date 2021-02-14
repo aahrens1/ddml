@@ -26,15 +26,22 @@ binary or continous treatment variables and endogeneity.
 [{cmd:if} {it:exp}] [{cmd:in} {it:range}]
 {opt model(name)}
 {bind:[ {cmd:,}}
-{opt cmd(varlist)}
-{opt cmdopt(varlist)}
+{opt cmd(string)}
+{opt cmdopt(string)}
 {opt mname(string)}
+{opt ...}
 {bind:{cmdab:noc:onstant} ]}
 
 {pstd}
 Since {opt qddml} uses {helpb pystacked} per default, 
-it requires Stata 16 and Python in the default setting. See HERE for how to set up
-Python your system.
+it requires Stata 16 and Python in the default setting. See 
+{helpb python:this help file}, {browse "https://blog.stata.com/2020/08/18/stata-python-integration-part-1-setting-up-stata-to-use-python/":this Stata blog entry}
+and 
+{browse "https://www.youtube.com/watch?v=4WxMAGNhcuE":this Youtube video}
+for how to set up
+Python on your system.
+In short, install Python 3.x (we recommend Anaconda) 
+and set the appropriate Python path using {cmd:python set exec}.
 If you don't have Stata 16,
 you need to change the ML program used for estimating conditional expectations, e.g., 
 using the option {opt cmd(rlasso)}.
@@ -51,8 +58,84 @@ the model to be estimated; allows for {it:partial}, {it:interactive},
 {p_end}
 {synopt:{opt mname(string)}}
 name of the DDML model. Allows to run multiple DDML
-models simultaneously. Defaults to {it:ddml1}.
+models simultaneously. Defaults to {it:m0}.
 {p_end}
+{synopt:{opt nolie}}
+use DDML-IV {it:without} adjustment for LIE-conformity. 
+To be used with {opt model(optimaliv)}. Not recommended.
+{p_end}
+{synopt:{opt k(integer)}}
+number of folds for cross-fitting / sample splitting. 
+The default is 2. The theory of DDML does not
+depend on the number of folds; yet, we recommend 
+to also test higher number of folds (e.g., 5, 10)
+to check robustness of your results.
+{p_end}
+{synopt:{opt tabf:old}}
+show number of observations per fold
+{p_end}
+{synopt:{opt verb:ose}}
+show detailed output
+{p_end}
+{synopt:{opt vverb:ose}}
+show even more output
+{p_end}
+
+{synoptset 20}{...}
+{synopthdr:Option}
+{synoptline}
+{synopt:{opt cmd(string)}}
+ML program used for estimating conditional expectations. 
+Defaults to {helpb pystacked}. 
+See {helpb qddml##compatibility:here} for 
+other supported programs.
+{p_end}
+{synopt:{opt ycmd(string)}}
+ML program used for estimating conditional expectations. 
+Defaults to {helpb pystacked}. 
+{p_end}
+{synopt:{opt dcmd(string)}}
+ML program used for estimating conditional expectations. 
+Defaults to {helpb pystacked}. 
+{p_end}
+{synopt:{opt dhcmd(string)}}
+ML program used for estimating conditional expectations. 
+Defaults to {helpb pystacked}. 
+{p_end}
+{synopt:{opt zcmd(string)}}
+ML program used for estimating conditional expectations. 
+Defaults to {helpb pystacked}. 
+{p_end}
+{synopt:{opt cmdopt(string)}}
+options that are passed on to ML program
+{p_end}
+{synopt:{opt ycmdopt(string)}}
+options that are passed on to ML program used for conditional 
+expectations of y (i.e., "yeq")
+{p_end}
+{synopt:{opt dcmdopt(string)}}
+options that are passed on to ML program used for "deq"
+{p_end}
+{synopt:{opt dhcmdopt(string)}}
+options that are passed on to ML program used for "dheq"
+{p_end}
+{synopt:{opt zcmdopt(string)}}
+options that are passed on to ML program used for "zeq"
+{p_end}
+{synopt:{opt ...}}
+all remaining options are passed on to ML program. This is a short-hand for {opt cmd()};
+i.e., {cmd:cmd(nocons)} is the same as simply {cmd:nocons}.
+{p_end}
+
+{marker models}{...}
+{title:Models}
+
+{pstd} copy from {helpb ddml}
+
+{marker compatibility}{...}
+{title:Compatible programs}
+
+{pstd} copy from {helpb ddml}
 
 {marker examples}{...}
 {title:Examples}
