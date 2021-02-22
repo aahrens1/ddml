@@ -55,7 +55,12 @@ program ddml, eclass
 	
 	*** export model
 	if "`subcmd'"=="export" {
-		local fname: word 2 of `mainargs'
+		local using: word 2 of `mainargs'
+		if "`using'"~="using" {
+			di as err "invalid syntax - missing destination filename"
+			exit 198
+		}
+		local fname: word 3 of `mainargs'
 		local 0 "`restargs'"
 		syntax ,[ mname(name) * ]
 		if "`mname'"=="" {

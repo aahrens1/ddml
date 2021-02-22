@@ -24,33 +24,34 @@ program _ddml_export
 	}
 	
 	preserve
-
+	
+	// remove equation name prefix from tilde variable names
 	foreach vname in `tildelist' {
-		cap drop `vname'
-		gen `vname' = strofreal(`mname'_`vname',"%26.23e")
+		local newvname : subinstr local vname "`mname'_" ""
+		rename `vname' `newvname'
+		local newtildelist `newtildelist' `newvname'
 	}
 
 	cap drop id
 	qui gen id = strofreal(`mname'_id, "%20.0g")
 	cap drop fid
 	qui gen fid = strofreal(`mname'_fid, "%20.0g")
-	keep id fid `tildelist'
+	keep id fid `newtildelist'
+	order id fid, first
 
-	tempfile tfile
-	qui save `tfile'
+	// data
+	export delimited using `fname', `options'
+
+	// dictionary
 	drop _all
 	qui set obs 1
-	qui gen id = "id"
-	qui gen fid = "fid"
 	local i 1
 	tokenize `vlist'
-	foreach vname in `tildelist' {
+	foreach vname in `newtildelist' {
 		qui gen `vname' = "``i''"
 		local ++i
 	}
-	qui append using `tfile'
-
-	export delimited using `fname', `options'
+	export delimited using `fname'_dict, `options'
 	
 	restore	
 
