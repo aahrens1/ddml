@@ -19,8 +19,10 @@ program _ddml_export
 		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 		mata: st_local("vname",`eqn'.Vname)
 		mata: st_local("vtilde",`eqn'.Vtilde)
+		mata: st_local("eqntype",`eqn'.eqntype)
 		local vlist		`vlist' `vname'
 		local tildelist	`tildelist' `vtilde'
+		local etypelist `etypelist' `eqntype'
 	}
 	
 	preserve
@@ -44,11 +46,13 @@ program _ddml_export
 
 	// dictionary
 	drop _all
-	qui set obs 1
+	qui set obs 2
 	local i 1
 	tokenize `vlist'
 	foreach vname in `newtildelist' {
-		qui gen `vname' = "``i''"
+		qui gen `vname' = "``i''" if _n==1
+		local vtype : word `i' of `etypelist'
+		qui replace `vname' = "`vtype'" if _n==2
 		local ++i
 	}
 	export delimited using `fname'_dict, `options'
