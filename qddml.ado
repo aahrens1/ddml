@@ -4,8 +4,8 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		model(name)								///
 		VERBose VVERBOSE						///
 		mname(name)								///
-		kfolds(integer 2)		///
-		TABFold					///
+		kfolds(integer 5)						///
+		TABFold									///
 		debug 									///
 		seed(int 0)								///
 		cmd(name)								///
@@ -19,6 +19,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		ZCMD(string asis)						///
 		CMDOPTions(string asis)					///
 		NOLie									///
+		NOIsily 								///
 		* ]
 
 	mata: s_ivparse("`anything'")
@@ -147,7 +148,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `cmdoptions' 
 		`qui' ddml deq, gen(d) mname(`mname') vname(`dexog'): `dcmd' `dexog' `xctrl', `cmdoptions' 
 	}		
-	`qui' ddml crossfit, mname(`mname') kfolds(`kfolds') `tabfold'
+	`qui' ddml crossfit, mname(`mname') kfolds(`kfolds') `tabfold' `noisily'
 	if "`verbose'"!="" ddml desc
 	ddml estimate, mname(`mname')
 

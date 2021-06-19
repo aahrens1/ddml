@@ -1,3 +1,5 @@
+* last edited: 18 jun 2021
+
 *** ddml cross-fitting for the interactive model & LATE
 program _ddml_crossfit_interactive, eclass sortpreserve
 
@@ -17,6 +19,9 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 	// no marksample yet
 
 	local debugflag		= "`debug'"~=""
+	if ("`noisily'"=="") local qui qui
+	di "test1"
+	di "`qui'"
 		
 	*** extract details of estimation
 	
@@ -88,8 +93,10 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 			di as text "`k' " _c
 		}
 		// ML is applied to I^c sample (all data ex partition k)
-		qui {
+		`qui' {
 		
+			di "test"
+
 			// loop over equations
 			forvalues i=1/`numeqns' {
 				mata: `eqn'=*(`mname'.eqnlist[1,`i'])
@@ -113,7 +120,7 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					`est_main' if `mname'_fid!=`k' & `listD' == 1 & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict `vtype'`vtilde_i' if `mname'_fid==`k' & `listD' == 1 & `mname'_sample
+					predict `vtype'`vtilde_i' if `mname'_fid==`k' & `listD' == 1 & `mname'_sample
 					qui replace `vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 1 & `mname'_sample
 
 					// for D = 0
@@ -121,7 +128,7 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 					`est_main' if `mname'_fid!=`k' & `listD' == 0 & `mname'_sample, `est_options'
 					// get fitted values and residuals for kth fold	
 					tempvar vtilde_i
-					qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `listD' == 0 & `mname'_sample
+					predict `vtype' `vtilde_i' if `mname'_fid==`k' & `listD' == 0 & `mname'_sample
 					qui replace `vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 0 & `mname'_sample
 				
 				}

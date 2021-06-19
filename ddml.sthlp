@@ -183,7 +183,7 @@ learner.
 {ul:{it:LATE model:}}
 
 	Y = g(Z,X) + U
-        D = m(Z,X) + V
+        D = h(Z,X) + V
         Z = m(X) + E
 
 {pstd}
@@ -225,11 +225,15 @@ It has been tested with
 Note that {helpb pylearn} requires Stata 16.
 
 {p 7 9 0} 
-- the {helpb pylearn2} package (see {helpb pytree}, {helpb pystacked}, {helpb pyvote}, {helpb pylasso}. 
+- the {helpb pylearn2} package (see {helpb pystacked}, {helpb pyvote}, {helpb pylasso}. 
 Note that {helpb pylearn2} requires Stata 16.
 
 {p 7 9 0} 
 - {helpb rforest} by Zou & Schonlau.
+
+
+{p 7 9 0} 
+- {helpb svmachines} by Guenther & Schonlau.
 
 {pstd}
 Beyond these, it is compatible with almost any Stata program that uses the standard {it:reg y x}-type Syntax,

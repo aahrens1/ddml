@@ -6,7 +6,6 @@ program _ddml_estimate_partial, eclass sortpreserve
 								ROBust			///
 								show(string)	/// dertermines which to post
 								clear			/// deletes all tilde-variables (to be implemented)
-								avplot			///
 								* ]
 	
 	// base sample for estimation - determined by if/in
