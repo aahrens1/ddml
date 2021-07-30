@@ -1,5 +1,8 @@
 *** ddml cross-fitting
 
+* notes:
+* why is vtype field needed?
+
 program _ddml_crossfit_additive, eclass sortpreserve
 
 	syntax [anything] ,								/// 
@@ -126,20 +129,46 @@ program _ddml_crossfit_additive, eclass sortpreserve
 		}
 
 		*** do cross-fitting
-		di
-		di as text "Cross-fitting equation " _c
+		
 		forvalues i=1/`numeqns' {
 
-			if (`i'==`numeqns') {
-				di as text "`i'"
-			}
-			else {
-				di as text "`i' " _c
-			}
+			di as text "Cross-fitting equation `i'" _c
 
 			// has the equation already been crossfitted?
 			mata: st_numscalar("cvdone",`eqn'.crossfitted)
 			if ("`cvdone'"=="1") continue
+			
+			// initialize prior to calling crossfit
+			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+			mata: st_local("vtilde",`eqn'.Vtilde)
+			mata: st_local("vname",`eqn'.Vname)
+			mata: st_local("eststring",`eqn'.eststring)
+			mata: st_local("eqntype",`eqn'.eqntype)
+			// seems to be unused
+			// mata: st_local("vtype",`eqn'.vtype)
+			local touse `mname'_sample
+			if ~("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
+				// request residuals unless optimal IV model & deq or dheq
+				local resid resid
+			}
+			else {
+				// default is predicted values
+				local resid
+			}
+			
+			crossfit if `touse',					///
+				eststring(`eststring')				///
+				kfolds(`kfolds')					///
+				foldvar(`mname'_fid)				///
+				vtilde(`vtilde')					///
+				vname(`vname')						///
+				`resid'
+			
+			// store MSE and sample size
+			mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
+			
+			/*
+			*** old code replaced by crossfit subcommand
 
 			forvalues k = 1(1)`kfolds' {
 			
@@ -179,8 +208,13 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					}
 				}
 				mata: set_crossfit(`mname',`i',1) // indicate that cross-validation has been done
+			*/				
+				
 		}
+
 	
+		/*
+		*** old code replaced by crossfit subcommand
 		*** calculate MSE, store orthogonalized variables, etc.
 		forvalues i=1/`numeqns' {
 			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
@@ -199,7 +233,8 @@ program _ddml_crossfit_additive, eclass sortpreserve
 				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)')
 			}
 		}
-	
+		*/
+			
 		// loop through equations, display results, and save names of tilde vars with smallest MSE
 		// dep var
 		di

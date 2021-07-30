@@ -27,7 +27,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 
     _ddml_make_varlists, mname(`mname')
     if ("`debug'"!="") {
-        returnlist
+        return list
     }
 
     _ddml_allcombos `r(eq)' , putlast(`Yopt' `Dopt' `Zopt') ///

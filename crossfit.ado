@@ -3,7 +3,7 @@
 * eqntype replaced by resid option (default=fitted)
 * default is additive-type crossfitting; treatvar option triggers interactive-type crossfitting
 
-program define crossfit, eclass sortpreserve
+program define crossfit, rclass sortpreserve
 
 	syntax [anything] [if] [in] ,					/// 
 							[						///
@@ -109,8 +109,35 @@ program define crossfit, eclass sortpreserve
 	// last fold, insert new line
 	di "...complete"
 
+	// calculate and return mspe and sample size
+	tempvar vtilde_sq
+	if "`resid'"~="" {
+		// vtilde has residuals
+		qui gen double `vtilde_sq' = `vtilde'^2 if `touse'
+	}
+	else {
+		// vtilde has fitted values
+		qui gen double `vtilde_sq' = (`vname' - `vtilde')^2 if `touse'
+	}
 	
-
+	// mspe
+	if "`treatvar'"=="" {
+		// additive-type model
+		qui sum `vtilde_sq' if `touse', meanonly
+		return scalar mse	= r(mean)
+		local N				= r(N)
+	}
+	else {
+		// interactive-type model, return mse separately for treatvar =0 and =1
+		qui sum `vtilde_sq' if `treatvar' == 0 & `touse', meanonly
+		return scalar mse0	= r(mean)
+		local N				= r(N)
+		qui sum `vtilde_sq' if `treatvar' == 1 & `touse', meanonly
+		return scalar mse1	= r(mean)
+		local N				= `N' + r(N)
+	}
+	
+	return scalar N			= `N'
  
  end
  

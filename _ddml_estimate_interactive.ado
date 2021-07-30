@@ -36,7 +36,7 @@ program _ddml_estimate_interactive, eclass sortpreserve
         di "`Dtilde'"
     }
 
-    _ddml_allcombos `Ytilde' -Â `Ytilde' - `Dtilde', ///
+    _ddml_allcombos `Ytilde' - `Ytilde' - `Dtilde', ///
                                                         putlast(`Y0opt' `Y1opt' `Dopt') ///
                                                         addprefix("")
                                                         `debug'  
