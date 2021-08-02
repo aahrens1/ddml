@@ -1,5 +1,9 @@
 * last edited: 18 jun 2021
 
+* notes:
+* why is crossfitted field set in additive code but not here?
+* check it's correct that interactive-type estimation always goes with reporting mse0 and mse1
+
 *** ddml cross-fitting for the interactive model & LATE
 program _ddml_crossfit_interactive, eclass sortpreserve
 
@@ -20,7 +24,6 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 
 	local debugflag		= "`debug'"~=""
 	if ("`noisily'"=="") local qui qui
-	di "test1"
 	di "`qui'"
 		
 	*** extract details of estimation
@@ -80,6 +83,77 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		cap drop `vtilde'
 		qui gen double `vtilde'=.
 	}
+		
+	*** do cross-fitting
+	
+	forvalues i=1/`numeqns' {
+
+		di as text "Cross-fitting equation `i'" _c
+
+		/* why not used here but used in interactive code?
+		// has the equation already been crossfitted?
+		mata: st_numscalar("cvdone",`eqn'.crossfitted)
+		if ("`cvdone'"=="1") continue
+		*/
+		
+		// initialize prior to calling crossfit
+		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
+		mata: st_local("vtilde",`eqn'.Vtilde)
+		mata: st_local("vname",`eqn'.Vname)
+		mata: st_local("eststring",`eqn'.eststring)
+		mata: st_local("eqntype",`eqn'.eqntype)
+		// seems to be unused
+		// mata: st_local("vtype",`eqn'.vtype)
+		local touse `mname'_sample
+		// always request residuals not fitted values
+		local resid resid
+		if ("`eqntype'"=="yeq") {
+			local treatvar	`listD'
+		}
+		else if ("`eqntype'"=="deq") & ("`model'"=="interactive") {
+			local treatvar
+		}
+		else if ("`eqntype'"=="deq") {
+			local treatvar	`listZ'
+		}
+		else if ("`eqntype'"=="zeq") {
+			local treatvar
+		}
+		else {
+			di as err "Unknown equation type `eqntype'"
+			exit 198
+		}
+
+		crossfit if `touse',					///
+			eststring(`eststring')				///
+			kfolds(`kfolds')					///
+			foldvar(`mname'_fid)				///
+			vtilde(`vtilde')					///
+			vname(`vname')						///
+			treatvar(`treatvar')				///
+			`resid'
+		
+		// store MSE and sample size
+		if ("`eqntype'"=="yeq") {
+			mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse0)',`r(N)',0)
+			mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse1)',`r(N)',1)
+		}
+		else if ("`eqntype'"=="deq") & ("`model'"=="interactive") {
+			mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
+		}
+		else if ("`eqntype'"=="deq") {
+			mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse0)',`r(N)',0)
+			mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse1)',`r(N)',1)
+		}
+		else if ("`eqntype'"=="zeq") {
+			mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
+		}
+
+	}
+	
+	
+	/*
+	*** old code, replaced by call to crossfit subroutine
 	
 	*** do cross-fitting
 	di
@@ -95,8 +169,6 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		// ML is applied to I^c sample (all data ex partition k)
 		`qui' {
 		
-			di "test"
-
 			// loop over equations
 			forvalues i=1/`numeqns' {
 				mata: `eqn'=*(`mname'.eqnlist[1,`i'])
@@ -254,7 +326,8 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 			}
 		}
 	}
- 
+	*/
+
 	*** print results & find optimal model
 
 	// interactive model

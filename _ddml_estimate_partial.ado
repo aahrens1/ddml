@@ -6,6 +6,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 								ROBust			///
 								show(string)	/// dertermines which to post
 								clear			/// deletes all tilde-variables (to be implemented)
+								replist(string)	///
 								* ]
 	
 	// base sample for estimation - determined by if/in
@@ -25,44 +26,67 @@ program _ddml_estimate_partial, eclass sortpreserve
 	local Dlist		`s(Dlist)'
 	local ncombos	= s(ncombos)
 	local tokenlen	= `ncombos'*2 -1
-
-	if "`show'"=="all" {
-		local j = 1
-		forvalues i = 1(2)`tokenlen' {
-			tokenize `ylist' , parse("-")
-			local y ``i''
-			tokenize `Dlist' , parse("-")
-			local d ``i''
-			//add_prefix `y' `d', prefix("")
-			// do_regress is OLS but with original varnames
-			do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
-			di
-			di as res "DML with Y=`y' and D=`d' (N=`e(N)'):"
-			ereturn di
-	        local j= `j'+1
-	     }
+	
+	// replist empty => do for first resample
+	// replist = "all" do for all resamples
+	mata: st_local("numreps",strofreal(cols(`mname'.idFold)))
+	// subtract 1 (first col is id variable)
+	local numreps = `numreps' - 1
+	if "`replist'"=="" {
+		local replist 1
 	}
-
-	*** estimate best model
-	//add_prefix `Yopt' `Dopt', prefix("")
-	// do_regress is OLS but with original varnames
-	do_regress `Yopt' `Dopt' if `touse' , nocons `robust' yname(`Yopt') dnames(`Dopt')
-
-	// plot
-	if ("`avplot'"!="") {
-	   twoway (scatter `s(vnames)') (lfit `s(vnames)')
-	}
-
-	// display
-	di
-	if `ncombos' > 1 {
-		di as res "Optimal model: DML with optimal Y=`Yopt' and optimal D=`Dopt' (N=`e(N)'):"
+	else if "`replist'"=="all" {
+		numlist "1/`numreps'"
+		local replist "`r(numlist)'"
 	}
 	else {
-		di as res "DML with Y=`Yopt' and D=`Dopt' (N=`N'):"
+		numlist "`replist'"
+		local replist "`r(numlist)'"
 	}
-	ereturn display
 
+	// do for each specified resamples
+	foreach m in `replist' {
+		if "`show'"=="all" {
+			local j = 1
+			forvalues i = 1(2)`tokenlen' {
+				tokenize `ylist' , parse("-")
+				local y ``i''
+				tokenize `Dlist' , parse("-")
+				local d ``i''
+				//add_prefix `y' `d', prefix("")
+				add_suffix `y' `d', suffix("_`m'")
+				// do_regress is OLS but with original varnames
+				// do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+				do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+				di
+				di as res "DML (rep `m') with Y=`y' and D=`d' (N=`e(N)'):"
+				ereturn di
+		        local j= `j'+1
+		     }
+		}
+	
+		*** estimate best model
+		//add_prefix `Yopt' `Dopt', prefix("")
+		// do_regress is OLS but with original varnames
+		add_suffix `Yopt' `Dopt', suffix("_`m'")
+		// do_regress `Yopt' `Dopt' if `touse' , nocons `robust' yname(`Yopt') dnames(`Dopt')
+		do_regress `s(vnames)' if `touse' , nocons `robust' yname(`Yopt') dnames(`Dopt')
+	
+		// plot
+		if ("`avplot'"!="") {
+		   twoway (scatter `s(vnames)') (lfit `s(vnames)')
+		}
+	
+		// display
+		di
+		if `ncombos' > 1 {
+			di as res "Optimal model: DML (rep `m') with optimal Y=`Yopt' and optimal D=`Dopt' (N=`e(N)'):"
+		}
+		else {
+			di as res "DML (rep `m') with Y=`Yopt' and D=`Dopt' (N=`e(N)'):"
+		}
+		ereturn display
+	}
 end
 
 // adds model name prefixes to list of varnames
@@ -72,6 +96,18 @@ program define add_prefix, sclass
 	// anything is a list of to-be-varnames that need prefix added to them
 	foreach vn in `anything' {
 		local vnames `vnames' `prefix'`vn' 
+	}
+	
+	sreturn local vnames `vnames'
+end
+
+// adds rep number suffixes to list of varnames
+program define add_suffix, sclass
+	syntax anything , suffix(name)
+
+	// anything is a list of to-be-varnames that need suffix added to them
+	foreach vn in `anything' {
+		local vnames `vnames' `vn'`suffix'
 	}
 	
 	sreturn local vnames `vnames'
