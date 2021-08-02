@@ -1,9 +1,12 @@
+* comments
+* with resampling can N vary? currently assumed to be constant and only MSPE varies
 
 program define _ddml_display_mspe, rclass
 
-	syntax name(name=mname), vname(varname) ///
-								[ ///
-								zett(string) ///
+	syntax name(name=mname), vname(varname)		///
+								[				///
+								zett(string)	///
+								m(integer 1)	/// resample number
 								]
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
@@ -20,7 +23,7 @@ program define _ddml_display_mspe, rclass
 		mata: st_local("vtilde",`eqn'.Vtilde)
 		if "`vname'"==r(vname) {
 			mata: st_local("command",`eqn'.command)
-			mata: st_local("MSE",strofreal(`eqn'.MSE`zett'))
+			mata: st_local("MSE",strofreal(`eqn'.MSE`zett'[`m']))
 			mata: st_local("N",strofreal(`eqn'.N`zett'))
 			if `MSE' < `minmse' {
 				local optname `vtilde'

@@ -17,8 +17,6 @@ program _ddml_estimate_partial, eclass sortpreserve
 	// locals used below
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
-   	mata: st_local("Yopt",`mname'.nameYopt)
-   	mata: st_local("Dopt",invtokens(`mname'.nameDopt))
 
 	make_varlists, mname(`mname')
 
@@ -66,6 +64,8 @@ program _ddml_estimate_partial, eclass sortpreserve
 		}
 	
 		*** estimate best model
+	   	mata: st_local("Yopt",`mname'.nameYopt[`m'])
+   		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m']))
 		//add_prefix `Yopt' `Dopt', prefix("")
 		// do_regress is OLS but with original varnames
 		add_suffix `Yopt' `Dopt', suffix("_`m'")

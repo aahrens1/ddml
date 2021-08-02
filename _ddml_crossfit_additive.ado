@@ -85,7 +85,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 		}
 		if ("`tabfold'"!="") {
 			di
-			di "Overview of frequencies by fold (`m'):"
+			di "Overview of frequencies by fold (sample `m'):"
 			tab `mname'_fid_`m' if `mname'_sample
 			di
 		}
@@ -230,10 +230,10 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			// note that subroutine uses field names of struct
 			di
 			di as res "Reporting crossfitting results (sample=`m')
-			report_crossfit_result `mname', vtype(y|X) vlist(`nameY')
-			report_crossfit_result `mname', vtype(D|X) vlist(`listD')
-			report_crossfit_result `mname', vtype(D|X,Z) vlist(`listDH')
-			report_crossfit_result `mname', vtype(Z|X) vlist(`listZ')
+			report_crossfit_result `mname', vtype(y|X) vlist(`nameY') m(`m')
+			report_crossfit_result `mname', vtype(D|X) vlist(`listD') m(`m')
+			report_crossfit_result `mname', vtype(D|X,Z) vlist(`listDH') m(`m')
+			report_crossfit_result `mname', vtype(Z|X) vlist(`listZ') m(`m')
 			
 			// dep var
 			/*
@@ -309,7 +309,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 end
 
 program report_crossfit_result
-	syntax name(name=mname), vtype(string) [ vlist(string) ]
+	syntax name(name=mname), vtype(string) [ vlist(string) m(integer 1) ]
 
 	// set struct field name
 	if "`vtype'"=="y|X" {
@@ -325,6 +325,7 @@ program report_crossfit_result
 		local optname nameZopt
 	}
 	
+	// may be called with empty list (e.g. if no endog regressors)
 	local numeqns	: word count `vlist'
 	if `numeqns' > 0 {
 		
@@ -337,10 +338,17 @@ program report_crossfit_result
 		di _col(65) "MSPE"
 		di "{hline 75}"
 		// clear opt list
-		mata: `mname'.`optname' = J(1,0,"") 
+		// mata: `mname'.`optname' = J(1,0,"")
 		foreach var of varlist `vlist' {
-			_ddml_display_mspe `mname', vname(`var')
-			mata: `mname'.`optname' = (`mname'.`optname', "`r(optname)'")
+			// m is the rep number
+			_ddml_display_mspe `mname', vname(`var') m(`m')
+			local optlist `optlist' `r(optname)'
+		}
+		if `m'==1 {
+			mata: `mname'.`optname' = tokens("`optlist'")'
+		}
+		else {
+			mata: `mname'.`optname' = (`mname'.`optname' \ tokens("`optlist'")')
 		}
 
 	}
@@ -409,7 +417,7 @@ void add_to_eqn(					struct ddmlStruct m,
 	pointer(struct eqnStruct) scalar p
 	p				= m.eqnlist[1,eqnumber]
 	//(*p).idVtilde	= st_data(., tokens(vnames))
-	(*p).MSE		= mse
+	(*p).MSE		= ((*p).MSE \ mse)
 	(*p).N			= n
 }
 
