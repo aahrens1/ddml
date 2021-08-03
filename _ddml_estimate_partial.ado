@@ -57,7 +57,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 				// do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 				do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 				di
-				di as res "DML (rep `m') with Y=`y' and D=`d' (N=`e(N)'):"
+				di as res "DML (sample=`m') with Y=`y' and D=`d' (N=`e(N)'):"
 				ereturn di
 		        local j= `j'+1
 		     }
@@ -80,7 +80,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 		// display
 		di
 		if `ncombos' > 1 {
-			di as res "Optimal model: DML (rep `m') with optimal Y=`Yopt' and optimal D=`Dopt' (N=`e(N)'):"
+			di as res "Optimal model: DML (sample=`m') with optimal Y=`Yopt' and optimal D=`Dopt' (N=`e(N)'):"
 		}
 		else {
 			di as res "DML (rep `m') with Y=`Yopt' and D=`Dopt' (N=`e(N)'):"

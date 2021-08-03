@@ -155,153 +155,19 @@ program _ddml_crossfit_additive, eclass sortpreserve
 				
 				// store MSE and sample size
 				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
-				
-				/*
-				*** old code replaced by crossfit subcommand
-	
-				forvalues k = 1(1)`kfolds' {
-				
-					// ML is applied to I^c sample (all data ex partition k)
-					qui {
-						
-							mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-							mata: st_local("vtilde",`eqn'.Vtilde)
-							mata: st_local("vname",`eqn'.Vname)
-							mata: st_local("eststring",`eqn'.eststring)
-							mata: st_local("eqntype",`eqn'.eqntype)
-							mata: st_local("vtype",`eqn'.vtype)
-							local 0 "`eststring'"
-							syntax [anything] , [*]
-							local est_main `anything'
-							local est_options `options'
-							di as res "Estimating equation `i':"
-							di as res "  est_main: `est_main'"
-							di as res "  est_options: `est_options'"
-							
-							tempvar vtilde_i
-	
-							// estimate excluding kth fold
-							`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
-							// get fitted values and residuals for kth fold	
-							qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `mname'_sample
-	
-	
-							if ("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
-								// get predicted values if optimal IV model & deq or dheq
-								qui replace `vtilde' = `vtilde_i' if `mname'_fid==`k' & `mname'_sample
-							} 
-							else {
-								// get residuals
-								qui replace `vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
-							}
-						}
-					}
-					mata: set_crossfit(`mname',`i',1) // indicate that cross-validation has been done
-				*/				
 					
 			}
 	
-		
-			/*
-			*** old code replaced by crossfit subcommand
-			*** calculate MSE, store orthogonalized variables, etc.
-			forvalues i=1/`numeqns' {
-				mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-				mata: st_local("vtilde",`eqn'.Vtilde)
-				mata: st_local("vname",`eqn'.Vname)
-				tempvar vtilde_sq
-				if ("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
-					// need to use residuals here
-					qui gen double `vtilde_sq' = (`vname'-`vtilde')^2 if `mname'_sample
-					qui sum `vtilde_sq' if `mname'_sample, meanonly
-					mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)')
-				} 
-				else {
-					qui gen double `vtilde_sq' = `vtilde'^2 if `mname'_sample
-					qui sum `vtilde_sq' if `mname'_sample, meanonly
-					mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)')
-				}
-			}
-			*/
-				
-			// loop through equations, display results, and save names of tilde vars with smallest MSE
+			// for each equations: display results and save names of tilde vars with smallest MSE
 			// subroutine will handle case of empty lists
-			// note that vtype must match exactly
+			// note that etype argument is a string and must match exactly
 			// note that subroutine uses field names of struct
 			di
 			di as res "Reporting crossfitting results (sample=`m')
-			report_crossfit_result `mname', vtype(y|X) vlist(`nameY') m(`m')
-			report_crossfit_result `mname', vtype(D|X) vlist(`listD') m(`m')
-			report_crossfit_result `mname', vtype(D|X,Z) vlist(`listDH') m(`m')
-			report_crossfit_result `mname', vtype(Z|X) vlist(`listZ') m(`m')
-			
-			// dep var
-			/*
-			di
-			di as res "Mean-squared error for y|X:"
-			di _col(2) "Name" _c
-			di _col(20) "Orthogonalized" _c
-			di _col(40) "Command" _c
-			di _col(54) "N" _c
-			di _col(65) "MSPE"
-			di "{hline 75}"
-			_ddml_display_mspe `mname', vname(`nameY')
-			mata: `mname'.nameYopt		= "`r(optname)'"
-		
-			// loop through D vars (if any)
-			if `numeqnsD' {
-				di
-				di as res "Mean-squared error for D|X:"
-				di _col(2) "Name" _c
-				di _col(20) "Orthogonalized" _c
-				di _col(40) "Command" _c
-				di _col(54) "N" _c
-				di _col(65) "MSPE"
-				di "{hline 75}"
-				// clear opt list
-				mata: `mname'.nameDopt = J(1,0,"") 
-				foreach var of varlist `listD' {
-					_ddml_display_mspe `mname', vname(`var')
-					mata: `mname'.nameDopt = (`mname'.nameDopt, "`r(optname)'")
-				}
-			}
-			
-			// loop through DH vars (if any)
-			if `numeqnsDH' {
-				di
-				di as res "Mean-squared error for D|X,Z:"
-				di _col(2) "Name" _c
-				di _col(20) "Orthogonalized" _c
-				di _col(40) "Command" _c
-				di _col(54) "N" _c
-				di _col(65) "MSPE"
-				di "{hline 75}"
-				// clear opt list
-				mata: `mname'.nameDHopt = J(1,0,"") 
-				foreach var of varlist `listDH' {
-					_ddml_display_mspe `mname', vname(`var')
-					mata: `mname'.nameDHopt = (`mname'.nameDHopt, "`r(optname)'")
-				}
-			}
-	
-			// loop through Z vars (if any)
-			if `numeqnsZ' {
-				di
-				di as res "Mean-squared error for Z|X:"
-				di _col(2) "Name" _c
-				di _col(20) "Orthogonalized" _c
-				di _col(40) "Command" _c
-				di _col(54) "N" _c
-				di _col(65) "MSPE"
-				di "{hline 75}"
-				// clear opt list
-				mata: `mname'.nameZopt = J(1,0,"") 
-				foreach var of varlist `listZ' {
-					_ddml_display_mspe `mname', vname(`var')
-					mata: `mname'.nameZopt = (`mname'.nameZopt, "`r(optname)'")
-				}
-			}
-			*/
+			report_crossfit_result `mname', etype(y|X) vlist(`nameY') m(`m')
+			report_crossfit_result `mname', etype(D|X) vlist(`listD') m(`m')
+			report_crossfit_result `mname', etype(D|X,Z) vlist(`listDH') m(`m')
+			report_crossfit_result `mname', etype(Z|X) vlist(`listZ') m(`m')
 			
 		}	// end crossfitting block
 	}	// end resampling block
@@ -309,19 +175,19 @@ program _ddml_crossfit_additive, eclass sortpreserve
 end
 
 program report_crossfit_result
-	syntax name(name=mname), vtype(string) [ vlist(string) m(integer 1) ]
+	syntax name(name=mname), etype(string) [ vlist(string) m(integer 1) ]
 
 	// set struct field name
-	if "`vtype'"=="y|X" {
+	if "`etype'"=="y|X" {
 		local optname nameYopt
 	}
-	else if "`vtype'"=="D|X" {
+	else if "`etype'"=="D|X" {
 		local optname nameDopt
 	}
-	else if "`vtype'"=="D|X,Z" {
+	else if "`etype'"=="D|X,Z" {
 		local optname nameDHopt
 	}
-	else if "`vtype'"=="Z|X" {
+	else if "`etype'"=="Z|X" {
 		local optname nameZopt
 	}
 	
@@ -330,7 +196,7 @@ program report_crossfit_result
 	if `numeqns' > 0 {
 		
 		di
-		di as res "Mean-squared error for `vtype':"
+		di as res "Mean-squared error for `etype':"
 		di _col(2) "Name" _c
 		di _col(20) "Orthogonalized" _c
 		di _col(40) "Command" _c
