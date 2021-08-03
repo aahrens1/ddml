@@ -18,6 +18,11 @@ program define crossfit, rclass sortpreserve
 							vtype(string)			/// datatype of fitted variable; default=double
 							treatvar(varname)		/// 1 or 0 RHS variable; relevant for interactive model only
 													/// if omitted then default is additive model
+													/// 
+							/// options specific to LIE/DDML-IV
+							lie 					///
+							vtildeh(name)			/// intended for E[D^|X] where D^=E[D|XZ]=vtilde()	
+							eststringh(string asis)	/// est string for E[D^|XZ]		
 							]
 
 	marksample touse
@@ -33,9 +38,16 @@ program define crossfit, rclass sortpreserve
 		local vtype double
 	}
 	
-	// blank fitted variable
+	// create blank fitted variable
 	cap gen `vtype' `vtilde'=.
-	
+	if "`lie'"!="" {
+		// in-sample predicted values for E[D|ZX]
+		tempvar vtilde_is 
+		cap gen `vtype' `vtilde_is'=.
+		cap gen `vtype' `vtildeh'=.
+		local resid // we want predicted values
+	}
+
 	// if kfolds=0 then find number of folds
 	// note this requires that foldvar takes values 1..K
 	if `kfolds'==0 {
@@ -51,6 +63,15 @@ program define crossfit, rclass sortpreserve
 	local est_options `options'
 	`qui' di "est_main: `est_main'"
 	`qui' di "est_options: `est_options'"
+
+	if "`lie'"!="" {
+		local 0 `"`eststringh'"'
+		syntax [anything] , [*]
+		local est_main_h `anything'
+		local est_options_h `options'
+		`qui' di "est_main: `est_main_h'"
+		`qui' di "est_options: `est_options_h'"		
+	}
 	
 	// crossfit
 	di
@@ -59,7 +80,7 @@ program define crossfit, rclass sortpreserve
 
 		di as text "`k' " _c
 
-		if "`treatvar'"=="" {
+		if "`treatvar'"=="" & "`lie'"=="" {
 		
 			tempvar vtilde_k
 
@@ -77,9 +98,10 @@ program define crossfit, rclass sortpreserve
 				// get residuals
 				qui replace `vtilde' = `vname' - `vtilde_k' if `foldvar'==`k' & `touse'
 			}
+
 		}
-		
-		else {		// interactive model
+
+		else if "`treatvar'"!="" & "`lie'"=="" {		// interactive model
 
 			// outcome equation so estimate separately
 
@@ -104,6 +126,43 @@ program define crossfit, rclass sortpreserve
 				qui replace `vtilde' = `vname' - `vtilde' if `foldvar'==`k' & `touse'
 			}
 		}
+
+		else if "`lie'"!="" {
+
+			tempvar vtilde_k // stores predicted values for E[D|ZX] temporarily
+			tempvar vtildeh_k // stores predicted values for E[D^|X] temporarily
+
+			replace `vtilde_is'=.
+
+			// Step I: estimation of E[D|XZ]=D^
+			// estimate excluding kth fold
+			`qui' `est_main' if `foldvar'!=`k' & `touse', `est_options'
+			
+			// get fitted values  
+			qui predict `vtype' `vtilde_k' if `touse'
+
+			// get out-of-sample predicted values
+			qui replace `vtilde' = `vtilde_k' if `foldvar'==`k' & `touse'
+
+			// get in-sample predicted values
+			qui replace `vtilde_is' = `vtilde_k' if `foldvar'!=`k' & `touse'
+
+			// Step II: estimation of E[D^|X]
+
+			// replace {D}-placeholder in estimation string with variable name
+			local est_main_h_k = subinstr("`est_main_h'","{D}","`vtilde_is'",1)
+
+			// estimation	
+			`qui' `est_main_h_k' if `foldvar'!=`k' & `touse', `est_options_h'
+
+			// get fitted values  
+			qui predict `vtype' `vtildeh_k' if `touse'
+
+			// get out-of-sample predicted values
+			qui replace `vtildeh' = `vtildeh_k' if `foldvar'==`k' & `touse'
+
+		}
+
 	}
 	
 	// last fold, insert new line
