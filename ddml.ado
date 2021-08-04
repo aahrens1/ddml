@@ -158,6 +158,7 @@ program ddml, eclass
 					gen(name)		///
 					[				///
 					vname(name)		///
+					genh(name)	/// (intended for LIE)
 					mname(name)		///
 					vtype(string)   ///  "double", "float" etc
 					REPlace         ///
@@ -199,8 +200,20 @@ program ddml, eclass
 			local prefix
 		}
 
+		** split equation -- only required for D-eq with LIE
+		if "`model'"=="optimaliv" {
+			tokenize `" `eqn' "', parse("|")
+			// parse character is in macro `2'
+			local eqn `1'
+			local eqn_h `3'
+		}
+
+		if "`model'"=="optimaliv"&"`genh'"=="" {
+			local genh `genh'_h
+		}
+
 		// subcmd macro tells add_eqn(.) which list to add it to
-		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`prefix'`gen'", "`eqn'","`vtype'","`noprefix'")
+		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`prefix'`gen'","`eqn'","`vtype'","`noprefix'","`eqn_h'","`prefix'`genh'")
 		local newentry `r(newentry)'
 		if "`subcmd'"=="yeq" {
 			// check if nameY is already there; if it is, must be identical to vname here
@@ -422,14 +435,20 @@ void add_eqn(						struct ddmlStruct m,
 									string scalar vtilde,
 									string scalar estcmd,
 									string scalar vtype,
-									string scalar noprefix)
+									string scalar noprefix,
+									string scalar estcmd_h,
+									string scalar vtilde_h
+									)
 {
 	struct eqnStruct scalar		e, e0
 	e.eqntype		= eqntype
 	e.Vname			= vname
 	e.Vtilde		= vtilde
+	e.Vtilde_h 		= vtilde_h
 	e.eststring		= estcmd
+	e.eststring_h 	= estcmd_h
 	e.command		= tokens(estcmd)[1,1]
+	e.command_h		= tokens(estcmd_h)[1,1]
 	e.vtype		 	= vtype
 	e.crossfitted	= 0
 
@@ -465,6 +484,9 @@ void add_eqn(						struct ddmlStruct m,
 		}
 		else if (eqntype=="deq") {
 			m.nameDtilde	= (m.nameDtilde, vtilde)
+			if (estcmd_h!="") {
+				m.nameDHtilde	= (m.nameDHtilde, vtilde_h)
+			}
 		}
 		else if (eqntype=="dheq") {
 			m.nameDHtilde	= (m.nameDHtilde, vtilde)

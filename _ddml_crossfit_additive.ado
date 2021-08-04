@@ -145,7 +145,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					local resid
 				}
 				
-				crossfit if `touse',					///
+				_ddml_crossfit if `touse',					///
 					eststring(`eststring')				///
 					kfolds(`kfolds')					///
 					foldvar(`mname'_fid_`m')			/// macro m is resampling counter
