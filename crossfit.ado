@@ -3,7 +3,7 @@
 * eqntype replaced by resid option (default=fitted)
 * default is additive-type crossfitting; treatvar option triggers interactive-type crossfitting
 
-program define _ddml_crossfit, rclass sortpreserve
+program define crossfit, rclass sortpreserve
 
 	syntax [anything] [if] [in] ,					/// 
 							[						///
