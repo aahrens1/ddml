@@ -22,6 +22,12 @@ program _ddml_estimate_iv, eclass sortpreserve
 	// also exclude obs already excluded by ddml sample
 	qui replace `touse' = 0 if `mname'_sample==0
 
+	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
+	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
+	mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
+	mata: st_local("nameY",invtokens(`mname'.nameY))
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameZ",invtokens(`mname'.nameZ))
 
 	/* not in use (?)
 	_ddml_make_varlists, mname(`mname')
@@ -29,13 +35,8 @@ program _ddml_estimate_iv, eclass sortpreserve
 		return list
 	}
 	*/
-	mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
-	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
-	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
-	mata: st_local("nameD",invtokens(`mname'.nameD))
-	mata: st_local("nameY",invtokens(`mname'.nameY))
-	mata: st_local("nameZ",invtokens(`mname'.nameZ))
-
+	*** THIS MAY BE WRONG IF THERE ARE MULTIPLE D OR Z VARS ***
+	*** May need to restore use of _ddml_make_varlists.     ***
 	/*
 	// seems to require _ddml_make_varlists?
 	_ddml_allcombos `r(eq)' ,								///

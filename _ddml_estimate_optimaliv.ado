@@ -2,15 +2,17 @@
 
 program _ddml_estimate_optimaliv, eclass sortpreserve
 
-	syntax namelist(name=mname) [if] [in] , /// 
-								[  ///
-								ROBust ///
-								show(string) /// dertermines which to post
-								clear /// deletes all tilde-variables (to be implemented)
-								avplot ///
-								debug ///
+	syntax namelist(name=mname) [if] [in] ,		/// 
+								[				///
+								ROBust			///
+								show(string)	/// dertermines which to post
+								clear			/// deletes all tilde-variables (to be implemented)
+								replist(string)	/// list of resamplings to estimate
+								avplot			///
+								debug			///
 								* ]
 
+	// what does this do?
 	if ("`show'"=="") {
 		local show opt 
 	}
@@ -20,49 +22,91 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 	// also exclude obs already excluded by ddml sample
 	qui replace `touse' = 0 if `mname'_sample==0
 
-    //mata: `mname'.nameDtilde
-    mata: st_local("Yopt",`mname'.nameYopt)
-    mata: st_local("Dopt",invtokens(`mname'.nameDopt))
-    mata: st_local("DHopt",invtokens(`mname'.nameDHopt))
-    mata: st_local("nameD",invtokens(`mname'.nameD))
-    mata: st_local("nameY",invtokens(`mname'.nameY))
+	//mata: `mname'.nameDtilde
+	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
+	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
+	mata: st_local("DHtilde",invtokens(`mname'.nameDHtilde))
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameY",invtokens(`mname'.nameY))
 
-    _ddml_make_varlists, mname(`mname')
-    if "`debug'"!="" return list
-    _ddml_allcombos `r(eq)' , putlast(`Yopt' `Dopt' `DHopt') ///
-                                                `debug' ///
-                                                dpos_end(`r(dpos_end)') ///
-                                                zpos_start(`r(zpos_start)') zpos_end(`r(zpos_end)') ///
-                                                addprefix("")
+	// how do do these two programs relate?
+	// do we need two programs?
+	_ddml_make_varlists, mname(`mname')
+	_ddml_allcombos `r(eq)' ,								///
+		`debug'												///
+		dpos_end(`r(dpos_end)')								///
+		zpos_start(`r(zpos_start)') zpos_end(`r(zpos_end)') ///
+		addprefix("")
 
 	local ncombos = r(ncombos)
-	local tokenlen = `ncombos'*2 -1
+	local tokenlen = `ncombos'*2
 	local ylist `r(ystr)'
 	local Dlist `r(dstr)'
 	local DHlist `r(zstr)' 
 
-	local j = 1
-	forvalues i = 1(2)`tokenlen' {
-		if ("`show'"=="all"|`i'==`tokenlen') {
-		   	tokenize `ylist' , parse("-")
-		    local y ``i''
-		    tokenize `Dlist' , parse("-")
-		    local d ``i''
-		    tokenize `DHlist' , parse("-")
-		    local dh ``i''
-		    if (`j'==`ncombos') {
-		        if "`show'"=="all" di as res "Optimal model: " _c
-		    	local qui qui
-		    } 
-		    else {
-		    	local qui
-		    }
-		    di as res "DML with E[Y|X]=`y' and E[D|X]=`d', E[D|X,Y]=`dh':"
-		     `qui' _ddml_optiv, yvar(`nameY') dvar(`nameD') dhtilde(`dh') ytilde(`y') dtilde(`d') touse(`touse')  `debug'
-		}
-	    local j= `j'+1
+	// replist empty => do for first resample
+	// replist = "all" do for all resamples
+	mata: st_local("numreps",strofreal(cols(`mname'.idFold)))
+	// subtract 1 (first col is id variable)
+	local numreps = `numreps' - 1
+	if "`replist'"=="" {
+		local replist 1
+	}
+	else if "`replist'"=="all" {
+		numlist "1/`numreps'"
+		local replist "`r(numlist)'"
+	}
+	else {
+		numlist "`replist'"
+		local replist "`r(numlist)'"
 	}
 
+	// do for each specified resamples
+	foreach m in `replist' {
+		forvalues i = 1(2)`tokenlen' {
+			if "`show'"=="all" {
+			   	tokenize `ylist' , parse("-")
+				add_suffix ``i'', suffix("_`m'")
+				local y `s(vnames)'
+				tokenize `Dlist' , parse("-")
+				add_suffix ``i'', suffix("_`m'")
+				local d `s(vnames)'
+				tokenize `DHlist' , parse("-")
+				add_suffix ``i'', suffix("_`m'")
+				local dh `s(vnames)'
+				di
+				di as res "DML (sample=`m') with E[Y|X]=`y', E[D|X]=`d', E[D|X,Y]=`dh':"
+				_ddml_optiv, yvar(`nameY') ytilde(`y')				///
+					dvar(`nameD') dhtilde(`dh') dtilde(`d')			///
+					touse(`touse') `debug'
+			}
+		}
+	
+		mata: st_local("Yopt",`mname'.nameYopt[`m'])
+		add_suffix `Yopt', suffix("_`m'")
+		local Yopt `s(vnames)'
+		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m']))
+		add_suffix `Dopt', suffix("_`m'")
+		local Dopt `s(vnames)'
+		mata: st_local("DHopt",invtokens(`mname'.nameDHopt[`m']))
+		add_suffix `DHopt', suffix("_`m'")
+		local DHopt `s(vnames)'
+
+/*
+di "Problem..."
+di "Dopt=`Dopt'"
+di "DHopt=`Dopt'"
+*/
+		
+		di
+		di as res "Optimal model: DML (sample=`m') with E[Y|X]=`Yopt', E[D|X]=`Dopt', E[D|X,Y]=`DHopt':"
+		_ddml_optiv, yvar(`nameY') ytilde(`Yopt')				///
+			dvar(`nameD') dhtilde(`DHopt') dtilde(`Dopt')		///
+			touse(`touse') `debug'
+
+	}
+
+	/*
 	// display
 	tempname b
 	tempname V 
@@ -78,6 +122,20 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 	if "`robust'"~="" {
 		ereturn local vcetype	robust
 	}
-    ereturn display
+	ereturn display
+	*/
+	
+end
 
+
+// adds rep number suffixes to list of varnames
+program define add_suffix, sclass
+	syntax anything , suffix(name)
+
+	// anything is a list of to-be-varnames that need suffix added to them
+	foreach vn in `anything' {
+		local vnames `vnames' `vn'`suffix'
+	}
+	
+	sreturn local vnames `vnames'
 end

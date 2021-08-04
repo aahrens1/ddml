@@ -165,7 +165,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					
 			}
 	
-			// for each equations: display results and save names of tilde vars with smallest MSE
+			// for each equation: display results and save names of tilde vars with smallest MSE
 			// hence subroutine changes the contents of eqn mname as well as reports
 			// subroutine will handle case of empty lists
 			// note that etype argument is a string and must match exactly
@@ -198,7 +198,9 @@ program report_crossfit_result
 	else if "`etype'"=="Z|X" {
 		local optname nameZopt
 	}
-	
+di "optname = `optname'"
+di "vlist = `vlist'"
+
 	// may be called with empty list (e.g. if no endog regressors)
 	local numeqns	: word count `vlist'
 	if `numeqns' > 0 {
