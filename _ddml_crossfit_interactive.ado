@@ -124,7 +124,7 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 			exit 198
 		}
 
-		_ddml_crossfit if `touse',				///
+		crossfit if `touse',					///
 			eststring(`eststring')				///
 			kfolds(`kfolds')					///
 			foldvar(`mname'_fid)				///
