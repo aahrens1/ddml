@@ -3,7 +3,7 @@
 * eqntype replaced by resid option (default=fitted)
 * default is additive-type crossfitting; treatvar option triggers interactive-type crossfitting
 
-program define crossfit, rclass sortpreserve
+program define _ddml_crossfit, rclass sortpreserve
 
 	syntax [anything] [if] [in] ,					/// 
 							[						///
@@ -39,12 +39,12 @@ program define crossfit, rclass sortpreserve
 	}
 	
 	// create blank fitted variable
-	cap gen `vtype' `vtilde'=.
+	qui cap gen `vtype' `vtilde'=.
 	if "`lie'"!="" {
 		// in-sample predicted values for E[D|ZX]
 		tempvar vtilde_is 
-		cap gen `vtype' `vtilde_is'=.
-		cap gen `vtype' `vtildeh'=.
+		qui cap gen `vtype' `vtilde_is'=.
+		qui cap gen `vtype' `vtildeh'=.
 		local resid // we want predicted values
 	}
 
@@ -132,7 +132,7 @@ program define crossfit, rclass sortpreserve
 			tempvar vtilde_k // stores predicted values for E[D|ZX] temporarily
 			tempvar vtildeh_k // stores predicted values for E[D^|X] temporarily
 
-			replace `vtilde_is'=.
+			qui replace `vtilde_is'=.
 
 			// Step I: estimation of E[D|XZ]=D^
 			// estimate excluding kth fold

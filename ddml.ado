@@ -262,7 +262,7 @@ program ddml, eclass
 
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
-		syntax , [mname(name) *]
+		syntax , [mname(name) *  
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
@@ -291,7 +291,7 @@ program ddml, eclass
 	if "`subcmd'" =="estimate" {
 		local 0 "`restargs'"
 		// mname is required; could make optional with a default name
-		syntax , [mname(name) *]
+		syntax , [mname(name) * resample(integer 1)]
 
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
@@ -301,20 +301,52 @@ program ddml, eclass
 
 		mata: st_global("r(model)",`mname'.model)
 
-		if ("`r(model)'"=="partial") {
-			_ddml_estimate_partial `mname', `options'
-		}
-		if ("`r(model)'"=="iv") {
-			_ddml_estimate_iv `mname', `options'
-		}
-		if ("`r(model)'"=="interactive") {
-			_ddml_estimate_interactive `mname', `options'
-		}
-		if ("`r(model)'"=="late") {
-			_ddml_estimate_late `mname', `options'
-		}
-		if ("`r(model)'"=="optimaliv") {
-			_ddml_estimate_optimaliv `mname', `options'
+		if (`resample'<=1) {
+			if ("`r(model)'"=="partial") {
+				_ddml_estimate_partial `mname', `options'
+			}
+			if ("`r(model)'"=="iv") {
+				_ddml_estimate_iv `mname', `options'
+			}
+			if ("`r(model)'"=="interactive") {
+				_ddml_estimate_interactive `mname', `options'
+			}
+			if ("`r(model)'"=="late") {
+				_ddml_estimate_late `mname', `options'
+			}
+			if ("`r(model)'"=="optimaliv") {
+				_ddml_estimate_optimaliv `mname', `options'
+			}
+		} 
+		else {
+			tempname b_resample v_resample bi vi b V
+			mat `b_resample' = J(1,`resample',.)
+			mat `v_resample' = J(1,`resample',.)
+			forvalues i= 1(1)`resample' {
+				if ("`r(model)'"=="partial") {
+					_ddml_estimate_partial `mname', `options'
+				}
+				if ("`r(model)'"=="iv") {
+					_ddml_estimate_iv `mname', `options'
+				}
+				if ("`r(model)'"=="interactive") {
+					_ddml_estimate_interactive `mname', `options'
+				}
+				if ("`r(model)'"=="late") {
+					_ddml_estimate_late `mname', `options'
+				}
+				if ("`r(model)'"=="optimaliv") {
+					_ddml_estimate_optimaliv `mname', `options'
+				}
+				mat bi = e(b)
+				mat vi = e(V)
+				mat `b_resample'[1,`i'] = `bi'[1,1]
+				mat `v_resample'[1,`i'] = `vi'[1,1]
+			}
+			mata: st_matrix("`b'",mean(st_matrix("`b_resample'")))
+			mata: st_matrix("`V'",mean(st_matrix("`v_resample'")))
+			ereturn clear
+			ereturn post `b' `V' //, depname(`Yopt') obs(`N') esample(`touse')
 		}
 	}
 end
