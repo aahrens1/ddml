@@ -3,20 +3,22 @@
 * notes:
 * why is crossfitted field set in additive code but not here?
 * check it's correct that interactive-type estimation always goes with reporting mse0 and mse1
+* are multiple Zs allowed?
 
 *** ddml cross-fitting for the interactive model & LATE
 program _ddml_crossfit_interactive, eclass sortpreserve
 
 	syntax [anything] [if] [in] , /// 
-							[ kfolds(integer 2) ///
-							NOIsily ///
-							debug /// 
-							Robust ///
-							TABFold ///
-							foldvar(name) ///
-							yrclass ///
-							drclass /// 
-							mname(name)	///
+							[ kfolds(integer 2)		///
+							NOIsily					///
+							debug					/// 
+							Robust					///
+							TABFold					///
+							foldlist(numlist)		///
+							mname(name)				///
+							reps(integer 1)			///
+							yrclass					///
+							drclass					/// 
 							]
 
 	// no checks included yet
@@ -24,7 +26,6 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 
 	local debugflag		= "`debug'"~=""
 	if ("`noisily'"=="") local qui qui
-	di "`qui'"
 		
 	*** extract details of estimation
 	
@@ -49,395 +50,277 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		di "Number of Z estimating equations: `numeqnsZ'"
 	}		 
 	
-	*** gen folds
-	// create foldvar if not empty
-	// Stata name will be mname_fid
-	cap count if `mname'_fid < .
-	if _rc > 0 {
-		// fold var does not exist or is not a valid identifier
-		cap drop `mname'_fid
-		tempvar uni cuni
-		qui gen double `uni' = runiform() if `mname'_sample
-		qui cumul `uni' if `mname'_sample, gen(`cuni')
-		qui gen int `mname'_fid = ceil(`kfolds'*`cuni') if `mname'_sample
-		// add fold id to model struct (col 1 = id, col 2 = fold id)
-		mata: `mname'.idFold = st_data(., ("`mname'_id", "`mname'_fid"))
+	// folds and fold IDs
+	mata: st_local("hasfoldvars",strofreal(cols(`mname'.idFold)))
+
+	// if empty:
+	// add fold IDs to model struct (col 1 = id, col 2 = fold id 1, col 3 = fold id 2 etc.)
+	// first initialize with id
+	
+	if `hasfoldvars'==0 {
+		mata: `mname'.idFold = st_data(., ("`mname'_id"))
 	}
-	if ("`tabfold'"!="") {
-		di
-		di "Overview of frequencies by fold:"
-		tab `mname'_fid if `mname'_sample
-		di
+
+	forvalues m=1/`reps' {
+	
+		if `hasfoldvars'==0 {
+			*** gen folds
+			cap drop `mname'_fid_`m'
+			tempvar uni cuni
+			qui gen double `uni' = runiform() if `mname'_sample
+			qui cumul `uni' if `mname'_sample, gen(`cuni')
+			qui gen int `mname'_fid_`m' = ceil(`kfolds'*`cuni') if `mname'_sample
+			// add fold id to model struct (col 1 = id, col 2 = fold id)
+			mata: `mname'.idFold = (`mname'.idFold , st_data(., ("`mname'_fid_`m'")))
+		}
+		if ("`tabfold'"!="") {
+			di
+			di "Overview of frequencies by fold (sample `m'):"
+			tab `mname'_fid_`m' if `mname'_sample
+			di
+		}
+	
 	}
-	//
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	// used multiple times below
 	tempname eqn
 	mata: `eqn' = init_eqnStruct()
 
-	*** initialize tilde variables
-	forvalues i=1/`numeqns' {
-		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		cap drop `vtilde'
-		qui gen double `vtilde'=.
-	}
-		
-	*** do cross-fitting
+	forvalues m=1/`reps' {
 	
-	forvalues i=1/`numeqns' {
+		di
+		di as text "Starting cross-fitting (sample = `m')"
 
-		di as text "Cross-fitting equation `i'" _c
-
-		/* why not used here but used in interactive code?
-		// has the equation already been crossfitted?
-		mata: st_numscalar("cvdone",`eqn'.crossfitted)
-		if ("`cvdone'"=="1") continue
-		*/
-		
-		// initialize prior to calling crossfit
-		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		mata: st_local("vname",`eqn'.Vname)
-		mata: st_local("eststring",`eqn'.eststring)
-		mata: st_local("eqntype",`eqn'.eqntype)
-		// seems to be unused
-		// mata: st_local("vtype",`eqn'.vtype)
-		local touse `mname'_sample
-		// always request residuals not fitted values
-		local resid resid
-		if ("`eqntype'"=="yeq") {
-			local treatvar	`listD'
-		}
-		else if ("`eqntype'"=="deq") & ("`model'"=="interactive") {
-			local treatvar
-		}
-		else if ("`eqntype'"=="deq") {
-			local treatvar	`listZ'
-		}
-		else if ("`eqntype'"=="zeq") {
-			local treatvar
-		}
-		else {
-			di as err "Unknown equation type `eqntype'"
-			exit 198
-		}
-
-		crossfit if `touse',					///
-			eststring(`eststring')				///
-			kfolds(`kfolds')					///
-			foldvar(`mname'_fid)				///
-			vtilde(`vtilde')					///
-			vname(`vname')						///
-			treatvar(`treatvar')				///
-			`resid'
-		
-		// store MSE and sample size
-		if ("`eqntype'"=="yeq") {
-			mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse0)',`r(N)',0)
-			mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse1)',`r(N)',1)
-		}
-		else if ("`eqntype'"=="deq") & ("`model'"=="interactive") {
-			mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
-		}
-		else if ("`eqntype'"=="deq") {
-			mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse0)',`r(N)',0)
-			mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse1)',`r(N)',1)
-		}
-		else if ("`eqntype'"=="zeq") {
-			mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
-		}
-
-	}
-	
-	
-	/*
-	*** old code, replaced by call to crossfit subroutine
-	
-	*** do cross-fitting
-	di
-	di as text "Cross-fitting fold " _c
-	forvalues k = 1(1)`kfolds' {
-	
-		if (`k'==`kfolds') {
-			di as text "`k'"
-		}
-		else {
-			di as text "`k' " _c
-		}
-		// ML is applied to I^c sample (all data ex partition k)
-		`qui' {
-		
-			// loop over equations
-			forvalues i=1/`numeqns' {
-				mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-				mata: st_local("eqntype",`eqn'.eqntype)
-				if ("`eqntype'"=="yeq") {
-					// Y equations
-					mata: st_local("vtilde",`eqn'.Vtilde)
-					mata: st_local("vname",`eqn'.Vname)
-					mata: st_local("eststring",`eqn'.eststring)
-					mata: st_local("vtype",`eqn'.vtype)
-					local 0 "`eststring'"
-					syntax [anything] , [*]
-					local est_main `anything'
-					local est_options `options'
-					di "Y estimating equation `i':"
-					di "  est_main: `est_main'"
-					di "  est_options: `est_options'"
-					
-					// for D = 1
-					// estimate excluding kth fold
-					`est_main' if `mname'_fid!=`k' & `listD' == 1 & `mname'_sample, `est_options'
-					// get fitted values and residuals for kth fold	
-					tempvar vtilde_i
-					predict `vtype'`vtilde_i' if `mname'_fid==`k' & `listD' == 1 & `mname'_sample
-					qui replace `vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 1 & `mname'_sample
-
-					// for D = 0
-					// estimate excluding kth fold
-					`est_main' if `mname'_fid!=`k' & `listD' == 0 & `mname'_sample, `est_options'
-					// get fitted values and residuals for kth fold	
-					tempvar vtilde_i
-					predict `vtype' `vtilde_i' if `mname'_fid==`k' & `listD' == 0 & `mname'_sample
-					qui replace `vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listD' == 0 & `mname'_sample
-				
-				}
-				else if ("`eqntype'"=="deq") {
-					// D equations
-					mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-					mata: st_local("vtilde",`eqn'.Vtilde)
-					mata: st_local("vname",`eqn'.Vname)
-					mata: st_local("eststring",`eqn'.eststring)
-					mata: st_local("vtype",`eqn'.vtype)
-					local 0 "`eststring'"
-					syntax [anything] , [*]
-					local est_main `anything'
-					local est_options `options'
-					di "D estimating equation `i':"
-					di "  est_main: `est_main'"
-					di "  est_options: `est_options'"
-						
-					if ("`model'"=="interactive") {
-						// estimate excluding kth fold
-						`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
-						// get fitted values and residuals for kth fold	
-						tempvar vtilde_i
-						qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `mname'_sample
-						qui replace `vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
-					}
-					else {
-
-						// for Z = 0
-						// estimate excluding kth fold
-						`est_main' if `mname'_fid!=`k' & `listZ' == 0 & `mname'_sample, `est_options'
-						// get fitted values and residuals for kth fold	
-						tempvar vtilde_i
-						qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `listZ' == 0 & `mname'_sample
-						qui replace `vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k'  & `listZ' == 0 & `mname'_sample
-
-						// for Z = 1
-						// estimate excluding kth fold
-						`est_main' if `mname'_fid!=`k' & `listZ' == 1 & `mname'_sample, `est_options'
-						// get fitted values and residuals for kth fold	
-						tempvar vtilde_i
-						qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `listZ' == 1 & `mname'_sample
-						qui replace `vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `listZ' == 1 & `mname'_sample
-					}
-				}
-				else if ("`eqntype'"=="zeq") {
-
-					// Z equations
-					mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-					mata: st_local("vtilde",`eqn'.Vtilde)
-					mata: st_local("vname",`eqn'.Vname)
-					mata: st_local("eststring",`eqn'.eststring)
-					mata: st_local("vtype",`eqn'.vtype)
-					local 0 "`eststring'"
-					syntax [anything] , [*]
-					local est_main `anything'
-					local est_options `options'
-					di "Z estimating equation `i':"
-					di "  est_main: `est_main'"
-					di "  est_options: `est_options'"
-		
-					// estimate excluding kth fold
-					`est_main' if `mname'_fid!=`k' & `mname'_sample, `est_options'
-					// get fitted values and residuals for kth fold	
-					tempvar vtilde_i
-					qui predict `vtype' `vtilde_i' if `mname'_fid==`k' & `mname'_sample
-					qui replace `vtilde' = `vname' - `vtilde_i' if `mname'_fid==`k' & `mname'_sample
-				}
-			}
-		}
- 	}	
-
-	*** calculate MSE (or any other postestimation calculations)
-	if ("`model'"=="interactive") {
-		*** calculate MSE, store orthogonalized variables, etc.
+		*** initialize tilde variables
 		forvalues i=1/`numeqns' {
 			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-			mata: st_local("eqntype",`eqn'.eqntype)
 			mata: st_local("vtilde",`eqn'.Vtilde)
-			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `vtilde'^2 if `mname'_sample
-			if ("`eqntype'"=="yeq") {
-				// for D=1
-				sum `vtilde_sq' if `listD'==0 & `mname'_sample, meanonly
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)',0)
-				// for D=1
-				qui sum `vtilde_sq' if `listD'==1 & `mname'_sample, meanonly
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)',1)
-			} 
-			else if ("`eqntype'"=="deq") {
-				qui sum `vtilde_sq' if `mname'_sample, meanonly
-				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)')
-			}
+			/// macro m is resampling counter
+			cap drop `vtilde'_`m'
+			qui gen double `vtilde'_`m'=.
 		}
-	}
-	if ("`model'"=="late") {
-		*** calculate MSE, store orthogonalized variables, etc.
+			
+		*** do cross-fitting
+		
 		forvalues i=1/`numeqns' {
+		
+			// initialize prior to calling crossfit
 			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-			mata: st_local("eqntype",`eqn'.eqntype)
 			mata: st_local("vtilde",`eqn'.Vtilde)
-			tempvar vtilde_sq
-			qui gen double `vtilde_sq' = `vtilde'^2 if `mname'_sample
+			mata: st_local("vname",`eqn'.Vname)
+			mata: st_local("eststring",`eqn'.eststring)
+			mata: st_local("eqntype",`eqn'.eqntype)
+			// seems to be unused
+			// mata: st_local("vtype",`eqn'.vtype)
+			local touse `mname'_sample
+			// always request residuals not fitted values
+			local resid resid
+	
+			di as text "Cross-fitting equation `i' (`vname', `vtilde')" _c
+	
+			/* why not used here but used in interactive code?
+			// has the equation already been crossfitted?
+			mata: st_numscalar("cvdone",`eqn'.crossfitted)
+			if ("`cvdone'"=="1") continue
+			*/
+			
 			if ("`eqntype'"=="yeq") {
-				// for Z=1
-				qui sum `vtilde_sq' if `listZ'==0 & `mname'_sample, meanonly
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)',0)
-				// for Z=1
-				qui sum `vtilde_sq' if `listZ'==1 & `mname'_sample, meanonly
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)',1)
-			} 
+				local treatvar	`listD'
+			}
+			else if ("`eqntype'"=="deq") & ("`model'"=="interactive") {
+				local treatvar
+			}
 			else if ("`eqntype'"=="deq") {
-				// for Z = 0
-				sum `vtilde_sq' if `listZ'==0 & `mname'_sample, meanonly
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)',0)
-				// for Z = 1
-				sum `vtilde_sq' if `listZ'==1 & `mname'_sample, meanonly
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)',1)
+				local treatvar	`listZ'
 			}
 			else if ("`eqntype'"=="zeq") {
-				qui sum `vtilde_sq' if `mname'_sample, meanonly
-				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mean)',`r(N)')
+				local treatvar
 			}
+			else {
+				di as err "Unknown equation type `eqntype'"
+				exit 198
+			}
+	
+			crossfit if `touse',					///
+				eststring(`eststring')				///
+				kfolds(`kfolds')					///
+				foldvar(`mname'_fid_`m')			///
+				vtilde(`vtilde'_`m')				///
+				vname(`vname')						///
+				treatvar(`treatvar')				///
+				`resid'
+			
+			// store MSE and sample size
+			if ("`eqntype'"=="yeq") {
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse0)',`r(N0)',0)
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse1)',`r(N1)',1)
+			}
+			else if ("`eqntype'"=="deq") & ("`model'"=="interactive") {
+				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
+			}
+			else if ("`eqntype'"=="deq") {
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse0)',`r(N0)',0)
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse1)',`r(N1)',1)
+			}
+			else if ("`eqntype'"=="zeq") {
+				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
+			}
+	
 		}
-	}
-	*/
-
-	*** print results & find optimal model
-
-	// interactive model
-	if "`model'"=="interactive" {
-
-		// dependent variable
-		_ddml_display_header , str(y|X,D=0)
-		_ddml_display_mspe `mname', vname(`nameY') zett(0)
-		mata: `mname'.nameY1opt		= "`r(optname)'"
-		_ddml_display_header , str(y|X,D=1)
-		_ddml_display_mspe `mname', vname(`nameY') zett(1)
-		mata: `mname'.nameY0opt		= "`r(optname)'"
-
-		// D variable
-		_ddml_display_header , str(D|X)
-		foreach var of varlist `listD' {
-			_ddml_display_mspe `mname', vname(`var') 
-			mata: `mname'.nameDopt		= "`r(optname)'"
-		}
-	}
-
-	// late model
-	if "`model'"=="late" {
-
-		// dependent variable
-		_ddml_display_header , str(y|X,Z=0)
-		_ddml_display_mspe `mname', vname(`nameY') zett(0)
-		mata: `mname'.nameY1opt		= "`r(optname)'"
-		_ddml_display_header , str(y|X,Z=1)
-		_ddml_display_mspe `mname', vname(`nameY') zett(1)
-		mata: `mname'.nameY0opt		= "`r(optname)'"
-
-		// D variable
-		_ddml_display_header , str(D|X,Z=0)
-		foreach var of varlist `listD' {
-			_ddml_display_mspe `mname', vname(`var') zett(0)
-			mata: `mname'.nameD0opt		= "`r(optname)'"
-		}
-		_ddml_display_header , str(D|X,Z=1)
-		foreach var of varlist `listD' {
-			_ddml_display_mspe `mname', vname(`var') zett(1)
-			mata: `mname'.nameD1opt		= "`r(optname)'"
-		}
-
-		// Z variable
-		foreach var of varlist `listZ' {
-			_ddml_display_mspe `mname', vname(`var')
-			mata: `mname'.nameZopt = (`mname'.nameZopt, "`r(optname)'")
-		}
-	}
 		
-/*
-	*** save all 
-	ereturn clear
-	ereturn scalar crossfit = 1
-	ereturn scalar yest = `yestn'
-	ereturn scalar dest = `destn'
-	ereturn local cmd ddml_crossfit
-	ereturn local depvar `yvar'
-	ereturn local dvar `dvar'
-	ereturn local model "`model'"
-	ereturn scalar crossfit = 1
+		*** print results & find optimal model
+	
+		di
+		di as res "Reporting crossfitting results (sample=`m')
 
-	* return variable and command names
-	forvalues i = 1(1)`yestn' {
-		ereturn local y`i' `yname`i''
-		ereturn local ycmd`i' `ycmd`i''
-	}
-	forvalues i = 1(1)`destn' {
-		ereturn local d`i' `dname`i''
-		ereturn local dcmd`i' `dcmd`i''
-	}
-	if ("`model'"=="iv"|"`model'"=="late") {
-		ereturn scalar zest = `zestn'
-		ereturn local zvar `zvar'
-		forvalues i = 1(1)`zestn' {
-			ereturn local z`i' `zname`i''
-			ereturn local zcmd`i' `zcmd`i''
+		// interactive model
+		if "`model'"=="interactive" {
+	
+			// dependent variable
+			report_crossfit_result `mname', etype(y|X,D=0) vlist(`nameY') m(`m')
+			report_crossfit_result `mname', etype(y|X,D=1) vlist(`nameY') m(`m')
+			/*
+			_ddml_display_header , str(y|X,D=0)
+			_ddml_display_mspe `mname', vname(`nameY') zett(0)
+			mata: `mname'.nameY1opt		= "`r(optname)'"
+			_ddml_display_header , str(y|X,D=1)
+			_ddml_display_mspe `mname', vname(`nameY') zett(1)
+			mata: `mname'.nameY0opt		= "`r(optname)'"
+			*/
+
+			// D variable
+			report_crossfit_result `mname', etype(D|X) vlist(`listD') m(`m')
+			/*
+			_ddml_display_header , str(D|X)
+			foreach var of varlist `listD' {
+				_ddml_display_mspe `mname', vname(`var') 
+				mata: `mname'.nameDopt		= "`r(optname)'"
+			}
+			*/
 		}
+	
+		// late model
+		if "`model'"=="late" {
+	
+			// dependent variable
+			report_crossfit_result `mname', etype(y|X,Z=0) vlist(`nameY') m(`m')
+			report_crossfit_result `mname', etype(y|X,Z=1) vlist(`nameY') m(`m')
+			
+			/*
+			_ddml_display_header , str(y|X,Z=0)
+			_ddml_display_mspe `mname', vname(`nameY') zett(0)
+			mata: `mname'.nameY1opt		= "`r(optname)'"
+			_ddml_display_header , str(y|X,Z=1)
+			_ddml_display_mspe `mname', vname(`nameY') zett(1)
+			mata: `mname'.nameY0opt		= "`r(optname)'"
+			*/
+	
+			// D variable
+			report_crossfit_result `mname', etype(D|X,Z=0) vlist(`listD') m(`m')
+			report_crossfit_result `mname', etype(D|X,Z=1) vlist(`listD') m(`m')
+
+			/*
+			_ddml_display_header , str(D|X,Z=0)
+			foreach var of varlist `listD' {
+				_ddml_display_mspe `mname', vname(`var') zett(0)
+				mata: `mname'.nameD0opt		= "`r(optname)'"
+			}
+
+			_ddml_display_header , str(D|X,Z=1)
+			foreach var of varlist `listD' {
+				_ddml_display_mspe `mname', vname(`var') zett(1)
+				mata: `mname'.nameD1opt		= "`r(optname)'"
+			}
+			*/
+			
+			// Z variable
+			report_crossfit_result `mname', etype(Z|X) vlist(`listZ') m(`m')
+			/*
+			foreach var of varlist `listZ' {
+				_ddml_display_mspe `mname', vname(`var')
+				mata: `mname'.nameZopt = (`mname'.nameZopt, "`r(optname)'")
+			}
+			*/
+
+		}	
 	}
 
-	* return MSE and opt-ID for Y
-	if ("`model'"=="partial"|"`model'"=="iv") {
-		ereturn scalar yoptid = `yminmseid'
-		ereturn matrix ymse = `MSEy'
-	}
-	if ("`model'"=="late"|"`model'"=="interactive") {
-		ereturn scalar y0optid = `yminmseid0'
-		ereturn scalar y1optid = `yminmseid1'
-		ereturn matrix y0mse = `MSEy0'
-		ereturn matrix y1mse = `MSEy1'
-	}
-	*** return MSE and opt-ID for D
-	if ("`model'"=="partial"|"`model'"=="iv"|"`model'"=="interactive") {
-		ereturn scalar doptid = `dminmseid'
-		ereturn matrix dmse = `MSEd'
-	} 
-	if ("`model'"=="late") {
-		ereturn scalar d1optid = `dminmseid1'
-		ereturn scalar d0optid = `dminmseid0'
-		ereturn matrix d1mse = `MSEd1'
-		ereturn matrix d0mse = `MSEd0'
-	}
-	*** return MSE and opt-ID for Z
-	if ("`model'"=="late"|"`model'"=="iv") {
-		ereturn scalar zoptid = `zminmseid'
-		ereturn matrix zmse = `MSEz'
-	}
-*/
 end
+
+
+program report_crossfit_result
+	syntax name(name=mname), etype(string) [ vlist(string) m(integer 1) ]
+
+	// set struct field name
+	if "`etype'"=="y|X" {
+		local optname nameYopt
+	}
+	else if "`etype'"=="y|X,D=0" {
+		local optname nameY0opt
+		local zett 0
+	}
+	else if "`etype'"=="y|X,D=1" {
+		local optname nameY1opt
+		local zett 1
+	}
+	else if "`etype'"=="y|X,Z=0" {
+		local optname nameY0opt
+		local zett 0
+	}
+	else if "`etype'"=="y|X,Z=1" {
+		local optname nameY1opt
+		local zett 1
+	}
+	else if "`etype'"=="D|X" {
+		local optname nameDopt
+	}
+	else if "`etype'"=="D|X,Z" {
+		local optname nameDHopt
+	}
+	else if "`etype'"=="D|X,Z=0" {
+		local optname nameD0opt
+		local zett 0
+	}
+	else if "`etype'"=="D|X,Z=1" {
+		local optname nameD1opt
+		local zett 1
+	}
+	else if "`etype'"=="Z|X" {
+		local optname nameZopt
+	}
+	
+	// may be called with empty list (e.g. if no endog regressors)
+	local numeqns	: word count `vlist'
+	if `numeqns' > 0 {
+		
+		di
+		di as res "Mean-squared error for `etype':"
+		di _col(2) "Name" _c
+		di _col(20) "Orthogonalized" _c
+		di _col(40) "Command" _c
+		di _col(54) "N" _c
+		di _col(65) "MSPE"
+		di "{hline 75}"
+		// clear opt list
+		// mata: `mname'.`optname' = J(1,0,"")
+		foreach var of varlist `vlist' {
+			// m is the rep number
+			_ddml_display_mspe `mname', vname(`var') m(`m') zett(`zett')
+			local optlist `optlist' `r(optname)'
+		}
+		if `m'==1 {
+			mata: `mname'.`optname' = tokens("`optlist'")'
+		}
+		else {
+			mata: `mname'.`optname' = (`mname'.`optname' \ tokens("`optlist'")')
+		}
+
+	}
+end
+
+
+
 
 mata:
 
@@ -455,8 +338,8 @@ void add_to_eqn(					struct ddmlStruct m,
 {
 	pointer(struct eqnStruct) scalar p
 	p				= m.eqnlist[1,eqnumber]
-	(*p).idVtilde	= st_data(., tokens(vnames))
-	(*p).MSE		= mse
+	//(*p).idVtilde	= st_data(., tokens(vnames))
+	(*p).MSE		= ((*p).MSE \ mse)
 	(*p).N			= n
 }
 
@@ -469,13 +352,13 @@ void add_to_eqn01(					struct ddmlStruct m,
 {
 	pointer(struct eqnStruct) scalar p
 	p				= m.eqnlist[1,eqnumber]
-	(*p).idVtilde	= st_data(., tokens(vnames))
+	//(*p).idVtilde	= st_data(., tokens(vnames))
 	if (Z==0) {
-		(*p).MSE0		= mse
+		(*p).MSE0		= ((*p).MSE0 \ mse)
 		(*p).N0			= n
 	}
 	else {
-		(*p).MSE1		= mse
+		(*p).MSE1		= ((*p).MSE1 \ mse)
 		(*p).N1			= n
 	}
 

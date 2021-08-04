@@ -7,6 +7,7 @@
 * debug reporting in separate subroutine below
 * number of resamples set here in reps(.) option
 * in eqn struct, (*p).idVtilde is a problem ... but is it needed? currently commented out.
+* add noisily option
 
 program _ddml_crossfit_additive, eclass sortpreserve
 
@@ -16,9 +17,9 @@ program _ddml_crossfit_additive, eclass sortpreserve
 							debug					/// 
 							Robust					///
 							TABFold					///
-							mname(name)				///
-							eqnlist(namelist)		///
 							foldlist(numlist)		///
+							mname(name)				///
+							/* eqnlist(namelist) */	/// not in use
 							reps(integer 1)			///
 							]
 
@@ -26,10 +27,12 @@ program _ddml_crossfit_additive, eclass sortpreserve
 
 	local debugflag		= "`debug'"~=""
 
+	/* not in use
 	// if eqnlist is empty, populate with full list of eqn names
 	if "`eqnlist'"=="" {
 		mata: st_local("eqnlist",invtokens(`mname'.eqnlistNames))
 	}
+	*/
 			
 	*** extract details of estimation
 	
@@ -105,6 +108,9 @@ program _ddml_crossfit_additive, eclass sortpreserve
 	else {
 		forvalues m=1/`reps' {
 		
+			di
+			di as text "Starting cross-fitting (sample = `m')"
+
 			*** initialize tilde variables
 			forvalues i=1/`numeqns' {
 				mata: `eqn'=*(`mname'.eqnlist[1,`i'])
@@ -121,12 +127,10 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			
 			forvalues i=1/`numeqns' {
 	
-				di as text "Cross-fitting equation `i'" _c
-	
 				// has the equation already been crossfitted?
 				mata: st_numscalar("cvdone",`eqn'.crossfitted)
 				if ("`cvdone'"=="1") continue
-				
+	
 				// initialize prior to calling crossfit
 				mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 				mata: st_local("vtilde",`eqn'.Vtilde)
@@ -136,6 +140,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 				// seems to be unused
 				// mata: st_local("vtype",`eqn'.vtype)
 				local touse `mname'_sample
+				
 				if ~("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
 					// request residuals unless optimal IV model & deq or dheq
 					local resid resid
@@ -144,6 +149,8 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					// default is predicted values
 					local resid
 				}
+				
+				di as text "Cross-fitting equation `i' (`vname', `vtilde')" _c
 				
 				crossfit if `touse',					///
 					eststring(`eststring')				///
@@ -159,6 +166,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			}
 	
 			// for each equations: display results and save names of tilde vars with smallest MSE
+			// hence subroutine changes the contents of eqn mname as well as reports
 			// subroutine will handle case of empty lists
 			// note that etype argument is a string and must match exactly
 			// note that subroutine uses field names of struct

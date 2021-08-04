@@ -15,6 +15,7 @@ program define _ddml_allcombos, rclass
 		local sep -
 	}
 
+	// why tokenize? not used below
 	tokenize "`anything'" , parse("`sep'")
 
 	// obtain all combinations
@@ -22,10 +23,15 @@ program define _ddml_allcombos, rclass
 	mata: st_rclear()
 	mata: `out' = get_combos("`anything'","`sep'")
 	return scalar ncombos = `r(ncombos)'
+	if ("`debug'"!="") {
+		mata: "Matrix `out' :"
+		mata: `out'
+	}
 
 	// put one specific order at the end (indended for optimal model)
 	mata: `out' = put_last(`out',"`putlast'")
 	if ("`debug'"!="") {
+		mata: "Matrix `out' after putlast:"
 		mata: `out'
 	}
 

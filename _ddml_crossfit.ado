@@ -191,9 +191,11 @@ program define _ddml_crossfit, rclass sortpreserve
 		qui sum `vtilde_sq' if `treatvar' == 0 & `touse', meanonly
 		return scalar mse0	= r(mean)
 		local N				= r(N)
+		return scalar N0	= r(N)
 		qui sum `vtilde_sq' if `treatvar' == 1 & `touse', meanonly
 		return scalar mse1	= r(mean)
 		local N				= `N' + r(N)
+		return scalar N1	= r(N)
 	}
 	
 	return scalar N			= `N'

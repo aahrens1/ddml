@@ -6,7 +6,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 								ROBust			///
 								show(string)	/// dertermines which to post
 								clear			/// deletes all tilde-variables (to be implemented)
-								replist(string)	///
+								replist(string)	/// list of resamplings to estimate
 								* ]
 	
 	// base sample for estimation - determined by if/in
@@ -23,7 +23,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 	local ylist		`s(ylist)'
 	local Dlist		`s(Dlist)'
 	local ncombos	= s(ncombos)
-	local tokenlen	= `ncombos'*2 -1
+	local tokenlen	= `ncombos'*2
 	
 	// replist empty => do for first resample
 	// replist = "all" do for all resamples
@@ -45,7 +45,6 @@ program _ddml_estimate_partial, eclass sortpreserve
 	// do for each specified resamples
 	foreach m in `replist' {
 		if "`show'"=="all" {
-			local j = 1
 			forvalues i = 1(2)`tokenlen' {
 				tokenize `ylist' , parse("-")
 				local y ``i''
@@ -59,7 +58,6 @@ program _ddml_estimate_partial, eclass sortpreserve
 				di
 				di as res "DML (sample=`m') with Y=`y' and D=`d' (N=`e(N)'):"
 				ereturn di
-		        local j= `j'+1
 		     }
 		}
 	
