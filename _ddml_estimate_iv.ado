@@ -49,12 +49,17 @@ program _ddml_estimate_iv, eclass sortpreserve
 		`debug'											///
 		addprefix("")
 
-	return list
 	local ncombos = r(ncombos)
 	local tokenlen = `ncombos'*2
+	local ylist `r(colstr1)'
+	local Dlist `r(colstr2)'
+	local Zlist `r(colstr3)'
+
+	/*
 	local ylist `r(ystr)'
 	local Dlist `r(dstr)'
 	local Zlist `r(zstr)' 
+	*/
 
 	// replist empty => do for first resample
 	// replist = "all" do for all resamples
@@ -79,20 +84,27 @@ program _ddml_estimate_iv, eclass sortpreserve
 			// if ("`show'"=="all"|`i'==`tokenlen') {
 			if "`show'"=="all" {
 				tokenize `ylist' , parse("-")
-				local y ``i''
+				add_suffix ``i'', suffix("_`m'")
+				local y `s(vnames)'
 				tokenize `Dlist' , parse("-")
-				local d ``i''
+				add_suffix ``i'', suffix("_`m'")
+				local d `s(vnames)'
 				tokenize `Zlist' , parse("-")
-				local z ``i''
-				di as res "DML (sample = `m') with Y=`y' and D=`d', Z=`z':"
+				add_suffix ``i'', suffix("_`m'")
+				local z `s(vnames)'
+				di
+				di as res "DML (sample = `m') with Y=`y', D=`d', Z=`z':"
 			   	ivreg2 `y' (`d'=`z') if `touse', nocons `robust' noheader nofooter
 			 }
 		}
 	
 		//mata: `mname'.nameDtilde
-		mata: st_local("Yopt",`mname'.nameYopt)
-		mata: st_local("Dopt",invtokens(`mname'.nameDopt))
-		mata: st_local("Zopt",invtokens(`mname'.nameZopt))
+		mata: st_local("Yopt",`mname'.nameYopt[`m'])
+		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m']))
+		mata: st_local("Zopt",invtokens(`mname'.nameZopt[`m']))
+		di
+		di as res "Optimal model: DML (sample = `m') with Y=`Yopt', D=`Dopt', Z=`Zopt':"
+	   	ivreg2 `Yopt'_`m' (`Dopt'_`m'=`Zopt'_`m') if `touse', nocons `robust' noheader nofooter
 	}
 
 	/*
@@ -114,6 +126,18 @@ program _ddml_estimate_iv, eclass sortpreserve
 	ereturn display
 	*/
 
+end
+
+// adds rep number suffixes to list of varnames
+program define add_suffix, sclass
+	syntax anything , suffix(name)
+
+	// anything is a list of to-be-varnames that need suffix added to them
+	foreach vn in `anything' {
+		local vnames `vnames' `vn'`suffix'
+	}
+	
+	sreturn local vnames `vnames'
 end
 
 /*
