@@ -15,7 +15,6 @@ program define _ddml_allcombos, rclass
 		local sep -
 	}
 
-	// why tokenize? not used below
 	tokenize "`anything'" , parse("`sep'")
 
 	// obtain all combinations
@@ -23,15 +22,10 @@ program define _ddml_allcombos, rclass
 	mata: st_rclear()
 	mata: `out' = get_combos("`anything'","`sep'")
 	return scalar ncombos = `r(ncombos)'
-	if ("`debug'"!="") {
-		mata: "Matrix `out' :"
-		mata: `out'
-	}
 
-	// put one specific order at the end (indended for optimal model)
+	// put one specific order at the end (intended for optimal model)
 	mata: `out' = put_last(`out',"`putlast'")
 	if ("`debug'"!="") {
-		mata: "Matrix `out' after putlast:"
 		mata: `out'
 	}
 
@@ -176,7 +170,7 @@ void mat_to_colstring(string matrix inmat,string scalar sep,string scalar prefix
 
 }
 
-// replicate elements of a vector, while mainting order
+// replicate elements of a vector, while maintaining order
 string matrix Jsort(string matrix mat,
 				real scalar rep
 )

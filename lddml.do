@@ -67,6 +67,7 @@ struct eqnStruct {
 	real scalar         N_h 			// (intended for LIE)
 	real scalar 		N0
 	real scalar 		N1
+	// possibly drop, or make a colvector corresponding to the resampling number
 	real scalar 		crossfitted   	// =1 if crossvalidation has been done; 0 if not
 }
 

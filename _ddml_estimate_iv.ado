@@ -29,38 +29,19 @@ program _ddml_estimate_iv, eclass sortpreserve
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens(`mname'.nameZ))
 
-	/* not in use (?)
 	_ddml_make_varlists, mname(`mname')
-	if ("`debug'"!="") {
-		return list
-	}
-	*/
-	*** THIS MAY BE WRONG IF THERE ARE MULTIPLE D OR Z VARS ***
-	*** May need to restore use of _ddml_make_varlists.     ***
-	/*
 	// seems to require _ddml_make_varlists?
 	_ddml_allcombos `r(eq)' ,								///
-		/* putlast(`Yopt' `Dopt' `Zopt') */					///
 		`debug'												///
 		dpos_end(`r(dpos_end)')								///
 		zpos_start(`r(zpos_start)') zpos_end(`r(zpos_end)')	///
 		addprefix("")
-	*/
-	_ddml_allcombos `Ytilde' - `Dtilde' - `Ztilde' ,	///
-		`debug'											///
-		addprefix("")
 
 	local ncombos = r(ncombos)
 	local tokenlen = `ncombos'*2
-	local ylist `r(colstr1)'
-	local Dlist `r(colstr2)'
-	local Zlist `r(colstr3)'
-
-	/*
 	local ylist `r(ystr)'
 	local Dlist `r(dstr)'
 	local Zlist `r(zstr)' 
-	*/
 
 	// replist empty => do for first resample
 	// replist = "all" do for all resamples
@@ -101,8 +82,8 @@ program _ddml_estimate_iv, eclass sortpreserve
 	
 		//mata: `mname'.nameDtilde
 		mata: st_local("Yopt",`mname'.nameYopt[`m'])
-		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m']))
-		mata: st_local("Zopt",invtokens(`mname'.nameZopt[`m']))
+		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
+		mata: st_local("Zopt",invtokens(`mname'.nameZopt[`m',.]))
 		di
 		di as res "Optimal model: DML (sample = `m') with Y=`Yopt', D=`Dopt', Z=`Zopt':"
 	   	ivreg2 `Yopt'_`m' (`Dopt'_`m'=`Zopt'_`m') if `touse', nocons `robust' noheader nofooter
@@ -159,3 +140,4 @@ string scalar mat_to_varlist(string matrix inmat)
 	return(str)
 }
 end
+*/

@@ -85,18 +85,12 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 		mata: st_local("Yopt",`mname'.nameYopt[`m'])
 		add_suffix `Yopt', suffix("_`m'")
 		local Yopt `s(vnames)'
-		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m']))
+		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
 		add_suffix `Dopt', suffix("_`m'")
 		local Dopt `s(vnames)'
-		mata: st_local("DHopt",invtokens(`mname'.nameDHopt[`m']))
+		mata: st_local("DHopt",invtokens(`mname'.nameDHopt[`m',.]))
 		add_suffix `DHopt', suffix("_`m'")
 		local DHopt `s(vnames)'
-
-/*
-di "Problem..."
-di "Dopt=`Dopt'"
-di "DHopt=`Dopt'"
-*/
 		
 		di
 		di as res "Optimal model: DML (sample=`m') with E[Y|X]=`Yopt', E[D|X]=`Dopt', E[D|X,Y]=`DHopt':"

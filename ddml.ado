@@ -1,6 +1,9 @@
 *** feb 1, 2021
 * ddml v0.3
 
+* notes:
+* e.command		= tokens(estcmd)[1,1] fails if command string starts with a prefix e.g. capture
+
 program ddml, eclass
 
 	version 13
@@ -274,8 +277,7 @@ program ddml, eclass
 	if "`subcmd'" =="crossfit" {
 
 		local 0 "`restargs'"
-		// mname is required; could make optional with a default name
-		syntax , [mname(name) *  
+		syntax , [ mname(name) * ]
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
@@ -441,14 +443,17 @@ void add_eqn(						struct ddmlStruct m,
 									)
 {
 	struct eqnStruct scalar		e, e0
+
 	e.eqntype		= eqntype
 	e.Vname			= vname
 	e.Vtilde		= vtilde
 	e.Vtilde_h 		= vtilde_h
 	e.eststring		= estcmd
-	e.eststring_h 	= estcmd_h
 	e.command		= tokens(estcmd)[1,1]
-	e.command_h		= tokens(estcmd_h)[1,1]
+	if (estcmd_h~="") {
+		e.eststring_h 	= estcmd_h
+		e.command_h		= tokens(estcmd_h)[1,1]
+	}
 	e.vtype		 	= vtype
 	e.crossfitted	= 0
 

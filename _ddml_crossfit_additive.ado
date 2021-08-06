@@ -172,62 +172,14 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			// note that subroutine uses field names of struct
 			di
 			di as res "Reporting crossfitting results (sample=`m')
-			report_crossfit_result `mname', etype(y|X) vlist(`nameY') m(`m')
-			report_crossfit_result `mname', etype(D|X) vlist(`listD') m(`m')
-			report_crossfit_result `mname', etype(D|X,Z) vlist(`listDH') m(`m')
-			report_crossfit_result `mname', etype(Z|X) vlist(`listZ') m(`m')
+			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m')
+			_ddml_report_crossfit_res_mspe `mname', etype(deq) vlist(`listD') m(`m')
+			_ddml_report_crossfit_res_mspe `mname', etype(dheq) vlist(`listDH') m(`m')
+			_ddml_report_crossfit_res_mspe `mname', etype(zeq) vlist(`listZ') m(`m')
 			
 		}	// end crossfitting block
 	}	// end resampling block
 
-end
-
-program report_crossfit_result
-	syntax name(name=mname), etype(string) [ vlist(string) m(integer 1) ]
-
-	// set struct field name
-	if "`etype'"=="y|X" {
-		local optname nameYopt
-	}
-	else if "`etype'"=="D|X" {
-		local optname nameDopt
-	}
-	else if "`etype'"=="D|X,Z" {
-		local optname nameDHopt
-	}
-	else if "`etype'"=="Z|X" {
-		local optname nameZopt
-	}
-di "optname = `optname'"
-di "vlist = `vlist'"
-
-	// may be called with empty list (e.g. if no endog regressors)
-	local numeqns	: word count `vlist'
-	if `numeqns' > 0 {
-		
-		di
-		di as res "Mean-squared error for `etype':"
-		di _col(2) "Name" _c
-		di _col(20) "Orthogonalized" _c
-		di _col(40) "Command" _c
-		di _col(54) "N" _c
-		di _col(65) "MSPE"
-		di "{hline 75}"
-		// clear opt list
-		// mata: `mname'.`optname' = J(1,0,"")
-		foreach var of varlist `vlist' {
-			// m is the rep number
-			_ddml_display_mspe `mname', vname(`var') m(`m')
-			local optlist `optlist' `r(optname)'
-		}
-		if `m'==1 {
-			mata: `mname'.`optname' = tokens("`optlist'")'
-		}
-		else {
-			mata: `mname'.`optname' = (`mname'.`optname' \ tokens("`optlist'")')
-		}
-
-	}
 end
 
 program report_debugging
@@ -275,6 +227,7 @@ program report_debugging
 	}	
 
 end
+
 
 mata:
 

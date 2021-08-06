@@ -1,4 +1,6 @@
-* currently does not support flagging minimized MSEs
+* notes:
+* does not support flagging minimized MSEs
+* does not report crossfitting results
 
 program define _ddml_describe
 
@@ -6,12 +8,6 @@ program define _ddml_describe
 	
 	local showcmd	= ("`nocmd'"=="")
 	local showall	= ("`all'"~="")
-
-	// Will use for flagging minimized MSEs
-	// mata: st_local("Yopt",`mname'.nameYopt)
-	// mata: st_local("Dopt",invtokens(`mname'.nameDopt))
-	// mata: st_local("Zopt",invtokens(`mname'.nameZopt))
-	// mata: st_local("DHopt",invtokens(`mname'.nameDHopt))
 
 	mata: printf("{res}Model: %s\n", `mname'.model)
 	di as res "ID: `mname'_id"
@@ -22,14 +18,11 @@ program define _ddml_describe
 
 	mata: printf("{res}Dependent variable (Y): %s\n", `mname'.nameY)
 	mata: printf("{res}Dependent variable (orthogonalized): %s\n", invtokens(`mname'.nameYtilde))
-	// di "Minimum MSE orthogonalized dep var: `Yopt'"
 	mata: printf("{res}Causal variable(s) (D): %s\n", invtokens(`mname'.nameD))
 	mata: printf("{res}Causal variable(s) (orthogonalized): %s\n", invtokens(`mname'.nameDtilde))
-	// di "Minimum MSE orthogonalized causal var: `Dopt'"
 	if ("`model'"=="iv") {
 		mata: printf("{res}Excluded instrumental variable(s): %s\n", `mname'.nameZ)
 		mata: printf("{res}Excluded instrumental variable(s) (orthogonalized): %s\n", `mname'.nameZtilde)
-		// di "Minimum MSE orthogonalized IVs: `Zopt'"
 	}
 	
 	// List equations
@@ -60,11 +53,6 @@ program define _ddml_describe
 		desc_equation `mname', eqntype(dheq) optlist(`DHopt') showcmd(`showcmd')
 	}
 
-	if "`Yopt'`Dopt'`Zopt'`DHopt'"~="" {
-		di
-		di "* indicates minimum MSE estimation"
-	}
-
 	if `showall' {
 		di
 		di as res "Other:"
@@ -93,22 +81,7 @@ prog define desc_equation
 		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 		mata: st_global("r(eqntype)",`eqn'.eqntype)
 		if "`eqntype'"==r(eqntype) {
-			di "Estimating equation `i': " _c
-			mata: st_local("cvdone",strofreal(`eqn'.crossfitted))
-			if ("`cvdone'"=="1") {
-				mata: printf("{res}N = %6.0f     MSE = %10.6f", `eqn'.N, `eqn'.MSE)
-			}
-			else {
-				mata: printf("(not cross-fitted)\r")
-			}
-			mata: st_local("vtilde",`eqn'.Vtilde)
-			local minMSE : list vtilde in optlist
-			if `minMSE' {
-				di "*"
-			}
-			else {
-				di
-			}
+			di "Estimating equation `i': "
 			mata: printf("{res}  Variable: %s{col 30}Orthogonalized: %s\n", `eqn'.Vname, `eqn'.Vtilde)
 			if `showcmd' {
 				mata: printf("{res}  Command: %s\n", `eqn'.eststring)

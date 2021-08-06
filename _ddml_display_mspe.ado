@@ -1,3 +1,4 @@
+*** retire - currently not in use ***
 * comments
 * with resampling can N vary? currently assumed to be constant and only MSPE varies
 

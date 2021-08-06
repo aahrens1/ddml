@@ -63,7 +63,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 	
 		*** estimate best model
 	   	mata: st_local("Yopt",`mname'.nameYopt[`m'])
-   		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m']))
+   		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
 		//add_prefix `Yopt' `Dopt', prefix("")
 		// do_regress is OLS but with original varnames
 		add_suffix `Yopt' `Dopt', suffix("_`m'")
@@ -81,7 +81,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 			di as res "Optimal model: DML (sample=`m') with optimal Y=`Yopt' and optimal D=`Dopt' (N=`e(N)'):"
 		}
 		else {
-			di as res "DML (rep `m') with Y=`Yopt' and D=`Dopt' (N=`e(N)'):"
+			di as res "DML (sample=`m') with Y=`Yopt' and D=`Dopt' (N=`e(N)'):"
 		}
 		ereturn display
 	}

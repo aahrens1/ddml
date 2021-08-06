@@ -178,148 +178,32 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		if "`model'"=="interactive" {
 	
 			// dependent variable
-			report_crossfit_result `mname', etype(y|X,D=0) vlist(`nameY') m(`m')
-			report_crossfit_result `mname', etype(y|X,D=1) vlist(`nameY') m(`m')
-			/*
-			_ddml_display_header , str(y|X,D=0)
-			_ddml_display_mspe `mname', vname(`nameY') zett(0)
-			mata: `mname'.nameY1opt		= "`r(optname)'"
-			_ddml_display_header , str(y|X,D=1)
-			_ddml_display_mspe `mname', vname(`nameY') zett(1)
-			mata: `mname'.nameY0opt		= "`r(optname)'"
-			*/
+			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m') zett(0)
+			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m') zett(1)
 
 			// D variable
-			report_crossfit_result `mname', etype(D|X) vlist(`listD') m(`m')
-			/*
-			_ddml_display_header , str(D|X)
-			foreach var of varlist `listD' {
-				_ddml_display_mspe `mname', vname(`var') 
-				mata: `mname'.nameDopt		= "`r(optname)'"
-			}
-			*/
+			_ddml_report_crossfit_res_mspe `mname', etype(deq) vlist(`listD') m(`m')
+
 		}
 	
 		// late model
 		if "`model'"=="late" {
 	
 			// dependent variable
-			report_crossfit_result `mname', etype(y|X,Z=0) vlist(`nameY') m(`m')
-			report_crossfit_result `mname', etype(y|X,Z=1) vlist(`nameY') m(`m')
-			
-			/*
-			_ddml_display_header , str(y|X,Z=0)
-			_ddml_display_mspe `mname', vname(`nameY') zett(0)
-			mata: `mname'.nameY1opt		= "`r(optname)'"
-			_ddml_display_header , str(y|X,Z=1)
-			_ddml_display_mspe `mname', vname(`nameY') zett(1)
-			mata: `mname'.nameY0opt		= "`r(optname)'"
-			*/
+			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m') zett(0)
+			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m') zett(1)
 	
 			// D variable
-			report_crossfit_result `mname', etype(D|X,Z=0) vlist(`listD') m(`m')
-			report_crossfit_result `mname', etype(D|X,Z=1) vlist(`listD') m(`m')
-
-			/*
-			_ddml_display_header , str(D|X,Z=0)
-			foreach var of varlist `listD' {
-				_ddml_display_mspe `mname', vname(`var') zett(0)
-				mata: `mname'.nameD0opt		= "`r(optname)'"
-			}
-
-			_ddml_display_header , str(D|X,Z=1)
-			foreach var of varlist `listD' {
-				_ddml_display_mspe `mname', vname(`var') zett(1)
-				mata: `mname'.nameD1opt		= "`r(optname)'"
-			}
-			*/
+			_ddml_report_crossfit_res_mspe `mname', etype(deq) vlist(`listD') m(`m') zett(0)
+			_ddml_report_crossfit_res_mspe `mname', etype(deq) vlist(`listD') m(`m') zett(1)
 			
 			// Z variable
-			report_crossfit_result `mname', etype(Z|X) vlist(`listZ') m(`m')
-			/*
-			foreach var of varlist `listZ' {
-				_ddml_display_mspe `mname', vname(`var')
-				mata: `mname'.nameZopt = (`mname'.nameZopt, "`r(optname)'")
-			}
-			*/
+			_ddml_report_crossfit_res_mspe `mname', etype(zeq) vlist(`listZ') m(`m')
 
 		}	
 	}
 
 end
-
-
-program report_crossfit_result
-	syntax name(name=mname), etype(string) [ vlist(string) m(integer 1) ]
-
-	// set struct field name
-	if "`etype'"=="y|X" {
-		local optname nameYopt
-	}
-	else if "`etype'"=="y|X,D=0" {
-		local optname nameY0opt
-		local zett 0
-	}
-	else if "`etype'"=="y|X,D=1" {
-		local optname nameY1opt
-		local zett 1
-	}
-	else if "`etype'"=="y|X,Z=0" {
-		local optname nameY0opt
-		local zett 0
-	}
-	else if "`etype'"=="y|X,Z=1" {
-		local optname nameY1opt
-		local zett 1
-	}
-	else if "`etype'"=="D|X" {
-		local optname nameDopt
-	}
-	else if "`etype'"=="D|X,Z" {
-		local optname nameDHopt
-	}
-	else if "`etype'"=="D|X,Z=0" {
-		local optname nameD0opt
-		local zett 0
-	}
-	else if "`etype'"=="D|X,Z=1" {
-		local optname nameD1opt
-		local zett 1
-	}
-	else if "`etype'"=="Z|X" {
-		local optname nameZopt
-	}
-	
-	// may be called with empty list (e.g. if no endog regressors)
-	local numeqns	: word count `vlist'
-	if `numeqns' > 0 {
-		
-		di
-		di as res "Mean-squared error for `etype':"
-		di _col(2) "Name" _c
-		di _col(20) "Orthogonalized" _c
-		di _col(40) "Command" _c
-		di _col(54) "N" _c
-		di _col(65) "MSPE"
-		di "{hline 75}"
-		// clear opt list
-		// mata: `mname'.`optname' = J(1,0,"")
-		foreach var of varlist `vlist' {
-			// m is the rep number
-			_ddml_display_mspe `mname', vname(`var') m(`m') zett(`zett')
-			local optlist `optlist' `r(optname)'
-		}
-		if `m'==1 {
-			mata: `mname'.`optname' = tokens("`optlist'")'
-		}
-		else {
-			mata: `mname'.`optname' = (`mname'.`optname' \ tokens("`optlist'")')
-		}
-
-	}
-end
-
-
 
 
 mata:

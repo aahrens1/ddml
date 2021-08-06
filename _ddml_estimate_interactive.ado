@@ -92,7 +92,6 @@ program _ddml_estimate_interactive, eclass sortpreserve
 		mata: st_local("Y0opt",`mname'.nameY0opt[`m'])
 		mata: st_local("Y1opt",`mname'.nameY1opt[`m'])
 		mata: st_local("Dopt",`mname'.nameDopt[`m'])
-		//mata: st_local("Zopt",`mname'.nameZopt[`m'])
 		di
 		di as res "Optimal model: DML (sample = `m') with Y0=`Y0opt', Y1=`Y1opt', D=`Dopt':"
 		_ddml_ate,					///
