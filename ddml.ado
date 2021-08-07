@@ -117,11 +117,14 @@ program ddml, eclass
 		}
 		local 0 "`restargs'"
 		// fold variable is option; default is ddmlfold
-		syntax , [mname(name)]
+		syntax , [mname(name) nolie]
 
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
+
+		// distinct model: no-LIE optimal IV
+		if "`model'"=="optimaliv"&"`nolie'"!="" local model optimaliv_nolie
 
 		mata: `mname'=init_ddmlStruct()
 		// create and store id variable
@@ -188,10 +191,10 @@ program ddml, eclass
 
 		** check that equation is consistent with model
 		mata: st_local("model",`mname'.model)
-		if ("`subcmd'"=="zeq"&("`model'"=="optimaliv"|"`model'"=="partial"|"`model'"=="interactive")) {
+		if ("`subcmd'"=="zeq"&("`model'"=="optimaliv"|"`model'"=="optimaliv_nolie"|"`model'"=="partial"|"`model'"=="interactive")) {
 			di as err "not allowed; zeq not allowed with `model'"
 		}
-		if ("`subcmd'"=="dheq"&("`model'"!="optimaliv")) {
+		if ("`subcmd'"=="dheq"&("`model'"!="optimaliv_nolie")) {
 			di as err "not allowed; dheq not allowed with `model'"
 		}
 
@@ -209,6 +212,10 @@ program ddml, eclass
 			// parse character is in macro `2'
 			local eqn `1'
 			local eqn_h `3'
+			if "`2'`3'"=="" {
+				di as err "estimation command for E[D|X,Z] missing"
+				exit 198
+			}
 		}
 
 		if "`model'"=="optimaliv"&"`genh'"=="" {
@@ -300,6 +307,9 @@ program ddml, eclass
 		if ("`r(model)'"=="optimaliv") {
 		_ddml_crossfit_additive , `options' mname(`mname') 
 		}
+		if ("`r(model)'"=="optimaliv_nolie") {
+		_ddml_crossfit_additive , `options' mname(`mname') 
+		}
 	}
 
 	*** estimate
@@ -332,6 +342,9 @@ program ddml, eclass
 			if ("`r(model)'"=="optimaliv") {
 				_ddml_estimate_optimaliv `mname', `options'
 			}
+			if ("`r(model)'"=="optimaliv_nolie") {
+				_ddml_estimate_optimaliv_nolie `mname', `options'
+			}
 		} 
 		else {
 			tempname b_resample v_resample bi vi b V
@@ -352,6 +365,9 @@ program ddml, eclass
 				}
 				if ("`r(model)'"=="optimaliv") {
 					_ddml_estimate_optimaliv `mname', `options'
+				}
+				if ("`r(model)'"=="optimaliv_nolie") {
+					_ddml_estimate_optimaliv_nolie `mname', `options'
 				}
 				mat bi = e(b)
 				mat vi = e(V)
