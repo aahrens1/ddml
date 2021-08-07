@@ -18,13 +18,25 @@ program _ddml_estimate_partial, eclass sortpreserve
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 
-	make_varlists, mname(`mname')
+	/*make_varlists, mname(`mname')
 
 	local ylist		`s(ylist)'
 	local Dlist		`s(Dlist)'
 	local ncombos	= s(ncombos)
-	local tokenlen	= `ncombos'*2
-	
+	local tokenlen	= `ncombos'*2*/
+
+	// get varlists
+	_ddml_make_varlists, mname(`mname')
+	// obtain all combinations
+	_ddml_allcombos `r(yvars)' - `r(dvars)' ,				///
+		`debug'												///
+		addprefix("")
+
+	local ncombos = r(ncombos)
+	local tokenlen = `ncombos'*2
+	local ylist `r(ystr)'
+	local Dlist `r(dstr)'
+
 	// replist empty => do for first resample
 	// replist = "all" do for all resamples
 	mata: st_local("numreps",strofreal(cols(`mname'.idFold)))

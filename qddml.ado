@@ -107,46 +107,46 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	local cmdoptions `cmdoptions' `options'
 
 	*** estimation
-	`qui' ddml init `model', mname(`mname')
+	`qui' ddml init `model', mname(`mname') `nolie'
 	if ("`model'"=="optimaliv"&"`nolie'"!="") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `cmdoptions'  
-		`qui' ddml deq, gen(d) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `cmdoptions' 
-		`qui' ddml dheq, gen(dh) mname(`mname') vname(`dendog'): `dhcmd' `dendog' `xctrl' `exexog', `cmdoptions' 
+		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
+		`qui' ddml deq, gen(d) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
+		`qui' ddml dheq, gen(dh) mname(`mname') vname(`dendog'): `dhcmd' `dendog' `xctrl' `exexog', `dhcmdoptions' 
 	} 
 	if ("`model'"=="optimaliv"&"`nolie'"=="") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `cmdoptions'  
-		`qui' ddml dheq, gen(dh) mname(`mname') vname(`dendog'): `dhcmd' `dendog' `xctrl' `exexog', `cmdoptions' 
-		`qui' ddml deq, gen(d) mname(`mname') vname(`dendog'): `dcmd' `mname'_dh `xctrl', `cmdoptions' 
+		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
+		`qui' ddml deq, gen(d) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' ///
+							| `dcmd' {D} `xctrl' `exexog', `dhcmdoptions' 
 	} 
 	else if ("`model'"=="iv") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `cmdoptions' 
+		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		local j = 1
 		foreach d of varlist `dendog' {
-			`qui' ddml deq, gen(d`j') mname(`mname') vname(`d'): `dcmd' `d' `xctrl', `cmdoptions' 
+			`qui' ddml deq, gen(d`j') mname(`mname') vname(`d'): `dcmd' `d' `xctrl', `dcmdoptions' 
 			local j = `j' + 1
 		}
 		local j = 1
 		foreach z of varlist `exexog' {
-			`qui' ddml zeq, gen(z`j') mname(`mname') vname(`z'): `zcmd' `z' `xctrl', `cmdoptions' 
+			`qui' ddml zeq, gen(z`j') mname(`mname') vname(`z'): `zcmd' `z' `xctrl', `zcmdoptions' 
 			local j = `j' + 1
 		}
 	}
 	else if ("`model'"=="late") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `cmdoptions' 
-		`qui' ddml deq, gen(d) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `cmdoptions' 
-		`qui' ddml zeq, gen(z) mname(`mname') vname(`exexog'): `zcmd' `exexog' `xctrl', `cmdoptions' 
+		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml deq, gen(d) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
+		`qui' ddml zeq, gen(z) mname(`mname') vname(`exexog'): `zcmd' `exexog' `xctrl', `zcmdoptions' 
 	}
 	else if ("`model'"=="partial") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `cmdoptions' 
+		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		local j = 1
 		foreach d of varlist `dexog' {
-			`qui' ddml deq, gen(d`j') mname(`mname') vname(`d'): `dcmd' `d' `xctrl', `cmdoptions' 
+			`qui' ddml deq, gen(d`j') mname(`mname') vname(`d'): `dcmd' `d' `xctrl', `dcmdoptions' 
 			local j = `j' + 1
 		}
 	}
 	else if ("`model'"=="interactive") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `cmdoptions' 
-		`qui' ddml deq, gen(d) mname(`mname') vname(`dexog'): `dcmd' `dexog' `xctrl', `cmdoptions' 
+		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml deq, gen(d) mname(`mname') vname(`dexog'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
 	}		
 	`qui' ddml crossfit, mname(`mname') kfolds(`kfolds') `tabfold' `noisily'
 	if "`verbose'"!="" ddml desc

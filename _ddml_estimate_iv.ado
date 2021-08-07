@@ -29,12 +29,12 @@ program _ddml_estimate_iv, eclass sortpreserve
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens(`mname'.nameZ))
 
+	// get varlists
 	_ddml_make_varlists, mname(`mname')
-	// seems to require _ddml_make_varlists?
-	_ddml_allcombos `r(eq)' ,								///
+	// obtain all combinations
+	_ddml_allcombos `r(yvars)' - `r(dvars)' - `r(zvars)' ,	///
 		`debug'												///
-		dpos_end(`r(dpos_end)')								///
-		zpos_start(`r(zpos_start)') zpos_end(`r(zpos_end)')	///
+		zpos(`r(zpos_start)') 								///
 		addprefix("")
 
 	local ncombos = r(ncombos)

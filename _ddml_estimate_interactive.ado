@@ -30,7 +30,6 @@ program _ddml_estimate_interactive, eclass sortpreserve
 	mata: st_local("nameY",invtokens(`mname'.nameY))
 
 	_ddml_allcombos `Ytilde'- `Ytilde' - `Dtilde',		///
-		/* putlast(`Y0opt' `Y1opt' `Dopt') */			///
 		addprefix("")									///
 		`debug'  
 

@@ -5,9 +5,9 @@ program define _ddml_allcombos, rclass
 	
 	syntax anything , [ putlast(string) ///
 						debug ///  
-						ypos_start(int 1) ypos_end(int 1) /// position of Y variables
-						dpos_start(int 2) dpos_end(int 0) /// position of D variables
-						zpos_start(int 0) zpos_end(int 0) /// position of Z variables
+						ypos(int 1) /// position of Y variables
+						DPOS_start(int 2) /// position of D variables
+						ZPOS_start(int 0) /// position of Z variables
 						sep(string) ///
 						addprefix(string) ///
 						]
@@ -22,6 +22,16 @@ program define _ddml_allcombos, rclass
 	mata: st_rclear()
 	mata: `out' = get_combos("`anything'","`sep'")
 	return scalar ncombos = `r(ncombos)'
+	local ncols = `r(ncols)'
+
+	// determine end position for D and Z vars
+	if `zpos_start'>0 {
+		local dpos_end = `zpos_start'-1
+		local zpos_end = `ncols'
+	}
+	else {
+		local dpos_end = `ncols'
+	}
 
 	// put one specific order at the end (intended for optimal model)
 	mata: `out' = put_last(`out',"`putlast'")
@@ -29,17 +39,17 @@ program define _ddml_allcombos, rclass
 		mata: `out'
 	}
 
-	// save all in one list separated by |
-	mata: mat_to_string(`out'[,`ypos_start'..`ypos_end'],"`sep'","`addprefix'")
+	// save all Y in one list separated by `sep'
+	mata: mat_to_string(`out'[,`ypos'],"`sep'","`addprefix'")
 	return local ystr `r(str)'
 
-	// save D variables in list separated by |
-	if (`dpos_start'!=0 & `dpos_end'!=0) {
+	// save D variables in list separated by `sep'
+	if (`dpos_start'>0) {
 		mata: mat_to_string(`out'[,`dpos_start'..`dpos_end'],"`sep'","`addprefix'")
 		return local dstr `r(str)'
 	}
-	// save Z variables in list separated by |
-	if (`zpos_start'!=0 & `zpos_end'!=0) {
+	// save Z variables in list separated by `sep'
+	if (`zpos_start'>0) {
 		mata: mat_to_string(`out'[,`zpos_start'..`zpos_end'],"`sep'","`addprefix'")
 		return local zstr `r(str)'
 	}
@@ -120,7 +130,8 @@ string matrix get_combos(string scalar input,string scalar sep)
 	}
 
 	st_numscalar("r(ncombos)",rows(out))
-	
+	st_numscalar("r(ncols)",cols(out))
+
 	return(out)
 
 }

@@ -7,6 +7,7 @@ program define _ddml_make_varlists, rclass
 	mata: `eqn' = init_eqnStruct()
 
 	// locals used below
+	mata: st_local("model",`mname'.model)
 	mata: st_local("numDH",strofreal(cols(`mname'.nameDH)))
 	mata: st_local("numD",strofreal(cols(`mname'.nameD)))
 	mata: st_local("numZ",strofreal(cols(`mname'.nameZ)))
@@ -35,6 +36,11 @@ program define _ddml_make_varlists, rclass
 		if "`eqntype'"=="dheq" {
 			local DHvn_list `DHvn_list' `vname'
 			local DHvno_list `DHvno_list' `vtilde'
+		}
+		if "`eqntype'"=="deq"&"`model'"=="optimaliv" {
+			mata: st_local("vtilde_h",`eqn'.Vtilde_h)
+			local DHvn_list `DHvn_list' `vname'
+			local DHvno_list `DHvno_list' `vtilde_h'
 		}
 	}
 
@@ -77,7 +83,7 @@ program define _ddml_make_varlists, rclass
 	}
 
 	// do the same for DH
-	if (`numDH'>0) {
+	if ("`model'"=="optimaliv"|"`model'"=="optimaliv_nolie") {
 		tempname DHv_list DHo_list
 		mata: `DHv_list' = tokens("`DHvn_list'")
 		mata: `DHo_list' = tokens("`DHvno_list'")
@@ -96,17 +102,23 @@ program define _ddml_make_varlists, rclass
 	// di "numeqnsD: `numeqnsD'"
 	// di "unique original varnames: `vn_uniq'"
 	// di "orthog_lists: `orthog_lists'"
+	local dash
 	foreach vl in `Dorthog_lists' {
 		// di "`vl' = ``vl''"
-		local Dtilde `Dtilde' - ``vl''
+		local Dtilde `Dtilde' `dash' ``vl''
+		local dash -
 	}
+	local dash
 	foreach vl in `Zorthog_lists' {
 		// di "`vl' = ``vl''"
-		local Ztilde `Ztilde' - ``vl''
+		local Ztilde `Ztilde' `dash' ``vl''
+		local dash -
 	}
+	local dash
 	foreach vl in `DHorthog_lists' {
 		// di "`vl' = ``vl''"
-		local DHtilde `DHtilde' - ``vl''
+		local DHtilde `DHtilde' `dash' ``vl''
+		local dash -
 	}
 
 
@@ -114,17 +126,23 @@ program define _ddml_make_varlists, rclass
 	mata: mata drop `eqn'
 	mata: mata drop `Dv_list' `Do_list' `Do_index' `Zv_list' `Zo_list' `Zo_index' `DHv_list' `DHo_list'
 
-	return local eq `Ytilde' `Dtilde' `Ztilde' `DHtilde'
+	//return local eq `Ytilde' - `Dtilde' - `Ztilde' `DHtilde'
 	return scalar dpos_end = `numD' + 1
 	return scalar dpos_start = 2
 	if (`numZ'>0) {
 		return scalar zpos_start = `numD' +2
 		return scalar zpos_end = `numD' + `numZ' + 1
 	}
-	if (`numDH'>0) {
+	if ("`model'"=="optimaliv"|"`model'"=="optimaliv_nolie") {		
 		return scalar zpos_start = `numD' +2
 		return scalar zpos_end = `numD' + `numDH' + 1
 	}
+	return scalar numD = `numD'
+	return scalar numDH = `numDH'
+	return scalar numZ = `numZ'
+	return local yvars `Ytilde'
+	return local dvars `Dtilde'
+	return local zvars `Ztilde' `DHtilde'
 end
 
 

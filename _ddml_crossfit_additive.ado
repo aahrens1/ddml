@@ -137,6 +137,12 @@ program _ddml_crossfit_additive, eclass sortpreserve
 				mata: st_local("vname",`eqn'.Vname)
 				mata: st_local("eststring",`eqn'.eststring)
 				mata: st_local("eqntype",`eqn'.eqntype)
+
+				if ("`model'"=="optimaliv") {
+					mata: st_local("vtilde_h",`eqn'.Vtilde_h)
+					mata: st_local("eststring_h",`eqn'.eststring_h)					
+				}
+
 				// seems to be unused
 				// mata: st_local("vtype",`eqn'.vtype)
 				local touse `mname'_sample
@@ -157,12 +163,16 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					kfolds(`kfolds')					///
 					foldvar(`mname'_fid_`m')			/// macro m is resampling counter
 					vtilde(`vtilde'_`m')				///
+					vtildeh(`vtilde_h'_`m')				/// LIE only
+					eststringh(`eststring_h')			/// LIE only
 					vname(`vname')						///
 					`resid'
 				
 				// store MSE and sample size
 				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
-					
+				if ("`eqntype'"=="deq"&"`model'"=="optimaliv") {
+					mata: add_to_eqn_h(`mname',`i',"`mname'_id `vtilde'", `r(mse_h)',`r(N_h)')	
+				}	
 			}
 	
 			// for each equation: display results and save names of tilde vars with smallest MSE
@@ -171,11 +181,11 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			// note that etype argument is a string and must match exactly
 			// note that subroutine uses field names of struct
 			di
-			di as res "Reporting crossfitting results (sample=`m')
-			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m')
-			_ddml_report_crossfit_res_mspe `mname', etype(deq) vlist(`listD') m(`m')
-			_ddml_report_crossfit_res_mspe `mname', etype(dheq) vlist(`listDH') m(`m')
-			_ddml_report_crossfit_res_mspe `mname', etype(zeq) vlist(`listZ') m(`m')
+			di as res "Reporting crossfitting results (sample=`m')"
+			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m') model(`model')
+			_ddml_report_crossfit_res_mspe `mname', etype(deq) vlist(`listD') m(`m') model(`model')
+			_ddml_report_crossfit_res_mspe `mname', etype(dheq) vlist(`listDH') m(`m') model(`model')
+			_ddml_report_crossfit_res_mspe `mname', etype(zeq) vlist(`listZ') m(`m') model(`model')
 			
 		}	// end crossfitting block
 	}	// end resampling block
@@ -248,6 +258,19 @@ void add_to_eqn(					struct ddmlStruct m,
 	//(*p).idVtilde	= st_data(., tokens(vnames))
 	(*p).MSE		= ((*p).MSE \ mse)
 	(*p).N			= n
+}
+
+void add_to_eqn_h(					struct ddmlStruct m,
+									real scalar eqnumber,
+									string scalar vnames,
+									real scalar mse,
+									real scalar n)
+{
+	pointer(struct eqnStruct) scalar p
+	p				= m.eqnlist[1,eqnumber]
+	//(*p).idVtilde	= st_data(., tokens(vnames))
+	(*p).MSE_h		= ((*p).MSE_h \ mse)
+	(*p).N_h		= n
 }
 
 // function to set crossfit dummy indicating whether crossfit has been done already

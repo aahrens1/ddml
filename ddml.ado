@@ -117,7 +117,7 @@ program ddml, eclass
 		}
 		local 0 "`restargs'"
 		// fold variable is option; default is ddmlfold
-		syntax , [mname(name) nolie]
+		syntax , [mname(name) NOLie]
 
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
@@ -161,10 +161,10 @@ program ddml, eclass
 		local eqn `3'
 		local 0 "`1'"
 		syntax ,	///			
-					gen(name)		///
 					[				///
+					gen(name)		///
 					vname(name)		///
-					genh(name)	/// (intended for LIE)
+					genh(name)		/// (intended for LIE)
 					mname(name)		///
 					vtype(string)   ///  "double", "float" etc
 					REPlace         ///
@@ -184,6 +184,11 @@ program ddml, eclass
 			local vname : word 2 of `eqn'
 		}
 
+		** 
+		if "`gen'"=="" {
+			local gen `vname'_t
+		}
+
 		** drop gen var if it already exists
 		if "`replace'"!="" {
 			cap drop `gen'
@@ -194,8 +199,13 @@ program ddml, eclass
 		if ("`subcmd'"=="zeq"&("`model'"=="optimaliv"|"`model'"=="optimaliv_nolie"|"`model'"=="partial"|"`model'"=="interactive")) {
 			di as err "not allowed; zeq not allowed with `model'"
 		}
+		if ("`subcmd'"=="dheq"&"`model'"=="optimaliv") {
+			di as err "not allowed; dheq not allowed with `model' and nolie"
+			exit 198
+		}
 		if ("`subcmd'"=="dheq"&("`model'"!="optimaliv_nolie")) {
 			di as err "not allowed; dheq not allowed with `model'"
+			exit 198
 		}
 
 		** add prefix to vtilde
@@ -207,7 +217,7 @@ program ddml, eclass
 		}
 
 		** split equation -- only required for D-eq with LIE
-		if "`model'"=="optimaliv" {
+		if "`subcmd'"=="deq"&"`model'"=="optimaliv" {
 			tokenize `" `eqn' "', parse("|")
 			// parse character is in macro `2'
 			local eqn `1'
@@ -219,7 +229,7 @@ program ddml, eclass
 		}
 
 		if "`model'"=="optimaliv"&"`genh'"=="" {
-			local genh `genh'_h
+			local genh `gen'_h
 		}
 
 		// subcmd macro tells add_eqn(.) which list to add it to
@@ -248,6 +258,18 @@ program ddml, eclass
 				mata: `mname'.nameD		= tokens("`dlist'")
 			}
 		}
+		if "`subcmd'"=="deq"&"`model'"=="optimaliv" {
+			// check if nameD already has vname; if not, add it to the list
+			mata: st_global("r(vname)",invtokens(`mname'.nameD))
+			if "`r(vname)'"=="" {
+				mata: `mname'.nameDH		= "`vname'"
+			}
+			else {
+				local dlist `r(vname)' `vname'
+				local dlist : list uniq dlist
+				mata: `mname'.nameDH		= tokens("`dlist'")
+			}
+		}		
 		if "`subcmd'"=="dheq" {
 			// check if nameDH already has vname; if not, add it to the list
 			mata: st_global("r(vname)",invtokens(`mname'.nameDH))
@@ -343,7 +365,7 @@ program ddml, eclass
 				_ddml_estimate_optimaliv `mname', `options'
 			}
 			if ("`r(model)'"=="optimaliv_nolie") {
-				_ddml_estimate_optimaliv_nolie `mname', `options'
+				_ddml_estimate_optimaliv `mname', `options'
 			}
 		} 
 		else {
@@ -367,7 +389,7 @@ program ddml, eclass
 					_ddml_estimate_optimaliv `mname', `options'
 				}
 				if ("`r(model)'"=="optimaliv_nolie") {
-					_ddml_estimate_optimaliv_nolie `mname', `options'
+					_ddml_estimate_optimaliv `mname', `options'
 				}
 				mat bi = e(b)
 				mat vi = e(V)

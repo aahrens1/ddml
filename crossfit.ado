@@ -20,7 +20,6 @@ program define crossfit, rclass sortpreserve
 													/// if omitted then default is additive model
 													/// 
 							/// options specific to LIE/DDML-IV
-							lie 					///
 							vtildeh(name)			/// intended for E[D^|X] where D^=E[D|XZ]=vtilde()	
 							eststringh(string asis)	/// est string for E[D^|XZ]		
 							]
@@ -32,6 +31,9 @@ program define crossfit, rclass sortpreserve
 	}
 
 	*** setup
+
+	** indicator for LIE/optimal-IV model
+	if "`eststringh'"!="" local lie lie
 	
 	// datatype for fitted values/residuals
 	if "`vtype'"=="" {
@@ -179,6 +181,12 @@ program define crossfit, rclass sortpreserve
 		qui gen double `vtilde_sq' = (`vname' - `vtilde')^2 if `touse'
 	}
 	
+	if "`lie'"!="" {
+		// vtilde has fitted values
+		tempvar vtildeh_sq
+		qui gen double `vtildeh_sq' = (`vtilde' - `vtildeh')^2 if `touse'		
+	}
+
 	// mspe
 	if "`treatvar'"=="" {
 		// additive-type model
@@ -198,6 +206,13 @@ program define crossfit, rclass sortpreserve
 		return scalar N1	= r(N)
 	}
 	
+	if "`lie'"!="" {
+		qui sum `vtildeh_sq' if `touse', meanonly
+		return scalar mse_h	= r(mean)
+		local N_h				= r(N)	
+		return scalar N_h = `N_h'
+	}
+
 	return scalar N			= `N'
  
  end

@@ -1,5 +1,5 @@
 program define _ddml_report_crossfit_res_mspe
-	syntax name(name=mname), etype(string) [ vlist(string) zett(string) m(integer 1) ]
+	syntax name(name=mname), etype(string) [ vlist(string) zett(string) m(integer 1) model(string) ]
 
 	// set struct field name
 	if "`etype'"=="yeq" {
@@ -32,7 +32,12 @@ program define _ddml_report_crossfit_res_mspe
 	}
 	else if "`etype'"=="dheq" {
 		local optname nameDHopt
-		local estring D|X,Z
+		if "`model'"=="optimaliv" {
+			local estring D^|X,Z with D^=E^[D|X]
+		} 
+		else {
+			local estring D|X,Z
+		}
 	}
 	else if "`etype'"=="zeq" {
 		local optname nameZopt
@@ -59,7 +64,7 @@ program define _ddml_report_crossfit_res_mspe
 		// mata: `mname'.`optname' = J(1,0,"")
 		foreach var of varlist `vlist' {
 			// m is the rep number
-			display_mspe `mname', vname(`var') etype(`etype') m(`m') zett(`zett')
+			display_mspe `mname', vname(`var') etype(`etype') m(`m') zett(`zett') model(`model')
 			local optlist `optlist' `r(optname)'
 		}
 
@@ -82,6 +87,7 @@ program define display_mspe, rclass
 								etype(string)	///
 								zett(string)	///
 								m(integer 1)	/// resample number
+								model(string) 	///
 								]
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
@@ -90,13 +96,21 @@ program define display_mspe, rclass
 	mata: `eqn' = init_eqnStruct()
 	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlistNames)))
 
+	** special case optimaliv: need to take MSE & N from deq structure
+	local vtildeh
+	if "`model'"=="optimaliv"&"`etype'"=="dheq" {
+		local etype deq
+		local zett _h 
+		local vtildeh _h
+	}
+
 	// initialize
 	local minmse = .
 	forvalues i=1/`numeqns' {
 		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 		mata: st_global("r(vname)",`eqn'.Vname)
 		mata: st_global("r(eqntype)",`eqn'.eqntype)
-		mata: st_local("vtilde",`eqn'.Vtilde)
+		mata: st_local("vtilde",`eqn'.Vtilde`vtildeh')
 		if "`vname'"==r(vname) & "`etype'"==r(eqntype) {
 			mata: st_local("command",`eqn'.command)
 			mata: st_local("MSE",strofreal(`eqn'.MSE`zett'[`m']))

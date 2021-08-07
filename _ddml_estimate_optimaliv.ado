@@ -8,7 +8,6 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 								show(string)	/// dertermines which to post
 								clear			/// deletes all tilde-variables (to be implemented)
 								replist(string)	/// list of resamplings to estimate
-								avplot			///
 								debug			///
 								* ]
 
@@ -29,13 +28,12 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameY",invtokens(`mname'.nameY))
 
-	// how do do these two programs relate?
-	// do we need two programs?
+	// get varlists
 	_ddml_make_varlists, mname(`mname')
-	_ddml_allcombos `r(eq)' ,								///
+	// obtain all combinations
+	_ddml_allcombos `r(yvars)' - `r(dvars)' - `r(zvars)' ,	///
 		`debug'												///
-		dpos_end(`r(dpos_end)')								///
-		zpos_start(`r(zpos_start)') zpos_end(`r(zpos_end)') ///
+		zpos(`r(zpos_start)') 								///
 		addprefix("")
 
 	local ncombos = r(ncombos)
