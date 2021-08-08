@@ -20,6 +20,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		CMDOPTions(string asis)					///
 		NOLie									///
 		NOIsily 								///
+		resample(integer 1)						///
 		* ]
 
 	mata: s_ivparse("`anything'")
@@ -150,7 +151,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	}		
 	`qui' ddml crossfit, mname(`mname') kfolds(`kfolds') `tabfold' `noisily'
 	if "`verbose'"!="" ddml desc
-	ddml estimate, mname(`mname')
+	ddml estimate, mname(`mname') resample(`resample')
 
 end 
 

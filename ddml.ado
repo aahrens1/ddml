@@ -369,9 +369,7 @@ program ddml, eclass
 			}
 		} 
 		else {
-			tempname b_resample v_resample bi vi b V
-			mat `b_resample' = J(1,`resample',.)
-			mat `v_resample' = J(1,`resample',.)
+			tempname b_resample v_resample //b V
 			forvalues i= 1(1)`resample' {
 				if ("`r(model)'"=="partial") {
 					_ddml_estimate_partial `mname', `options'
@@ -391,15 +389,22 @@ program ddml, eclass
 				if ("`r(model)'"=="optimaliv_nolie") {
 					_ddml_estimate_optimaliv `mname', `options'
 				}
-				mat bi = e(b)
-				mat vi = e(V)
-				mat `b_resample'[1,`i'] = `bi'[1,1]
-				mat `v_resample'[1,`i'] = `vi'[1,1]
+				tempname vi bi
+				mat `bi' = e(b)
+				mat `vi' = e(V)
+				if (`i'==1) {
+					mat `b_resample' = 1/`resample' * `bi'
+					mat `v_resample' = 1/`resample' * `vi'
+				}
+				else {
+					mat `b_resample' = `b_resample' + 1/`resample' * `bi'
+					mat `v_resample' = `v_resample' + 1/`resample' * `vi'					
+				}
 			}
-			mata: st_matrix("`b'",mean(st_matrix("`b_resample'")))
-			mata: st_matrix("`V'",mean(st_matrix("`v_resample'")))
+			//mata: st_matrix("`b'",mean(st_matrix("`b_resample'")))
+			//mata: st_matrix("`V'",mean(st_matrix("`v_resample'")))
 			ereturn clear
-			ereturn post `b' `V' //, depname(`Yopt') obs(`N') esample(`touse')
+			ereturn post `b_resample' `v_resample' //, depname(`Yopt') obs(`N') esample(`touse')
 		}
 	}
 end
