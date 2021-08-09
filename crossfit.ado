@@ -88,6 +88,7 @@ program define crossfit, rclass sortpreserve
 
 			// estimate excluding kth fold
 			`qui' `est_main' if `foldvar'!=`k' & `touse', `est_options'
+			local cmd `e(cmd)'
 			
 			// get fitted values and residuals for kth fold	
 			qui predict `vtype' `vtilde_k' if `foldvar'==`k' & `touse'
@@ -110,6 +111,7 @@ program define crossfit, rclass sortpreserve
 			// for treatvar = 1
 			// estimate excluding kth fold
 			`qui' `est_main' if `foldvar'!=`k' & `treatvar' == 1 & `touse', `est_options'
+			local cmd `e(cmd)'
 			// get fitted values for kth fold	
 			tempvar vtilde_k
 			qui predict `vtype' `vtilde_k' if `foldvar'==`k' & `treatvar' == 1 & `touse'
@@ -139,6 +141,7 @@ program define crossfit, rclass sortpreserve
 			// Step I: estimation of E[D|XZ]=D^
 			// estimate excluding kth fold
 			`qui' `est_main' if `foldvar'!=`k' & `touse', `est_options'
+			local cmd `e(cmd)'
 			
 			// get fitted values  
 			qui predict `vtype' `vtilde_k' if `touse'
@@ -156,6 +159,7 @@ program define crossfit, rclass sortpreserve
 
 			// estimation	
 			`qui' `est_main_h_k' if `foldvar'!=`k' & `touse', `est_options_h'
+			local cmd_h `e(cmd)'
 
 			// get fitted values  
 			qui predict `vtype' `vtildeh_k' if `touse'
@@ -214,6 +218,8 @@ program define crossfit, rclass sortpreserve
 	}
 
 	return scalar N			= `N'
+	return local cmd		`cmd'
+	return local cmd_h		`cmd_h'
  
  end
  

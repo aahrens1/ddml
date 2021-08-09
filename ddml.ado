@@ -3,6 +3,7 @@
 
 * notes:
 * e.command		= tokens(estcmd)[1,1] fails if command string starts with a prefix e.g. capture
+* check for incompatible y variables disabled - can't accommodate prefixes e.g. capture
 
 program ddml, eclass
 
@@ -241,10 +242,13 @@ program ddml, eclass
 			if "`r(vname)'"=="" {
 				mata: `mname'.nameY		= "`vname'"
 			}
+			/*
+			*** disabled - doesn't work with cap or other prefixes ***
 			else if "`r(vname)'"~="`vname'" {
 				di as err "error - incompatible y variables"
 				exit 198
 			}
+			*/
 		}
 		if "`subcmd'"=="deq" {
 			// check if nameD already has vname; if not, add it to the list

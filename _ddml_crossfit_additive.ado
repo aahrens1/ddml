@@ -169,9 +169,9 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					`resid'
 				
 				// store MSE and sample size
-				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
+				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)',"`r(cmd)'")
 				if ("`eqntype'"=="deq"&"`model'"=="optimaliv") {
-					mata: add_to_eqn_h(`mname',`i',"`mname'_id `vtilde'", `r(mse_h)',`r(N_h)')	
+					mata: add_to_eqn_h(`mname',`i',"`mname'_id `vtilde'", `r(mse_h)',`r(N_h)',"`r(cmd_h)'")	
 				}	
 			}
 	
@@ -251,26 +251,30 @@ void add_to_eqn(					struct ddmlStruct m,
 									real scalar eqnumber,
 									string scalar vnames,
 									real scalar mse,
-									real scalar n)
+									real scalar n,
+									string scalar cmd)
 {
 	pointer(struct eqnStruct) scalar p
 	p				= m.eqnlist[1,eqnumber]
 	//(*p).idVtilde	= st_data(., tokens(vnames))
 	(*p).MSE		= ((*p).MSE \ mse)
 	(*p).N			= n
+	(*p).command	= cmd
 }
 
 void add_to_eqn_h(					struct ddmlStruct m,
 									real scalar eqnumber,
 									string scalar vnames,
 									real scalar mse,
-									real scalar n)
+									real scalar n,
+									string scalar cmd_h)
 {
 	pointer(struct eqnStruct) scalar p
 	p				= m.eqnlist[1,eqnumber]
 	//(*p).idVtilde	= st_data(., tokens(vnames))
 	(*p).MSE_h		= ((*p).MSE_h \ mse)
 	(*p).N_h		= n
+	(*p).command_h	= cmd_h
 }
 
 // function to set crossfit dummy indicating whether crossfit has been done already
