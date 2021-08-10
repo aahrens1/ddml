@@ -20,7 +20,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 							foldlist(numlist)		///
 							mname(name)				///
 							/* eqnlist(namelist) */	/// not in use
-							reps(integer 1)			///
+							reps(integer 0)			///
 							]
 
 	// no checks included yet
@@ -62,9 +62,24 @@ program _ddml_crossfit_additive, eclass sortpreserve
 		mata: st_local("listZtilde",invtokens(`mname'.nameZtilde))
 		di "Number of Z estimating equations: `numeqnsZ'"
 	}
+	// initialize opt lists with void matrices of correct dimension
+	mata: st_local("numvarsD",strofreal(cols(`mname'.nameD)))
+	mata: st_local("numvarsZ",strofreal(cols(`mname'.nameZ)))
+	mata: `mname'.nameYopt = J(0,1,"")
+	mata: `mname'.nameDopt = J(0,`numvarsD',"")
+	mata: `mname'.nameDHopt = J(0,`numvarsD',"")
+	mata: `mname'.nameZopt = J(0,`numvarsZ',"")
 	
 	// folds and fold IDs
 	mata: st_local("hasfoldvars",strofreal(cols(`mname'.idFold)))
+	// if reps is specified then overwrite any existing fold vars.
+	if `reps'>0 {
+		local hasfoldvars = 0
+	}
+	else {
+		// default reps = 1
+		local reps = 1
+	}
 
 	// if empty:
 	// add fold IDs to model struct (col 1 = id, col 2 = fold id 1, col 3 = fold id 2 etc.)
@@ -175,20 +190,24 @@ program _ddml_crossfit_additive, eclass sortpreserve
 				}	
 			}
 	
-			// for each equation: display results and save names of tilde vars with smallest MSE
-			// hence subroutine changes the contents of eqn mname as well as reports
+			// for each equation: save names of tilde vars with smallest MSE
+			// in each resample m and for each variable in nameY/listD/etc.
 			// subroutine will handle case of empty lists
-			// note that etype argument is a string and must match exactly
-			// note that subroutine uses field names of struct
-			di
-			di as res "Reporting crossfitting results (sample=`m')"
-			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m') model(`model')
-			_ddml_report_crossfit_res_mspe `mname', etype(deq) vlist(`listD') m(`m') model(`model')
-			_ddml_report_crossfit_res_mspe `mname', etype(dheq) vlist(`listDH') m(`m') model(`model')
-			_ddml_report_crossfit_res_mspe `mname', etype(zeq) vlist(`listZ') m(`m') model(`model')
-			
+			_ddml_crossfit_update_optlist `mname', etype(yeq) vlist(`nameY') m(`m') model(`model')
+			_ddml_crossfit_update_optlist `mname', etype(deq) vlist(`listD') m(`m') model(`model')
+			_ddml_crossfit_update_optlist `mname', etype(dheq) vlist(`listDH') m(`m') model(`model')
+			_ddml_crossfit_update_optlist `mname', etype(zeq) vlist(`listZ') m(`m') model(`model')
+		
 		}	// end crossfitting block
 	}	// end resampling block
+
+	// set crossfitted field to 1	
+	mata: `mname'.crossfitted = 1
+	
+	// report results by equation type with resamplings grouped together
+	di
+	di as res "Reporting crossfitting results:"
+	_ddml_crossfit_report `mname'
 
 end
 

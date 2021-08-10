@@ -1,3 +1,5 @@
+*** retire - not in use ***
+
 program define _ddml_report_crossfit_res_mspe
 	syntax name(name=mname), etype(string) [ vlist(string) zett(string) m(integer 1) model(string) ]
 
@@ -68,12 +70,14 @@ program define _ddml_report_crossfit_res_mspe
 			local optlist `optlist' `r(optname)'
 		}
 
-		if `m'==1 {
-			mata: `mname'.`optname' = tokens("`optlist'")
-		}
-		else {
+//		if `m'==1 {
+//			mata: `mname'.`optname' = tokens("`optlist'")
+//		}
+//		else {
+			// assumes opt lists have been initialized as void lists
 			mata: `mname'.`optname' = (`mname'.`optname' \ tokens("`optlist'"))
-		}
+
+//		}
 
 	}
 end

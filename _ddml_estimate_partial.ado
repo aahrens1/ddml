@@ -18,13 +18,6 @@ program _ddml_estimate_partial, eclass sortpreserve
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 
-	/*make_varlists, mname(`mname')
-
-	local ylist		`s(ylist)'
-	local Dlist		`s(Dlist)'
-	local ncombos	= s(ncombos)
-	local tokenlen	= `ncombos'*2*/
-
 	// get varlists
 	_ddml_make_varlists, mname(`mname')
 	// obtain all combinations
@@ -56,19 +49,26 @@ program _ddml_estimate_partial, eclass sortpreserve
 
 	// do for each specified resamples
 	foreach m in `replist' {
+		// text used in output below
+		if `numreps'>1 {
+			local stext " (sample=`m')"
+		}
 		if "`show'"=="all" {
 			forvalues i = 1(2)`tokenlen' {
 				tokenize `ylist' , parse("-")
-				local y ``i''
+				local y ``i''_`m'
+				// remove extraneous space before the "_"
+				local y : subinstr local y " " "", all
 				tokenize `Dlist' , parse("-")
 				local d ``i''
-				//add_prefix `y' `d', prefix("")
-				add_suffix `y' `d', suffix("_`m'")
+				add_suffix `d', suffix("_`m'")
+				local d `s(vnames)'
 				// do_regress is OLS but with original varnames
-				// do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
-				do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+				do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 				di
-				di as res "DML (sample=`m') with Y=`y' and D=`d' (N=`e(N)'):"
+				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+				di as text "Y = " as res "`y'"
+				di as text "D = " as res "`d'"
 				ereturn di
 		     }
 		}
@@ -76,11 +76,9 @@ program _ddml_estimate_partial, eclass sortpreserve
 		*** estimate best model
 	   	mata: st_local("Yopt",`mname'.nameYopt[`m'])
    		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
-		//add_prefix `Yopt' `Dopt', prefix("")
 		// do_regress is OLS but with original varnames
 		add_suffix `Yopt' `Dopt', suffix("_`m'")
-		// do_regress `Yopt' `Dopt' if `touse' , nocons `robust' yname(`Yopt') dnames(`Dopt')
-		do_regress `s(vnames)' if `touse' , nocons `robust' yname(`Yopt') dnames(`Dopt')
+		do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 	
 		// plot
 		if ("`avplot'"!="") {
@@ -90,11 +88,14 @@ program _ddml_estimate_partial, eclass sortpreserve
 		// display
 		di
 		if `ncombos' > 1 {
-			di as res "Optimal model: DML (sample=`m') with optimal Y=`Yopt' and optimal D=`Dopt' (N=`e(N)'):"
+			di as text "Optimal DML model`stext':" _c
 		}
 		else {
-			di as res "DML (sample=`m') with Y=`Yopt' and D=`Dopt' (N=`e(N)'):"
+			di as text "DML`stext':" _c
 		}
+		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+		di as text "Y = " as res "`Yopt'"
+		di as text "D = " as res "`Dopt'"
 		ereturn display
 	}
 end

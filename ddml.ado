@@ -4,6 +4,7 @@
 * notes:
 * e.command		= tokens(estcmd)[1,1] fails if command string starts with a prefix e.g. capture
 * check for incompatible y variables disabled - can't accommodate prefixes e.g. capture
+* spin off init code into a subroutine
 
 program ddml, eclass
 
@@ -139,6 +140,7 @@ program ddml, eclass
 		mata: `mname'.idSample		= st_data(., ("`mname'_id", "`mname'_sample"))
 		// fill by hand
 		mata: `mname'.model			= "`model'"
+		mata: `mname'.crossfitted	= 0
 	}
 	
 	*** set sample, foldvar, etc.

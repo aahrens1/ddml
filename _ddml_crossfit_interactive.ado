@@ -3,7 +3,7 @@
 * notes:
 * why is crossfitted field set in additive code but not here?
 * check it's correct that interactive-type estimation always goes with reporting mse0 and mse1
-* are multiple Zs allowed?
+* are multiple Ds allowed?
 
 *** ddml cross-fitting for the interactive model & LATE
 program _ddml_crossfit_interactive, eclass sortpreserve
@@ -16,7 +16,7 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 							TABFold					///
 							foldlist(numlist)		///
 							mname(name)				///
-							reps(integer 1)			///
+							reps(integer 0)			/// if reps specified then overwrite any existing fold vars
 							yrclass					///
 							drclass					/// 
 							]
@@ -49,9 +49,26 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 		mata: st_local("listZtilde",invtokens(`mname'.nameZtilde))
 		di "Number of Z estimating equations: `numeqnsZ'"
 	}		 
+	// initialize opt lists with void matrices of correct dimension
+	mata: st_local("numvarsD",strofreal(cols(`mname'.nameD)))
+	mata: st_local("numvarsZ",strofreal(cols(`mname'.nameZ)))
+	mata: `mname'.nameY0opt = J(0,1,"")
+	mata: `mname'.nameY1opt = J(0,1,"")
+	mata: `mname'.nameDopt = J(0,`numvarsD',"")
+	mata: `mname'.nameD0opt = J(0,`numvarsD',"")
+	mata: `mname'.nameD1opt = J(0,`numvarsD',"")
+	mata: `mname'.nameZopt = J(0,`numvarsZ',"")
 	
 	// folds and fold IDs
 	mata: st_local("hasfoldvars",strofreal(cols(`mname'.idFold)))
+	// if reps is specified then overwrite any existing fold vars.
+	if `reps'>0 {
+		local hasfoldvars = 0
+	}
+	else {
+		// default reps = 1
+		local reps = 1
+	}
 
 	// if empty:
 	// add fold IDs to model struct (col 1 = id, col 2 = fold id 1, col 3 = fold id 2 etc.)
@@ -168,40 +185,74 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 			}
 	
 		}
-		
-		*** print results & find optimal model
-	
-		di
-		di as res "Reporting crossfitting results (sample=`m')
 
-		// interactive model
+		// for each equation: save names of tilde vars with smallest MSE
+		// in each resample m and for each variable in nameY/listD/etc.
+		// subroutine will handle case of empty lists
 		if "`model'"=="interactive" {
-	
 			// dependent variable
-			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m') zett(0)
-			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m') zett(1)
-
+			_ddml_crossfit_update_optlist `mname', etype(yeq) vlist(`nameY') m(`m') zett(0)
+			_ddml_crossfit_update_optlist `mname', etype(yeq) vlist(`nameY') m(`m') zett(1)
 			// D variable
-			_ddml_report_crossfit_res_mspe `mname', etype(deq) vlist(`listD') m(`m')
-
+			_ddml_crossfit_update_optlist `mname', etype(deq) vlist(`listD') m(`m')
 		}
-	
 		// late model
-		if "`model'"=="late" {
-	
+		else if "`model'"=="late" {
 			// dependent variable
-			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m') zett(0)
-			_ddml_report_crossfit_res_mspe `mname', etype(yeq) vlist(`nameY') m(`m') zett(1)
-	
+			_ddml_crossfit_update_optlist `mname', etype(yeq) vlist(`nameY') m(`m') zett(0)
+			_ddml_crossfit_update_optlist `mname', etype(yeq) vlist(`nameY') m(`m') zett(1)
 			// D variable
-			_ddml_report_crossfit_res_mspe `mname', etype(deq) vlist(`listD') m(`m') zett(0)
-			_ddml_report_crossfit_res_mspe `mname', etype(deq) vlist(`listD') m(`m') zett(1)
-			
+			_ddml_crossfit_update_optlist `mname', etype(deq) vlist(`listD') m(`m') zett(0)
+			_ddml_crossfit_update_optlist `mname', etype(deq) vlist(`listD') m(`m') zett(1)
 			// Z variable
-			_ddml_report_crossfit_res_mspe `mname', etype(zeq) vlist(`listZ') m(`m')
-
-		}	
+			_ddml_crossfit_update_optlist `mname', etype(zeq) vlist(`listZ') m(`m')
+		}
+		else {
+			di as err "internal error - unknown model `model'"
+			exit 198
+		}
 	}
+
+	// set crossfitted field to 1	
+	mata: `mname'.crossfitted = 1
+
+	// report results by equation type with resamplings grouped together
+	di
+	di as res "Reporting crossfitting results:"
+	_ddml_crossfit_report `mname'
+	
+	/*
+	// y equation - all models
+	forvalues m=1/`reps' {
+		_ddml_crossfit_report `mname', etype(yeq) vlist(`nameY') m(`m') model(`model') zett(0)
+	}
+	forvalues m=1/`reps' {
+		_ddml_crossfit_report `mname', etype(yeq) vlist(`nameY') m(`m') model(`model') zett(1)
+	}
+	// interactive model - D eqn only
+	if "`model'"=="interactive" {
+		forvalues m=1/`reps' {
+			_ddml_crossfit_report `mname', etype(deq) vlist(`listD') m(`m') model(`model')
+		}
+	}
+	// LATE - D and Z eqns
+	else if "`model'"=="late" {
+		forvalues m=1/`reps' {
+			_ddml_crossfit_report `mname', etype(deq) vlist(`listD') m(`m') model(`model') zett(0)
+		}
+		forvalues m=1/`reps' {
+			_ddml_crossfit_report `mname', etype(deq) vlist(`listD') m(`m') model(`model') zett(1)
+		}
+		forvalues m=1/`reps' {
+			_ddml_crossfit_report `mname', etype(zeq) vlist(`listZ') m(`m') model(`model')
+		}
+	}
+	else {
+		di as err "internal error - unknown model `model'"
+		exit 198
+	}
+	*/
+
 
 end
 

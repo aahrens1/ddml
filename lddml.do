@@ -45,6 +45,7 @@ struct ddmlStruct {
 	string matrix		nameZopt		// names of optimal orthog. instruments
 	pointer rowvector	eqnlist			// list of all orthog equations
 	string rowvector	eqnlistNames	// names of corresponding Vtilde variable
+	real scalar 		crossfitted   	// =1 if crossvalidation has been done; 0 if not
 }
 
 // to add: boolean to indicate min MSE / optimal orthogonalized var

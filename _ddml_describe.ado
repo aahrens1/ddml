@@ -1,6 +1,5 @@
 * notes:
-* does not support flagging minimized MSEs
-* does not report crossfitting results
+
 
 program define _ddml_describe
 
@@ -8,6 +7,8 @@ program define _ddml_describe
 	
 	local showcmd	= ("`nocmd'"=="")
 	local showall	= ("`all'"~="")
+
+	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 
 	mata: printf("{res}Model: %s\n", `mname'.model)
 	di as res "ID: `mname'_id"
@@ -64,6 +65,10 @@ program define _ddml_describe
 		mata: `mname'.eqnlist
 		di as res "Corresponding tilde names:"
 		mata: `mname'.eqnlistNames
+	}
+	
+	if `crossfitted' {
+		_ddml_crossfit_report `mname'
 	}
 
 end
