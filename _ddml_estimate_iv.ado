@@ -62,21 +62,31 @@ program _ddml_estimate_iv, eclass sortpreserve
 
 	// do for each specified resamples
 	foreach m in `replist' {
+		// text used in output below
+		if `numreps'>1 {
+			local stext " (sample=`m')"
+		}
 		forvalues i = 1(2)`tokenlen' {
-			// if ("`show'"=="all"|`i'==`tokenlen') {
 			if "`show'"=="all" {
 				tokenize `ylist' , parse("-")
-				add_suffix ``i'', suffix("_`m'")
-				local y `s(vnames)'
+				local y ``i''_`m'
+				// remove extraneous space before the "_"
+				local y : subinstr local y " " "", all
 				tokenize `Dlist' , parse("-")
 				add_suffix ``i'', suffix("_`m'")
 				local d `s(vnames)'
 				tokenize `Zlist' , parse("-")
 				add_suffix ``i'', suffix("_`m'")
 				local z `s(vnames)'
+				// do_regress is OLS/IV but with original varnames
+				do_regress `y' `d' (`z') if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 				di
-				di as res "DML (sample = `m') with Y=`y', D=`d', Z=`z':"
-			   	ivreg2 `y' (`d'=`z') if `touse', nocons `robust' noheader nofooter
+				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+				di as text "Y = " as res "`y'"
+				di as text "D = " as res "`d'"
+				di as text "Z = " as res "`z'"
+				ereturn di
+				
 			 }
 		}
 	
@@ -84,9 +94,26 @@ program _ddml_estimate_iv, eclass sortpreserve
 		mata: st_local("Yopt",`mname'.nameYopt[`m'])
 		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
 		mata: st_local("Zopt",invtokens(`mname'.nameZopt[`m',.]))
+		// do_regress is OLS/IV but with original varnames
+		add_suffix `Yopt' `Dopt', suffix("_`m'")
+		local YD `s(vnames)'
+		add_suffix `Zopt', suffix("_`m'")
+		local IVlist `s(vnames)'
+		do_regress `YD' (`IVlist') if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+
+		// display
 		di
-		di as res "Optimal model: DML (sample = `m') with Y=`Yopt', D=`Dopt', Z=`Zopt':"
-	   	ivreg2 `Yopt'_`m' (`Dopt'_`m'=`Zopt'_`m') if `touse', nocons `robust' noheader nofooter
+		if `ncombos' > 1 {
+			di as text "Optimal DML model`stext':" _c
+		}
+		else {
+			di as text "DML`stext':" _c
+		}
+		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+		di as text "Y = " as res "`Yopt'"
+		di as text "D = " as res "`Dopt'"
+		di as text "D = " as res "`Zopt'"
+		ereturn display
 	}
 
 	/*
@@ -109,6 +136,30 @@ program _ddml_estimate_iv, eclass sortpreserve
 	*/
 
 end
+
+
+// does OLS/IV and reports with substitute yname and dnames
+program define do_regress, eclass
+	syntax anything [if] [in] , [ yname(name) dnames(namelist) * ]
+
+	marksample touse
+
+	qui reg `anything' if `touse', `options'
+
+	tempname b
+	tempname V
+	mat `b' = e(b)
+	mat `V' = e(V)
+	matrix colnames `b' = `dnames'
+	matrix rownames `b' = `yname'
+ 	matrix colnames `V' = `dnames'
+	matrix rownames `V' = `dnames'
+	local N = e(N)
+	ereturn clear
+	ereturn post `b' `V', depname(`yname') obs(`N') esample(`touse')
+
+end
+
 
 // adds rep number suffixes to list of varnames
 program define add_suffix, sclass

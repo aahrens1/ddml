@@ -148,7 +148,7 @@ program define report_equation
 			// m is the rep number
 			display_mspe `mname', vname(`var') etype(`etype') m(`m') zett(`zett') model(`model') optname(`optname')
 		}
-	
+		di "{hline 75}"
 	}
 	
 	mata: mata drop `eqn'
@@ -200,10 +200,10 @@ program define display_mspe, rclass
 			mata: st_local("MSE",strofreal(`eqn'.MSE`zett'[`m']))
 			mata: st_local("N",strofreal(`eqn'.N`zett'))
 			di _col(2) "`vname'" _c
-			di _col(20) "`vtilde'`optflag'" _c
+			di _col(20) "`vtilde'" _c
 			di _col(40) "`command'" _c
 			di _col(50) %6.0f `N' _c
-			di _col(60) %10.6f `MSE' _c
+			di _col(60) %10.4f `MSE' "`optflag'" _c
 			di _col(74) %2.0f `m'
 		}
 	}

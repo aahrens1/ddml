@@ -63,7 +63,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 				local d ``i''
 				add_suffix `d', suffix("_`m'")
 				local d `s(vnames)'
-				// do_regress is OLS but with original varnames
+				// do_regress is OLS/IV but with original varnames
 				do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 				di
 				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
@@ -76,7 +76,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 		*** estimate best model
 	   	mata: st_local("Yopt",`mname'.nameYopt[`m'])
    		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
-		// do_regress is OLS but with original varnames
+		// do_regress is OLS/IV but with original varnames
 		add_suffix `Yopt' `Dopt', suffix("_`m'")
 		do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 	
@@ -124,7 +124,7 @@ program define add_suffix, sclass
 	sreturn local vnames `vnames'
 end
 
-// does OLS and reports with substitute yname and dnames
+// does OLS/IV and reports with substitute yname and dnames
 program define do_regress, eclass
 	syntax anything [if] [in] , [ yname(name) dnames(namelist) * ]
 
