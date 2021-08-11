@@ -133,8 +133,8 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 			// seems to be unused
 			// mata: st_local("vtype",`eqn'.vtype)
 			local touse `mname'_sample
-			// always request residuals not fitted values
-			local resid resid
+			// always request fitted values
+			local resid  
 	
 			di as text "Cross-fitting equation `i' (`vname', `vtilde')" _c
 	
