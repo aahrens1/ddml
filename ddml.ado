@@ -354,64 +354,25 @@ program ddml, eclass
 
 		mata: st_global("r(model)",`mname'.model)
 
-		if (`resample'<=1) {
-			if ("`r(model)'"=="partial") {
-				_ddml_estimate_partial `mname', `options'
-			}
-			if ("`r(model)'"=="iv") {
-				_ddml_estimate_iv `mname', `options'
-			}
-			if ("`r(model)'"=="interactive") {
-				_ddml_estimate_interactive `mname', `options'
-			}
-			if ("`r(model)'"=="late") {
-				_ddml_estimate_late `mname', `options'
-			}
-			if ("`r(model)'"=="optimaliv") {
-				_ddml_estimate_optimaliv `mname', `options'
-			}
-			if ("`r(model)'"=="optimaliv_nolie") {
-				_ddml_estimate_optimaliv `mname', `options'
-			}
-		} 
-		else {
-			tempname b_resample v_resample //b V
-			forvalues i= 1(1)`resample' {
-				if ("`r(model)'"=="partial") {
-					_ddml_estimate_partial `mname', `options'
-				}
-				if ("`r(model)'"=="iv") {
-					_ddml_estimate_iv `mname', `options'
-				}
-				if ("`r(model)'"=="interactive") {
-					_ddml_estimate_interactive `mname', `options'
-				}
-				if ("`r(model)'"=="late") {
-					_ddml_estimate_late `mname', `options'
-				}
-				if ("`r(model)'"=="optimaliv") {
-					_ddml_estimate_optimaliv `mname', `options'
-				}
-				if ("`r(model)'"=="optimaliv_nolie") {
-					_ddml_estimate_optimaliv `mname', `options'
-				}
-				tempname vi bi
-				mat `bi' = e(b)
-				mat `vi' = e(V)
-				if (`i'==1) {
-					mat `b_resample' = 1/`resample' * `bi'
-					mat `v_resample' = 1/`resample' * `vi'
-				}
-				else {
-					mat `b_resample' = `b_resample' + 1/`resample' * `bi'
-					mat `v_resample' = `v_resample' + 1/`resample' * `vi'					
-				}
-			}
-			//mata: st_matrix("`b'",mean(st_matrix("`b_resample'")))
-			//mata: st_matrix("`V'",mean(st_matrix("`v_resample'")))
-			ereturn clear
-			ereturn post `b_resample' `v_resample' //, depname(`Yopt') obs(`N') esample(`touse')
+		if ("`r(model)'"=="partial") {
+			_ddml_estimate_partial `mname', `options'
 		}
+		if ("`r(model)'"=="iv") {
+			_ddml_estimate_iv `mname', `options'
+		}
+		if ("`r(model)'"=="interactive") {
+			_ddml_estimate_interactive `mname', `options'
+		}
+		if ("`r(model)'"=="late") {
+			_ddml_estimate_late `mname', `options'
+		}
+		if ("`r(model)'"=="optimaliv") {
+			_ddml_estimate_optimaliv `mname', `options'
+		}
+		if ("`r(model)'"=="optimaliv_nolie") {
+			_ddml_estimate_optimaliv `mname', `options'
+		}
+
 	}
 end
 

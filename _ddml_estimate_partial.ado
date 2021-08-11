@@ -67,8 +67,8 @@ program _ddml_estimate_partial, eclass sortpreserve
 				do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 				di
 				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-				di as text "Y = " as res "`y'"
-				di as text "D = " as res "`d'"
+				di as text "E[y|X] = " as res "`y'"
+				di as text "E[D|X] = " as res "`d'"
 				ereturn di
 		     }
 		}
@@ -94,8 +94,8 @@ program _ddml_estimate_partial, eclass sortpreserve
 			di as text "DML`stext':" _c
 		}
 		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-		di as text "Y = " as res "`Yopt'"
-		di as text "D = " as res "`Dopt'"
+		di as text "E[y|X] = " as res "`Yopt'"
+		di as text "E[D|X] = " as res "`Dopt'"
 		ereturn display
 	}
 end

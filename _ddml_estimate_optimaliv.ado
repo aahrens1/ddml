@@ -61,6 +61,10 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 
 	// do for each specified resamples
 	foreach m in `replist' {
+		// text used in output below
+		if `numreps'>1 {
+			local stext " (sample=`m')"
+		}
 		forvalues i = 1(2)`tokenlen' {
 			if "`show'"=="all" {
 			   	tokenize `ylist' , parse("-")
@@ -73,7 +77,10 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 				add_suffix ``i'', suffix("_`m'")
 				local dh `s(vnames)'
 				di
-				di as res "DML (sample=`m') with E[Y|X]=`y', E[D|X]=`d', E[D|X,Y]=`dh':"
+				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+				di as text "E[Y|X]   = " as res "`y'"
+				di as text "E[D|X]   = " as res "`d'"
+				di as text "E[D|X,Z] = " as res "`dh'"
 				_ddml_optiv, yvar(`nameY') ytilde(`y')				///
 					dvar(`nameD') dhtilde(`dh') dtilde(`d')			///
 					touse(`touse') `debug'
@@ -91,7 +98,16 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 		local DHopt `s(vnames)'
 		
 		di
-		di as res "Optimal model: DML (sample=`m') with E[Y|X]=`Yopt', E[D|X]=`Dopt', E[D|X,Y]=`DHopt':"
+		if `ncombos' > 1 {
+			di as text "Optimal DML model`stext':" _c
+		}
+		else {
+			di as text "DML`stext':" _c
+		}
+		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+		di as text "E[Y|X]   = " as res "`Yopt'"
+		di as text "E[D|X]   = " as res "`Dopt'"
+		di as text "E[D|X,Z] = " as res "`DHopt'"
 		_ddml_optiv, yvar(`nameY') ytilde(`Yopt')				///
 			dvar(`nameD') dhtilde(`DHopt') dtilde(`Dopt')		///
 			touse(`touse') `debug'

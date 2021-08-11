@@ -82,12 +82,12 @@ program _ddml_estimate_iv, eclass sortpreserve
 				do_regress `y' `d' (`z') if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 				di
 				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-				di as text "Y = " as res "`y'"
-				di as text "D = " as res "`d'"
-				di as text "Z = " as res "`z'"
+				di as text "E[y|X] = " as res "`y'"
+				di as text "E[D|X] = " as res "`d'"
+				di as text "E[Z|X] = " as res "`z'"
 				ereturn di
 				
-			 }
+			}
 		}
 	
 		//mata: `mname'.nameDtilde
@@ -110,9 +110,9 @@ program _ddml_estimate_iv, eclass sortpreserve
 			di as text "DML`stext':" _c
 		}
 		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-		di as text "Y = " as res "`Yopt'"
-		di as text "D = " as res "`Dopt'"
-		di as text "D = " as res "`Zopt'"
+		di as text "E[y|X] = " as res "`Yopt'"
+		di as text "E[D|X] = " as res "`Dopt'"
+		di as text "E[Z|X] = " as res "`Zopt'"
 		ereturn display
 	}
 

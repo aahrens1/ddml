@@ -1,4 +1,6 @@
 *** ddml estimation: LATE model
+* notes:
+* add check somewhere that only a single D and a single Z are allowed.
 
 program _ddml_estimate_late, eclass sortpreserve
 
@@ -67,9 +69,11 @@ program _ddml_estimate_late, eclass sortpreserve
 
 	// do for each specified resamples
 	foreach m in `replist' {
-	
+		// text used in output below
+		if `numreps'>1 {
+			local stext " (sample=`m')"
+		}
 		forvalues i = 1(2)`tokenlen' {
-			// if ("`show'"=="all"|`i'==`tokenlen') {
 			if "`show'"=="all" {
 				tokenize `y0list' , parse("-")
 				local y0 ``i''
@@ -82,7 +86,12 @@ program _ddml_estimate_late, eclass sortpreserve
 				tokenize `Zlist' , parse("-")
 				local z ``i''
 				di
-				di as res "DML (sample = `m') with Y0=`y0', Y1=`y1', D0=`d0', D1=`d1', Z=`z':"
+				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+				di as text "E[y|X,Z=0] = " as res "`y0'_`m'"
+				di as text "E[y|X,Z=1] = " as res "`y1'_`m'"
+				di as text "E[D|X,Z=0] = " as res "`d0'_`m'"
+				di as text "E[D|X,Z=1] = " as res "`d1'_`m'"
+				di as text "E[Z|X]     = " as res "`z'_`m'"
 				_ddml_late, yvar(`nameY') y0tilde(`y0'_`m') y1tilde(`y1'_`m')	///
 							dvar(`nameD') d0tilde(`d0'_`m') d1tilde(`d1'_`m')	///
 							zvar(`nameZ') ztilde(`z'_`m')						///
@@ -96,7 +105,18 @@ program _ddml_estimate_late, eclass sortpreserve
 		mata: st_local("D1opt",`mname'.nameD1opt[`m'])
 		mata: st_local("Zopt",`mname'.nameZopt[`m'])
 		di
-		di as res "Optimal model: DML (sample = `m') with Y0=`Y0opt', Y1=`Y1opt', D0=`D0opt', D1=`D1opt', Z=`Zopt':"
+		if `ncombos' > 1 {
+			di as text "Optimal DML model`stext':" _c
+		}
+		else {
+			di as text "DML`stext':" _c
+		}
+		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+		di as text "E[y|X,Z=0] = " as res "`Y0opt'_`m'"
+		di as text "E[y|X,Z=1] = " as res "`Y1opt'_`m'"
+		di as text "E[D|X,Z=0] = " as res "`D0opt'_`m'"
+		di as text "E[D|X,Z=1] = " as res "`D1opt'_`m'"
+		di as text "E[Z|X]     = " as res "`Zopt'_`m'"
 		_ddml_late, yvar(`nameY') y0tilde(`Y0opt'_`m') y1tilde(`Y1opt'_`m')	///
 					dvar(`nameD') d0tilde(`D0opt'_`m') d1tilde(`D1opt'_`m')	///
 					zvar(`nameZ') ztilde(`Zopt'_`m')						///

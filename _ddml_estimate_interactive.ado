@@ -1,4 +1,6 @@
 *** ddml estimation: interactive model
+* notes:
+* add check somewhere that only a single D is allowed.
 
 program _ddml_estimate_interactive, eclass sortpreserve
 
@@ -66,9 +68,11 @@ program _ddml_estimate_interactive, eclass sortpreserve
 
 	// do for each specified resamples
 	foreach m in `replist' {
-
+		// text used in output below
+		if `numreps'>1 {
+			local stext " (sample=`m')"
+		}
 		forvalues i = 1(2)`tokenlen' {
-			// if ("`show'"=="all"|`i'==`tokenlen') {
 			if "`show'"=="all" {
 				tokenize `y0list' , parse("-")
 				local y0 ``i''
@@ -77,7 +81,10 @@ program _ddml_estimate_interactive, eclass sortpreserve
 				tokenize `Dlist' , parse("-")
 				local d ``i''
 				di
-				di as res "DML (sample = `m') with Y0=`y0', Y1=`y1', D=`d':"
+				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+				di as text "E[y|X,D=0] = " as res "`y0'_`m'"
+				di as text "E[y|X,D=1] = " as res "`y1'_`m'"
+				di as text "E[D|X]     = " as res "`d'_`m'"
 				_ddml_ate,				///
 					yvar(`nameY')		///
 					dvar(`nameD')		///
@@ -92,7 +99,16 @@ program _ddml_estimate_interactive, eclass sortpreserve
 		mata: st_local("Y1opt",`mname'.nameY1opt[`m'])
 		mata: st_local("Dopt",`mname'.nameDopt[`m'])
 		di
-		di as res "Optimal model: DML (sample = `m') with Y0=`Y0opt', Y1=`Y1opt', D=`Dopt':"
+		if `ncombos' > 1 {
+			di as text "Optimal DML model`stext':" _c
+		}
+		else {
+			di as text "DML`stext':" _c
+		}
+		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+		di as text "E[y|X,D=0] = " as res "`Y0opt'_`m'"
+		di as text "E[y|X,D=1] = " as res "`Y1opt'_`m'"
+		di as text "E[D|X]     = " as res "`Dopt'_`m'"
 		_ddml_ate,					///
 			 yvar(`nameY')			///
 			 dvar(`nameD')			///

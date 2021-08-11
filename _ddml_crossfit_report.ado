@@ -78,7 +78,7 @@ program define report_equation
 	if "`etype'"=="yeq" {
 		if "`zett'"=="" {
 			local optname nameYopt
-			local estring y|X
+			local estring E[y|X]
 		}
 		else {
 		// Either interactive (D=0,1) or LATE (Z=0,1)
@@ -90,40 +90,40 @@ program define report_equation
 			}
 			if "`zett'"=="0" {
 				local optname nameY0opt
-				local estring y|X,`DZ'=0
+				local estring E[y|X,`DZ'=0]
 			}
 			else if "`zett'"=="1" {
 				local optname nameY1opt
-				local estring y|X,`DZ'=1
+				local estring E[y|X,`DZ'=1]
 			}
 		}
 	}
 	else if "`etype'"=="deq" {
 		if "`zett'"=="" {
 			local optname nameDopt
-			local estring D|X
+			local estring E[D|X]
 		}
 		else if "`zett'"=="0" {
 			local optname nameD0opt
-			local estring D|X,Z=0
+			local estring E[D|X,Z=0]
 		}
 		else if "`zett'"=="1" {
 			local optname nameD1opt
-			local estring D|X,Z=1
+			local estring E[D|X,Z=1]
 		}
 	}
 	else if "`etype'"=="dheq" {
 		local optname nameDHopt
 		if "`model'"=="optimaliv" {
-			local estring D^|X,Z with D^=E^[D|X]
+			local estring E[D^|X,Z] with D^=E^[D|X]
 		} 
 		else {
-			local estring D|X,Z
+			local estring E[D|X,Z]
 		}
 	}
 	else if "`etype'"=="zeq" {
 		local optname nameZopt
-		local estring Z|X
+		local estring E[Z|X]
 	}
 	else {
 		di as err "internal error - unknown equation type `etype'"
