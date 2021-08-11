@@ -73,7 +73,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 					di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
 					di as text "E[y|X] = " as res "`y'"
 					di as text "E[D|X] = " as res "`d'"
-					ereturn di					
+					ereturn display				
 				}
 		    }
 		}

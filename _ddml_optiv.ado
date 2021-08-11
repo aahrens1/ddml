@@ -60,7 +60,7 @@ program _ddml_optiv, eclass
 	mat `V' = e(V)
 
 	// display
-	local N = `e(N)'
+	local N = e(N)
 	matrix colnames `b' = `dvar'
 	matrix rownames `b' = `yvar'
 	matrix colnames `V' = `dvar'
@@ -70,6 +70,5 @@ program _ddml_optiv, eclass
 	// ereturn post esample(vname) moves - doesn't copy! - vname into e(sample), so create a copy
 	qui gen byte `esample'=`touse'
 	ereturn post `b' `V', depname(`yvar') obs(`N') esample(`esample')
-	ereturn display
 
 end

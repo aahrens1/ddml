@@ -84,11 +84,6 @@ program _ddml_estimate_interactive, eclass sortpreserve
 				local y1 ``i''
 				tokenize `Dlist' , parse("-")
 				local d ``i''
-				di
-				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-				di as text "E[y|X,D=0] = " as res "`y0'_`m'"
-				di as text "E[y|X,D=1] = " as res "`y1'_`m'"
-				di as text "E[D|X]     = " as res "`d'_`m'"
 				_ddml_ate,				///
 					yvar(`nameY')		///
 					dvar(`nameD')		///
@@ -96,15 +91,25 @@ program _ddml_estimate_interactive, eclass sortpreserve
 					y1tilde(`y1'_`m')	///
 					dtilde(`d'_`m')		///
 					touse(`touse')
+				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+				di as text "E[y|X,D=0] = " as res "`y0'_`m'"
+				di as text "E[y|X,D=1] = " as res "`y1'_`m'"
+				di as text "E[D|X]     = " as res "`d'_`m'"
+				ereturn display
 			}
 		}
-
 
 		// estimate best model
 		local nodisp 
 		if `nreplist'>1 local nodisp qui
 		`nodisp' {
-			di
+			_ddml_ate,					///
+				 yvar(`nameY')			///
+				 dvar(`nameD')			///
+				 y0tilde(`Y0opt'_`m')	///
+				 y1tilde(`Y1opt'_`m')	///
+				 dtilde(`Dopt'_`m')		///
+				 touse(`touse')
 			if `ncombos' > 1 {
 				di as text "Optimal DML model`stext':" _c
 			}
@@ -115,13 +120,7 @@ program _ddml_estimate_interactive, eclass sortpreserve
 			di as text "E[y|X,D=0] = " as res "`Y0opt'_`m'"
 			di as text "E[y|X,D=1] = " as res "`Y1opt'_`m'"
 			di as text "E[D|X]     = " as res "`Dopt'_`m'"
-			_ddml_ate,					///
-				 yvar(`nameY')			///
-				 dvar(`nameD')			///
-				 y0tilde(`Y0opt'_`m')	///
-				 y1tilde(`Y1opt'_`m')	///
-				 dtilde(`Dopt'_`m')		///
-				 touse(`touse')
+			ereturn display
 		}
 
 		*** aggregate over resampling iterations if there is more than one

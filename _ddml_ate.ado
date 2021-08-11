@@ -29,7 +29,7 @@ program _ddml_ate, eclass
     matrix rownames `V' = "`dvar'"
     ereturn clear
     ereturn post `b' `V', depname(`yvar') obs(`N')
-    ereturn display
+
 end
 
 

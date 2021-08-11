@@ -31,7 +31,6 @@ program _ddml_late, eclass
     matrix rownames `V' = "`dvar'"
     ereturn clear
     ereturn post `b' `V', depname(`yvar') obs(`N')
-    ereturn display
 
 end
 

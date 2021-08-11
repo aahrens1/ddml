@@ -91,19 +91,18 @@ program _ddml_estimate_late, eclass sortpreserve
 				local d1 ``i''
 				tokenize `Zlist' , parse("-")
 				local z ``i''
-				di
-				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-				di as text "E[y|X,Z=0] = " as res "`y0'_`m'"
-				di as text "E[y|X,Z=1] = " as res "`y1'_`m'"
-				di as text "E[D|X,Z=0] = " as res "`d0'_`m'"
-				di as text "E[D|X,Z=1] = " as res "`d1'_`m'"
-				di as text "E[Z|X]     = " as res "`z'_`m'"
 				// omit if this is the optimal model, which will be estimated at the end
 				if ("`Y0opt'"!="`y0'_`m'"|"`Y1opt'"!="`y1'_`m'"|"`D1opt'"!="`d1'_`m'"|"`D0opt'"!="`d0'_`m'"|"`Zopt'"!="`z'_`m'") {
 					_ddml_late, yvar(`nameY') y0tilde(`y0'_`m') y1tilde(`y1'_`m')	///
 							dvar(`nameD') d0tilde(`d0'_`m') d1tilde(`d1'_`m')	///
 							zvar(`nameZ') ztilde(`z'_`m')						///
 							touse(`touse')
+					di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+					di as text "E[y|X,Z=0] = " as res "`y0'_`m'"
+					di as text "E[y|X,Z=1] = " as res "`y1'_`m'"
+					di as text "E[D|X,Z=0] = " as res "`d0'_`m'"
+					di as text "E[D|X,Z=1] = " as res "`d1'_`m'"
+					di as text "E[Z|X]     = " as res "`z'_`m'"									
 				}
 			}
 		}
@@ -112,7 +111,10 @@ program _ddml_estimate_late, eclass sortpreserve
 		local nodisp 
 		if `nreplist'>1 local nodisp qui
 		`nodisp' {
-			di
+			_ddml_late, yvar(`nameY') y0tilde(`Y0opt'_`m') y1tilde(`Y1opt'_`m')	///
+						dvar(`nameD') d0tilde(`D0opt'_`m') d1tilde(`D1opt'_`m')	///
+						zvar(`nameZ') ztilde(`Zopt'_`m')						///
+						touse(`touse')  
 			if `ncombos' > 1 {
 				di as text "Optimal DML model`stext':" _c
 			}
@@ -125,10 +127,6 @@ program _ddml_estimate_late, eclass sortpreserve
 			di as text "E[D|X,Z=0] = " as res "`D0opt'_`m'"
 			di as text "E[D|X,Z=1] = " as res "`D1opt'_`m'"
 			di as text "E[Z|X]     = " as res "`Zopt'_`m'"
-			_ddml_late, yvar(`nameY') y0tilde(`Y0opt'_`m') y1tilde(`Y1opt'_`m')	///
-						dvar(`nameD') d0tilde(`D0opt'_`m') d1tilde(`D1opt'_`m')	///
-						zvar(`nameZ') ztilde(`Zopt'_`m')						///
-						touse(`touse')  
 		}
 
 		*** aggregate over resampling iterations if there is more than one
