@@ -83,19 +83,17 @@ program _ddml_estimate_iv, eclass sortpreserve
 				add_suffix ``i'', suffix("_`m'")
 				local z `s(vnames)'
 				// do_regress is OLS/IV but with original varnames
-				if ("`y'"!="`Yopt'"|"`d'"!="`Dopt'"|"`z'"!="Zopt") { / omit if opt model to show at the end
+				if ("`y'"!="`Yopt'"|"`d'"!="`Dopt'"|"`z'"!="Zopt") { // omit if opt model to show at the end
 					do_regress `y' `d' (`z') if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+					di
+					di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+					di as text "E[y|X] = " as res "`y'"
+					di as text "E[D|X] = " as res "`d'"
+					di as text "E[Z|X] = " as res "`z'"
+					ereturn display
 				}
-				di
-				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-				di as text "E[y|X] = " as res "`y'"
-				di as text "E[D|X] = " as res "`d'"
-				di as text "E[Z|X] = " as res "`z'"
-				ereturn di
-				
 			}
 		}
-	
 
 		// estimate best model
 		local nodisp 
@@ -107,7 +105,6 @@ program _ddml_estimate_iv, eclass sortpreserve
 			local IVlist `s(vnames)'
 			do_regress `YD' (`IVlist') if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 			// display
-			di
 			if `ncombos' > 1 {
 				di as text "Optimal DML model`stext':" _c
 			}
