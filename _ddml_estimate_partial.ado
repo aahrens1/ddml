@@ -6,7 +6,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 								ROBust			///
 								show(string)	/// dertermines which to post
 								clear			/// deletes all tilde-variables (to be implemented)
-								replist(string)	/// list of resamplings to estimate
+								REP(integer 0)	/// resampling iteration for the estimation, 0=use all
 								* ]
 	
 	// base sample for estimation - determined by if/in
@@ -30,23 +30,27 @@ program _ddml_estimate_partial, eclass sortpreserve
 	local ylist `r(ystr)'
 	local Dlist `r(dstr)'
 
-	// replist empty => do for first resample
+	// replist empty => do all
 	// replist = "all" do for all resamples
 	mata: st_local("numreps",strofreal(`mname'.nreps))
-	if "`replist'"=="" {
-		local replist 1
-	}
-	else if "`replist'"=="all" {
+	if `rep'==0 { // use all
 		numlist "1/`numreps'"
 		local replist "`r(numlist)'"
 	}
 	else {
-		numlist "`replist'"
+		numlist "`rep'"
 		local replist "`r(numlist)'"
 	}
+	local nreplist : word count `replist'
 
 	// do for each specified resamples
+	tempname bagg vagg 
 	foreach m in `replist' {
+
+		*** retrieve best model
+	   	mata: st_local("Yopt",`mname'.nameYopt[`m'])
+   		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
+
 		// text used in output below
 		if `numreps'>1 {
 			local stext " (sample=`m')"
@@ -59,32 +63,56 @@ program _ddml_estimate_partial, eclass sortpreserve
 				local y : subinstr local y " " "", all
 				tokenize `Dlist' , parse("-")
 				local d ``i''
-				add_suffix `d', suffix("_`m'")
-				local d `s(vnames)'
-				// do_regress is OLS/IV but with original varnames
-				do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
-				di
-				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-				di as text "E[y|X] = " as res "`y'"
-				di as text "E[D|X] = " as res "`d'"
-				ereturn di
-		     }
+				if ("`y'"!="`Yopt'"|"`d'"!="Dopt") { // omit if opt model to show at the end
+					add_suffix `d', suffix("_`m'")
+					local d `s(vnames)'
+					// do_regress is OLS/IV but with original varnames
+					do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+					di
+					di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+					di as text "E[y|X] = " as res "`y'"
+					di as text "E[D|X] = " as res "`d'"
+					ereturn di					
+				}
+		    }
 		}
-	
-		*** estimate best model
-	   	mata: st_local("Yopt",`mname'.nameYopt[`m'])
-   		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
-		// do_regress is OLS/IV but with original varnames
+
+		// estimate best model
 		add_suffix `Yopt' `Dopt', suffix("_`m'")
 		do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
-	
-		// plot
-		if ("`avplot'"!="") {
-		   twoway (scatter `s(vnames)') (lfit `s(vnames)')
+
+		*** aggregate over resampling iterations if there is more than one
+		if `nreplist'>1 {
+			tempname bi vi
+			mat `bi' = e(b)
+			mat `vi' = e(V)
+			if `m'==1 {
+				mat `bagg' = 1/`numreps' * `bi'
+				mat `vagg' = 1/`numreps' * `vi'
+			} 
+			else {
+				mat `bagg' = `bagg' + 1/`numreps' * `bi'
+				mat `vagg' = `vagg' + 1/`numreps' * `vi'				
+			}
+			if `m'==`numreps' {
+				local N = e(N)
+				ereturn clear
+				ereturn post `bagg' `vagg', depname(`nameY') obs(`N') esample(`touse')
+			}
 		}
-	
-		// display
-		di
+	}
+		
+	// plot
+	if ("`avplot'"!="") {
+	   twoway (scatter `s(vnames)') (lfit `s(vnames)')
+	}
+
+	// display
+	di
+	if `nreplist'>1 {
+		di as text "Aggregate DML model over `nreplist' repetitions:"
+	}
+	else {
 		if `ncombos' > 1 {
 			di as text "Optimal DML model`stext':" _c
 		}
@@ -94,8 +122,8 @@ program _ddml_estimate_partial, eclass sortpreserve
 		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
 		di as text "E[y|X] = " as res "`Yopt'"
 		di as text "E[D|X] = " as res "`Dopt'"
-		ereturn display
 	}
+	ereturn display
 end
 
 // adds model name prefixes to list of varnames
