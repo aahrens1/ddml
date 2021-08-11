@@ -9,7 +9,7 @@ program _ddml_estimate_interactive, eclass sortpreserve
 								ROBust			///
 								show(string)	/// dertermines which to post
 								clear			/// deletes all tilde-variables (to be implemented)
-								replist(string)	/// list of resamplings to estimate
+								REP(integer 0)	/// resampling iteration for the estimation, 0=use all
 								avplot			///
 								debug			///
 								* ]
@@ -49,29 +49,35 @@ program _ddml_estimate_interactive, eclass sortpreserve
 		di
 	}
 	
-	// replist empty => do for first resample
-	// replist = "all" do for all resamples
+	// replist empty => do all
+	// replist = integer; do for specified resample iteration
 	mata: st_local("numreps",strofreal(`mname'.nreps))
-	if "`replist'"=="" {
-		local replist 1
-	}
-	else if "`replist'"=="all" {
+	if `rep'==0 { // use all
 		numlist "1/`numreps'"
 		local replist "`r(numlist)'"
 	}
 	else {
-		numlist "`replist'"
+		numlist "`rep'"
 		local replist "`r(numlist)'"
 	}
+	local nreplist : word count `replist'
 
 	// do for each specified resamples
+	tempname bagg vagg 
 	foreach m in `replist' {
+
+		*** retrieve best model
+		mata: st_local("Y0opt",`mname'.nameY0opt[`m'])
+		mata: st_local("Y1opt",`mname'.nameY1opt[`m'])
+		mata: st_local("Dopt",`mname'.nameDopt[`m'])
+
 		// text used in output below
 		if `numreps'>1 {
 			local stext " (sample=`m')"
 		}
-		forvalues i = 1(2)`tokenlen' {
-			if "`show'"=="all" {
+
+		if "`show'"=="all" {
+			forvalues i = 1(2)`tokenlen' {
 				tokenize `y0list' , parse("-")
 				local y0 ``i''
 				tokenize `y1list' , parse("-")
@@ -93,46 +99,52 @@ program _ddml_estimate_interactive, eclass sortpreserve
 			}
 		}
 
-		mata: st_local("Y0opt",`mname'.nameY0opt[`m'])
-		mata: st_local("Y1opt",`mname'.nameY1opt[`m'])
-		mata: st_local("Dopt",`mname'.nameDopt[`m'])
-		di
-		if `ncombos' > 1 {
-			di as text "Optimal DML model`stext':" _c
+
+		// estimate best model
+		local nodisp 
+		if `nreplist'>1 local nodisp qui
+		`nodisp' {
+			di
+			if `ncombos' > 1 {
+				di as text "Optimal DML model`stext':" _c
+			}
+			else {
+				di as text "DML`stext':" _c
+			}
+			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+			di as text "E[y|X,D=0] = " as res "`Y0opt'_`m'"
+			di as text "E[y|X,D=1] = " as res "`Y1opt'_`m'"
+			di as text "E[D|X]     = " as res "`Dopt'_`m'"
+			_ddml_ate,					///
+				 yvar(`nameY')			///
+				 dvar(`nameD')			///
+				 y0tilde(`Y0opt'_`m')	///
+				 y1tilde(`Y1opt'_`m')	///
+				 dtilde(`Dopt'_`m')		///
+				 touse(`touse')
 		}
-		else {
-			di as text "DML`stext':" _c
+
+		*** aggregate over resampling iterations if there is more than one
+		if `nreplist'>1 {
+			tempname bi vi
+			mat `bi' = e(b)
+			mat `vi' = e(V)
+			if `m'==1 {
+				mat `bagg' = 1/`numreps' * `bi'
+				mat `vagg' = 1/`numreps' * `vi'
+			} 
+			else {
+				mat `bagg' = `bagg' + 1/`numreps' * `bi'
+				mat `vagg' = `vagg' + 1/`numreps' * `vi'				
+			}
+			if `m'==`numreps' { // save & display on last iteration
+				local N = e(N)
+				ereturn clear
+				di as text "Aggregate DML model over `nreplist' repetitions:"
+				ereturn post `bagg' `vagg', depname(`nameY') obs(`N') esample(`touse')
+				ereturn display
+			}
 		}
-		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-		di as text "E[y|X,D=0] = " as res "`Y0opt'_`m'"
-		di as text "E[y|X,D=1] = " as res "`Y1opt'_`m'"
-		di as text "E[D|X]     = " as res "`Dopt'_`m'"
-		_ddml_ate,					///
-			 yvar(`nameY')			///
-			 dvar(`nameD')			///
-			 y0tilde(`Y0opt'_`m')	///
-			 y1tilde(`Y1opt'_`m')	///
-			 dtilde(`Dopt'_`m')		///
-			 touse(`touse')
-	
-		/*
-		// display
-		tempname b
-		tempname V 
-		mat `b' = e(b)
-		mat `V' = e(V)
-		matrix colnames `b' = `nameD'
-		matrix rownames `b' = `nameY'
-		matrix colnames `V' = `nameD'
-		matrix rownames `V' = `nameD'
-		local N = e(N)
-		ereturn clear
-		ereturn post `b' `V', depname(`Yopt') obs(`N') esample(`touse')
-		if "`robust'"~="" {
-			ereturn local vcetype   robust
-		}
-		ereturn display
-		*/
 	}
 
 end

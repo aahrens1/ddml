@@ -31,7 +31,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 	local Dlist `r(dstr)'
 
 	// replist empty => do all
-	// replist = "all" do for all resamples
+	// replist = integer; do for specified resample iteration
 	mata: st_local("numreps",strofreal(`mname'.nreps))
 	if `rep'==0 { // use all
 		numlist "1/`numreps'"
@@ -55,6 +55,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 		if `numreps'>1 {
 			local stext " (sample=`m')"
 		}
+
 		if "`show'"=="all" {
 			forvalues i = 1(2)`tokenlen' {
 				tokenize `ylist' , parse("-")
@@ -78,8 +79,22 @@ program _ddml_estimate_partial, eclass sortpreserve
 		}
 
 		// estimate best model
-		add_suffix `Yopt' `Dopt', suffix("_`m'")
-		do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+		local nodisp 
+		if `nreplist'>1 local nodisp qui
+		`nodisp' {
+			add_suffix `Yopt' `Dopt', suffix("_`m'")
+			do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+			if `ncombos' > 1 {
+				di as text "Optimal DML model`stext':" _c
+			}
+			else {
+				di as text "DML`stext':" _c
+			}
+			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+			di as text "E[y|X] = " as res "`Yopt'"
+			di as text "E[D|X] = " as res "`Dopt'"
+			ereturn display
+		}
 
 		*** aggregate over resampling iterations if there is more than one
 		if `nreplist'>1 {
@@ -94,36 +109,21 @@ program _ddml_estimate_partial, eclass sortpreserve
 				mat `bagg' = `bagg' + 1/`numreps' * `bi'
 				mat `vagg' = `vagg' + 1/`numreps' * `vi'				
 			}
-			if `m'==`numreps' {
+			if `m'==`numreps' { // save & display on last iteration
 				local N = e(N)
 				ereturn clear
+				di as text "Aggregate DML model over `nreplist' repetitions:"
 				ereturn post `bagg' `vagg', depname(`nameY') obs(`N') esample(`touse')
+				ereturn display
 			}
 		}
 	}
 		
 	// plot
-	if ("`avplot'"!="") {
-	   twoway (scatter `s(vnames)') (lfit `s(vnames)')
-	}
+	//if ("`avplot'"!="") {
+	//   twoway (scatter `s(vnames)') (lfit `s(vnames)')
+	//}
 
-	// display
-	di
-	if `nreplist'>1 {
-		di as text "Aggregate DML model over `nreplist' repetitions:"
-	}
-	else {
-		if `ncombos' > 1 {
-			di as text "Optimal DML model`stext':" _c
-		}
-		else {
-			di as text "DML`stext':" _c
-		}
-		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-		di as text "E[y|X] = " as res "`Yopt'"
-		di as text "E[D|X] = " as res "`Dopt'"
-	}
-	ereturn display
 end
 
 // adds model name prefixes to list of varnames

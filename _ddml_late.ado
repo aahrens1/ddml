@@ -11,7 +11,7 @@ program _ddml_late, eclass
                 d1tilde(varname) ///
                 zvar(varname) ///
                 ztilde(varname) ///
-				[touse(varname)]
+				[touse(varname) NODisplay]
 
     if "`touse'"=="" {
         tempvar touse

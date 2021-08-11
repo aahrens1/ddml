@@ -20,7 +20,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		CMDOPTions(string asis)					///
 		NOLie									///
 		NOIsily 								///
-		resample(integer 1)						///
+		REPs(integer 1)							///
 		* ]
 
 	mata: s_ivparse("`anything'")
@@ -149,9 +149,9 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		`qui' ddml deq, gen(d) mname(`mname') vname(`dexog'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
 	}		
-	`qui' ddml crossfit, mname(`mname') kfolds(`kfolds') `tabfold' `noisily'
+	`qui' ddml crossfit, mname(`mname') kfolds(`kfolds') `tabfold' `noisily' reps(`reps')
 	if "`verbose'"!="" ddml desc
-	ddml estimate, mname(`mname') resample(`resample')
+	ddml estimate, mname(`mname')  
 
 end 
 
