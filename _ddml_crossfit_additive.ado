@@ -80,6 +80,8 @@ program _ddml_crossfit_additive, eclass sortpreserve
 		// default reps = 1
 		local reps = 1
 	}
+	// store number of resamplings
+	mata: `mname'.nreps = `reps'
 
 	// if empty:
 	// add fold IDs to model struct (col 1 = id, col 2 = fold id 1, col 3 = fold id 2 etc.)

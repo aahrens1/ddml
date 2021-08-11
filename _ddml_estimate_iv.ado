@@ -45,9 +45,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 
 	// replist empty => do for first resample
 	// replist = "all" do for all resamples
-	mata: st_local("numreps",strofreal(cols(`mname'.idFold)))
-	// subtract 1 (first col is id variable)
-	local numreps = `numreps' - 1
+	mata: st_local("numreps",strofreal(`mname'.nreps))
 	if "`replist'"=="" {
 		local replist 1
 	}
