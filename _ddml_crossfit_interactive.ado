@@ -17,8 +17,6 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 							foldlist(numlist)		///
 							mname(name)				///
 							reps(integer 0)			/// if reps specified then overwrite any existing fold vars
-							yrclass					///
-							drclass					/// 
 							]
 
 	// no checks included yet

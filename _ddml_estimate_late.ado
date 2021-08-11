@@ -102,7 +102,8 @@ program _ddml_estimate_late, eclass sortpreserve
 					di as text "E[y|X,Z=1] = " as res "`y1'_`m'"
 					di as text "E[D|X,Z=0] = " as res "`d0'_`m'"
 					di as text "E[D|X,Z=1] = " as res "`d1'_`m'"
-					di as text "E[Z|X]     = " as res "`z'_`m'"									
+					di as text "E[Z|X]     = " as res "`z'_`m'"			
+					ereturn display						
 				}
 			}
 		}
@@ -127,6 +128,7 @@ program _ddml_estimate_late, eclass sortpreserve
 			di as text "E[D|X,Z=0] = " as res "`D0opt'_`m'"
 			di as text "E[D|X,Z=1] = " as res "`D1opt'_`m'"
 			di as text "E[Z|X]     = " as res "`Zopt'_`m'"
+			ereturn display
 		}
 
 		*** aggregate over resampling iterations if there is more than one

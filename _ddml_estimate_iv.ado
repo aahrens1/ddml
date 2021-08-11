@@ -135,6 +135,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 				local N = e(N)
 				ereturn clear
 				ereturn post `bagg' `vagg', depname(`nameY') obs(`N') esample(`touse')
+				ereturn display
 			}
 		}
 	}
