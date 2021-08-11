@@ -144,13 +144,16 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 			if ("`cvdone'"=="1") continue
 			*/
 			
-			if ("`eqntype'"=="yeq") {
+			if ("`eqntype'"=="yeq") & ("`model'"=="interactive") {
 				local treatvar	`listD'
+			}
+			else if ("`eqntype'"=="yeq") & ("`model'"=="late") {
+				local treatvar	`listZ'
 			}
 			else if ("`eqntype'"=="deq") & ("`model'"=="interactive") {
 				local treatvar
 			}
-			else if ("`eqntype'"=="deq") {
+			else if ("`eqntype'"=="deq") & ("`model'"=="late") {
 				local treatvar	`listZ'
 			}
 			else if ("`eqntype'"=="zeq") {
