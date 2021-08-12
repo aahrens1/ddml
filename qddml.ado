@@ -44,6 +44,10 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if "`dcmd'"=="" local dcmd `cmd'
 	if "`dhcmd'"=="" local dhcmd `cmd'
 	if "`zcmd'"=="" local zcmd `cmd'
+	local ycmdoptions `ycmdoptions' `cmdoptions'
+	local dcmdoptions `dcmdoptions' `cmdoptions'
+	local zcmdoptions `zcmdoptions' `cmdoptions'
+	local dhcmdoptions `dhcmdoptions' `cmdoptions'
 
 	**** syntax checks
 	if ("`model'"=="optimaliv") {
@@ -104,50 +108,47 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	*** model name
 	if "`mname'"=="" local mname m0		
 
-	*** add `*'-options to cmdoptions 
-	local cmdoptions `cmdoptions' `options'
-
 	*** estimation
 	`qui' ddml init `model', mname(`mname') `nolie'
 	if ("`model'"=="optimaliv"&"`nolie'"!="") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
-		`qui' ddml deq, gen(d) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
-		`qui' ddml dheq, gen(dh) mname(`mname') vname(`dendog'): `dhcmd' `dendog' `xctrl' `exexog', `dhcmdoptions' 
+		`qui' ddml yeq, gen(`depvar't) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
+		`qui' ddml deq, gen(`dendog't) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
+		`qui' ddml dheq, gen(`dendog'th) mname(`mname') vname(`dendog'): `dhcmd' `dendog' `xctrl' `exexog', `dhcmdoptions' 
 	} 
 	if ("`model'"=="optimaliv"&"`nolie'"=="") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
-		`qui' ddml deq, gen(d) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' ///
+		`qui' ddml yeq, gen(`depvar't) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
+		`qui' ddml deq, gen(`dendog't) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' ///
 							| `dcmd' {D} `xctrl' `exexog', `dhcmdoptions' 
 	} 
 	else if ("`model'"=="iv") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml yeq, gen(`depvar't) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		local j = 1
 		foreach d of varlist `dendog' {
-			`qui' ddml deq, gen(d`j') mname(`mname') vname(`d'): `dcmd' `d' `xctrl', `dcmdoptions' 
+			`qui' ddml deq, gen(`d't`j') mname(`mname') vname(`d'): `dcmd' `d' `xctrl', `dcmdoptions' 
 			local j = `j' + 1
 		}
 		local j = 1
 		foreach z of varlist `exexog' {
-			`qui' ddml zeq, gen(z`j') mname(`mname') vname(`z'): `zcmd' `z' `xctrl', `zcmdoptions' 
+			`qui' ddml zeq, gen(`z't`j') mname(`mname') vname(`z'): `zcmd' `z' `xctrl', `zcmdoptions' 
 			local j = `j' + 1
 		}
 	}
 	else if ("`model'"=="late") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
-		`qui' ddml deq, gen(d) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
-		`qui' ddml zeq, gen(z) mname(`mname') vname(`exexog'): `zcmd' `exexog' `xctrl', `zcmdoptions' 
+		`qui' ddml yeq, gen(`depvar't) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml deq, gen(`dendog't) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
+		`qui' ddml zeq, gen(`exexog't) mname(`mname') vname(`exexog'): `zcmd' `exexog' `xctrl', `zcmdoptions' 
 	}
 	else if ("`model'"=="partial") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml yeq, gen(`depvar't) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		local j = 1
 		foreach d of varlist `dexog' {
-			`qui' ddml deq, gen(d`j') mname(`mname') vname(`d'): `dcmd' `d' `xctrl', `dcmdoptions' 
+			`qui' ddml deq, gen(`d't`j') mname(`mname') vname(`d'): `dcmd' `d' `xctrl', `dcmdoptions' 
 			local j = `j' + 1
 		}
 	}
 	else if ("`model'"=="interactive") {
-		`qui' ddml yeq, gen(y) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
-		`qui' ddml deq, gen(d) mname(`mname') vname(`dexog'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
+		`qui' ddml yeq, gen(`depvar't) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml deq, gen(`dexog't) mname(`mname') vname(`dexog'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
 	}		
 	`qui' ddml crossfit, mname(`mname') kfolds(`kfolds') `tabfold' `noisily' reps(`reps')
 	if "`verbose'"!="" ddml desc
