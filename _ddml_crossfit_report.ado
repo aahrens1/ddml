@@ -1,5 +1,5 @@
 program define _ddml_crossfit_report
-	syntax name(name=mname)
+	syntax name(name=mname), [byfold]
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	// used multiple times below
@@ -10,55 +10,59 @@ program define _ddml_crossfit_report
 	mata: st_local("listD",invtokens(`mname'.nameD))
 	mata: st_local("listDH",invtokens(`mname'.nameDH))
 	mata: st_local("listZ",invtokens(`mname'.nameZ))
-	mata: st_local("reps",strofreal(cols(`mname'.idFold)))
-	// first column is ID number so subtract
-	local reps = `reps'-1
+	mata: st_local("numreps",strofreal(`mname'.nreps))
 
 	if "`model'"=="interactive" | "`model'"=="late" {
 		// y equation - all models
-		forvalues m=1/`reps' {
-			report_equation `mname', etype(yeq) vlist(`nameY') m(`m') model(`model') zett(0)
+		forvalues m=1/`numreps' {
+			report_equation `mname', etype(yeq) vlist(`nameY') m(`m') model(`model') zett(0) `byfold'
 		}
-		forvalues m=1/`reps' {
-			report_equation `mname', etype(yeq) vlist(`nameY') m(`m') model(`model') zett(1)
+		forvalues m=1/`numreps' {
+			report_equation `mname', etype(yeq) vlist(`nameY') m(`m') model(`model') zett(1) `byfold'
 		}
 		// interactive model - D eqn only
 		if "`model'"=="interactive" {
-			forvalues m=1/`reps' {
-				report_equation `mname', etype(deq) vlist(`listD') m(`m') model(`model')
+			forvalues m=1/`numreps' {
+				report_equation `mname', etype(deq) vlist(`listD') m(`m') model(`model') `byfold'
 			}
 		}
 		// LATE - D and Z eqns
 		else if "`model'"=="late" {
-			forvalues m=1/`reps' {
-				report_equation `mname', etype(deq) vlist(`listD') m(`m') model(`model') zett(0)
+			forvalues m=1/`numreps' {
+				report_equation `mname', etype(deq) vlist(`listD') m(`m') model(`model') zett(0) `byfold'
 			}
-			forvalues m=1/`reps' {
-				report_equation `mname', etype(deq) vlist(`listD') m(`m') model(`model') zett(1)
+			forvalues m=1/`numreps' {
+				report_equation `mname', etype(deq) vlist(`listD') m(`m') model(`model') zett(1) `byfold'
 			}
-			forvalues m=1/`reps' {
-				report_equation `mname', etype(zeq) vlist(`listZ') m(`m') model(`model')
+			forvalues m=1/`numreps' {
+				report_equation `mname', etype(zeq) vlist(`listZ') m(`m') model(`model') `byfold'
 			}
 		}
 	}		// end interactive/LATE block
 	else {
-		forvalues m=1/`reps' {
-			report_equation `mname', etype(yeq) vlist(`nameY') m(`m') model(`model')
+		forvalues m=1/`numreps' {
+			report_equation `mname', etype(yeq) vlist(`nameY') m(`m') model(`model') `byfold'
 		}
 		// use foreach ... in ... to accommodate empty lists
 		foreach var in `listD' {
-			forvalues m=1/`reps' {
-				report_equation `mname', etype(deq) vlist(`var') m(`m') model(`model')
+			if "`model'"=="optimaliv" {
+				local fitted fitted
+			}
+			forvalues m=1/`numreps' {
+				report_equation `mname', etype(deq) vlist(`var') m(`m') model(`model') `byfold' `fitted'
 			}
 		}
 		foreach var in `listDH' {
-			forvalues m=1/`reps' {
-				report_equation `mname', etype(dheq) vlist(`var') m(`m') model(`model')
+			if "`model'"=="optimaliv" {
+				local fitted fitted
+			}
+			forvalues m=1/`numreps' {
+				report_equation `mname', etype(dheq) vlist(`var') m(`m') model(`model') `byfold' `fitted'
 			}
 		}
 		foreach var in `listZ' {
-			forvalues m=1/`reps' {
-				report_equation `mname', etype(zeq) vlist(`var') m(`m') model(`model')
+			forvalues m=1/`numreps' {
+				report_equation `mname', etype(zeq) vlist(`var') m(`m') model(`model') `byfold'
 			}
 		}
 	}		// end partial linear/IV block
@@ -66,7 +70,7 @@ program define _ddml_crossfit_report
 end
 
 program define report_equation
-	syntax name(name=mname), etype(string) [ vlist(string) zett(string) m(integer 1) model(string) ]
+	syntax name(name=mname), etype(string) [ vlist(string) zett(string) m(integer 1) model(string) byfold fitted ]
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	// used multiple times below
@@ -146,7 +150,7 @@ program define report_equation
 		}
 		foreach var of varlist `vlist' {
 			// m is the rep number
-			display_mspe `mname', vname(`var') etype(`etype') m(`m') zett(`zett') model(`model') optname(`optname')
+			display_mspe `mname', vname(`var') etype(`etype') m(`m') zett(`zett') model(`model') optname(`optname') `byfold' `fitted'
 		}
 		di "{hline 75}"
 	}
@@ -166,6 +170,8 @@ program define display_mspe, rclass
 								m(integer 1)	/// resample number
 								model(string) 	///
 								optname(string)	///
+								byfold			///
+								fitted			/// is vtilde a fitted value? (default=residual)
 								]
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
@@ -181,6 +187,12 @@ program define display_mspe, rclass
 		local etype deq
 		local zett _h 
 		local vtildeh _h
+	}
+
+	if "`byfold'"~="" {
+		local foldvar `mname'_fid_`m'
+		qui sum `foldvar', meanonly
+		local kfolds = r(max)
 	}
 
 	// initialize
@@ -205,6 +217,22 @@ program define display_mspe, rclass
 			di _col(50) %6.0f `N' _c
 			di _col(60) %10.4f `MSE' "`optflag'" _c
 			di _col(74) %2.0f `m'
+			if "`byfold'"~="" {
+				tempvar spe
+				if "`fitted'"=="" {
+					qui gen double `spe' = `vtilde'_`m'^2
+				}
+				else {
+					qui gen double `spe' = (`vname'-`vtilde'_`m')^2
+				}
+				forvalues j=1/`kfolds' {
+					di _col(4) "fold=" _col(7) %2.0f `j' _c
+					qui count if `j'==`foldvar'
+					di _col(50) %6.0f `r(N)' _c
+					qui sum `spe' if `j'==`foldvar', meanonly
+					di _col(60) %10.4f `r(mean)'
+				}
+			}
 		}
 	}
 	

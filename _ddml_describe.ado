@@ -3,7 +3,7 @@
 
 program define _ddml_describe
 
-	syntax name(name=mname), [NOCMD all]
+	syntax name(name=mname), [NOCMD all byfold]
 	
 	local showcmd	= ("`nocmd'"=="")
 	local showall	= ("`all'"~="")
@@ -68,7 +68,7 @@ program define _ddml_describe
 	}
 	
 	if `crossfitted' {
-		_ddml_crossfit_report `mname'
+		_ddml_crossfit_report `mname', `byfold'
 	}
 
 end
