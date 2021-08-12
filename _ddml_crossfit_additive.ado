@@ -12,7 +12,7 @@
 program _ddml_crossfit_additive, eclass sortpreserve
 
 	syntax [anything] ,								/// 
-							[ kfolds(integer 2)		///
+							[ kfolds(integer 5)		///
 							NOIsily					///
 							debug					/// 
 							Robust					///

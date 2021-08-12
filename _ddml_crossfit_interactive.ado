@@ -9,7 +9,7 @@
 program _ddml_crossfit_interactive, eclass sortpreserve
 
 	syntax [anything] [if] [in] , /// 
-							[ kfolds(integer 2)		///
+							[ kfolds(integer 5)		///
 							NOIsily					///
 							debug					/// 
 							Robust					///

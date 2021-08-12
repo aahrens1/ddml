@@ -95,7 +95,7 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
 				di as text "E[Y|X]   = " as res "`y'"
 				di as text "E[D|X]   = " as res "`d'"
-				di as text "E[D|X,Z] = " as res "`dh'"
+				di as text "E[D^|X,Z] = " as res "`dh'"
 				ereturn display
 			}
 		}
@@ -116,7 +116,7 @@ program _ddml_estimate_optimaliv, eclass sortpreserve
 			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
 			di as text "E[Y|X]   = " as res "`Yopt'"
 			di as text "E[D|X]   = " as res "`Dopt'"
-			di as text "E[D|X,Z] = " as res "`DHopt'"
+			di as text "E[D^|X,Z] = " as res "`DHopt'"
 			ereturn display
 		}
 
