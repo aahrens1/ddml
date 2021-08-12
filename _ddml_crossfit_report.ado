@@ -181,18 +181,18 @@ program define display_mspe, rclass
 	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlistNames)))
 	mata: st_local("optlist",invtokens(`mname'.`optname'[`m',.]))
 
+	if "`byfold'"~="" {
+		local foldvar `mname'_fid_`m'
+		qui sum `foldvar', meanonly
+		local kfolds = r(max)
+	}
+
 	** special case optimaliv: need to take MSE & N from deq structure
 	local vtildeh
 	if "`model'"=="optimaliv"&"`etype'"=="dheq" {
 		local etype deq
 		local zett _h 
 		local vtildeh _h
-	}
-
-	if "`byfold'"~="" {
-		local foldvar `mname'_fid_`m'
-		qui sum `foldvar', meanonly
-		local kfolds = r(max)
 	}
 
 	// initialize
@@ -225,11 +225,19 @@ program define display_mspe, rclass
 				else {
 					qui gen double `spe' = (`vname'-`vtilde'_`m')^2
 				}
+				if "`model'"=="interactive" & "`etype'"=="yeq" {
+					mata: st_local("Dvar",`mname'.nameD)
+					local and_zett & `Dvar'==`zett'
+				}
+				else if "`model'"=="late" & ("`etype'"=="yeq" | "`etype'"=="deq") {
+					mata: st_local("Zvar",`mname'.nameZ)
+					local and_zett & `Zvar'==`zett'
+				}
 				forvalues j=1/`kfolds' {
 					di _col(4) "fold=" _col(7) %2.0f `j' _c
-					qui count if `j'==`foldvar'
+					qui count if `j'==`foldvar' `and_zett'
 					di _col(50) %6.0f `r(N)' _c
-					qui sum `spe' if `j'==`foldvar', meanonly
+					qui sum `spe' if `j'==`foldvar' `and_zett', meanonly
 					di _col(60) %10.4f `r(mean)'
 				}
 			}
