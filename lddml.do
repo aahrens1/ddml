@@ -24,9 +24,10 @@ st_global("s(compiled_date)","`current_date")
 struct ddmlStruct {
 	string scalar		model			// model; partial, iv, late, etc
 	real colvector		id				// id variable (name in Stata will be modelname_id)
-	real matrix			idFold			// col 1 = id, col 2 = fold identifier
-	real matrix			idSample		// col 1 = id, col 2 = sample indicator
+	real matrix			idFold			// col 1 = id, col 2 = fold identifier (can probably drop this)
+	real matrix			idSample		// col 1 = id, col 2 = sample indicator (can probably drop this)
 	real scalar			nreps			// number of resamplings
+	real scalar			kfolds			// number of crossfitting folds
 	string scalar		strDatavars		// string with expanded names of Stata variables
 	string scalar		nameY			// dependent variable 
 	string colvector	nameYtilde		// names of orthogonalized variables
