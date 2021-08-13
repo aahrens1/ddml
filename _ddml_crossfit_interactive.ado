@@ -172,19 +172,20 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 				`resid'
 			
 			// store MSE and sample size
+			// assumes needed results from crossfit are in r(.) macros
 			if ("`eqntype'"=="yeq") {
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse0)',`r(N0)',0)
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse1)',`r(N1)',1)
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", "0")
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", "1")
 			}
 			else if ("`eqntype'"=="deq") & ("`model'"=="interactive") {
-				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
+				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'")
 			}
 			else if ("`eqntype'"=="deq") {
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse0)',`r(N0)',0)
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", `r(mse1)',`r(N1)',1)
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", "0")
+				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", "1")
 			}
 			else if ("`eqntype'"=="zeq") {
-				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)')
+				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'")
 			}
 	
 		}
@@ -223,39 +224,6 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 	di
 	di as res "Reporting crossfitting results:"
 	_ddml_crossfit_report `mname'
-	
-	/*
-	// y equation - all models
-	forvalues m=1/`reps' {
-		_ddml_crossfit_report `mname', etype(yeq) vlist(`nameY') m(`m') model(`model') zett(0)
-	}
-	forvalues m=1/`reps' {
-		_ddml_crossfit_report `mname', etype(yeq) vlist(`nameY') m(`m') model(`model') zett(1)
-	}
-	// interactive model - D eqn only
-	if "`model'"=="interactive" {
-		forvalues m=1/`reps' {
-			_ddml_crossfit_report `mname', etype(deq) vlist(`listD') m(`m') model(`model')
-		}
-	}
-	// LATE - D and Z eqns
-	else if "`model'"=="late" {
-		forvalues m=1/`reps' {
-			_ddml_crossfit_report `mname', etype(deq) vlist(`listD') m(`m') model(`model') zett(0)
-		}
-		forvalues m=1/`reps' {
-			_ddml_crossfit_report `mname', etype(deq) vlist(`listD') m(`m') model(`model') zett(1)
-		}
-		forvalues m=1/`reps' {
-			_ddml_crossfit_report `mname', etype(zeq) vlist(`listZ') m(`m') model(`model')
-		}
-	}
-	else {
-		di as err "internal error - unknown model `model'"
-		exit 198
-	}
-	*/
-
 
 end
 
@@ -270,34 +238,72 @@ struct eqnStruct init_eqnStruct()
 
 void add_to_eqn(					struct ddmlStruct m,
 									real scalar eqnumber,
-									string scalar vnames,
-									real scalar mse,
-									real scalar n)
+									string scalar vnames)
+
 {
 	pointer(struct eqnStruct) scalar p
+
+	mse				= st_numscalar("r(mse)")
+	mse_folds		= st_matrix("r(mse_folds)")
+	n				= st_numscalar("r(N)")
+	n_folds			= st_matrix("r(N_folds)")
 	p				= m.eqnlist[1,eqnumber]
-	//(*p).idVtilde	= st_data(., tokens(vnames))
 	(*p).MSE		= ((*p).MSE \ mse)
-	(*p).N			= n
+	(*p).N			= ((*p).N \ n)
+	(*p).command	= st_global("r(cmd)")
+	// if MSE by fold list is null, then initialize
+	// (otherwise concat fails because of conformability)
+	if (rows((*p).MSE_folds)==0) {
+		(*p).MSE_folds	= mse_folds
+		(*p).N_folds	= n_folds
+	}
+	else {
+		(*p).MSE_folds	= ((*p).MSE_folds \ mse_folds)
+		(*p).N_folds	= ((*p).N_folds \ n_folds)
+	}
+
 }
 
 void add_to_eqn01(					struct ddmlStruct m,
 									real scalar eqnumber,
 									string scalar vnames,
-									real scalar mse,
-									real scalar n, 
-									real scalar Z)
+									string scalar Z)
 {
 	pointer(struct eqnStruct) scalar p
+
+	mse				= st_numscalar("r(mse" + Z + ")")
+	mse_folds		= st_matrix("r(mse" + Z + "_folds)")
+	n				= st_numscalar("r(N" + Z + ")")
+	n_folds			= st_matrix("r(N" + Z + "_folds)")
+
 	p				= m.eqnlist[1,eqnumber]
-	//(*p).idVtilde	= st_data(., tokens(vnames))
-	if (Z==0) {
+	if (Z=="0") {
 		(*p).MSE0		= ((*p).MSE0 \ mse)
-		(*p).N0			= n
+		(*p).N0			= ((*p).N0 \ n)
+		// if MSE by fold list is null, then initialize
+		// (otherwise concat fails because of conformability)
+		if (rows((*p).MSE0_folds)==0) {
+			(*p).MSE0_folds	= mse_folds
+			(*p).N0_folds	= n_folds
+		}
+		else {
+			(*p).MSE0_folds	= ((*p).MSE0_folds \ mse_folds)
+			(*p).N0_folds	= ((*p).N0_folds \ n_folds)
+		}
 	}
 	else {
 		(*p).MSE1		= ((*p).MSE1 \ mse)
-		(*p).N1			= n
+		(*p).N1			= ((*p).N1 \ n)
+		// if MSE by fold list is null, then initialize
+		// (otherwise concat fails because of conformability)
+		if (rows((*p).MSE1_folds)==0) {
+			(*p).MSE1_folds	= mse_folds
+			(*p).N1_folds	= n_folds
+		}
+		else {
+			(*p).MSE1_folds	= ((*p).MSE1_folds \ mse_folds)
+			(*p).N1_folds	= ((*p).N1_folds \ n_folds)
+		}
 	}
 
 }

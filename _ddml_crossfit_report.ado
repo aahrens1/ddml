@@ -210,7 +210,7 @@ program define display_mspe, rclass
 		if "`vname'"==r(vname) & "`etype'"==r(eqntype) {
 			mata: st_local("command",`eqn'.command)
 			mata: st_local("MSE",strofreal(`eqn'.MSE`zett'[`m']))
-			mata: st_local("N",strofreal(`eqn'.N`zett'))
+			mata: st_local("N",strofreal(`eqn'.N`zett'[`m']))
 			di _col(2) "`vname'" _c
 			di _col(20) "`vtilde'" _c
 			di _col(40) "`command'" _c
@@ -218,13 +218,9 @@ program define display_mspe, rclass
 			di _col(60) %10.4f `MSE' "`optflag'" _c
 			di _col(74) %2.0f `m'
 			if "`byfold'"~="" {
-				tempvar spe
-				if "`fitted'"=="" {
-					qui gen double `spe' = `vtilde'_`m'^2
-				}
-				else {
-					qui gen double `spe' = (`vname'-`vtilde'_`m')^2
-				}
+				tempname MSPE_folds N_folds
+				mata: st_matrix("`MSPE_folds'",`eqn'.MSE`zett'_folds[`m',.])
+				mata: st_matrix("`N_folds'",`eqn'.N`zett'_folds[`m',.])
 				if "`model'"=="interactive" & "`etype'"=="yeq" {
 					mata: st_local("Dvar",`mname'.nameD)
 					local and_zett & `Dvar'==`zett'
@@ -235,10 +231,8 @@ program define display_mspe, rclass
 				}
 				forvalues j=1/`kfolds' {
 					di _col(4) "fold=" _col(7) %2.0f `j' _c
-					qui count if `j'==`foldvar' `and_zett'
-					di _col(50) %6.0f `r(N)' _c
-					qui sum `spe' if `j'==`foldvar' `and_zett', meanonly
-					di _col(60) %10.4f `r(mean)'
+					di _col(50) %6.0f `N_folds'[1,`j'] _c
+					di _col(60) %10.4f `MSPE_folds'[1,`j']
 				}
 			}
 		}

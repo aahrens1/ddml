@@ -197,6 +197,15 @@ program define crossfit, rclass sortpreserve
 		qui sum `vtilde_sq' if `touse', meanonly
 		return scalar mse	= r(mean)
 		local N				= r(N)
+		tempname mse_folds N_folds
+		forvalues k = 1(1)`kfolds' {
+			qui sum `vtilde_sq' if `touse' & `foldvar'==`k', meanonly
+			mat `mse_folds' = (nullmat(`mse_folds'), r(mean))
+			qui count if `touse' & `foldvar'==`k' & `vtilde_sq'<.
+			mat `N_folds' = (nullmat(`N_folds'), r(N))
+		}
+		return mat mse_folds	= `mse_folds'
+		return mat N_folds		= `N_folds'
 	}
 	else {
 		// interactive-type model, return mse separately for treatvar =0 and =1
@@ -208,13 +217,37 @@ program define crossfit, rclass sortpreserve
 		return scalar mse1	= r(mean)
 		local N				= `N' + r(N)
 		return scalar N1	= r(N)
+		tempname mse0_folds N0_folds mse1_folds N1_folds
+		forvalues k = 1(1)`kfolds' {
+			qui sum `vtilde_sq' if `treatvar' == 0 & `touse' & `foldvar'==`k', meanonly
+			mat `mse0_folds' = (nullmat(`mse0_folds'), r(mean))
+			qui sum `vtilde_sq' if `treatvar' == 1 & `touse' & `foldvar'==`k', meanonly
+			mat `mse1_folds' = (nullmat(`mse1_folds'), r(mean))
+			qui count if `treatvar' == 0 & `touse' & `foldvar'==`k' & `vtilde_sq'<.
+			mat `N0_folds' = (nullmat(`N0_folds'), r(N))
+			qui count if `treatvar' == 1 & `touse' & `foldvar'==`k' & `vtilde_sq'<.
+			mat `N1_folds' = (nullmat(`N1_folds'), r(N))
+		}
+		return mat mse0_folds	= `mse0_folds'
+		return mat mse1_folds	= `mse1_folds'
+		return mat N0_folds		= `N0_folds'
+		return mat N1_folds		= `N1_folds'
 	}
 	
 	if "`lie'"!="" {
 		qui sum `vtildeh_sq' if `touse', meanonly
 		return scalar mse_h	= r(mean)
-		local N_h				= r(N)	
-		return scalar N_h = `N_h'
+		local N_h			= r(N)	
+		return scalar N_h	= `N_h'
+		tempname mse_h_folds N_h_folds
+		forvalues k = 1(1)`kfolds' {
+			qui sum `vtildeh_sq' if `touse' & `foldvar'==`k', meanonly
+			mat `mse_h_folds' = (nullmat(`mse_h_folds'), r(mean))
+			qui count if `touse' & `foldvar'==`k' & `vtildeh_sq'<.
+			mat `N_h_folds' = (nullmat(`N_h_folds'), r(N))
+		}
+		return mat mse_h_folds	= `mse_h_folds'
+		return mat N_h_folds	= `N_h_folds'
 	}
 
 	return scalar N			= `N'

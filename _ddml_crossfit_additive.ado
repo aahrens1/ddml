@@ -184,11 +184,12 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					eststringh(`eststring_h')			/// LIE only
 					vname(`vname')						///
 					`resid'
-				
+
 				// store MSE and sample size
-				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'", `r(mse)',`r(N)',"`r(cmd)'")
+				// assumes needed results from crossfit are in r(.) macros
+				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'")
 				if ("`eqntype'"=="deq"&"`model'"=="optimaliv") {
-					mata: add_to_eqn_h(`mname',`i',"`mname'_id `vtilde'", `r(mse_h)',`r(N_h)',"`r(cmd_h)'")	
+					mata: add_to_eqn_h(`mname',`i',"`mname'_id `vtilde'")	
 				}	
 			}
 	
@@ -270,32 +271,56 @@ struct eqnStruct init_eqnStruct()
 
 void add_to_eqn(					struct ddmlStruct m,
 									real scalar eqnumber,
-									string scalar vnames,
-									real scalar mse,
-									real scalar n,
-									string scalar cmd)
+									string scalar vnames)
+
 {
 	pointer(struct eqnStruct) scalar p
+
+	mse				= st_numscalar("r(mse)")
+	mse_folds		= st_matrix("r(mse_folds)")
+	n				= st_numscalar("r(N)")
+	n_folds			= st_matrix("r(N_folds)")
 	p				= m.eqnlist[1,eqnumber]
-	//(*p).idVtilde	= st_data(., tokens(vnames))
 	(*p).MSE		= ((*p).MSE \ mse)
-	(*p).N			= n
-	(*p).command	= cmd
+	(*p).N			= ((*p).N \ n)
+	(*p).command	= st_global("r(cmd)")
+	// if MSE by fold list is null, then initialize
+	// (otherwise concat fails because of conformability)
+	if (rows((*p).MSE_folds)==0) {
+		(*p).MSE_folds	= mse_folds
+		(*p).N_folds	= n_folds
+	}
+	else {
+		(*p).MSE_folds	= ((*p).MSE_folds \ mse_folds)
+		(*p).N_folds	= ((*p).N_folds \ n_folds)
+	}
 }
 
 void add_to_eqn_h(					struct ddmlStruct m,
 									real scalar eqnumber,
-									string scalar vnames,
-									real scalar mse,
-									real scalar n,
-									string scalar cmd_h)
+									string scalar vnames)
 {
 	pointer(struct eqnStruct) scalar p
+
+	mse_h			= st_numscalar("r(mse_h)")
+	mse_h_folds		= st_matrix("r(mse_h_folds)")
+	n_h				= st_numscalar("r(N_h)")
+	n_h_folds		= st_matrix("r(N_h_folds)")
 	p				= m.eqnlist[1,eqnumber]
-	//(*p).idVtilde	= st_data(., tokens(vnames))
-	(*p).MSE_h		= ((*p).MSE_h \ mse)
-	(*p).N_h		= n
-	(*p).command_h	= cmd_h
+	(*p).MSE_h		= ((*p).MSE_h \ mse_h)
+	(*p).N_h		= ((*p).N_h \ n_h)
+	(*p).command_h	= st_global("r(cmd_h)")
+	// if MSE by fold list is null, then initialize
+	// (otherwise concat fails because of conformability)
+	if (rows((*p).MSE_h_folds)==0) {
+		(*p).MSE_h_folds= mse_h_folds
+		(*p).N_h_folds	= n_h_folds
+	}
+	else {
+		(*p).MSE_h_folds= ((*p).MSE_h_folds \ mse_h_folds)
+		(*p).N_h_folds	= ((*p).N_h_folds \ n_h_folds)
+	}
+
 }
 
 // function to set crossfit dummy indicating whether crossfit has been done already

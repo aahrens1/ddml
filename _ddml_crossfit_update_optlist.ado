@@ -62,7 +62,6 @@ program define _ddml_crossfit_update_optlist
 				mata: st_local("command",`eqn'.command)
 				// m is the rep number
 				mata: st_local("MSE",strofreal(`eqn'.MSE`zett'[`m']))
-				mata: st_local("N",strofreal(`eqn'.N`zett'))
 				if `MSE' < `minmse' {
 					local optvar `vtilde'
 					local minmse `MSE'
