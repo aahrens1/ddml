@@ -12,27 +12,16 @@
 program _ddml_crossfit_additive, eclass sortpreserve
 
 	syntax [anything] ,								/// 
-							[ kfolds(integer 5)		///
+							[						///
 							NOIsily					///
 							debug					/// 
 							Robust					///
-							TABFold					///
-							foldlist(numlist)		///
 							mname(name)				///
-							/* eqnlist(namelist) */	/// not in use
-							reps(integer 0)			///
 							]
 
 	// no checks included yet
 
 	local debugflag		= "`debug'"~=""
-
-	/* not in use
-	// if eqnlist is empty, populate with full list of eqn names
-	if "`eqnlist'"=="" {
-		mata: st_local("eqnlist",invtokens(`mname'.eqnlistNames))
-	}
-	*/
 			
 	*** extract details of estimation
 	
@@ -69,48 +58,9 @@ program _ddml_crossfit_additive, eclass sortpreserve
 	mata: `mname'.nameDopt = J(0,`numvarsD',"")
 	mata: `mname'.nameDHopt = J(0,`numvarsD',"")
 	mata: `mname'.nameZopt = J(0,`numvarsZ',"")
-	
-	// folds and fold IDs
-	mata: st_local("hasfoldvars",strofreal(cols(`mname'.idFold)))
-	// if reps is specified then overwrite any existing fold vars.
-	if `reps'>0 {
-		local hasfoldvars = 0
-	}
-	else {
-		// default reps = 1
-		local reps = 1
-	}
-	// store number of resamplings
-	mata: `mname'.nreps = `reps'
-
-	// if empty:
-	// add fold IDs to model struct (col 1 = id, col 2 = fold id 1, col 3 = fold id 2 etc.)
-	// first initialize with id
-	
-	if `hasfoldvars'==0 {
-		mata: `mname'.idFold = st_data(., ("`mname'_id"))
-	}
-
-	forvalues m=1/`reps' {
-	
-		if `hasfoldvars'==0 {
-			*** gen folds
-			cap drop `mname'_fid_`m'
-			tempvar uni cuni
-			qui gen double `uni' = runiform() if `mname'_sample
-			qui cumul `uni' if `mname'_sample, gen(`cuni')
-			qui gen int `mname'_fid_`m' = ceil(`kfolds'*`cuni') if `mname'_sample
-			// add fold id to model struct (col 1 = id, col 2 = fold id)
-			mata: `mname'.idFold = (`mname'.idFold , st_data(., ("`mname'_fid_`m'")))
-		}
-		if ("`tabfold'"!="") {
-			di
-			di "Overview of frequencies by fold (sample `m'):"
-			tab `mname'_fid_`m' if `mname'_sample
-			di
-		}
-	
-	}
+	// folds and resamplings
+	mata: st_local("reps",strofreal(`mname'.nreps))
+	mata: st_local("kfolds",strofreal(`mname'.kfolds))
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	// used multiple times below

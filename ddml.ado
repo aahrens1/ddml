@@ -4,7 +4,8 @@
 * notes:
 * e.command		= tokens(estcmd)[1,1] fails if command string starts with a prefix e.g. capture
 * check for incompatible y variables disabled - can't accommodate prefixes e.g. capture
-* spin off init code into a subroutine
+* spin off init code into a subroutine?
+* init code current calls _ddml_sample to set fold var, kfolds, etc. Allow options with init?
 
 program ddml, eclass
 
@@ -119,7 +120,7 @@ program ddml, eclass
 		}
 		local 0 "`restargs'"
 		// fold variable is option; default is ddmlfold
-		syntax , [mname(name) NOLie]
+		syntax `if' `in', [mname(name) NOLie *]
 
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
@@ -141,6 +142,9 @@ program ddml, eclass
 		// fill by hand
 		mata: `mname'.model			= "`model'"
 		mata: `mname'.crossfitted	= 0
+		
+		// initialize with default fold var, kfolds, number of resamplings
+		_ddml_sample `if' `in' , mname(`mname') `options'
 	}
 	
 	*** set sample, foldvar, etc.
