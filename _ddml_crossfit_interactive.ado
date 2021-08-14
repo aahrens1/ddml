@@ -213,16 +213,13 @@ void add_to_eqn(					struct ddmlStruct m,
 	(*p).MSE		= ((*p).MSE \ mse)
 	(*p).N			= ((*p).N \ n)
 	(*p).command	= st_global("r(cmd)")
-	// if MSE by fold list is null, then initialize
+	// MSE by fold list should be initialized to void 0-by-k matrix
 	// (otherwise concat fails because of conformability)
-	if (rows((*p).MSE_folds)==0) {
-		(*p).MSE_folds	= mse_folds
-		(*p).N_folds	= n_folds
-	}
-	else {
-		(*p).MSE_folds	= ((*p).MSE_folds \ mse_folds)
-		(*p).N_folds	= ((*p).N_folds \ n_folds)
-	}
+	(*p).MSE_folds	= ((*p).MSE_folds \ mse_folds)
+	(*p).N_folds	= ((*p).N_folds \ n_folds)
+	
+	// set crossfitted flag = 1
+	(*p).crossfitted	= 1
 
 }
 
@@ -242,31 +239,22 @@ void add_to_eqn01(					struct ddmlStruct m,
 	if (Z=="0") {
 		(*p).MSE0		= ((*p).MSE0 \ mse)
 		(*p).N0			= ((*p).N0 \ n)
-		// if MSE by fold list is null, then initialize
+		// MSE by fold list should be initialized to void 0-by-k matrix
 		// (otherwise concat fails because of conformability)
-		if (rows((*p).MSE0_folds)==0) {
-			(*p).MSE0_folds	= mse_folds
-			(*p).N0_folds	= n_folds
-		}
-		else {
-			(*p).MSE0_folds	= ((*p).MSE0_folds \ mse_folds)
-			(*p).N0_folds	= ((*p).N0_folds \ n_folds)
-		}
+		(*p).MSE0_folds	= ((*p).MSE0_folds \ mse_folds)
+		(*p).N0_folds	= ((*p).N0_folds \ n_folds)
 	}
 	else {
 		(*p).MSE1		= ((*p).MSE1 \ mse)
 		(*p).N1			= ((*p).N1 \ n)
-		// if MSE by fold list is null, then initialize
+		// MSE by fold list should be initialized to void 0-by-k matrix
 		// (otherwise concat fails because of conformability)
-		if (rows((*p).MSE1_folds)==0) {
-			(*p).MSE1_folds	= mse_folds
-			(*p).N1_folds	= n_folds
-		}
-		else {
-			(*p).MSE1_folds	= ((*p).MSE1_folds \ mse_folds)
-			(*p).N1_folds	= ((*p).N1_folds \ n_folds)
-		}
+		(*p).MSE1_folds	= ((*p).MSE1_folds \ mse_folds)
+		(*p).N1_folds	= ((*p).N1_folds \ n_folds)
 	}
+	
+	// set crossfitted flag = 1
+	(*p).crossfitted	= 1
 
 }
 

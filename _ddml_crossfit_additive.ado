@@ -89,14 +89,10 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					qui gen double `vtilde'_`m'=.
 				}
 			}
-	
+
 			*** do cross-fitting
 			
 			forvalues i=1/`numeqns' {
-	
-				// has the equation already been crossfitted?
-				mata: st_numscalar("cvdone",`eqn'.crossfitted)
-				if ("`cvdone'"=="1") continue
 	
 				// initialize prior to calling crossfit
 				mata: `eqn'=*(`mname'.eqnlist[1,`i'])
@@ -135,7 +131,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 					vname(`vname')						///
 					`resid'
 
-				// store MSE and sample size
+				// store MSE and sample size; also set eqn crossfitted flag = 1
 				// assumes needed results from crossfit are in r(.) macros
 				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'")
 				if ("`eqntype'"=="deq"&"`model'"=="optimaliv") {
@@ -153,9 +149,6 @@ program _ddml_crossfit_additive, eclass sortpreserve
 		
 		}	// end crossfitting block
 	}	// end resampling block
-
-	// set crossfitted field to 1	
-	mata: `mname'.crossfitted = 1
 	
 	// report results by equation type with resamplings grouped together
 	di
@@ -234,16 +227,15 @@ void add_to_eqn(					struct ddmlStruct m,
 	(*p).MSE		= ((*p).MSE \ mse)
 	(*p).N			= ((*p).N \ n)
 	(*p).command	= st_global("r(cmd)")
-	// if MSE by fold list is null, then initialize
+
+	// MSE by fold list should be initialized to void 0-by-k matrix
 	// (otherwise concat fails because of conformability)
-	if (rows((*p).MSE_folds)==0) {
-		(*p).MSE_folds	= mse_folds
-		(*p).N_folds	= n_folds
-	}
-	else {
-		(*p).MSE_folds	= ((*p).MSE_folds \ mse_folds)
-		(*p).N_folds	= ((*p).N_folds \ n_folds)
-	}
+	(*p).MSE_folds	= ((*p).MSE_folds \ mse_folds)
+	(*p).N_folds	= ((*p).N_folds \ n_folds)
+	
+	// set crossfitted flag = 1
+	(*p).crossfitted	= 1
+
 }
 
 void add_to_eqn_h(					struct ddmlStruct m,
@@ -260,16 +252,11 @@ void add_to_eqn_h(					struct ddmlStruct m,
 	(*p).MSE_h		= ((*p).MSE_h \ mse_h)
 	(*p).N_h		= ((*p).N_h \ n_h)
 	(*p).command_h	= st_global("r(cmd_h)")
-	// if MSE by fold list is null, then initialize
+
+	// MSE by fold list should be initialized to void 0-by-k matrix
 	// (otherwise concat fails because of conformability)
-	if (rows((*p).MSE_h_folds)==0) {
-		(*p).MSE_h_folds= mse_h_folds
-		(*p).N_h_folds	= n_h_folds
-	}
-	else {
-		(*p).MSE_h_folds= ((*p).MSE_h_folds \ mse_h_folds)
-		(*p).N_h_folds	= ((*p).N_h_folds \ n_h_folds)
-	}
+	(*p).MSE_h_folds= ((*p).MSE_h_folds \ mse_h_folds)
+	(*p).N_h_folds	= ((*p).N_h_folds \ n_h_folds)
 
 }
 

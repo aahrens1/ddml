@@ -322,6 +322,9 @@ program ddml, eclass
 		}
 		check_mname "`mname'"
 
+		// clear previous results or initialize if no prev results
+		_ddml_reset_model_results, mname(`mname')
+
 		mata: st_global("r(model)",`mname'.model)
 
 		if ("`r(model)'"=="partial") {
@@ -342,6 +345,10 @@ program ddml, eclass
 		if ("`r(model)'"=="optimaliv_nolie") {
 		_ddml_crossfit_additive , `options' mname(`mname') 
 		}
+
+		// set model crossfitted flag = 1
+		mata: `mname'.crossfitted	= 1
+
 	}
 
 	*** estimate

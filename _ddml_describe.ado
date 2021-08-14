@@ -9,6 +9,8 @@ program define _ddml_describe
 	local showall	= ("`all'"~="")
 
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
+	mata: st_local("kfolds",strofreal(`mname'.kfolds))
+	mata: st_local("nreps",strofreal(`mname'.nreps))
 
 	mata: printf("{res}Model: %s\n", `mname'.model)
 	di as res "ID: `mname'_id"
@@ -16,6 +18,8 @@ program define _ddml_describe
 	di as res "Sample indicator: `mname'_sample" _c
 	qui count if `mname'_sample
 	di as res " (N=`r(N)')"
+	di as res "Number of folds     =" %3.0f `kfolds'
+	di as res "Number of resamples =" %3.0f `nreps'
 
 	mata: printf("{res}Dependent variable (Y): %s\n", `mname'.nameY)
 	mata: printf("{res}Dependent variable (orthogonalized): %s\n", invtokens(`mname'.nameYtilde))
