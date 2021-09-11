@@ -117,8 +117,8 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	} 
 	if ("`model'"=="optimaliv"&"`nolie'"=="") {
 		`qui' ddml yeq, gen(`depvar't) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
-		`qui' ddml deq, gen(`dendog't) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' ///
-							| `dcmd' {D} `xctrl' `exexog', `dhcmdoptions' 
+		`qui' ddml deq, gen(`dendog't) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' ///
+							| `dcmd' {D} `xctrl' , `dhcmdoptions' 
 	} 
 	else if ("`model'"=="iv") {
 		`qui' ddml yeq, gen(`depvar't) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 

@@ -230,8 +230,12 @@ program ddml, eclass
 			local eqn `1'
 			local eqn_h `3'
 			if "`2'`3'"=="" {
-				di as err "estimation command for E[D|X,Z] missing"
+				di as err "estimation command for E[D^|X] missing"
 				exit 198
+			}
+			if regexm("`eqn_h'","{D}")==0 {
+				di as err "placeholder {D} missing in E[D^|X] command (2nd part)"
+				exit 198				
 			}
 		}
 
@@ -384,6 +388,9 @@ program ddml, eclass
 			_ddml_estimate_optimaliv `mname', `options'
 		}
 
+		_ddml_ereturn, mname(`mname')
+
+
 	}
 end
 
@@ -477,6 +484,10 @@ void add_eqn(						struct ddmlStruct m,
 	}
 	e.vtype		 	= vtype
 	e.crossfitted	= 0
+	e.stack_weights   	= .
+	e.stack_weights_h 	= .
+	e.stack_weights0 	= .
+	e.stack_weights1 	= .
 
 	newentry		= 1
 

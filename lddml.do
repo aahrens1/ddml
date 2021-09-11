@@ -80,6 +80,10 @@ struct eqnStruct {
 	real matrix			N1_folds		// sample size by fold; col=fold, row=resample
 	// possibly drop, or make a colvector corresponding to the resampling number
 	real scalar 		crossfitted   	// =1 if crossvalidation has been done; 0 if not
+	real matrix 		stack_weights   // weights from use of pystacked
+	real matrix 		stack_weights_h   // weights from use of pystacked
+	real matrix 		stack_weights0   // weights from use of pystacked
+	real matrix 		stack_weights1   // weights from use of pystacked
 }
 
 mata mlib create lddml, dir(PERSONAL) replace

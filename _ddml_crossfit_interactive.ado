@@ -205,6 +205,7 @@ void add_to_eqn(					struct ddmlStruct m,
 {
 	pointer(struct eqnStruct) scalar p
 
+	cmd 			= st_global("r(cmd)")
 	mse				= st_numscalar("r(mse)")
 	mse_folds		= st_matrix("r(mse_folds)")
 	n				= st_numscalar("r(N)")
@@ -212,7 +213,12 @@ void add_to_eqn(					struct ddmlStruct m,
 	p				= m.eqnlist[1,eqnumber]
 	(*p).MSE		= ((*p).MSE \ mse)
 	(*p).N			= ((*p).N \ n)
-	(*p).command	= st_global("r(cmd)")
+	(*p).command	= cmd
+
+	if (cmd == "pystacked") {
+		(*p).stack_weights = st_matrix("r(pysw)")		 
+	}
+
 	// MSE by fold list should be initialized to void 0-by-k matrix
 	// (otherwise concat fails because of conformability)
 	(*p).MSE_folds	= ((*p).MSE_folds \ mse_folds)
@@ -230,6 +236,7 @@ void add_to_eqn01(					struct ddmlStruct m,
 {
 	pointer(struct eqnStruct) scalar p
 
+	cmd 			= st_global("r(cmd)")
 	mse				= st_numscalar("r(mse" + Z + ")")
 	mse_folds		= st_matrix("r(mse" + Z + "_folds)")
 	n				= st_numscalar("r(N" + Z + ")")
@@ -243,6 +250,9 @@ void add_to_eqn01(					struct ddmlStruct m,
 		// (otherwise concat fails because of conformability)
 		(*p).MSE0_folds	= ((*p).MSE0_folds \ mse_folds)
 		(*p).N0_folds	= ((*p).N0_folds \ n_folds)
+		if (cmd == "pystacked") {
+			(*p).stack_weights0 = st_matrix("r(pysw0)")		 
+		}
 	}
 	else {
 		(*p).MSE1		= ((*p).MSE1 \ mse)
@@ -251,6 +261,9 @@ void add_to_eqn01(					struct ddmlStruct m,
 		// (otherwise concat fails because of conformability)
 		(*p).MSE1_folds	= ((*p).MSE1_folds \ mse_folds)
 		(*p).N1_folds	= ((*p).N1_folds \ n_folds)
+		if (cmd == "pystacked") {
+			(*p).stack_weights1 = st_matrix("r(pysw1)")		 
+		}
 	}
 	
 	// set crossfitted flag = 1

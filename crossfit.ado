@@ -75,6 +75,9 @@ program define crossfit, rclass sortpreserve
 		`qui' di "est_options: `est_options_h'"		
 	}
 	
+	// save pystacked weights
+	tempname pysw pysw0 pysw1 pysw_t pysw_h
+
 	// crossfit
 	di
 	di as text "Cross-fitting fold " _c
@@ -89,7 +92,18 @@ program define crossfit, rclass sortpreserve
 			// estimate excluding kth fold
 			`qui' `est_main' if `foldvar'!=`k' & `touse', `est_options'
 			local cmd `e(cmd)'
-			
+
+			// save pystacked weights
+			if ("`cmd'"=="pystacked") {
+				if (`k'==1) {
+					mat `pysw' = e(weights)
+				}
+				else {
+					mat `pysw_t' = e(weights)
+					mat `pysw' = (`pysw',`pysw_t')
+				}
+			}
+
 			// get fitted values and residuals for kth fold	
 			qui predict `vtype' `vtilde_k' if `foldvar'==`k' & `touse'
 
@@ -112,6 +126,19 @@ program define crossfit, rclass sortpreserve
 			// estimate excluding kth fold
 			`qui' `est_main' if `foldvar'!=`k' & `treatvar' == 1 & `touse', `est_options'
 			local cmd `e(cmd)'
+
+			// save pystacked weights
+			if ("`cmd'"=="pystacked") {
+				if (`k'==1) {
+					mat `pysw0' = e(weights)
+				}
+				else {
+					mat `pysw_t' = e(weights)
+					mat `pysw0' = (`pysw0',`pysw_t')
+				}
+			}
+
+
 			// get fitted values for kth fold	
 			tempvar vtilde_k
 			qui predict `vtype' `vtilde_k' if `foldvar'==`k' & `treatvar' == 1 & `touse'
@@ -120,6 +147,18 @@ program define crossfit, rclass sortpreserve
 			// for treatvar = 0
 			// estimate excluding kth fold
 			`qui' `est_main' if `foldvar'!=`k' & `treatvar' == 0 & `touse', `est_options'
+
+			// save pystacked weights
+			if ("`cmd'"=="pystacked") {
+				if (`k'==1) {
+					mat `pysw1' = e(weights)
+				}
+				else {
+					mat `pysw_t' = e(weights)
+					mat `pysw1' = (`pysw1',`pysw_t')
+				}
+			}
+
 			// get fitted values for kth fold	
 			tempvar vtilde_k
 			qui predict `vtype' `vtilde_k' if `foldvar'==`k' & `treatvar' == 0 & `touse'
@@ -142,6 +181,17 @@ program define crossfit, rclass sortpreserve
 			// estimate excluding kth fold
 			`qui' `est_main' if `foldvar'!=`k' & `touse', `est_options'
 			local cmd `e(cmd)'
+
+			// save pystacked weights
+			if ("`cmd'"=="pystacked") {
+				if (`k'==1) {
+					mat `pysw' = e(weights)
+				}
+				else {
+					mat `pysw_t' = e(weights)
+					mat `pysw' = (`pysw',`pysw_t')
+				}
+			}
 			
 			// get fitted values  
 			qui predict `vtype' `vtilde_k' if `touse'
@@ -160,6 +210,17 @@ program define crossfit, rclass sortpreserve
 			// estimation	
 			`qui' `est_main_h_k' if `foldvar'!=`k' & `touse', `est_options_h'
 			local cmd_h `e(cmd)'
+
+			// save pystacked weights
+			if ("`cmd_h'"=="pystacked") {
+				if (`k'==1) {
+					mat `pysw_h' = e(weights)
+				}
+				else {
+					mat `pysw_t' = e(weights)
+					mat `pysw_h' = (`pysw_h',`pysw_t')
+				}
+			}
 
 			// get fitted values  
 			qui predict `vtype' `vtildeh_k' if `touse'
@@ -253,6 +314,10 @@ program define crossfit, rclass sortpreserve
 	return scalar N			= `N'
 	return local cmd		`cmd'
 	return local cmd_h		`cmd_h'
+	if ("`cmd'"=="pystacked" & "`lie'"=="" & "`treatvar'"=="") return mat pysw = `pysw' // pystacked weights
+	if ("`cmd'"=="pystacked" & "`lie'"=="" & "`treatvar'"!="") return mat pysw0 = `pysw0'
+	if ("`cmd'"=="pystacked" & "`lie'"=="" & "`treatvar'"!="") return mat pysw1 = `pysw1'
+	if ("`cmd'"=="pystacked" & "`lie'"!="") return mat pysw_h 		= `pysw_h'
  
  end
  
