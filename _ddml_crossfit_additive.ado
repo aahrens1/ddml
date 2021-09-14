@@ -109,14 +109,15 @@ program _ddml_crossfit_additive, eclass sortpreserve
 				// seems to be unused
 				// mata: st_local("vtype",`eqn'.vtype)
 				local touse `mname'_sample
-				
+
+				// request residuals unless optimal IV model & deq or dheq
 				if ~("`model'"=="optimaliv"&("`eqntype'"=="deq"|"`eqntype'"=="dheq")) {
-					// request residuals unless optimal IV model & deq or dheq
-					local resid resid
+					local resid 
+					mata: `eqn'.resid = 0
 				}
 				else {
-					// default is predicted values
-					local resid
+					local resid resid
+					mata: `eqn'.resid = 1
 				}
 				
 				di as text "Cross-fitting equation `i' (`vname', `vtilde')" _c
@@ -133,9 +134,9 @@ program _ddml_crossfit_additive, eclass sortpreserve
 
 				// store MSE and sample size; also set eqn crossfitted flag = 1
 				// assumes needed results from crossfit are in r(.) macros
-				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'")
+				mata: add_to_eqn(`mname',`i')
 				if ("`eqntype'"=="deq"&"`model'"=="optimaliv") {
-					mata: add_to_eqn_h(`mname',`i',"`mname'_id `vtilde'")	
+					mata: add_to_eqn_h(`mname',`i')	
 				}	
 			}
 	
@@ -213,8 +214,7 @@ struct eqnStruct init_eqnStruct()
 }
 
 void add_to_eqn(					struct ddmlStruct m,
-									real scalar eqnumber,
-									string scalar vnames)
+									real scalar eqnumber)
 
 {
 	pointer(struct eqnStruct) scalar p
@@ -244,8 +244,7 @@ void add_to_eqn(					struct ddmlStruct m,
 }
 
 void add_to_eqn_h(					struct ddmlStruct m,
-									real scalar eqnumber,
-									string scalar vnames)
+									real scalar eqnumber)
 {
 	pointer(struct eqnStruct) scalar p
 

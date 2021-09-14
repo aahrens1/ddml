@@ -1,4 +1,4 @@
-
+** ereturn after final estimation
 
 program _ddml_ereturn, eclass
 
@@ -36,14 +36,10 @@ syntax , [mname(name) ]
 
 end
 
-
 mata:
-
 struct eqnStruct init_eqnStruct()
 {
 	struct eqnStruct scalar		e
 	return(e)
 }
-
-
 end

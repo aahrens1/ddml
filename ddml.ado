@@ -244,7 +244,7 @@ program ddml, eclass
 		}
 
 		// subcmd macro tells add_eqn(.) which list to add it to
-		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`prefix'`gen'","`eqn'","`vtype'","`noprefix'","`eqn_h'","`prefix'`genh'")
+		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'","`eqn'","`vtype'","`prefix'","`eqn_h'","`genh'")
 		local newentry `r(newentry)'
 		if "`subcmd'"=="yeq" {
 			// check if nameY is already there; if it is, must be identical to vname here
@@ -320,7 +320,7 @@ program ddml, eclass
 	if "`subcmd'" =="crossfit" {
 
 		local 0 "`restargs'"
-		syntax , [ mname(name) * ]
+		syntax , [ mname(name) nnls * ]
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
@@ -349,6 +349,8 @@ program ddml, eclass
 		if ("`r(model)'"=="optimaliv_nolie") {
 		_ddml_crossfit_additive , `options' mname(`mname') 
 		}
+
+		if ("`nnls'"!="") _ddml_combine, mname(`mname')
 
 		// set model crossfitted flag = 1
 		mata: `mname'.crossfitted	= 1
@@ -465,17 +467,28 @@ void add_eqn(						struct ddmlStruct m,
 									string scalar vtilde,
 									string scalar estcmd,
 									string scalar vtype,
-									string scalar noprefix,
+									string scalar prefix,
 									string scalar estcmd_h,
 									string scalar vtilde_h
 									)
 {
 	struct eqnStruct scalar		e, e0
 
+	neq = cols(m.eqnlist)
+
+	// set default vtilde
+	// we might want to refine this
+	if (vtilde=="") {
+		vtilde = vname+"t"+strofreal(neq+1)
+	}
+	if (vtilde_h=="") {
+		vtilde_h = vname+"h"+strofreal(neq+1)
+	}
+
 	e.eqntype		= eqntype
 	e.Vname			= vname
-	e.Vtilde		= vtilde
-	e.Vtilde_h 		= vtilde_h
+	e.Vtilde		= prefix+vtilde
+	e.Vtilde_h 		= prefix+vtilde_h
 	e.eststring		= estcmd
 	e.command		= tokens(estcmd)[1,1]
 	if (estcmd_h~="") {
@@ -491,13 +504,13 @@ void add_eqn(						struct ddmlStruct m,
 
 	newentry		= 1
 
-	if (cols(m.eqnlist)==0) {
+	if (neq==0) {
 		m.eqnlist		= &e
 		m.eqnlistNames	= vtilde
 	}
 	else {
 		// look for existing entry
-		for (i=1;i<=cols(m.eqnlist);i++) {
+		for (i=1;i<=neq;i++) {
 			e0 = *(m.eqnlist[i])
 			if (e0.Vtilde==vtilde) {
 				// replace

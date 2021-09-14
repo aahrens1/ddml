@@ -94,8 +94,9 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 			// mata: st_local("vtype",`eqn'.vtype)
 			local touse `mname'_sample
 			// always request fitted values
-			local resid  
-	
+			local resid
+			mata: `eqn'.resid = 0
+
 			di as text "Cross-fitting equation `i' (`vname', `vtilde')" _c
 	
 			/* why not used here but used in interactive code?
@@ -136,18 +137,18 @@ program _ddml_crossfit_interactive, eclass sortpreserve
 			// store MSE and sample size
 			// assumes needed results from crossfit are in r(.) macros
 			if ("`eqntype'"=="yeq") {
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", "0")
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", "1")
+				mata: add_to_eqn01(`mname',`i', "0")
+				mata: add_to_eqn01(`mname',`i', "1")
 			}
 			else if ("`eqntype'"=="deq") & ("`model'"=="interactive") {
-				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'")
+				mata: add_to_eqn(`mname',`i')
 			}
 			else if ("`eqntype'"=="deq") {
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", "0")
-				mata: add_to_eqn01(`mname',`i',"`mname'_id `vtilde'", "1")
+				mata: add_to_eqn01(`mname',`i', "0")
+				mata: add_to_eqn01(`mname',`i', "1")
 			}
 			else if ("`eqntype'"=="zeq") {
-				mata: add_to_eqn(`mname',`i',"`mname'_id `vtilde'")
+				mata: add_to_eqn(`mname',`i')
 			}
 	
 		}
@@ -199,8 +200,7 @@ struct eqnStruct init_eqnStruct()
 }
 
 void add_to_eqn(					struct ddmlStruct m,
-									real scalar eqnumber,
-									string scalar vnames)
+									real scalar eqnumber)
 
 {
 	pointer(struct eqnStruct) scalar p
@@ -231,7 +231,6 @@ void add_to_eqn(					struct ddmlStruct m,
 
 void add_to_eqn01(					struct ddmlStruct m,
 									real scalar eqnumber,
-									string scalar vnames,
 									string scalar Z)
 {
 	pointer(struct eqnStruct) scalar p
