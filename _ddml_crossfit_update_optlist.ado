@@ -38,7 +38,6 @@ program define _ddml_crossfit_update_optlist
 		if "`model'"=="optimaliv" {
 			local etype deq
 			local zett _h 
-			local vtildeh _h
 		}
 	}
 	else if "`etype'"=="zeq" {
@@ -57,7 +56,7 @@ program define _ddml_crossfit_update_optlist
 			mata: `eqn'=*(`mname'.eqnlist[1,`i'])
 			mata: st_global("r(vname)",`eqn'.Vname)
 			mata: st_global("r(eqntype)",`eqn'.eqntype)
-			mata: st_local("vtilde",`eqn'.Vtilde`vtildeh')
+			mata: st_local("vtilde",`eqn'.Vtilde`zett')
 			if "`var'"==r(vname) & "`etype'"==r(eqntype) {
 				mata: st_local("command",`eqn'.command)
 				// m is the rep number
@@ -75,16 +74,5 @@ program define _ddml_crossfit_update_optlist
 	mata: `mname'.`optname' = (`mname'.`optname' \ tokens("`optlist'"))
 	
 	mata: mata drop `eqn'
-
-end
-
-
-mata:
-
-struct eqnStruct init_eqnStruct()
-{
-	struct eqnStruct scalar		e
-	return(e)
-}
 
 end

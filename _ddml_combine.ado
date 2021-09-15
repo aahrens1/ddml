@@ -40,9 +40,14 @@ program _ddml_combine, eclass sortpreserve
 		}
 	}
 	di "_ddml_nnls `nameY' `listYtilde'"
+	// need to create new equation
 	mata: add_eqn(`mname', "yeq", "`nameY'", "`gen'","_ddml_nnls `nameY' `listYtilde'","double","`prefix'","","")
+	// run NNLS
 	_ddml_nnls `nameY' `listYtilde'
+	// create residuals
 	predict double, r
+	// need to calculate MSE etc
+	// add to equation
 	mata: add_to_eqn()
 
 	*** NNLS for D
@@ -74,8 +79,11 @@ program _ddml_combine, eclass sortpreserve
 			list `dvar' `listDtilde'
 			mata: add_eqn(`mname', "deq", "`dvar'", "`dvar't`j'","_ddml_nnls `dvar' `listDtilde'","double","`mname'_","","")
 			_ddml_nnls `dvar' `listDtilde'
-			predict double , r
-			add_to_eqn()
+			// create residuals
+			predict double, r
+			// need to calculate MSE etc
+			// add to equation
+			mata: add_to_eqn()
 			local j = `j'+1
 		}
 	}
@@ -83,6 +91,7 @@ program _ddml_combine, eclass sortpreserve
 	*** NNLS for Z
 	if `numeqnsZ' {
 		mata: st_local("listZ",invtokens(`mname'.nameZ))
+		local j =1
 		foreach zvar of varlist `listZ' {
 			local listZtilde
 			forvalues i=1/`numeqns' {
@@ -106,8 +115,12 @@ program _ddml_combine, eclass sortpreserve
 			list `zvar' `listZtilde'
 			mata: add_eqn(`mname', "zeq", "`zvar'", "`gen'","_ddml_nnls `zvar' `listZtilde'","double","`prefix'","","")
 			_ddml_nnls `zvar' `listZtilde'
+			// create residuals
 			predict double, r
+			// need to calculate MSE etc
+			// add to equation
 			mata: add_to_eqn()
+			local j = `j'+1
 		}
 	}
 end
@@ -121,11 +134,15 @@ struct eqnStruct init_eqnStruct()
 
 
 void add_to_eqn(					struct ddmlStruct m,
-									real scalar eqnumber,
-									string scalar vnames)
+									real scalar eqnumber, 
+									string scalar vtilde)
 
 {
 	pointer(struct eqnStruct) scalar p
+
+	if vtilde!="" {
+		eqnumber = selectindex(m.eqnlistNames:==vtilde)
+	}
 
 	cmd 			= st_global("r(cmd)")
 	mse				= st_numscalar("r(mse)")
@@ -151,30 +168,4 @@ void add_to_eqn(					struct ddmlStruct m,
 
 }
 
-void add_to_eqn_h(					struct ddmlStruct m,
-									real scalar eqnumber,
-									string scalar vnames)
-{
-	pointer(struct eqnStruct) scalar p
-
-	cmd 			= st_global("r(cmd_h)")
-	mse_h			= st_numscalar("r(mse_h)")
-	mse_h_folds		= st_matrix("r(mse_h_folds)")
-	n_h				= st_numscalar("r(N_h)")
-	n_h_folds		= st_matrix("r(N_h_folds)")
-	p				= m.eqnlist[1,eqnumber]
-	(*p).MSE_h		= ((*p).MSE_h \ mse_h)
-	(*p).N_h		= ((*p).N_h \ n_h)
-	(*p).command_h	= cmd
-
-	if (cmd == "pystacked") {
-		(*p).stack_weights_h = st_matrix("r(pysw_h)")		 
-	}
-
-	// MSE by fold list should be initialized to void 0-by-k matrix
-	// (otherwise concat fails because of conformability)
-	(*p).MSE_h_folds= ((*p).MSE_h_folds \ mse_h_folds)
-	(*p).N_h_folds	= ((*p).N_h_folds \ n_h_folds)
-
-}
 end

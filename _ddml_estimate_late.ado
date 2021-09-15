@@ -26,8 +26,10 @@ program _ddml_estimate_late, eclass sortpreserve
 
 	//mata: `mname'.nameDtilde
 	mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
-	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
-	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
+	mata: st_local("D0tilde",invtokens(`mname'.nameD0tilde))
+	mata: st_local("D1tilde",invtokens(`mname'.nameD1tilde))
+	mata: st_local("Y0tilde",invtokens(`mname'.nameY0tilde))
+	mata: st_local("Y1tilde",invtokens(`mname'.nameY1tilde))
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameY",invtokens(`mname'.nameY))
 	mata: st_local("nameZ",invtokens(`mname'.nameZ))
@@ -38,8 +40,8 @@ program _ddml_estimate_late, eclass sortpreserve
 		di "`Dtilde'"
 	}
 
-	_ddml_allcombos `Ytilde' - `Ytilde' - `Dtilde' - `Dtilde' - `Ztilde' ,	///
-		`debug'																///
+	_ddml_allcombos `Y0tilde' - `Y1tilde' - `D0tilde' - `D1tilde' - `Ztilde' ,	///
+		`debug'																	///
 		addprefix("")
 
 	local ncombos = r(ncombos)

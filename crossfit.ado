@@ -12,6 +12,8 @@ program define crossfit, rclass sortpreserve
 							foldvar(name)			/// must be numbered 1...K where K=#folds
 							resid					///
 							vtilde(name)			/// name of fitted variable
+							vtilde0(name)			/// name of fitted variable
+							vtilde1(name)			/// name of fitted variable
 							vname(varname)			/// name of original variable
 							eststring(string asis)	/// estimation string
 													/// need asis option in case it includes strings
@@ -41,7 +43,13 @@ program define crossfit, rclass sortpreserve
 	}
 	
 	// create blank fitted variable
-	qui cap gen `vtype' `vtilde'=.
+	if "`treatvar'"=="" {
+		qui cap gen `vtype' `vtilde'=.
+	} 
+	else {
+		qui cap gen `vtype' `vtilde0'=.
+		qui cap gen `vtype' `vtilde1'=.		
+	}
 	if "`lie'"!="" {
 		// in-sample predicted values for E[D|ZX]
 		tempvar vtilde_is 
@@ -118,7 +126,7 @@ program define crossfit, rclass sortpreserve
 
 		}
 
-		else if "`treatvar'"!="" & "`lie'"=="" {		// interactive model
+		else if "`treatvar'"!="" & "`lie'"=="" {		// interactive models
 
 			// outcome equation so estimate separately
 
@@ -141,8 +149,8 @@ program define crossfit, rclass sortpreserve
 
 			// get fitted values for kth fold	
 			tempvar vtilde_k
-			qui predict `vtype' `vtilde_k' if `foldvar'==`k' & `treatvar' == 1 & `touse'
-			qui replace `vtilde' = `vtilde_k' if `foldvar'==`k' & `treatvar' == 1 & `touse'
+			qui predict `vtype' `vtilde_k' if `foldvar'==`k' & `touse'
+			qui replace `vtilde1' = `vtilde_k' if `foldvar'==`k' & `touse'
 
 			// for treatvar = 0
 			// estimate excluding kth fold
@@ -161,13 +169,13 @@ program define crossfit, rclass sortpreserve
 
 			// get fitted values for kth fold	
 			tempvar vtilde_k
-			qui predict `vtype' `vtilde_k' if `foldvar'==`k' & `treatvar' == 0 & `touse'
-			qui replace `vtilde' = `vtilde_k' if `foldvar'==`k' & `treatvar' == 0 & `touse'
+			qui predict `vtype' `vtilde_k' if `foldvar'==`k' & `touse'
+			qui replace `vtilde0' = `vtilde_k' if `foldvar'==`k' & `touse'
 			
 			// replace with residuals if requested
-			if "`resid'"~="" {
-				qui replace `vtilde' = `vname' - `vtilde' if `foldvar'==`k' & `touse'
-			}
+			//if "`resid'"~="" {
+			//	qui replace `vtilde' = `vname' - `vtilde0' if `foldvar'==`k' & `touse'
+			//}
 		}
 
 		else if "`lie'"!="" {
@@ -235,17 +243,7 @@ program define crossfit, rclass sortpreserve
 	// last fold, insert new line
 	di "...complete"
 
-	// calculate and return mspe and sample size
-	tempvar vtilde_sq
-	if "`resid'"~="" {
-		// vtilde has residuals
-		qui gen double `vtilde_sq' = `vtilde'^2 if `touse'
-	}
-	else {
-		// vtilde has fitted values
-		qui gen double `vtilde_sq' = (`vname' - `vtilde')^2 if `touse'
-	}
-	
+
 	if "`lie'"!="" {
 		// vtilde has fitted values
 		tempvar vtildeh_sq
@@ -254,6 +252,19 @@ program define crossfit, rclass sortpreserve
 
 	// mspe
 	if "`treatvar'"=="" {
+
+
+		// calculate and return mspe and sample size
+		tempvar vtilde_sq
+		if "`resid'"~="" {
+			// vtilde has residuals
+			qui gen double `vtilde_sq' = `vtilde'^2 if `touse'
+		}
+		else {
+			// vtilde has fitted values
+			qui gen double `vtilde_sq' = (`vname' - `vtilde')^2 if `touse'
+		}
+	
 		// additive-type model
 		qui sum `vtilde_sq' if `touse', meanonly
 		return scalar mse	= r(mean)
@@ -267,32 +278,41 @@ program define crossfit, rclass sortpreserve
 		}
 		return mat mse_folds	= `mse_folds'
 		return mat N_folds		= `N_folds'
+	
 	}
 	else {
+
+		// calculate and return mspe and sample size
+		tempvar vtilde0_sq vtilde1_sq
+		// vtilde has fitted values
+		qui gen double `vtilde0_sq' = (`vname' - `vtilde0')^2 if `treatvar' == 0 & `touse'
+		qui gen double `vtilde1_sq' = (`vname' - `vtilde1')^2 if `treatvar' == 1 & `touse'
+
 		// interactive-type model, return mse separately for treatvar =0 and =1
-		qui sum `vtilde_sq' if `treatvar' == 0 & `touse', meanonly
+		qui sum `vtilde0_sq' if `treatvar' == 0 & `touse', meanonly
 		return scalar mse0	= r(mean)
 		local N				= r(N)
 		return scalar N0	= r(N)
-		qui sum `vtilde_sq' if `treatvar' == 1 & `touse', meanonly
+		qui sum `vtilde1_sq' if `treatvar' == 1 & `touse', meanonly
 		return scalar mse1	= r(mean)
 		local N				= `N' + r(N)
 		return scalar N1	= r(N)
 		tempname mse0_folds N0_folds mse1_folds N1_folds
 		forvalues k = 1(1)`kfolds' {
-			qui sum `vtilde_sq' if `treatvar' == 0 & `touse' & `foldvar'==`k', meanonly
+			qui sum `vtilde0_sq' if `treatvar' == 0 & `touse' & `foldvar'==`k', meanonly
 			mat `mse0_folds' = (nullmat(`mse0_folds'), r(mean))
-			qui sum `vtilde_sq' if `treatvar' == 1 & `touse' & `foldvar'==`k', meanonly
+			qui sum `vtilde1_sq' if `treatvar' == 1 & `touse' & `foldvar'==`k', meanonly
 			mat `mse1_folds' = (nullmat(`mse1_folds'), r(mean))
-			qui count if `treatvar' == 0 & `touse' & `foldvar'==`k' & `vtilde_sq'<.
+			qui count if `treatvar' == 0 & `touse' & `foldvar'==`k' & `vtilde1_sq'<.
 			mat `N0_folds' = (nullmat(`N0_folds'), r(N))
-			qui count if `treatvar' == 1 & `touse' & `foldvar'==`k' & `vtilde_sq'<.
+			qui count if `treatvar' == 1 & `touse' & `foldvar'==`k' & `vtilde0_sq'<.
 			mat `N1_folds' = (nullmat(`N1_folds'), r(N))
 		}
 		return mat mse0_folds	= `mse0_folds'
 		return mat mse1_folds	= `mse1_folds'
 		return mat N0_folds		= `N0_folds'
 		return mat N1_folds		= `N1_folds'
+
 	}
 	
 	if "`lie'"!="" {

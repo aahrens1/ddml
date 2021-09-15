@@ -207,68 +207,6 @@ end
 
 mata:
 
-struct eqnStruct init_eqnStruct()
-{
-	struct eqnStruct scalar		e
-	return(e)
-}
-
-void add_to_eqn(					struct ddmlStruct m,
-									real scalar eqnumber)
-
-{
-	pointer(struct eqnStruct) scalar p
-
-	cmd 			= st_global("r(cmd)")
-	mse				= st_numscalar("r(mse)")
-	mse_folds		= st_matrix("r(mse_folds)")
-	n				= st_numscalar("r(N)")
-	n_folds			= st_matrix("r(N_folds)")
-	p				= m.eqnlist[1,eqnumber]
-	(*p).MSE		= ((*p).MSE \ mse)
-	(*p).N			= ((*p).N \ n)
-	(*p).command	= cmd
-
-	if (cmd == "pystacked") {
-		(*p).stack_weights = st_matrix("r(pysw)")		 
-	}
-
-	// MSE by fold list should be initialized to void 0-by-k matrix
-	// (otherwise concat fails because of conformability)
-	(*p).MSE_folds	= ((*p).MSE_folds \ mse_folds)
-	(*p).N_folds	= ((*p).N_folds \ n_folds)
-	
-	// set crossfitted flag = 1
-	(*p).crossfitted	= 1
-
-}
-
-void add_to_eqn_h(					struct ddmlStruct m,
-									real scalar eqnumber)
-{
-	pointer(struct eqnStruct) scalar p
-
-	cmd 			= st_global("r(cmd_h)")
-	mse_h			= st_numscalar("r(mse_h)")
-	mse_h_folds		= st_matrix("r(mse_h_folds)")
-	n_h				= st_numscalar("r(N_h)")
-	n_h_folds		= st_matrix("r(N_h_folds)")
-	p				= m.eqnlist[1,eqnumber]
-	(*p).MSE_h		= ((*p).MSE_h \ mse_h)
-	(*p).N_h		= ((*p).N_h \ n_h)
-	(*p).command_h	= cmd
-
-	if (cmd == "pystacked") {
-		(*p).stack_weights_h = st_matrix("r(pysw_h)")		 
-	}
-
-	// MSE by fold list should be initialized to void 0-by-k matrix
-	// (otherwise concat fails because of conformability)
-	(*p).MSE_h_folds= ((*p).MSE_h_folds \ mse_h_folds)
-	(*p).N_h_folds	= ((*p).N_h_folds \ n_h_folds)
-
-}
-
 // function to set crossfit dummy indicating whether crossfit has been done already
 void set_crossfit(					struct ddmlStruct m,
 									real scalar eqnumber,

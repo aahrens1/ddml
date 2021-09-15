@@ -27,12 +27,13 @@ program _ddml_estimate_interactive, eclass sortpreserve
 	//mata: `mname'.nameDtilde
 	//mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
 	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
-	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
+	mata: st_local("Y0tilde",invtokens(`mname'.nameY0tilde))
+	mata: st_local("Y1tilde",invtokens(`mname'.nameY1tilde))
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameY",invtokens(`mname'.nameY))
 
-	_ddml_allcombos `Ytilde'- `Ytilde' - `Dtilde',		///
-		addprefix("")									///
+	_ddml_allcombos `Y0tilde'- `Y1tilde' - `Dtilde',		///
+		addprefix("`mname'_")										///
 		`debug'  
 
 	local ncombos = r(ncombos)
