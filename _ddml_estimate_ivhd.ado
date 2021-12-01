@@ -1,6 +1,6 @@
 *** ddml estimation: partial linear IV model
 
-program _ddml_estimate_optimaliv, eclass sortpreserve
+program _ddml_estimate_ivhd, eclass sortpreserve
 
 	syntax namelist(name=mname) [if] [in] ,		/// 
 								[				///

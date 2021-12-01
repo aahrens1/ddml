@@ -91,7 +91,7 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			}
 
 			*** do cross-fitting
-			
+			*** loop over equations
 			forvalues i=1/`numeqns' {
 	
 				// initialize prior to calling crossfit

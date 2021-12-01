@@ -114,7 +114,7 @@ program ddml, eclass
 	*** initialize new estimation
 	if "`subcmd'"=="init" {
 		local model: word 2 of `mainargs'
-		if ("`model'"!="partial"&"`model'"!="iv"&"`model'"!="interactive"&"`model'"!="late"&"`model'"!="optimaliv") {
+		if ("`model'"!="partial"&"`model'"!="iv"&"`model'"!="interactive"&"`model'"!="late"&"`model'"!="ivhd") {
 			di as err "no or wrong model specified." 
 			exit 1
 		}
@@ -127,7 +127,7 @@ program ddml, eclass
 		}
 
 		// distinct model: no-LIE optimal IV
-		if "`model'"=="optimaliv"&"`nolie'"!="" local model optimaliv_nolie
+		if "`model'"=="ivhd"&"`nolie'"!="" local model ivhd_nolie
 
 		mata: `mname'=init_ddmlStruct()
 		// create and store id variable
@@ -203,14 +203,14 @@ program ddml, eclass
 
 		** check that equation is consistent with model
 		mata: st_local("model",`mname'.model)
-		if ("`subcmd'"=="zeq"&("`model'"=="optimaliv"|"`model'"=="optimaliv_nolie"|"`model'"=="partial"|"`model'"=="interactive")) {
+		if ("`subcmd'"=="zeq"&("`model'"=="ivhd"|"`model'"=="ivhd_nolie"|"`model'"=="partial"|"`model'"=="interactive")) {
 			di as err "not allowed; zeq not allowed with `model'"
 		}
-		if ("`subcmd'"=="dheq"&"`model'"=="optimaliv") {
+		if ("`subcmd'"=="dheq"&"`model'"=="ivhd") {
 			di as err "not allowed; dheq not allowed with `model' and nolie"
 			exit 198
 		}
-		if ("`subcmd'"=="dheq"&("`model'"!="optimaliv_nolie")) {
+		if ("`subcmd'"=="dheq"&("`model'"!="ivhd_nolie")) {
 			di as err "not allowed; dheq not allowed with `model'"
 			exit 198
 		}
@@ -224,7 +224,7 @@ program ddml, eclass
 		}
 
 		** split equation -- only required for D-eq with LIE
-		if "`subcmd'"=="deq"&"`model'"=="optimaliv" {
+		if "`subcmd'"=="deq"&"`model'"=="ivhd" {
 			tokenize `" `eqn' "', parse("|")
 			// parse character is in macro `2'
 			local eqn `1'
@@ -239,7 +239,7 @@ program ddml, eclass
 			}
 		}
 
-		if "`model'"=="optimaliv"&"`genh'"=="" {
+		if "`model'"=="ivhd"&"`genh'"=="" {
 			local genh `gen'_h
 		}
 
@@ -272,7 +272,7 @@ program ddml, eclass
 				mata: `mname'.nameD		= tokens("`dlist'")
 			}
 		}
-		if "`subcmd'"=="deq"&"`model'"=="optimaliv" {
+		if "`subcmd'"=="deq"&"`model'"=="ivhd" {
 			// check if nameD already has vname; if not, add it to the list
 			mata: st_global("r(vname)",invtokens(`mname'.nameD))
 			if "`r(vname)'"=="" {
@@ -343,10 +343,10 @@ program ddml, eclass
 		if ("`r(model)'"=="late") {
 		_ddml_crossfit_interactive , `options' mname(`mname') 
 		}
-		if ("`r(model)'"=="optimaliv") {
+		if ("`r(model)'"=="ivhd") {
 		_ddml_crossfit_additive , `options' mname(`mname') 
 		}
-		if ("`r(model)'"=="optimaliv_nolie") {
+		if ("`r(model)'"=="ivhd_nolie") {
 		_ddml_crossfit_additive , `options' mname(`mname') 
 		}
 
@@ -383,11 +383,11 @@ program ddml, eclass
 		if ("`r(model)'"=="late") {
 			_ddml_estimate_late `mname', `options'
 		}
-		if ("`r(model)'"=="optimaliv") {
-			_ddml_estimate_optimaliv `mname', `options'
+		if ("`r(model)'"=="ivhd") {
+			_ddml_estimate_ivhd `mname', `options'
 		}
-		if ("`r(model)'"=="optimaliv_nolie") {
-			_ddml_estimate_optimaliv `mname', `options'
+		if ("`r(model)'"=="ivhd_nolie") {
+			_ddml_estimate_ivhd `mname', `options'
 		}
 
 		_ddml_ereturn, mname(`mname')
