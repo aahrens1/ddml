@@ -8,6 +8,7 @@ program _ddml_nnls, eclass sortpreserve
 	version 13
 	syntax varlist(numeric min=2) [if] [in] [, /// 
 							 	gen(name) ///
+							 	double /// datatype for fitted value
 								///ml /// use ML instead of NL
 								VERBose ///
 								* ///
@@ -82,7 +83,7 @@ program _ddml_nnls, eclass sortpreserve
     matrix rownames `vhat' = `xvars'
 
  	if ("`gen'"!="") {
-    	matrix score `gen' = `bhat' 			
+    	matrix score `double' `gen' = `bhat' 			
 	}
 
     ereturn clear

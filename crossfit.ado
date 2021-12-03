@@ -131,6 +131,7 @@ program define crossfit, rclass sortpreserve
 							vtype(string)			/// datatype of fitted variable; default=double
 							treatvar(varname)		/// 1 or 0 RHS variable; relevant for interactive model only
 													/// if omitted then default is additive model
+							shortstack(name)		///
 													/// 
 							/// options specific to LIE/DDML-IV
 							vtildeh(name)			/// intended for E[D^|X] where D^=E[D|XZ]=vtilde()	
@@ -152,6 +153,12 @@ program define crossfit, rclass sortpreserve
 	tempname eqn_info
 	initialize_eqn_info, sname(`eqn_info') vlist(`vlist') vtlist(`vtlist') estring(`eststring') `noisily'
 	local numeqns = r(numeqns)
+	
+	*** syntax
+	if "`shortstack'"~="" & `numeqns'==1 {
+		di as err "error - shortstack option available only for multiple learners"
+		exit 198
+	}
 
 	** indicator for LIE/optimal-IV model
 	if "`eststringh'"!="" local lie lie
@@ -163,9 +170,10 @@ program define crossfit, rclass sortpreserve
 	
 	// create blank fitted variable(s)
 	forvalues i=1/`numeqns' {
-		mata: st_local("vtilde",`eqn_info'.vtlist[`i'])
 		if "`treatvar'"=="" {
-			qui cap gen `vtype' `vtilde'=.
+			tempvar vhat`i' vres`i'
+			qui gen `vtype' `vhat`i''=.
+			qui gen `vtype' `vres`i''=.
 		} 
 		else {
 			qui cap gen `vtype' `vtilde0'=.
@@ -245,14 +253,9 @@ program define crossfit, rclass sortpreserve
 				// get fitted values and residuals for kth fold	
 				qui predict `vtype' `vtilde_k' if `foldvar'==`k' & `touse'
 	
-				if "`resid'"=="" {
-					// get predicted values
-					qui replace `vtilde' = `vtilde_k' if `foldvar'==`k' & `touse'
-				} 
-				else {
-					// get residuals
-					qui replace `vtilde' = `vlist' - `vtilde_k' if `foldvar'==`k' & `touse'
-				}
+				// get predicted values
+				qui replace `vhat`i'' = `vtilde_k' if `foldvar'==`k' & `touse'
+				qui replace `vres`i'' = `vname' - `vtilde_k' if `foldvar'==`k' & `touse'
 	
 			}
 	
@@ -389,32 +392,33 @@ program define crossfit, rclass sortpreserve
 			qui gen double `vtildeh_sq' = (`vtilde' - `vtildeh')^2 if `touse'		
 		}
 	
-		// mspe
+		// vtilde, mspe, etc.
 		if "`treatvar'"=="" {
 	
 			mata: st_local("vname",`eqn_info'.vlist[`i'])
 			mata: st_local("vtilde",`eqn_info'.vtlist[`i'])
-	
-			// calculate and return mspe and sample size
-			tempvar vtilde_sq
-			if "`resid'"~="" {
-				// vtilde has residuals
-				qui gen double `vtilde_sq' = `vtilde'^2 if `touse'
+			if "`resid'"=="" {
+				// vtilde is predicted values
+				qui gen `vtilde' = `vhat`i''
 			}
 			else {
-				// vtilde has fitted values
-				qui gen double `vtilde_sq' = (`vname' - `vtilde')^2 if `touse'
+				// vtilde is residuals
+				qui gen `vtilde' = `vres`i''
 			}
+	
+			// calculate and return mspe and sample size
+			tempvar vres_sq
+			qui gen double `vres_sq' = `vres`i''^2 if `touse'
 		
 			// additive-type model
-			qui sum `vtilde_sq' if `touse', meanonly
+			qui sum `vres_sq' if `touse', meanonly
 			local mse			= r(mean)
 			local N				= r(N)
 			tempname mse_folds N_folds
 			forvalues k = 1(1)`kfolds' {
-				qui sum `vtilde_sq' if `touse' & `foldvar'==`k', meanonly
+				qui sum `vres_sq' if `touse' & `foldvar'==`k', meanonly
 				mat `mse_folds' = (nullmat(`mse_folds'), r(mean))
-				qui count if `touse' & `foldvar'==`k' & `vtilde_sq'<.
+				qui count if `touse' & `foldvar'==`k' & `vres_sq'<.
 				mat `N_folds' = (nullmat(`N_folds'), r(N))
 			}
 		
@@ -472,6 +476,23 @@ program define crossfit, rclass sortpreserve
 			}
 			return mat mse_h_folds	= `mse_h_folds'
 			return mat N_h_folds	= `N_h_folds'
+		}
+	}
+	
+	// shortstack
+	if "`shortstack'"~="" & `numeqns'>1 {
+		if "`treatvar'"=="" {
+		 	forvalues i=1/`numeqns' {
+		 		local vhats `vhats' `vhat`i''
+		 	}
+		 	tempvar vss
+		 	`qui' di as text "Stacking NNLS:"
+			`qui' _ddml_nnls `vname' `vhats', gen(`shortstack') double
+			
+			if "`resid'"~="" {
+				// vtilde is the residual
+				qui replace `shortstack' = `vname' - `shortstack'
+			}
 		}
 	}
 
