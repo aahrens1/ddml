@@ -3,6 +3,9 @@
 * eqntype replaced by resid option (default=fitted)
 * default is additive-type crossfitting; treatvar option triggers interactive-type crossfitting
 
+* should recode so that 0 and 1 vtilde names not needed
+* when looping will vname always be the same? (dep var) treatvar as well?
+
 * single equation version returns scalars:
 *   r(mse)
 *   r(N)
@@ -22,8 +25,9 @@
 mata:
 
 struct eStruct {
-	real matrix vlist
 	real matrix vtlist
+	real matrix vtlist0
+	real matrix vtlist1
 	real matrix elist
 	real matrix emlist
 	real matrix eolist
@@ -37,8 +41,9 @@ struct eStruct init_eStruct()
 {
 	struct eStruct scalar	d
 
-	d.vlist		= J(1,0,"")
 	d.vtlist	= J(1,0,"")
+	d.vtlist0	= J(1,0,"")
+	d.vtlist1	= J(1,0,"")
 	d.elist		= J(1,0,"")
 	d.emlist	= J(1,0,"")
 	d.eolist	= J(1,0,"")
@@ -56,8 +61,9 @@ program define initialize_eqn_info, rclass
 	syntax [anything] [if] [in] ,					/// 
 							[						///
 							sname(name)				/// name of mata struct
-							vlist(string)			/// names of original variables
 							vtlist(string)			/// names of corresponding tilde variables
+							vtlist0(string)			/// names of corresponding tilde variables
+							vtlist1(string)			/// names of corresponding tilde variables
 							estring(string asis)	/// names of estimation strings
 													/// need asis option in case it includes strings
 							vtlisth(string)			/// intended for lists of E[D^|X] where D^=E[D|XZ]=vtilde()
@@ -74,10 +80,12 @@ program define initialize_eqn_info, rclass
 	
 	mata: `sname'			= init_eStruct()
 	// in two steps, to accommodate singleton lists (which are otherwise string scalars and not matrices
-	mata: `t' = tokens("`vlist'")
-	mata: `sname'.vlist		= `t'
 	mata: `t' = tokens("`vtlist'")
 	mata: `sname'.vtlist	= `t'
+	mata: `t' = tokens("`vtlist0'")
+	mata: `sname'.vtlist0	= `t'
+	mata: `t' = tokens("`vtlist1'")
+	mata: `sname'.vtlist1	= `t'
 	parse_estring, sname(`sname') estring(`estring') `noisily'
 
 	if "`vtlisth'"~="" {
@@ -172,9 +180,9 @@ program define crossfit, rclass sortpreserve
 							foldvar(name)			/// must be numbered 1...K where K=#folds
 							resid					///
 							vtilde(namelist)		/// name(s) of fitted variable
-							vtilde0(name)			/// name of fitted variable
-							vtilde1(name)			/// name of fitted variable
-							vname(varlist)			/// name of original variable
+							vtilde0(namelist)		/// name of fitted variable
+							vtilde1(namelist)		/// name of fitted variable
+							vname(varname)			/// name of original variable
 							eststring(string asis)	/// estimation string
 													/// need asis option in case it includes strings
 							vtype(string)			/// datatype of fitted variable; default=double
@@ -188,9 +196,10 @@ program define crossfit, rclass sortpreserve
 							]
 
 	// temporary renaming until options above renamed
-	local vlist `vname'
 	local vtlist `vtilde'
 	local vtlisth `vtildeh'
+	local vtlist0 `vtilde0'
+	local vtlist1 `vtilde1'
 
 	// LIE => we want predicted values not resids
 	if "`vtlisth'"~="" {
@@ -206,8 +215,9 @@ program define crossfit, rclass sortpreserve
 	*** setup
 	
 	tempname eqn_info
-	initialize_eqn_info, sname(`eqn_info') vlist(`vlist') vtlist(`vtlist') estring(`eststring')	///
-						vtlisth(`vtlisth') estringh(`eststringh')								///
+	initialize_eqn_info, sname(`eqn_info') vtlist(`vtlist') estring(`eststring')	///
+						vtlist0(`vtlist0') vtlist1(`vtlist1')						///
+						vtlisth(`vtlisth') estringh(`eststringh')					///
 						`noisily'
 	local numeqns = r(numeqns)
 	
@@ -233,8 +243,12 @@ program define crossfit, rclass sortpreserve
 			qui gen `vtype' `vres`i''=.
 		} 
 		else {
-			qui cap gen `vtype' `vtilde0'=.
-			qui cap gen `vtype' `vtilde1'=.		
+			tempvar vhat0`i' vres0`i'
+			tempvar vhat1`i' vres1`i'
+			qui gen `vtype' `vhat0`i''=.
+			qui gen `vtype' `vres0`i''=.	
+			qui gen `vtype' `vhat1`i''=.
+			qui gen `vtype' `vres1`i''=.	
 		}
 		if "`lie'"!="" {
 			// in-sample predicted values for E[D|ZX]; resids not needed
@@ -264,7 +278,6 @@ program define crossfit, rclass sortpreserve
 		forvalues i=1/`numeqns' {
 			mata: st_local("est_main",`eqn_info'.emlist[`i'])
 			mata: st_local("est_options",`eqn_info'.eolist[`i'])
-			mata: st_local("vname",`eqn_info'.vlist[`i'])
 			mata: st_local("vtilde",`eqn_info'.vtlist[`i'])
 			if "`lie'"!="" {
 				// LIE locals
@@ -321,11 +334,11 @@ program define crossfit, rclass sortpreserve
 					}
 				}
 	
-	
 				// get fitted values for kth fold	
 				tempvar vhat_k
 				qui predict `vtype' `vhat_k' if `foldvar'==`k' & `touse'
-				qui replace `vtilde1' = `vhat_k' if `foldvar'==`k' & `touse'
+				qui replace `vhat1`i'' = `vhat_k' if `foldvar'==`k' & `touse'
+				qui replace `vres1`i'' = `vname' - `vhat_k' if `foldvar'==`k' & `touse'
 	
 				// for treatvar = 0
 				// estimate excluding kth fold
@@ -345,7 +358,8 @@ program define crossfit, rclass sortpreserve
 				// get fitted values for kth fold	
 				tempvar vhat_k
 				qui predict `vtype' `vhat_k' if `foldvar'==`k' & `touse'
-				qui replace `vtilde0' = `vhat_k' if `foldvar'==`k' & `touse'
+				qui replace `vhat0`i'' = `vhat_k' if `foldvar'==`k' & `touse'
+				qui replace `vres0`i'' = `vname' - `vhat_k' if `foldvar'==`k' & `touse'
 
 			}
 	
@@ -423,6 +437,8 @@ program define crossfit, rclass sortpreserve
 
 	tempname mse_list N_list mse_folds_list N_folds_list
 	tempname mse_h_list N_h_list mse_h_folds_list N_h_folds_list
+	tempname mse0_list N0_list mse0_folds_list N0_folds_list
+	tempname mse1_list N1_list mse1_folds_list N1_folds_list
 	
 	forvalues i=1/`numeqns' {
 
@@ -436,7 +452,6 @@ program define crossfit, rclass sortpreserve
 		// vtilde, mspe, etc.
 		if "`treatvar'"=="" {
 	
-			mata: st_local("vname",`eqn_info'.vlist[`i'])
 			mata: st_local("vtilde",`eqn_info'.vtlist[`i'])
 			if "`resid'"=="" {
 				// vtilde is predicted values
@@ -469,38 +484,56 @@ program define crossfit, rclass sortpreserve
 			mat `N_folds_list'		= (nullmat(`N_folds_list')\ `N_folds')
 		}
 		else {
+		
+			mata: st_local("vtilde0",`eqn_info'.vtlist0[`i'])
+			mata: st_local("vtilde1",`eqn_info'.vtlist1[`i'])
+			if "`resid'"=="" {
+				// vtilde is predicted values
+				qui gen `vtilde0' = `vhat0`i''
+				qui gen `vtilde1' = `vhat1`i''
+			}
+			else {
+				// vtilde is residuals
+				qui gen `vtilde0' = `vres0`i''
+				qui gen `vtilde1' = `vres1`i''
+			}
 	
 			// calculate and return mspe and sample size
-			tempvar vtilde0_sq vtilde1_sq
+			tempvar vres0_sq vres1_sq
 			// vtilde has fitted values
-			qui gen double `vtilde0_sq' = (`vlist' - `vtilde0')^2 if `treatvar' == 0 & `touse'
-			qui gen double `vtilde1_sq' = (`vlist' - `vtilde1')^2 if `treatvar' == 1 & `touse'
+			qui gen double `vres0_sq' = (`vname' - `vhat0`i'')^2 if `treatvar' == 0 & `touse'
+			qui gen double `vres1_sq' = (`vname' - `vhat1`i'')^2 if `treatvar' == 1 & `touse'
 	
 			// interactive-type model, return mse separately for treatvar =0 and =1
-			qui sum `vtilde0_sq' if `treatvar' == 0 & `touse', meanonly
-			return scalar mse0	= r(mean)
-			local N				= r(N)
-			return scalar N0	= r(N)
-			qui sum `vtilde1_sq' if `treatvar' == 1 & `touse', meanonly
-			return scalar mse1	= r(mean)
-			local N				= `N' + r(N)
-			return scalar N1	= r(N)
+			qui sum `vres0_sq' if `treatvar' == 0 & `touse', meanonly
+			local mse0			= r(mean)
+			local N0			= r(N)
+			qui sum `vres1_sq' if `treatvar' == 1 & `touse', meanonly
+			local mse1			= r(mean)
+			local N1			= r(N)
+			local N				= `N0'+`N1'
 			tempname mse0_folds N0_folds mse1_folds N1_folds
 			forvalues k = 1(1)`kfolds' {
-				qui sum `vtilde0_sq' if `treatvar' == 0 & `touse' & `foldvar'==`k', meanonly
+				qui sum `vres0_sq' if `treatvar' == 0 & `touse' & `foldvar'==`k', meanonly
 				mat `mse0_folds' = (nullmat(`mse0_folds'), r(mean))
-				qui sum `vtilde1_sq' if `treatvar' == 1 & `touse' & `foldvar'==`k', meanonly
+				qui sum `vres1_sq' if `treatvar' == 1 & `touse' & `foldvar'==`k', meanonly
 				mat `mse1_folds' = (nullmat(`mse1_folds'), r(mean))
-				qui count if `treatvar' == 0 & `touse' & `foldvar'==`k' & `vtilde1_sq'<.
+				qui count if `treatvar' == 0 & `touse' & `foldvar'==`k' & `vres1_sq'<.
 				mat `N0_folds' = (nullmat(`N0_folds'), r(N))
-				qui count if `treatvar' == 1 & `touse' & `foldvar'==`k' & `vtilde0_sq'<.
+				qui count if `treatvar' == 1 & `touse' & `foldvar'==`k' & `vres0_sq'<.
 				mat `N1_folds' = (nullmat(`N1_folds'), r(N))
 			}
-			return mat mse0_folds	= `mse0_folds'
-			return mat mse1_folds	= `mse1_folds'
-			return mat N0_folds		= `N0_folds'
-			return mat N1_folds		= `N1_folds'
-	
+
+			mat `mse0_list'			= (nullmat(`mse0_list') \ `mse0')
+			mat `N0_list'			= (nullmat(`N0_list') \ `N0')
+			mat `mse0_folds_list'	= (nullmat(`mse0_folds_list') \ `mse0_folds')
+			mat `N0_folds_list'		= (nullmat(`N0_folds_list')\ `N0_folds')
+			
+			mat `mse1_list'			= (nullmat(`mse1_list') \ `mse1')
+			mat `N1_list'			= (nullmat(`N1_list') \ `N1')
+			mat `mse1_folds_list'	= (nullmat(`mse1_folds_list') \ `mse1_folds')
+			mat `N1_folds_list'		= (nullmat(`N1_folds_list')\ `N1_folds')
+			
 		}
 		
 		if "`lie'"!="" {
@@ -547,6 +580,27 @@ program define crossfit, rclass sortpreserve
 		return mat N_list			= `N_list'
 		return mat mse_folds_list	= `mse_folds_list'
 		return mat N_folds_list		= `N_folds_list'
+	}
+	else {
+		return scalar mse0			= `mse0'
+		return scalar N0			= `N0'
+		return scalar mse1			= `mse1'
+		return scalar N1			= `N1'
+		return mat mse0_folds		= `mse0_folds'
+		return mat mse1_folds		= `mse1_folds'
+		return mat N0_folds			= `N0_folds'
+		return mat N1_folds			= `N1_folds'
+	
+		return mat mse0_list		= `mse0_list'
+		return mat N0_list			= `N0_list'
+		return mat mse0_folds_list	= `mse0_folds_list'
+		return mat N0_folds_list	= `N0_folds_list'
+		
+		return mat mse1_list		= `mse1_list'
+		return mat N1_list			= `N1_list'
+		return mat mse1_folds_list	= `mse1_folds_list'
+		return mat N1_folds_list	= `N1_folds_list'
+	
 	}
 	if "`lie'"~="" {
 		return scalar N_h			= `N_h'
