@@ -238,9 +238,9 @@ program define crossfit, rclass sortpreserve
 		}
 		if "`lie'"!="" {
 			// in-sample predicted values for E[D|ZX]; resids not needed
-			tempvar vhath_is`i' vhath`i'
-			qui gen `vtype' `vhath_is`i''=.
-			qui gen `vtype' `vhath`i''=.
+			tempvar hhat_is`i' hhat`i'
+			qui gen `vtype' `hhat_is`i''=.
+			qui gen `vtype' `hhat`i''=.
 		}
 	}
 
@@ -270,7 +270,7 @@ program define crossfit, rclass sortpreserve
 				// LIE locals
 				mata: st_local("est_main_h",`eqn_info'.emlisth[`i'])
 				mata: st_local("est_options_h",`eqn_info'.eolisth[`i'])
-				mata: st_local("vhath",`eqn_info'.vtlisth[`i'])
+				mata: st_local("hhat",`eqn_info'.vtlisth[`i'])
 			}
 			
 			if "`treatvar'"=="" & "`lie'"=="" {
@@ -352,10 +352,10 @@ program define crossfit, rclass sortpreserve
 			else if "`lie'"!="" {
 	
 				tempvar vhat_k // stores predicted values for E[D|ZX] temporarily
-				tempvar vhath_k // stores predicted values for E[D^|X] temporarily
+				tempvar hhat_k // stores predicted values for E[D^|X] temporarily
 	
 				// line may be unnecessary
-				qui replace `vhath_is`i''=.
+				qui replace `hhat_is`i''=.
 	
 				// Step I: estimation of E[D|XZ]=D^
 				// estimate excluding kth fold
@@ -380,12 +380,12 @@ program define crossfit, rclass sortpreserve
 				qui replace `vhat`i'' = `vhat_k' if `foldvar'==`k' & `touse'
 	
 				// get in-sample predicted values
-				qui replace `vhath_is`i'' = `vhat_k' if `foldvar'!=`k' & `touse'
+				qui replace `hhat_is`i'' = `vhat_k' if `foldvar'!=`k' & `touse'
 	
 				// Step II: estimation of E[D^|X]
 	
 				// replace {D}-placeholder in estimation string with variable name
-				local est_main_h_k = subinstr("`est_main_h'","{D}","`vhath_is`i''",1)
+				local est_main_h_k = subinstr("`est_main_h'","{D}","`hhat_is`i''",1)
 	
 				// estimation	
 				`qui' `est_main_h_k' if `foldvar'!=`k' & `touse', `est_options_h'
@@ -403,10 +403,10 @@ program define crossfit, rclass sortpreserve
 				}
 	
 				// get fitted values  
-				qui predict `vtype' `vhath_k' if `touse'
+				qui predict `vtype' `hhat_k' if `touse'
 	
 				// get out-of-sample predicted values
-				qui replace `vhath`i'' = `vhath_k' if `foldvar'==`k' & `touse'
+				qui replace `hhat`i'' = `hhat_k' if `foldvar'==`k' & `touse'
 	
 			}
 			
@@ -429,8 +429,8 @@ program define crossfit, rclass sortpreserve
 		// maybe move below into LIE block ... unless this is supposed to be used in the first block below?
 		if "`lie'"!="" {
 			// vtilde has fitted values
-			tempvar vresh_sq
-			qui gen double `vresh_sq' = (`vhat`i'' - `vhath`i'')^2 if `touse'		
+			tempvar hres_sq
+			qui gen double `hres_sq' = (`vhat`i'' - `hhat`i'')^2 if `touse'		
 		}
 	
 		// vtilde, mspe, etc.
@@ -504,14 +504,14 @@ program define crossfit, rclass sortpreserve
 		}
 		
 		if "`lie'"!="" {
-			qui sum `vresh_sq' if `touse', meanonly
+			qui sum `hres_sq' if `touse', meanonly
 			local mse_h			= r(mean)
 			local N_h			= r(N)	
 			tempname mse_h_folds N_h_folds
 			forvalues k = 1(1)`kfolds' {
-				qui sum `vresh_sq' if `touse' & `foldvar'==`k', meanonly
+				qui sum `hres_sq' if `touse' & `foldvar'==`k', meanonly
 				mat `mse_h_folds' = (nullmat(`mse_h_folds'), r(mean))
-				qui count if `touse' & `foldvar'==`k' & `vresh_sq'<.
+				qui count if `touse' & `foldvar'==`k' & `hres_sq'<.
 				mat `N_h_folds' = (nullmat(`N_h_folds'), r(N))
 			}
 			mat `mse_h_list'		= (nullmat(`mse_h_list') \ `mse_h')
