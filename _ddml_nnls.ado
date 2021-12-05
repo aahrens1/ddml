@@ -82,10 +82,6 @@ program _ddml_nnls, eclass sortpreserve
     matrix colnames `vhat' = `xvars'
     matrix rownames `vhat' = `xvars'
 
- 	if ("`gen'"!="") {
-    	matrix score `double' `gen' = `bhat' 			
-	}
-
     ereturn clear
     ereturn post `bhat' `vhat', depname(`yvar') obs(`N') esample(`touse')
     ereturn display

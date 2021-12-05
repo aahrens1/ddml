@@ -2,7 +2,7 @@
 program define _ddml_nnls_p
     version 14
  
-    syntax newvarname [if] [in] , [ xb r ]
+    syntax newvarname [if] [in] , [ xb r]
  
     marksample touse, novarlist
  
