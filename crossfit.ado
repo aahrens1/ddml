@@ -180,8 +180,6 @@ program define crossfit, rclass sortpreserve
 							foldvar(name)			/// must be numbered 1...K where K=#folds
 							resid					///
 							vtilde(namelist)		/// name(s) of fitted variable
-							vtilde0(namelist)		/// name of fitted variable
-							vtilde1(namelist)		/// name of fitted variable
 							vname(varname)			/// name of original variable
 							eststring(string asis)	/// estimation string
 													/// need asis option in case it includes strings
@@ -189,7 +187,6 @@ program define crossfit, rclass sortpreserve
 							treatvar(varname)		/// 1 or 0 RHS variable; relevant for interactive model only
 													/// if omitted then default is additive model
 							shortstack(name)		///
-							shortstackh(name)		///
 													/// 
 													/// options specific to LIE/DDML-IV
 							vtildeh(namelist)		/// intended for E[D^|X] where D^=E[D|XZ]=vtilde()	
@@ -198,12 +195,18 @@ program define crossfit, rclass sortpreserve
 
 	// temporary renaming until options above renamed
 	local vtlist `vtilde'
-	local vtlisth `vtildeh'
-	local vtlist0 `vtilde0'
-	local vtlist1 `vtilde1'
+	local vtlisth  
+	local vtlist0 
+	local vtlist1 
+	foreach vv in `vtilde' {
+		local vtlisth `vtlisth' `vv'h
+		local vtlist0 `vtlist0' `vv'0
+		local vtlist1 `vtlist1' `vv'1
+	}
 
 	// LIE => we want predicted values not resids
-	if "`vtlisth'"~="" {
+	if "`vtlisth'"~="" | "`eststringh'"!="" {
+		di as err "resid option ignored"
 		local resid
 	}
 
@@ -250,6 +253,7 @@ program define crossfit, rclass sortpreserve
 
 	// create blank fitted variable(s)
 	if "`treatvar'"=="" & "`lie'"=="" { // case 1
+		if "`shortstack'"!="" gen `vtype' `shortstack'=.
 		forvalues i=1/`numeqns' {
 			tempvar vhat`i' vres`i'
 			qui gen `vtype' `vhat`i''=.
@@ -257,6 +261,10 @@ program define crossfit, rclass sortpreserve
 		}
 	}  
 	else if "`treatvar'"!="" & "`lie'"=="" { // case 2
+		if "`shortstack'"!="" {
+			gen `vtype' `shortstack'0=.
+			gen `vtype' `shortstack'1=.
+		}
 		forvalues i=1/`numeqns' {
 			tempvar vhat0`i' vres0`i'
 			tempvar vhat1`i' vres1`i'
@@ -272,6 +280,11 @@ program define crossfit, rclass sortpreserve
 			tempvar dhat`i'
 			qui gen `vtype' `dhat`i''=.  // using learner i
 		}
+		// out-of-sample predicted values for E[D|X] 
+		forvalues i=1/`numeqns' {
+			tempvar hhat`i'
+			qui gen `vtype' `hhat`i''=.  // using learner i in both steps
+		}
 		// predicted values for E[D|ZX] for each k & learner i
 		forvalues k=1/`kfolds' {
 			forvalues i=1/`numeqns' {
@@ -279,26 +292,30 @@ program define crossfit, rclass sortpreserve
 				qui gen `vtype' `dhat_`i'_`k''=.
 			}
 		}
-		// in-sample predicted values for E[D|ZX] for each k: short-stacked
-		forvalues k=1/`kfolds' {		
-			tempvar dhat_isSS_`k' 
-			qui gen `vtype' `dhat_isSS_`k''=.
-		}
-		// out-of-sample predicted values for E[D|ZX] from short-stacking by k
-		// NB: this is different from "dhatSS", which are from applying contrained regression to full sample
-		tempvar dhat_oosSS 
-		qui gen `vtype' `dhat_oosSS'=. 
-		// out-of-sample predicted values for E[D|X] 
-		forvalues i=1/`numeqns' {
-			tempvar dtil`i' dtilSS`i'
-			qui gen `vtype' `dtil`i''=.  // using learner i in both steps
-			qui gen `vtype' `dtilSS`i''=. // using short-stacking for E[D|XZ] & then using learner i for E[D|X]
-		}
-		// short-stacking predicted values
-		tempvar dhatSS
-		qui gen `vtype' `dhatSS'=. 
-		tempvar dtilSS
-		gen `vtype' `dtilSS'=.
+		if ("`shortstack'"!="") { // with short-stacking
+			// for final results
+			gen `vtype' `shortstack'=.
+			gen `vtype' `shortstack'h=.			
+			// in-sample predicted values for E[D|ZX] for each k: short-stacked
+			forvalues k=1/`kfolds' {		
+				tempvar dhat_isSS_`k' 
+				qui gen `vtype' `dhat_isSS_`k''=.
+			}
+			// out-of-sample predicted values for E[D|ZX] from short-stacking by k
+			// NB: this is different from "dhatSS", which are from applying contrained regression to full sample
+			tempvar dhat_oosSS 
+			qui gen `vtype' `dhat_oosSS'=. 
+			// out-of-sample predicted values for E[D|X] 
+			forvalues i=1/`numeqns' {
+				tempvar hhatSS`i'
+				qui gen `vtype' `hhatSS`i''=. // using short-stacking for E[D|XZ] & then using learner i for E[D|X]
+			}
+			// short-stacking predicted values
+			tempvar dhatSS
+			qui gen `vtype' `dhatSS'=. // this will become `shortstack'
+			tempvar hhatSS
+			gen `vtype' `hhatSS'=. // this will become `shortstack'h
+		} 
 	}
 
 	// save pystacked weights
@@ -350,7 +367,7 @@ program define crossfit, rclass sortpreserve
 	
 			}
 	
-			else if "`treatvar'"!="" & "`lie'"=="" {		// case 2: interactive models
+			else if "`treatvar'"!="" & "`lie'"=="" {	// case 2: interactive models
 	
 				// outcome equation so estimate separately
 	
@@ -409,7 +426,7 @@ program define crossfit, rclass sortpreserve
 				`qui' `est_main' if `foldvar'!=`k' & `touse', `est_options'
 				local cmd `e(cmd)'
 	
-				// save pystacked weights
+				// get pystacked weights
 				if ("`cmd'"=="pystacked") {
 					if (`k'==1) {
 						mat `pysw' = e(weights)
@@ -423,22 +440,22 @@ program define crossfit, rclass sortpreserve
 				// get fitted values (in and out of sample)
 				qui predict `vtype' `vhat_k' if `touse'
 	
-				// get out-of-sample predicted values
+				// get *combined* out-of-sample predicted values
 				qui replace `dhat`i'' = `vhat_k' if `foldvar'==`k' & `touse'
 	
-				// save predicted values in wide format for each i and k
+				// get predicted values in wide format for each i and k
 				qui replace `dhat_`i'_`k'' = `vhat_k' if `touse'
 	
 				// Step II: estimation of E[D^|X]
 	
 				// replace {D}-placeholder in estimation string with variable name
-				local est_main_h_k = subinstr("`est_main_h'","{D}","`dhat_is`i'_ `k''",1)
+				local est_main_h_k = subinstr("`est_main_h'","{D}","`dhat_`i'_`k''",1)
 	
 				// estimation	
 				`qui' `est_main_h_k' if `foldvar'!=`k' & `touse', `est_options_h'
 				local cmd_h `e(cmd)'
 	
-				// save pystacked weights
+				// get pystacked weights
 				if ("`cmd_h'"=="pystacked") {
 					if (`k'==1) {
 						mat `pysw_h' = e(weights)
@@ -452,8 +469,8 @@ program define crossfit, rclass sortpreserve
 				// get fitted values  
 				qui predict `vtype' `vtil_k' if `touse'
 	
-				// get out-of-sample predicted values
-				qui replace `dtil`i'' = `vtil_k' if `foldvar'==`k' & `touse'
+				// get *combined* out-of-sample predicted values
+				qui replace `hhat`i'' = `vtil_k' if `foldvar'==`k' & `touse'
 	
 			}
 			
@@ -487,17 +504,18 @@ program define crossfit, rclass sortpreserve
 				qui replace `shortstack' = `vname' - `shortstack'
 			}
 		}
-		else if "`treatvar'"!="" & "`lie'"=="" {		// case 2: interactive models
+		else if "`treatvar'"!="" & "`lie'"=="" {	// case 2: interactive models
 			local vhats1 
 			local vhats0
 			// treatvar == 1
 			forvalues i=1/`numeqns' {
-				local vhats1 `vhats' `vhat1`i''
+				local vhats1 `vhats1' `vhat1`i''
 			}
-			tempvar vss
+			tempvar vtemp
 			`qui' di as text "Stacking NNLS:"
 			`qui' _ddml_nnls `vname' `vhats1' if `treatvar'==1
-			predict `vtype' `shortstack'1 
+			qui predict `vtype' `vtemp'
+			qui replace `shortstack'1=`vtemp'
 				
 			if "`resid'"~="" {
 				// vtilde is the residual
@@ -507,14 +525,15 @@ program define crossfit, rclass sortpreserve
 			forvalues i=1/`numeqns' {
 				local vhats0 `vhats0' `vhat0`i''
 			}
-			tempvar vss
+			tempvar vtemp
 			`qui' di as text "Stacking NNLS:"
 			`qui' _ddml_nnls `vname' `vhats0'
-			predict `vtype' `shortstack'1 
+			qui predict `vtype' `vtemp'
+			qui replace `shortstack'0=`vtemp' 
 	
 			if "`resid'"~="" {
 				// vtilde is the residual
-				qui replace `shortstack'0 = `vname' - `shortstack'0
+				qui replace `shortstack'0 = `vname' - `shortstack'0 if treatvar == 0
 			}
 		}
 		else if "`lie'"!="" {
@@ -524,10 +543,10 @@ program define crossfit, rclass sortpreserve
 				local dhats `dhats' `dhat`i''
 			}
 			`qui' di as text "Stacking NNLS:"
-			`qui' _ddml_nnls `vname' `dhats'
+			`qui' _ddml_nnls `vname' `dhats' if `touse'
 			tempvar vtemp
-			predict `vtype' `vtemp'
-			replace `dhatSS'=`vtemp' 
+			qui predict `vtype' `vtemp' if `touse'
+			qui replace `dhatSS'=`vtemp' 
 
 			// apply short-stacking to in-sample predicted values of E[D|XZ] *for each k*
 			forvalues k = 1(1)`kfolds' {
@@ -538,10 +557,9 @@ program define crossfit, rclass sortpreserve
 				tempvar vtemp
 				`qui' di as text "Stacking NNLS:"
 				`qui' _ddml_nnls `vname' `dhats_is' if `foldvar'!=`k' & `touse' 
-				predict `vtype' `vtemp'
-				sum `vtemp'
-				replace `dhat_isSS_`k'' = `vtemp' if `foldvar'!=`k'
-				replace `dhat_oosSS' = `vtemp' if `foldvar'==`k'
+				qui predict `vtype' `vtemp'
+				qui replace `dhat_isSS_`k'' = `vtemp' if `foldvar'!=`k' & `touse'
+				qui replace `dhat_oosSS' = `vtemp' if `foldvar'==`k' & `touse'
 			}
 
 			// need to cross-fit stacked in-sample predicted values against X
@@ -550,7 +568,6 @@ program define crossfit, rclass sortpreserve
 
 					mata: st_local("est_main_h",`eqn_info'.emlisth[`i'])
 					mata: st_local("est_options_h",`eqn_info'.eolisth[`i'])
-					mata: st_local("hhat",`eqn_info'.vtlisth[`i'])
 
 					// replace {D}-placeholder in estimation string with variable name
 					//list `foldvar' `dhat_isSS_`k''
@@ -565,27 +582,27 @@ program define crossfit, rclass sortpreserve
 					qui predict `vtype' `vtemp' if `touse'
 		
 					// get out-of-sample predicted values
-					qui replace `dtilSS`i'' = `vtemp' if `foldvar'==`k' & `touse'
+					qui replace `hhatSS`i'' = `vtemp' if `foldvar'==`k' & `touse'
 				}
 			}
 
 			// final stacking for E[D|X]
 			forvalues k = 1(1)`kfolds' {
-				local dtilSS_list
+				local hhatSS_list
 				forvalues i=1/`numeqns' {
-					local dtilSS_list `dtilSS_list' `dtilSS`i''
+					local hhatSS_list `hhatSS_list' `hhatSS`i''
 				}
 				`qui' di as text "Stacking NNLS:"
-				sum `dhat_oosSS' `dtilSS_list'
-				`qui' _ddml_nnls `dhat_oosSS' `dtilSS_list'
+				sum `dhat_oosSS' `hhatSS_list'
+				`qui' _ddml_nnls `dhat_oosSS' `hhatSS_list'
 				tempvar vtemp
-				predict `vtype' `vtemp'
-				replace `dtilSS'=`vtemp'
+				qui predict `vtype' `vtemp'
+				qui replace `hhatSS'=`vtemp'
 			}
-			gen `vtype' `shortstack'=`dhatSS'
+			qui replace `shortstack'=`dhatSS'
 			label var `shortstack' "short-stacking cross-fitted E[D|Z,X]"
-			gen `vtype' `shortstackh'=`dtilSS'
-			label var `shortstackh' "short-stacking cross-fitted E[D|X]"
+			qui replace `shortstack'h=`hhatSS'
+			label var `shortstack' "short-stacking cross-fitted E[D|X]"
 		}
 	}
 
@@ -599,6 +616,7 @@ program define crossfit, rclass sortpreserve
 	tempname mse0_list N0_list mse0_folds_list N0_folds_list
 	tempname mse1_list N1_list mse1_folds_list N1_folds_list
 	
+	// AA: if we loop over "1 2 3 SS" this code would also calculate MSE for short-stacking in case of LIE
 	forvalues i=1/`numeqns' {
 
 		// maybe move below into LIE block ... unless this is supposed to be used in the first block below?
@@ -609,7 +627,7 @@ program define crossfit, rclass sortpreserve
 		}
 	
 		// vtilde, mspe, etc.
-		if "`treatvar'"=="" {
+		if "`treatvar'"=="" & "`lie'"=="" {
 	
 			mata: st_local("vtilde",`eqn_info'.vtlist[`i'])
 			if "`resid'"=="" {
@@ -642,10 +660,12 @@ program define crossfit, rclass sortpreserve
 			mat `mse_folds_list'	= (nullmat(`mse_folds_list') \ `mse_folds')
 			mat `N_folds_list'		= (nullmat(`N_folds_list')\ `N_folds')
 		}
-		else {
+		else if "`treatvar'"!="" & "`lie'"=="" {
 		
 			mata: st_local("vtilde0",`eqn_info'.vtlist0[`i'])
 			mata: st_local("vtilde1",`eqn_info'.vtlist1[`i'])
+			cap drop `vtilde0'
+			cap drop `vtilde1'
 			if "`resid'"=="" {
 				// vtilde is predicted values
 				qui gen `vtilde0' = `vhat0`i''
@@ -694,8 +714,29 @@ program define crossfit, rclass sortpreserve
 			mat `N1_folds_list'		= (nullmat(`N1_folds_list')\ `N1_folds')
 			
 		}
-		
-		if "`lie'"!="" {
+		else if "`lie'"!="" {
+
+			// calculate and return mspe and sample size
+			tempvar hres dres hres_sq dres_sq
+			// vtilde has fitted values
+			qui gen double `dres_sq' = (`vname' - `dhat`i'')^2 if `touse'
+			qui gen double `hres_sq' = (`vname' - `hhat`i'')^2 if `touse'
+
+			qui sum `dres_sq' if `touse', meanonly
+			local mse			= r(mean)
+			local N				= r(N)
+			tempname mse_folds N_folds
+			forvalues k = 1(1)`kfolds' {
+				qui sum `dres_sq' if `touse' & `foldvar'==`k', meanonly
+				mat `mse_folds' = (nullmat(`mse_folds'), r(mean))
+				qui count if `touse' & `foldvar'==`k' & `dres_sq'<.
+				mat `N_folds' = (nullmat(`N_folds'), r(N))
+			}
+			mat `mse_list'			= (nullmat(`mse_list') \ `mse')
+			mat `N_list'			= (nullmat(`N_list') \ `N')
+			mat `mse_folds_list'	= (nullmat(`mse_folds_list') \ `mse_folds')
+			mat `N_folds_list'		= (nullmat(`N_folds_list')\ `N_folds')
+
 			qui sum `hres_sq' if `touse', meanonly
 			local mse_h			= r(mean)
 			local N_h			= r(N)	
