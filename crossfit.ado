@@ -589,8 +589,10 @@ program define crossfit, rclass sortpreserve
 		}
 	}
 
-	// last fold, insert new line
-	di "...completed short-stacking"
+	if "`shortstack'"~="" & `numeqns'>1 {
+		// last fold, insert new line
+		di "...completed short-stacking"
+	}
 
 	tempname mse_list N_list mse_folds_list N_folds_list
 	tempname mse_h_list N_h_list mse_h_folds_list N_h_folds_list
