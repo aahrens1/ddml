@@ -178,9 +178,9 @@ program define crossfit, rclass sortpreserve
 							NOIsily					///
 							foldvar(name)			/// must be numbered 1...K where K=#folds
 							resid					///
-							vtilde(namelist)		/// name(s) of fitted variable - rename option to vtlist(namelist)?
+							vtilde(namelist)		/// name(s) of fitted variable(s)
 							vname(varname)			/// name of original variable
-							eststring(string asis)	/// estimation string
+							estring(string asis)	/// estimation string
 													/// need asis option in case it includes strings
 							vtype(string)			/// datatype of fitted variable; default=double
 							treatvar(varname)		/// 1 or 0 RHS variable; relevant for interactive model only
@@ -188,17 +188,16 @@ program define crossfit, rclass sortpreserve
 							shortstack(name)		///
 													/// 
 													/// options specific to LIE/DDML-IV
-							/// vtildeh(namelist)		/// intended for E[D^|X] where D^=E[D|XZ]=vtilde() - DELETE	
-							eststringh(string asis)	/// est string for E[D^|XZ]		
+							estringh(string asis)	/// est string for E[D^|XZ]		
 							]
 
-	// temporary renaming until options above renamed ... but may keep
+	// renaming for clarity
 	local vtlist `vtilde'
 	// clear the local macro
 	local vtilde
 
 	** indicator for LIE/optimal-IV model
-	local lieflag	= "`eststringh'"~=""
+	local lieflag	= "`estringh'"~=""
 	** indicator for interactive model
 	local tvflag	= "`treatvar'"~=""
 	** indicator for short-stacking
@@ -206,7 +205,7 @@ program define crossfit, rclass sortpreserve
  
 	foreach vv in `vtlist' {
 		if `lieflag' {
-			local vtlisth `vtlisth' `vv'h
+			local vtlisth `vtlisth' `vv'_h
 		}
 		if `tvflag' {
 			local vtlist0 `vtlist0' `vv'0
@@ -215,7 +214,6 @@ program define crossfit, rclass sortpreserve
 	}
 
 	// LIE => we want predicted values not resids
-	// if "`vtlisth'"~="" | "`eststringh'"!="" {
 	if `lieflag' {
 		di as res "resid option ignored"
 		local resid
@@ -230,9 +228,9 @@ program define crossfit, rclass sortpreserve
 	*** setup
 	
 	tempname eqn_info
-	initialize_eqn_info, sname(`eqn_info') vtlist(`vtlist') estring(`eststring')	///
+	initialize_eqn_info, sname(`eqn_info') vtlist(`vtlist') estring(`estring')	///
 						vtlist0(`vtlist0') vtlist1(`vtlist1')						///
-						vtlisth(`vtlisth') estringh(`eststringh')					///
+						vtlisth(`vtlisth') estringh(`estringh')					///
 						`noisily'
 	local numlearners = r(numlearners)
 	
@@ -304,7 +302,7 @@ program define crossfit, rclass sortpreserve
 		if `ssflag' { // with short-stacking
 			// for final results
 			qui gen `vtype' `shortstack'=.
-			qui gen `vtype' `shortstack'h=.			
+			qui gen `vtype' `shortstack'_h=.			
 			// in-sample predicted values for E[D|ZX] for each k: short-stacked
 			forvalues k=1/`kfolds' {		
 				tempvar dhat_isSS_`k' 
@@ -323,7 +321,7 @@ program define crossfit, rclass sortpreserve
 			tempvar dhatSS
 			qui gen `vtype' `dhatSS'=. // this will become `shortstack'
 			tempvar hhatSS
-			qui gen `vtype' `hhatSS'=. // this will become `shortstack'h
+			qui gen `vtype' `hhatSS'=. // this will become `shortstack'_h
 		} 
 	}
 	else {
@@ -613,8 +611,8 @@ program define crossfit, rclass sortpreserve
 			}
 			qui replace `shortstack'=`dhatSS'
 			label var `shortstack' "short-stacking cross-fitted E[D|Z,X]"
-			qui replace `shortstack'h=`hhatSS'
-			label var `shortstack'h "short-stacking cross-fitted E[D|X]"
+			qui replace `shortstack'_h=`hhatSS'
+			label var `shortstack'_h "short-stacking cross-fitted E[D|X]"
 		}
 		else {
 			di as err "internal crossfit error"
@@ -835,7 +833,7 @@ program define crossfit, rclass sortpreserve
 			tempvar hres dres hres_sq dres_sq
 			// vtilde has fitted values
 			qui gen double `dres_sq' = (`shortstack')^2 if `touse'
-			qui gen double `hres_sq' = (`shortstack'h)^2 if `touse'
+			qui gen double `hres_sq' = (`shortstack'_h)^2 if `touse'
 
 			qui sum `dres_sq' if `touse', meanonly
 			local mse			= r(mean)
