@@ -20,6 +20,71 @@ st_global("s(stata_version)","`stata_version'")
 st_global("s(compiled_date)","`current_date")
 }
 
+// uniquely identified by vname = dep var in the equation
+struct eStruct {
+	real matrix			vtlist
+	real scalar			nlearners		// number of learners
+	real scalar			nreps			// number of resamplings
+
+	pointer(class AssociativeArray) scalar	plrnAA		// pointer to AssociativeArray with all learners (keys=vtilde,object)
+	pointer(class AssociativeArray) scalar	presAA		// pointer to AssociativeArray with all learner results (keys=vtilde,object,rep)
+
+}
+
+struct eStruct init_eStruct(real scalar reps)
+{
+	struct eStruct scalar	d
+	class AssociativeArray scalar	A2, A3
+
+	d.vtlist	= J(1,0,"")
+	d.nlearners	= 0
+	d.nreps		= reps
+		
+	A2.reinit("string",2)
+	A3.reinit("string",3)
+	
+	A2.notfound(NULL)
+	A3.notfound(NULL)
+
+	d.plrnAA		= &A2
+	d.presAA		= &A3
+	
+	return(d)
+}
+
+struct mStruct {
+	string scalar							model			// model; partial, iv, late, etc
+	real colvector							id				// id variable (name in Stata will be modelname_id)
+	real scalar								nreps			// number of resamplings
+	real scalar								kfolds			// number of crossfitting folds
+	pointer(class AssociativeArray) scalar	peqnAA			// pointer to AssociativeArray with all equations
+	string scalar							nameY			// dependent variable 
+	string colvector						nameD			// treatment variable(s)
+	string colvector						nameZ			// instrument(s)
+	string scalar							strDatavars		// string with expanded names of Stata variables
+}
+
+struct mStruct init_mStruct()
+{
+
+	struct mStruct scalar			d
+	class AssociativeArray scalar	A
+	
+	A.reinit("string",1)
+	A.notfound(NULL)
+	
+	d.model			= ""
+	d.nreps			= 0
+	d.kfolds		= 0
+	d.peqnAA		= &A
+	d.nameY			= ""
+	d.nameD			= J(1,0,"")
+	d.nameZ			= J(1,0,"")
+	d.strDatavars	= ""
+	return(d)
+}
+
+
 // some of the string matrices are actually vectors
 struct ddmlStruct {
 	string scalar		model			// model; partial, iv, late, etc
@@ -138,6 +203,187 @@ struct eqnStruct init_eqnStruct()
 	return(e)
 }
 
+// add item about learner to eStruct
+void add_learner_item(				struct eStruct e,
+									string scalar key1,
+									string scalar key2,
+									transmorphic scalar s
+									)
+{
+	(*(e.plrnAA)).put((key1,key2),s)
+}
+
+// retrieve item about learner from eStruct
+transmorphic return_learner_item(	struct eStruct e,
+									string scalar key1,
+									string scalar key2
+									)
+{
+	return((*(e.plrnAA)).get((key1,key2)))
+}
+
+// add result from learner/resample to eStruct
+void add_result_item(				struct eStruct e,
+									string scalar key1,
+									string scalar key2,
+									string scalar rep,
+									s						//  s can be anything
+									)
+{
+	(*(e.presAA)).put((key1,key2,rep),s)
+}
+
+// retrieve result from learner/resample from eStruct
+transmorphic return_result_item(	struct eStruct e,
+									string scalar key1,
+									string scalar key2,
+									string scalar rep
+									)
+{
+	return((*(e.presAA)).get((key1,key2,rep)))
+}
+
+
+void add_eqn(						struct mStruct m,
+									real scalar posof,
+									string scalar eqntype,
+									string scalar vname,
+									string scalar vtilde,
+									string scalar estcmd,
+									string scalar vtype,
+									string scalar prefix,
+									string scalar estcmd_h,
+									string scalar vtilde_h
+									)
+{
+
+	struct eStruct scalar e
+	class AssociativeArray scalar A
+	pointer(struct eStruct) scalar p
+
+	model = m.model
+	
+	// posof = 0 means a new variable that isn't in any list
+	// posof > 0 means the variable has already been used and hence an eqn created
+	//           value of posof is the position in the name list
+	
+	// if a new variable, update corresponding varlist
+	if (posof==0) {
+		if (eqntype=="yeq") {
+			m.nameY = vname
+		}
+		else if (eqntype=="deq") {
+			m.nameD = (m.nameD, (vname))
+		}
+		else if (eqntype="zeq") {
+			m.nameZ = (m.nameZ, vname)
+		}
+	}
+	
+	// neq = cols(m.eqnlist)
+	// set default vtilde
+	//if (vtilde=="") {
+	//	vtilde = vname+"t"+strofreal(neq+1)
+	//}
+	
+	// retrieve equation entry from AA with key=vname
+	e	= (*(m.peqnAA)).get(vname)
+	// if no such entry is already there, create a new one
+	if (e==NULL) {
+		e = init_eStruct(m.nreps)
+	}
+	// add items to equation
+	// e.vtlist = (e.vtlist, J(1,1,vtilde))
+	// e.elist = (e.elist, J(1,1,estcmd))
+	// if (estcmd_h~="") {
+	// 	e.elisth = (e.elisth, J(1,1,estcmd_h))
+	// }
+	// re-insert updated equation into AA
+	(*(m.peqnAA)).put(vname,e)
+	
+	// check
+	"nameY and nameD"
+	m.nameY
+	m.nameD
+	"keys in AA"
+	(*(m.peqnAA)).keys()
+	e	= ((*(m.peqnAA)).get(vname))
+	"vtlist:"
+	e.vtlist
+	// "elist:"
+	// e.elist
+	
+	
+
+
+	// everything else
+	//e.eqntype		= eqntype
+	//e.Vname			= vname
+	//e.Vtilde		= prefix+vtilde
+	//e.eststring		= estcmd
+	//e.command		= tokens(estcmd)[1,1]
+	//e.vtype		 	= vtype
+	//e.crossfitted	= 0
+	//e.stack_weights   	= .
+	//e.stack_weights_h 	= .
+	//e.stack_weights0 	= .
+	//e.stack_weights1 	= .
+
+	// look for existing entry
+	//newentry		= 1
+	//if (neq==0) {
+	//	m.eqnlist		= &e
+	//	m.eqnlistNames	= vtilde
+	//}
+	//else {
+	//	for (i=1;i<=neq;i++) {
+	//		e0 = *(m.eqnlist[i])
+	//		if (e0.Vtilde==vtilde) {
+	//			// replace
+	//			m.eqnlist[i]		= &e
+	//			// unnecessary?
+	//			m.eqnlistNames[i]	= vtilde
+	//			newentry = 0
+	//		}
+	//	}
+	//	if (newentry==1) {
+	//		// new entry
+	//		m.eqnlist		= (m.eqnlist, &e)
+	//		m.eqnlistNames	= (m.eqnlistNames, vtilde)
+	//	}
+	//}
+
+	// add to appropriate list of tilde variables if a new entry
+	//if (newentry) {
+	//	if (eqntype=="yeq") {
+	//		m.nameYtilde	= (m.nameYtilde, vtilde)
+	//		if (interactive==1) {
+	//			m.nameY0tilde = (m.nameY0tilde, vtilde0)
+	//			m.nameY1tilde = (m.nameY1tilde, vtilde1)
+	//		}
+	//	}
+	//	else if (eqntype=="deq") {
+	//		m.nameDtilde	= (m.nameDtilde, vtilde)
+	//		if (estcmd_h!="") {
+	//			m.nameDHtilde	= (m.nameDHtilde, vtilde_h)
+	//		}
+	//		if (interactive==1) {
+	//			m.nameD0tilde = (m.nameD0tilde, vtilde0)
+	//			m.nameD1tilde = (m.nameD1tilde, vtilde1)
+	//		}
+	//	}
+	//	else if (eqntype=="dheq") {
+	//		m.nameDHtilde	= (m.nameDHtilde, vtilde)
+	//	}
+	//	else if (eqntype=="zeq") {
+	//		m.nameZtilde	= (m.nameZtilde, vtilde)
+	//	}
+	//}
+	
+	//st_global("r(newentry)",strofreal(newentry))
+}
+
+/*
 void add_eqn(						struct ddmlStruct m,
 									string scalar eqntype,
 									string scalar vname,
@@ -251,6 +497,7 @@ void add_eqn(						struct ddmlStruct m,
 	
 	st_global("r(newentry)",strofreal(newentry))
 }
+*/
 
 void add_to_eqn(					struct ddmlStruct m,
 									real scalar eqnumber)
