@@ -8,6 +8,7 @@ program define crossfit, rclass sortpreserve
 	syntax [anything] [if] [in] ,					/// 
 							[						///
 							ename(name)				/// name for Mata struct; default is "crossfit"
+							NOREPLACE				///
 							foldvar(varlist)		/// one fold var per resample
 							kfolds(integer 5)		/// ignored if foldvars provided
 							reps(integer 1)			/// ignored if foldvars provided
@@ -39,6 +40,8 @@ program define crossfit, rclass sortpreserve
 	local tvflag	= "`treatvar'"~=""
 	** indicator for short-stacking
 	local ssflag	= "`shortstack'"~=""
+	** indicator for initializing eqn struct
+	local initflag	= "`noreplace'"==""
 
 	// LIE => we want predicted values not resids
 	if `lieflag' & "`resid'"~="" {
@@ -54,6 +57,39 @@ program define crossfit, rclass sortpreserve
 		local qui quietly
 	}
 
+	if `initflag' {
+		// start with a blank setup
+		
+		*** set up struct with equation/learner info
+		
+		if "`ename'"== "" {
+			local eqn_info crossfit
+		}
+		else {
+			local eqn_info `ename'
+		}
+	
+		mata: `eqn_info' = init_eStruct()
+		initialize_eqn_info,										///
+							ename(`eqn_info')						///
+							vname(`vname')							///
+							vtlist(`vtlist')						///
+							shortstack(`shortstack')				///
+							estring(`estring') estringh(`estringh')	///
+							`noisily'
+		local nlearners = r(nlearners)
+
+	}
+	else {
+		// ename is a pre-populated eqn struct
+		local eqn_info `ename'
+		mata: st_local("vname", `eqn_info'.vname)
+		mata: st_local("vtlist", invtokens(`eqn_info'.vtlist))
+		mata: st_local("nlearners", strofreal(`eqn_info'.nlearners))
+		mata: st_local("shortstack", `eqn_info'.shortstack)
+		local ssflag	= "`shortstack'"~=""
+	}
+	
 	*** set up fold/reps variables
 	
 	// fold id variables
@@ -85,25 +121,10 @@ program define crossfit, rclass sortpreserve
 			local fidlist `fidlist' `fid'
 		}
 	}
-
-	*** set up struct with equation/learner info
+	// insert reps on eqn struct
+	mata: `eqn_info'.nreps = `reps'
 	
-	if "`ename'"== "" {
-		local eqn_info crossfit
-	}
-	else {
-		local eqn_info `ename'
-	}
-
-	mata: `eqn_info' = init_eStruct(`reps')
-	initialize_eqn_info,													///
-						ename(`eqn_info') reps(`reps')						///
-						vtlist(`vtlist')									///
-						estring(`estring') estringh(`estringh')				///
-						lieflag(`lieflag') tvflag(`tvflag')					///
-						`noisily'
-	local nlearners = r(nlearners)
-
+	
 	*** syntax
 	if `ssflag' & `nlearners'==1 {
 		di as err "error - shortstack option available only for multiple learners"
@@ -126,6 +147,10 @@ program define crossfit, rclass sortpreserve
 	// case 2: `tvflag'==1 & `lieflag'==0
 	// case 3: `lieflag'==1
 	// nb: `tvflag'==1 & `lieflag'==1 is impossible
+	
+		if `reps'>1 {
+			di as text "Resample `m'..."
+		}
 
 		local fid : word `m' of `fidlist'
 
@@ -211,7 +236,6 @@ program define crossfit, rclass sortpreserve
 		tempname pysw pysw0 pysw1 pysw_t pysw_h
 	
 		// crossfit
-		di
 		di as text "Cross-fitting fold " _c
 		forvalues k = 1(1)`kfolds' {
 	
@@ -371,7 +395,7 @@ program define crossfit, rclass sortpreserve
 		}
 	
 		// last fold, insert new line
-		di "...completed cross-fitting"
+		di as text "...completed cross-fitting"
 		
 
 		******************************** SHORTSTACKING ************************************
@@ -525,7 +549,6 @@ program define crossfit, rclass sortpreserve
 			// vtilde, mspe, etc.
 			if ~`tvflag' & ~`lieflag' {
 		
-				// mata: st_local("vtilde",`eqn_info'.vtlist[`i'])
 				cap drop `vtilde'_`m'
 				if "`resid'"=="" {
 					// vtilde is predicted values
@@ -564,6 +587,16 @@ program define crossfit, rclass sortpreserve
 
 				if "`cmd'"=="pystacked" {
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw'"))
+				}
+				
+				if `i'==1 {
+					local mse_opt		= `mse'
+					mata: add_learner_item(`eqn_info',"opt","`m'","`vtilde'")
+				}
+				else if `mse' < `mse_opt' {
+					// overwrite with new opt
+					local mse_opt		= `mse'
+					mata: add_learner_item(`eqn_info',"opt","`m'","`vtilde'")
 				}
 				
 			}
@@ -630,6 +663,17 @@ program define crossfit, rclass sortpreserve
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1'"))
 				}
 				
+				forvalues t=0/1 {
+					if `i'==1 {
+						local mse`t'_opt		= `mse`t''
+						mata: add_learner_item(`eqn_info',"opt`t'","`m'","`vtilde'")
+					}
+					else if `mse`t'' < `mse`t'_opt' {
+						// overwrite with new opt
+						local mse`t'_opt		= `mse`t''
+						mata: add_learner_item(`eqn_info',"opt`t'","`m'","`vtilde'")
+					}
+				}
 			}
 			else if `lieflag' {
 	
@@ -900,33 +944,39 @@ program define initialize_eqn_info, rclass
 	syntax [anything] [if] [in] ,					/// 
 							[						///
 							ename(name)				/// name of mata struct
-							reps(integer 1)			/// if not supplied, default is 1
+							vname(varname)			/// name of dep var to be orthogonalized
 							vtlist(string)			/// names of corresponding tilde variables
+							shortstack(name)		/// name of shortstacked variable; may be empty
 							estring(string asis)	/// names of estimation strings
 													/// need asis option in case it includes strings
 							estringh(string asis)	/// names of LIE estimation strings
 													/// need asis option in case it includes strings
-							lieflag(integer 0)		///
-							tvflag(integer 0)		///
 							NOIsily					///
 							]
 	
 	if "`noisily'"=="" {
 		local qui quietly
 	}
-
+	
+	// name for temp mata object
 	tempname t
 	
-	// in two steps, to accommodate singleton lists (which are otherwise string scalars and not matrices
-	mata: `t' = tokens("`vtlist'")
-	mata: `ename'.vtlist	= `t'
+	mata: `ename'.vname = "`vname'"
+	mata: `ename'.shortstack = "`shortstack'"	// may be empty string
+	
 	parse_estring, vtlist(`vtlist') ename(`ename') estring(`estring') `noisily'
 
 	if "`estringh'"~="" {
 		parse_estring, vtlist(`vtlist') ename(`ename') estring(`estringh') h `noisily'
 	}
 	
+	// if there were duplicate vtilde names in vtlist, info for the last learner would be stored in the AA
+	// so we remove any duplicates in the vtilde key list
 	local vtlist : list uniq vtlist
+	// in two steps, to accommodate singleton lists (which are otherwise string scalars and not matrices
+	mata: `t' = tokens("`vtlist'")
+	mata: `ename'.vtlist	= `t'
+	
 	local nlearners : word count `vtlist'
 	mata: `ename'.nlearners	= `nlearners'
 
@@ -976,7 +1026,7 @@ program define parse_estring, rclass
 			tokenize `"`estring'"', parse("||")
 		}		
 		
-		syntax [anything] , [*]
+		syntax [anything] [if] [in] , [*]
 		local est_main `anything'
 		local est_options `options'
 		if "`h'"=="" {

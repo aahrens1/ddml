@@ -4,10 +4,14 @@ program _ddml_estimate_partial, eclass sortpreserve
 	syntax namelist(name=mname) [if] [in] ,		/// 
 								[				///
 								ROBust			///
-								show(string)	/// dertermines which to post
+								show(string)	/// determines which to post (is only possible value "all"?)
 								clear			/// deletes all tilde-variables (to be implemented)
 								REP(integer 0)	/// resampling iteration for the estimation, 0=use all
 								* ]
+	
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	tempname eqn
+	mata: `eqn' = init_eStruct()
 	
 	// base sample for estimation - determined by if/in
 	marksample touse
@@ -17,19 +21,30 @@ program _ddml_estimate_partial, eclass sortpreserve
 	// locals used below
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
-
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	
+	// ssflag is a model characteristic but is well-defined only if every equation has multiple learners.
+	// will need to check this...
+	mata: st_local("ssflag",strofreal(`mname'.ssflag))
+	
 	// get varlists
 	_ddml_make_varlists, mname(`mname')
+	local yvars `r(yvars)'
+	local dvars `r(dvars)'
+	
 	// obtain all combinations
-	_ddml_allcombos `r(yvars)' - `r(dvars)' ,				///
-		`debug'												///
+	_ddml_allcombos `yvars' - `dvars' ,				///
+		`debug'										///
 		addprefix("")
-
+	
 	local ncombos = r(ncombos)
 	local tokenlen = `ncombos'*2
 	local ylist `r(ystr)'
 	local Dlist `r(dstr)'
-
+	
+	di as text "ylist: `ylist'"
+	di as text "Dlist: `Dlist'"
+	
 	// replist empty => do all
 	// replist = integer; do for specified resample iteration
 	mata: st_local("numreps",strofreal(`mname'.nreps))
@@ -42,20 +57,37 @@ program _ddml_estimate_partial, eclass sortpreserve
 		local replist "`r(numlist)'"
 	}
 	local nreplist : word count `replist'
-
+	
 	// do for each specified resamples
 	tempname bagg vagg 
 	foreach m in `replist' {
-
+		
+		// reset locals
+		local Dopt
+		local Dss
+		
 		*** retrieve best model
-	   	mata: st_local("Yopt",`mname'.nameYopt[`m'])
-   		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
+		mata: `eqn' = (*(`mname'.peqnAA)).get("`nameY'")
+		mata: st_local("Yopt",return_learner_item(`eqn',"opt","`m'"))
+		foreach var of varlist `nameD' {
+			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: st_local("oneDopt",return_learner_item(`eqn',"opt","`m'"))
+			local Dopt `Dopt' `oneDopt'
+		}
+		*** shortstack names
+		if `ssflag' {
+			local Yss `nameY'_ss
+			foreach var of varlist `nameD' {
+				local Dss `Dss' `var'_ss
+			}
+		}
 
 		// text used in output below
 		if `numreps'>1 {
 			local stext " (sample=`m')"
 		}
-
+		
+		// should show have other option values?
 		if "`show'"=="all" {
 			forvalues i = 1(2)`tokenlen' {
 				tokenize `ylist' , parse("-")
@@ -79,8 +111,8 @@ program _ddml_estimate_partial, eclass sortpreserve
 		}
 
 		// estimate best model
-		local nodisp 
-		if `nreplist'>1 local nodisp qui
+		// local nodisp 
+		// if `nreplist'>1 local nodisp qui
 		`nodisp' {
 			add_suffix `Yopt' `Dopt', suffix("_`m'")
 			do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
@@ -95,7 +127,18 @@ program _ddml_estimate_partial, eclass sortpreserve
 			di as text "E[D|X] = " as res "`Dopt'"
 			ereturn display
 		}
-
+		
+		if `ssflag' {
+			add_suffix `Yss' `Dss', suffix("_`m'")
+			do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+			di as text "Shortstack DML model`stext':" _c
+			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+			di as text "E[y|X] = " as res "`Yss'"
+			di as text "E[D|X] = " as res "`Dss'"
+			ereturn display
+		}
+		
+		/*
 		*** aggregate over resampling iterations if there is more than one
 		if `nreplist'>1 {
 			tempname bi vi
@@ -117,6 +160,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 				ereturn display
 			}
 		}
+		*/
 	}
 		
 	// plot
@@ -172,13 +216,3 @@ program define do_regress, eclass
 
 end
 
-mata:
-
-// returns an empty eqnStruct
-struct eqnStruct init_eqnStruct()
-{
-	struct eqnStruct scalar		e
-	return(e)
-}
-
-end

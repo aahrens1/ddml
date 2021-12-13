@@ -14,26 +14,34 @@ program _ddml_estimate_interactive, eclass sortpreserve
 								debug			///
 								* ]
 
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	
 	// base sample for estimation - determined by if/in
 	marksample touse
 	// also exclude obs already excluded by ddml sample
 	qui replace `touse' = 0 if `mname'_sample==0
 
-	// what does this do?
-	if ("`show'"=="") {
-		local show opt 
-	}
-	
-	//mata: `mname'.nameDtilde
-	//mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
-	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
-	mata: st_local("Y0tilde",invtokens(`mname'.nameY0tilde))
-	mata: st_local("Y1tilde",invtokens(`mname'.nameY1tilde))
+	// locals used below
+	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
-	mata: st_local("nameY",invtokens(`mname'.nameY))
+	
+	// ssflag is a model characteristic but is well-defined only if every equation has multiple learners.
+	// will need to check this...
+	mata: st_local("ssflag",strofreal(`mname'.ssflag))
+	
+	mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameY)
+	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
+	foreach var in `vtlistY' {
+		local Y0tilde `Y0tilde' `var'0
+		local Y1tilde `Y1tilde' `var'1
+	}
+	mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameD)
+	mata: st_local("Dtilde",invtokens(`eqn'.vtlist))
 
 	_ddml_allcombos `Y0tilde'- `Y1tilde' - `Dtilde',		///
-		addprefix("`mname'_")										///
+		addprefix("")										///
 		`debug'  
 
 	local ncombos = r(ncombos)
@@ -42,13 +50,9 @@ program _ddml_estimate_interactive, eclass sortpreserve
 	local y1list `r(colstr2)'
 	local Dlist `r(colstr3)'
 
-	if "`debug'"~="" {
-		di
-		di "y0list: `y0list'"
-		di "y1list: `y1list'"
-		di "Dist:   `Dlist'"
-		di
-	}
+	di "y0list: `y0list'"
+	di "y1list: `y1list'"
+	di "Dist:   `Dlist'"
 	
 	// replist empty => do all
 	// replist = integer; do for specified resample iteration
@@ -66,12 +70,23 @@ program _ddml_estimate_interactive, eclass sortpreserve
 	// do for each specified resamples
 	tempname bagg vagg 
 	foreach m in `replist' {
-
+		
 		*** retrieve best model
-		mata: st_local("Y0opt",`mname'.nameY0opt[`m'])
-		mata: st_local("Y1opt",`mname'.nameY1opt[`m'])
-		mata: st_local("Dopt",`mname'.nameDopt[`m'])
-
+		mata: `eqn' = (*(`mname'.peqnAA)).get("`nameY'")
+		mata: st_local("Y0opt",return_learner_item(`eqn',"opt0","`m'"))
+		mata: st_local("Y1opt",return_learner_item(`eqn',"opt1","`m'"))
+		local Y0opt `Y0opt'0
+		local Y1opt `Y1opt'1
+		mata: `eqn' = (*(`mname'.peqnAA)).get("`nameD'")
+		mata: st_local("Dopt",return_learner_item(`eqn',"opt","`m'"))
+		
+		*** shortstack names
+		if `ssflag' {
+			local Y0ss `nameY'_ss0
+			local Y1ss `nameY'_ss1
+			local Dss `nameD'_ss
+		}
+		
 		// text used in output below
 		if `numreps'>1 {
 			local stext " (sample=`m')"
@@ -99,10 +114,10 @@ program _ddml_estimate_interactive, eclass sortpreserve
 				ereturn display
 			}
 		}
-
+		
 		// estimate best model
-		local nodisp 
-		if `nreplist'>1 local nodisp qui
+		// local nodisp 
+		// if `nreplist'>1 local nodisp qui
 		`nodisp' {
 			_ddml_ate,					///
 				 yvar(`nameY')			///
@@ -123,7 +138,23 @@ program _ddml_estimate_interactive, eclass sortpreserve
 			di as text "E[D|X]     = " as res "`Dopt'_`m'"
 			ereturn display
 		}
-
+		
+		if `ssflag' {
+			_ddml_ate,					///
+				 yvar(`nameY')			///
+				 dvar(`nameD')			///
+				 y0tilde(`Y0ss'_`m')	///
+				 y1tilde(`Y1ss'_`m')	///
+				 dtilde(`Dss'_`m')		///
+				 touse(`touse')
+			di as text "Shortstack DML model`stext':" _c
+			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+			di as text "E[y|X,D=0] = " as res "`Y0ss'_`m'"
+			di as text "E[y|X,D=1] = " as res "`Y1ss'_`m'"
+			di as text "E[D|X]     = " as res "`Dss'_`m'"
+			ereturn display
+		}
+		/*
 		*** aggregate over resampling iterations if there is more than one
 		if `nreplist'>1 {
 			tempname bi vi
@@ -145,6 +176,7 @@ program _ddml_estimate_interactive, eclass sortpreserve
 				ereturn display
 			}
 		}
+		*/
 	}
 
 end

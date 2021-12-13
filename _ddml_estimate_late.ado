@@ -14,25 +14,38 @@ program _ddml_estimate_late, eclass sortpreserve
 								debug			///
 								* ]
 
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+
 	// base sample for estimation - determined by if/in
 	marksample touse
 	// also exclude obs already excluded by ddml sample
 	qui replace `touse' = 0 if `mname'_sample==0
 
-	// what does this do?
-	if ("`show'"=="") {
-		local show opt
-	}
-
-	//mata: `mname'.nameDtilde
-	mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
-	mata: st_local("D0tilde",invtokens(`mname'.nameD0tilde))
-	mata: st_local("D1tilde",invtokens(`mname'.nameD1tilde))
-	mata: st_local("Y0tilde",invtokens(`mname'.nameY0tilde))
-	mata: st_local("Y1tilde",invtokens(`mname'.nameY1tilde))
+	// locals used below
+	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
-	mata: st_local("nameY",invtokens(`mname'.nameY))
 	mata: st_local("nameZ",invtokens(`mname'.nameZ))
+	
+	// ssflag is a model characteristic but is well-defined only if every equation has multiple learners.
+	// will need to check this...
+	mata: st_local("ssflag",strofreal(`mname'.ssflag))
+	
+	mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameY)
+	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
+	foreach var in `vtlistY' {
+		local Y0tilde `Y0tilde' `var'0
+		local Y1tilde `Y1tilde' `var'1
+	}
+	mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameD)
+	mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
+	foreach var in `vtlistD' {
+		local D0tilde `D0tilde' `var'0
+		local D1tilde `D1tilde' `var'1
+	}
+	mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameZ)
+	mata: st_local("Ztilde",invtokens(`eqn'.vtlist))
 
 	if ("`debug'"!="") {
 		di "`Ytilde'"
@@ -69,12 +82,28 @@ program _ddml_estimate_late, eclass sortpreserve
 	tempname bagg vagg 
 	foreach m in `replist' {
 
-		** retrieve optimal model
-		mata: st_local("Y0opt",`mname'.nameY0opt[`m'])
-		mata: st_local("Y1opt",`mname'.nameY1opt[`m'])
-		mata: st_local("D0opt",`mname'.nameD0opt[`m'])
-		mata: st_local("D1opt",`mname'.nameD1opt[`m'])
-		mata: st_local("Zopt",`mname'.nameZopt[`m'])
+		*** retrieve best model
+		mata: `eqn' = (*(`mname'.peqnAA)).get("`nameY'")
+		mata: st_local("Y0opt",return_learner_item(`eqn',"opt0","`m'"))
+		mata: st_local("Y1opt",return_learner_item(`eqn',"opt1","`m'"))
+		local Y0opt `Y0opt'0
+		local Y1opt `Y1opt'1
+		mata: `eqn' = (*(`mname'.peqnAA)).get("`nameD'")
+		mata: st_local("D0opt",return_learner_item(`eqn',"opt0","`m'"))
+		mata: st_local("D1opt",return_learner_item(`eqn',"opt1","`m'"))
+		local D0opt `D0opt'0
+		local D1opt `D1opt'1
+		mata: `eqn' = (*(`mname'.peqnAA)).get("`nameZ'")
+		mata: st_local("Zopt",return_learner_item(`eqn',"opt","`m'"))
+		
+		*** shortstack names
+		if `ssflag' {
+			local Y0ss `nameY'_ss0
+			local Y1ss `nameY'_ss1
+			local D0ss `nameD'_ss0
+			local D1ss `nameD'_ss1
+			local Zss `nameZ'_ss
+		}
 
 		// text used in output below
 		if `numreps'>1 {
@@ -111,8 +140,8 @@ program _ddml_estimate_late, eclass sortpreserve
 		}
 	
 		*** optimal model
-		local nodisp 
-		if `nreplist'>1 local nodisp qui
+		// local nodisp 
+		// if `nreplist'>1 local nodisp qui
 		`nodisp' {
 			_ddml_late, yvar(`nameY') y0tilde(`Y0opt'_`m') y1tilde(`Y1opt'_`m')	///
 						dvar(`nameD') d0tilde(`D0opt'_`m') d1tilde(`D1opt'_`m')	///
@@ -132,7 +161,23 @@ program _ddml_estimate_late, eclass sortpreserve
 			di as text "E[Z|X]     = " as res "`Zopt'_`m'"
 			ereturn display
 		}
+		
+		if `ssflag' {
+			_ddml_late, yvar(`nameY') y0tilde(`Y0ss'_`m') y1tilde(`Y1ss'_`m')	///
+						dvar(`nameD') d0tilde(`D0ss'_`m') d1tilde(`D1ss'_`m')	///
+						zvar(`nameZ') ztilde(`Zss'_`m')						///
+						touse(`touse')  
+			di as text "Shortstack DML model`stext':" _c
+			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+			di as text "E[y|X,Z=0] = " as res "`Y0ss'_`m'"
+			di as text "E[y|X,Z=1] = " as res "`Y1ss'_`m'"
+			di as text "E[D|X,Z=0] = " as res "`D0ss'_`m'"
+			di as text "E[D|X,Z=1] = " as res "`D1ss'_`m'"
+			di as text "E[Z|X]     = " as res "`Zss'_`m'"
+			ereturn display
+		}
 
+		/*
 		*** aggregate over resampling iterations if there is more than one
 		if `nreplist'>1 {
 			tempname bi vi
@@ -153,6 +198,7 @@ program _ddml_estimate_late, eclass sortpreserve
 				ereturn display
 			}
 		}
+		*/
 
 	}
 

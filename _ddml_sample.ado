@@ -9,6 +9,7 @@ program _ddml_sample
 							kfolds(integer 5)		///
 							tabfold					///
 							sreset					///
+							shortstack				///
 							]
 	
 	marksample touse
@@ -25,6 +26,10 @@ program _ddml_sample
 		markout `touse' `vars'
 		// add list of vars to model struct
 		mata: `mname'.strDatavars = "`vars'"
+	}
+	
+	if "`shortstack'" ~= "" {
+		mata: `mname'.ssflag = 1
 	}
 	
 	*** gen folds
@@ -103,8 +108,10 @@ program _ddml_sample
 	mata: `mname'.kfolds = `kfolds'
 	mata: `mname'.nreps = `reps'
 
+/*
 	// clear previous results or initialize if no prev results
 	_ddml_reset_model_results, mname(`mname')
+*/
 
 	forvalues m=1/`reps' {
 		if ("`tabfold'"!="") {

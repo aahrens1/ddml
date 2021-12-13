@@ -9,7 +9,7 @@
 * in eqn struct, (*p).idVtilde is a problem ... but is it needed? currently commented out.
 * add noisily option
 
-program _ddml_crossfit_additive, eclass sortpreserve
+program _ddml_crossfit, eclass sortpreserve
 
 	syntax [anything] ,								/// 
 							[						///
@@ -88,6 +88,10 @@ program _ddml_crossfit_additive, eclass sortpreserve
 		else if ("`model'"=="late") {
 			local treatvar	`nameZ'
 		}
+		else {
+			// clear local
+			local treatvar
+		}
 		mata: st_local("ssname",`eqn'.shortstack)
 		di as text "Cross-fitting Y equation: `nameY'"
 		crossfit if `touse',						///
@@ -98,11 +102,15 @@ program _ddml_crossfit_additive, eclass sortpreserve
 			resid `noisily'
 		// D equations
 		if `numeqnD' {
+			if ("`model'"=="late") {
+				local treatvar	`nameZ'
+			}
+			else {
+				// clear local
+				local treatvar
+			}
 			foreach var of varlist `nameD' {
 				mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
-				if ("`model'"=="late") {
-					local treatvar	`nameZ'
-				}
 				mata: st_local("ssname",`eqn'.shortstack)
 				di as text "Cross-fitting D equation: `var'"
 				// All learners for each D eqn
@@ -313,7 +321,7 @@ program report_debugging
 
 end
 
-
+/*
 mata:
 
 // function to set crossfit dummy indicating whether crossfit has been done already
@@ -327,3 +335,4 @@ void set_crossfit(					struct ddmlStruct m,
 }
 
 end
+*/

@@ -22,7 +22,9 @@ st_global("s(compiled_date)","`current_date")
 
 // uniquely identified by vname = dep var in the equation
 struct eStruct {
-	real matrix			vtlist
+	string scalar		vname			// name of variable to be orthogonalized
+	real matrix			vtlist			// list of orthogonalized (learner) variables
+	string scalar		shortstack		// name of shortstack variable
 	real scalar			nlearners		// number of learners
 	real scalar			nreps			// number of resamplings
 
@@ -31,14 +33,17 @@ struct eStruct {
 
 }
 
-struct eStruct init_eStruct(real scalar reps)
+// should perhaps make vname a required argument for this function
+struct eStruct init_eStruct()
 {
 	struct eStruct scalar	d
 	class AssociativeArray scalar	A2, A3
 
-	d.vtlist	= J(1,0,"")
-	d.nlearners	= 0
-	d.nreps		= reps
+	d.vname			= ""
+	d.vtlist		= J(1,0,"")
+	d.shortstack	= ""
+	d.nlearners		= 0
+	d.nreps			= 0
 		
 	A2.reinit("string",2)
 	A3.reinit("string",3)
@@ -61,6 +66,7 @@ struct mStruct {
 	string scalar							nameY			// dependent variable 
 	string colvector						nameD			// treatment variable(s)
 	string colvector						nameZ			// instrument(s)
+	real scalar								ssflag			// flag for shortstacking
 	string scalar							strDatavars		// string with expanded names of Stata variables
 }
 
@@ -80,11 +86,12 @@ struct mStruct init_mStruct()
 	d.nameY			= ""
 	d.nameD			= J(1,0,"")
 	d.nameZ			= J(1,0,"")
+	d.ssflag		= 0
 	d.strDatavars	= ""
 	return(d)
 }
 
-
+/*
 // some of the string matrices are actually vectors
 struct ddmlStruct {
 	string scalar		model			// model; partial, iv, late, etc
@@ -118,7 +125,9 @@ struct ddmlStruct {
 	string rowvector	eqnlistNames	// names of corresponding Vtilde variable
 	real scalar 		crossfitted   	// =1 if crossvalidation has been done; 0 if not
 }
+*/
 
+/*
 // to add: boolean to indicate min MSE / optimal orthogonalized var
 struct eqnStruct {
 	string scalar		eqntype			// yeq, deq, zeq or dheq
@@ -158,8 +167,9 @@ struct eqnStruct {
 	real matrix 		stack_weights0   // weights from use of pystacked
 	real matrix 		stack_weights1   // weights from use of pystacked
 }
+*/
 
-
+/*
 struct ddmlStruct init_ddmlStruct()
 {
 	struct ddmlStruct scalar	d
@@ -187,6 +197,7 @@ struct ddmlStruct init_ddmlStruct()
 	d.nameZopt		= J(1,0,"")
 	return(d)
 }
+*/
 
 struct ddmlStruct use_model(		string scalar fname)
 {
@@ -197,11 +208,13 @@ struct ddmlStruct use_model(		string scalar fname)
 	return(m)
 }
 
+/*
 struct eqnStruct init_eqnStruct()
 {
 	struct eqnStruct scalar		e
 	return(e)
 }
+*/
 
 // add item about learner to eStruct
 void add_learner_item(				struct eStruct e,
@@ -243,7 +256,7 @@ transmorphic return_result_item(	struct eStruct e,
 	return((*(e.presAA)).get((key1,key2,rep)))
 }
 
-
+/*
 void add_eqn(						struct mStruct m,
 									real scalar posof,
 									string scalar eqntype,
@@ -252,8 +265,7 @@ void add_eqn(						struct mStruct m,
 									string scalar estcmd,
 									string scalar vtype,
 									string scalar prefix,
-									string scalar estcmd_h,
-									string scalar vtilde_h
+									string scalar estcmd_h
 									)
 {
 
@@ -290,15 +302,9 @@ void add_eqn(						struct mStruct m,
 	e	= (*(m.peqnAA)).get(vname)
 	// if no such entry is already there, create a new one
 	if (e==NULL) {
-		e = init_eStruct(m.nreps)
+		e = init_eStruct()
 	}
-	// add items to equation
-	// e.vtlist = (e.vtlist, J(1,1,vtilde))
-	// e.elist = (e.elist, J(1,1,estcmd))
-	// if (estcmd_h~="") {
-	// 	e.elisth = (e.elisth, J(1,1,estcmd_h))
-	// }
-	// re-insert updated equation into AA
+
 	(*(m.peqnAA)).put(vname,e)
 	
 	// check
@@ -382,7 +388,7 @@ void add_eqn(						struct mStruct m,
 	
 	//st_global("r(newentry)",strofreal(newentry))
 }
-
+*/
 /*
 void add_eqn(						struct ddmlStruct m,
 									string scalar eqntype,
@@ -499,6 +505,7 @@ void add_eqn(						struct ddmlStruct m,
 }
 */
 
+/*
 void add_to_eqn(					struct ddmlStruct m,
 									real scalar eqnumber)
 
@@ -528,7 +535,9 @@ void add_to_eqn(					struct ddmlStruct m,
 	(*p).crossfitted	= 1
 
 }
+*/
 
+/*
 void add_to_eqn_h(					struct ddmlStruct m,
 									real scalar eqnumber)
 {
@@ -554,8 +563,9 @@ void add_to_eqn_h(					struct ddmlStruct m,
 	(*p).N_h_folds	= ((*p).N_h_folds \ n_h_folds)
 
 }
+*/
 
-
+/*
 void add_to_eqn01(					struct ddmlStruct m,
 									real scalar eqnumber,
 									real scalar Z)
@@ -598,6 +608,7 @@ void add_to_eqn01(					struct ddmlStruct m,
 	(*p).crossfitted	= 1
 
 }
+*/
 
 mata mlib create lddml, dir(PERSONAL) replace
 mata mlib add lddml *()

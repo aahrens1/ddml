@@ -12,29 +12,34 @@ program _ddml_estimate_iv, eclass sortpreserve
 								debug			///
 								* ]
 
-	// what does this do?
-	if ("`show'"=="") {
-		local show opt 
-	}
-
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	
 	// base sample for estimation - determined by if/in
 	marksample touse
 	// also exclude obs already excluded by ddml sample
 	qui replace `touse' = 0 if `mname'_sample==0
-
-	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
-	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
-	mata: st_local("Ztilde",invtokens(`mname'.nameZtilde))
-	mata: st_local("nameY",invtokens(`mname'.nameY))
+	
+	// locals used below
+	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
-	mata: st_local("nameZ",invtokens(`mname'.nameZ))
-
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	
+	// ssflag is a model characteristic but is well-defined only if every equation has multiple learners.
+	// will need to check this...
+	mata: st_local("ssflag",strofreal(`mname'.ssflag))
+	
 	// get varlists
 	_ddml_make_varlists, mname(`mname')
+	local yvars `r(yvars)'
+	local dvars `r(dvars)'
+	local zvars `r(zvars)'
+
 	// obtain all combinations
-	_ddml_allcombos `r(yvars)' - `r(dvars)' - `r(zvars)' ,	///
-		`debug'												///
-		zpos(`r(zpos_start)') 								///
+	_ddml_allcombos `yvars' - `dvars' - `zvars' ,	///
+		`debug'										///
+		zpos(`r(zpos_start)') 						///
 		addprefix("")
 
 	local ncombos = r(ncombos)
@@ -42,6 +47,10 @@ program _ddml_estimate_iv, eclass sortpreserve
 	local ylist `r(ystr)'
 	local Dlist `r(dstr)'
 	local Zlist `r(zstr)' 
+
+	di as text "ylist: `ylist'"
+	di as text "Dlist: `Dlist'"
+	di as text "Zlist: `Zlist'"
 
 	// replist empty => do all
 	// replist = integer; do for specified resample iteration
@@ -60,10 +69,33 @@ program _ddml_estimate_iv, eclass sortpreserve
 	tempname bagg vagg 
 	foreach m in `replist' {
 
+		// reset locals
+		local Dopt
+		local Dss
+		
 		*** retrieve best model
-		mata: st_local("Yopt",`mname'.nameYopt[`m'])
-		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
-		mata: st_local("Zopt",invtokens(`mname'.nameZopt[`m',.]))
+		mata: `eqn' = (*(`mname'.peqnAA)).get("`nameY'")
+		mata: st_local("Yopt",return_learner_item(`eqn',"opt","`m'"))
+		foreach var of varlist `nameD' {
+			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: st_local("oneDopt",return_learner_item(`eqn',"opt","`m'"))
+			local Dopt `Dopt' `oneDopt'
+		}
+		foreach var of varlist `nameZ' {
+			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: st_local("oneZopt",return_learner_item(`eqn',"opt","`m'"))
+			local Zopt `Zopt' `oneZopt'
+		}
+		*** shortstack names
+		if `ssflag' {
+			local Yss `nameY'_ss
+			foreach var of varlist `nameD' {
+				local Dss `Dss' `var'_ss
+			}
+			foreach var of varlist `nameZ' {
+				local Zss `Zss' `var'_ss
+			}
+		}
 
 		// text used in output below
 		if `numreps'>1 {
@@ -96,8 +128,8 @@ program _ddml_estimate_iv, eclass sortpreserve
 		}
 
 		// estimate best model
-		local nodisp 
-		if `nreplist'>1 local nodisp qui
+		// local nodisp 
+		// if `nreplist'>1 local nodisp qui
 		`nodisp' {
 			add_suffix `Yopt' `Dopt', suffix("_`m'")
 			local YD `s(vnames)'
@@ -117,7 +149,22 @@ program _ddml_estimate_iv, eclass sortpreserve
 			di as text "E[Z|X] = " as res "`Zopt'"
 			ereturn display
 		}
-
+		
+		if `ssflag' {
+			add_suffix `Yss' `Dss', suffix("_`m'")
+			local YD `s(vnames)'
+			add_suffix `Zss', suffix("_`m'")
+			local IVlist `s(vnames)'
+			do_regress `YD' (`IVlist') if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+			di as text "Shortstack DML model`stext':" _c
+			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+			di as text "E[y|X] = " as res "`Yss'"
+			di as text "E[D|X] = " as res "`Dss'"
+			di as text "E[Z|X] = " as res "`Zss'"
+			ereturn display
+		}
+		
+		/*
 		*** aggregate over resampling iterations if there is more than one
 		if `nreplist'>1 {
 			tempname bi vi
@@ -138,6 +185,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 				ereturn display
 			}
 		}
+		*/
 	}
 
 end
@@ -177,23 +225,3 @@ program define add_suffix, sclass
 	
 	sreturn local vnames `vnames'
 end
-
-/*
-mata:
-
-string scalar mat_to_varlist(string matrix inmat)
-{
-	r = rows(inmat)
-	for (i=1;i<=r;i++) {
-
-		if (i==1) {
-			str = invtokens(inmat[i,]) 
-		}
-		else {
-			str = str + " | " + invtokens(inmat[i,]) 
-		}
-	} 
-	return(str)
-}
-end
-*/
