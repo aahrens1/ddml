@@ -23,13 +23,28 @@ program define _ddml_make_varlists, rclass
 	if `numeqnD' {
 		foreach var of varlist `nameD' {
 			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			tempname Dt_list
 			local `Dt_list' `vtlistD'
 			local Dorthog_lists `Dorthog_lists' `Dt_list'
 		}
 	}
-
+	
+	if `numeqnD' & `lieflag' {
+		foreach var of varlist `nameD' {
+			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
+			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
+			foreach vn in `vtlistD' {
+				local vtlistD_h `vtlistD_h' `vn'_h
+			}
+			tempname DHt_list
+			local `DHt_list' `vtlistD_h'
+			local DHorthog_lists `DHorthog_lists' `DHt_list'
+		}
+	}
+	
 	if `numeqnZ' {
 		foreach var of varlist `nameZ' {
 			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
@@ -50,6 +65,11 @@ program define _ddml_make_varlists, rclass
 		local Ztilde `Ztilde' `dash' ``vl''
 		local dash -
 	}
+	local dash
+	foreach vl in `DHorthog_lists' {
+		local DHtilde `DHtilde' `dash' ``vl''
+		local dash -
+	}
 
 	// clear from Mata
 	mata: mata drop `eqn'
@@ -60,7 +80,7 @@ program define _ddml_make_varlists, rclass
 		return scalar zpos_start = `numeqnD' +2
 		return scalar zpos_end = `numeqnD' + `numeqnZ' + 1
 	}
-	if ("`model'"=="optimaliv"|"`model'"=="optimaliv_nolie") {		
+	if ("`model'"=="ivhd") {		
 		return scalar zpos_start = `numeqnD' +2
 		// return scalar zpos_end = `numeqnD' + `numeqnDH' + 1
 		// not sure this will work

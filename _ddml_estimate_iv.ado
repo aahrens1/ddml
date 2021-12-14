@@ -35,11 +35,12 @@ program _ddml_estimate_iv, eclass sortpreserve
 	local yvars `r(yvars)'
 	local dvars `r(dvars)'
 	local zvars `r(zvars)'
+	local zpos	`r(zpos_start)'
 
 	// obtain all combinations
 	_ddml_allcombos `yvars' - `dvars' - `zvars' ,	///
 		`debug'										///
-		zpos(`r(zpos_start)') 						///
+		zpos(`zpos')		 						///
 		addprefix("")
 
 	local ncombos = r(ncombos)

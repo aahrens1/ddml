@@ -66,7 +66,7 @@ program _ddml_crossfit, eclass sortpreserve
 	if `numeqnZ' {
 		di as text "Z equations (`numeqnZ'): `nameZ'"
 		foreach var of varlist `nameZ' {
-			di as text _col(5) "D equation `var':"
+			di as text _col(5) "Z equation `var':"
 			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
 			di as text _col(10) "learners: `vtlistZ'"
@@ -137,6 +137,14 @@ program _ddml_crossfit, eclass sortpreserve
 			}
 		}
 	}
+	
+	// set flag on model struct
+	mata: `mname'.crossfitted = 1
+	
+	// report results by equation type with resamplings grouped together
+	di
+	di as res "Reporting crossfitting results:"
+	_ddml_describe `mname'
 	
 	/*		
 	*** extract details of estimation

@@ -27,7 +27,7 @@ program ddml, eclass
 	// restmainargs is main args minus the subcommand
 	local restmainargs `*'
 	
-	local allsubcmds	update describe save export use drop copy sample init yeq deq zeq crossfit estimate
+	local allsubcmds	update describe save export use drop copy sample init yeq deq dheq zeq crossfit estimate
 	if strpos("`allsubcmds'","`subcmd'")==0 {
 		di as err "error - unknown subcommand `subcmd'"
 		exit 198
@@ -145,22 +145,8 @@ program ddml, eclass
 		_ddml_sample `if' `in' , mname(`mname') `options'
 
 		/*
-		mata: `mname'=init_ddmlStruct()
-		// create and store id variable
-		cap drop `mname'_id
-		qui gen double `mname'_id	= _n
-		mata: `mname'.id			= st_data(., "`mname'_id")
-		// create and store sample indicator; initialized so all obs are used
-		cap drop `mname'_sample
-		qui gen byte `mname'_sample = 1
 		// add sample indicator to model struct (col 1 = id, col 2 = fold id)
 		mata: `mname'.idSample		= st_data(., ("`mname'_id", "`mname'_sample"))
-		// fill by hand
-		mata: `mname'.model			= "`model'"
-		mata: `mname'.crossfitted	= 0
-		
-		// initialize with default fold var, kfolds, number of resamplings
-		_ddml_sample `if' `in' , mname(`mname') `options'
 		*/
 	}
 	
@@ -176,7 +162,7 @@ program ddml, eclass
 	}
 
 	*** add equation  
-	if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="zeq" {
+	if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="dheq"|"`subcmd'"=="zeq" {
 
 		** parsing
 		// macro options has eqn to be estimated set off from the reset by a :
@@ -188,7 +174,6 @@ program ddml, eclass
 					[				///
 					gen(name)		///
 					vname(name)		///
-					/* genh(name) */		/// (intended for LIE)
 					mname(name)		///
 					vtype(string)   ///  "double", "float" etc
 					REPlace         ///
@@ -255,17 +240,13 @@ program ddml, eclass
 		}
 		
 		** split equation -- only required for D-eq with LIE
-		if "`subcmd'"=="deq"&"`model'"=="ivhd" {
+		if "`subcmd'"=="dheq" {
 			tokenize `" `eqn' "', parse("|")
 			// parse character is in macro `2'
 			local eqn `1'
 			local eqn_h `3'
-			if "`2'`3'"=="" {
-				di as err "estimation command for E[D^|X] missing"
-				exit 198
-			}
-			if regexm("`eqn_h'","{D}")==0 {
-				di as err "placeholder {D} missing in E[D^|X] command (2nd part)"
+			if regexm(`"`eqn'"',"{D}")==0 {
+				di as err "placeholder {D} for E[D^|X] is missing"
 				exit 198				
 			}
 		}
@@ -277,83 +258,6 @@ program ddml, eclass
 							subcmd(`subcmd')	///
 							posof(`posof')		///
 							estring(`eqn')
-
-		
-		/*
-		// set automatically
-		if "`model'"=="ivhd"&"`genh'"=="" {
-			local genh `gen'_h
-		}
-		*/
-		
-
-		
-/*
-		// subcmd macro tells add_eqn(.) which list to add it to
-		mata: add_eqn(`mname', "`subcmd'", "`vname'", "`gen'","`eqn'","`vtype'","`prefix'","`eqn_h'","`genh'")
-		local newentry `r(newentry)'
-		if "`subcmd'"=="yeq" {
-			// check if nameY is already there; if it is, must be identical to vname here
-			mata: st_global("r(vname)",`mname'.nameY)
-			if "`r(vname)'"=="" {
-				mata: `mname'.nameY		= "`vname'"
-			}
-		}
-		if "`subcmd'"=="deq" {
-			// check if nameD already has vname; if not, add it to the list
-			mata: st_global("r(vname)",invtokens(`mname'.nameD))
-			if "`r(vname)'"=="" {
-				mata: `mname'.nameD		= "`vname'"
-			}
-			else {
-				local dlist `r(vname)' `vname'
-				local dlist : list uniq dlist
-				mata: `mname'.nameD		= tokens("`dlist'")
-			}
-		}
-		if "`subcmd'"=="deq"&"`model'"=="ivhd" {
-			// check if nameD already has vname; if not, add it to the list
-			mata: st_global("r(vname)",invtokens(`mname'.nameD))
-			if "`r(vname)'"=="" {
-				mata: `mname'.nameDH		= "`vname'"
-			}
-			else {
-				local dlist `r(vname)' `vname'
-				local dlist : list uniq dlist
-				mata: `mname'.nameDH		= tokens("`dlist'")
-			}
-		}		
-		if "`subcmd'"=="dheq" {
-			// check if nameDH already has vname; if not, add it to the list
-			mata: st_global("r(vname)",invtokens(`mname'.nameDH))
-			if "`r(vname)'"=="" {
-				mata: `mname'.nameDH	= "`vname'"
-			}
-			else {
-				local dhlist `r(vname)' `vname'
-				local dhlist : list uniq dhlist
-				mata: `mname'.nameDH	= tokens("`dhlist'")
-			}
-		}
-		if "`subcmd'"=="zeq" {
-			// check if nameZ already has vname; if not, add it to the list
-			mata: st_global("r(vname)",invtokens(`mname'.nameZ))
-			if "`r(vname)'"=="" {
-				mata: `mname'.nameZ		= "`vname'"
-			}
-			else {
-				local zlist `r(vname)' `vname'
-				local zlist : list uniq zlist
-				mata: `mname'.nameZ		= tokens("`zlist'")
-			}
-		}
-		if `newentry' {
-			di as text "Equation successfully added."
-		}
-		else {
-			di as text "Equation successfully replaced."
-		}
-*/
 	}
 
 	*** cross-fitting
@@ -370,37 +274,15 @@ program ddml, eclass
 		// clear previous results or initialize if no prev results
 		_ddml_reset_model_results, mname(`mname')
 		*/
-
+		
+		// why is this needed?
 		mata: st_global("r(model)",`mname'.model)
 		
+		// crossfit
 		_ddml_crossfit, `options' mname(`mname') 
-		
-		/*
-		if ("`r(model)'"=="partial") {
-		_ddml_crossfit_additive , `options' mname(`mname') 
-		}
-		if ("`r(model)'"=="iv") {
-		_ddml_crossfit_additive , `options' mname(`mname') 
-		}
-		if ("`r(model)'"=="interactive") {
-		_ddml_crossfit_interactive , `options' mname(`mname') 
-		}
-		if ("`r(model)'"=="late") {
-		_ddml_crossfit_interactive , `options' mname(`mname') 
-		}
-		if ("`r(model)'"=="ivhd") {
-		_ddml_crossfit_additive , `options' mname(`mname') 
-		}
-		if ("`r(model)'"=="ivhd_nolie") {
-		_ddml_crossfit_additive , `options' mname(`mname') 
-		}
-
-		if ("`nnls'"!="") _ddml_combine, mname(`mname')
-
 		// set model crossfitted flag = 1
 		mata: `mname'.crossfitted	= 1
-		*/
-
+		
 	}
 
 	*** estimate
@@ -413,10 +295,8 @@ program ddml, eclass
 			local mname m0 // sets the default name
 		}
 		
-		/*
 		check_mname "`mname'"
-		*/
-		
+				
 		mata: st_global("r(model)",`mname'.model)
 
 		if ("`r(model)'"=="partial") {
@@ -434,9 +314,8 @@ program ddml, eclass
 		if ("`r(model)'"=="ivhd") {
 			_ddml_estimate_ivhd `mname', `options'
 		}
-		if ("`r(model)'"=="ivhd_nolie") {
-			_ddml_estimate_ivhd `mname', `options'
-		}
+		
+		// not yet updated
 		/*
 		_ddml_ereturn, mname(`mname')
 		*/
@@ -475,11 +354,10 @@ program define add_eqn_to_model, rclass
 							mname(name)				/// name of mata struct with model
 							vname(varname)			/// name of dep var in equation (to be orthogonalized)
 							vtilde(name)			/// names of tilde variable
-							subcmd(string)			/// yeq, deq, or zeq
+							subcmd(string)			/// yeq, deq, dheq or zeq
 							estring(string asis)	/// names of estimation strings
 													/// need asis option in case it includes strings
 							posof(integer 0)		/// position of vname in name list; =0 if a new vname (new eqn)
-							hflag(integer 0)		/// =1 if LIE eqn
 							NOIsily					///
 							]
 	
@@ -513,18 +391,19 @@ program define add_eqn_to_model, rclass
 	syntax [anything] [if] [in] , [*]
 	local est_main `anything'
 	local est_options `options'
-	if `hflag'==0 {
-		mata: add_learner_item(`ename',"`vtilde'","estring","`0'")
-		mata: add_learner_item(`ename',"`vtilde'","est_main","`est_main'")
-		mata: add_learner_item(`ename',"`vtilde'","est_options","`est_options'")
-	}
-	else {
+	if "`subcmd'"=="dheq" {
 		mata: add_learner_item(`ename',"`vtilde'","estring_h","`0'")
 		mata: add_learner_item(`ename',"`vtilde'","est_main_h","`est_main'")
 		mata: add_learner_item(`ename',"`vtilde'","est_options_h","`est_options'")
+		mata: `ename'.lieflag = 1
 	}
-	// update nlearners
-	mata: `ename'.nlearners = cols(`ename'.vtlist)
+	else {
+		mata: add_learner_item(`ename',"`vtilde'","estring","`0'")
+		mata: add_learner_item(`ename',"`vtilde'","est_main","`est_main'")
+		mata: add_learner_item(`ename',"`vtilde'","est_options","`est_options'")
+		// update nlearners - counts deq and dheq as a single learner
+		mata: `ename'.nlearners = cols(`ename'.vtlist)
+	}
 
 	// insert eqn struct into model struct
 	mata: (*(`mname'.peqnAA)).put("`vname'",`ename')
@@ -536,7 +415,7 @@ program define add_eqn_to_model, rclass
 			// only ever 1 y eqn
 			mata: `mname'.nameY = "`vname'"
 			}
-		else if "`subcmd'"=="deq" {
+		else if "`subcmd'"=="deq" | "`subcmd'"=="dheq" {
 			mata: `mname'.nameD = (`mname'.nameD, `t')			
 		}
 		else if "`subcmd'"=="zeq" {
@@ -546,6 +425,5 @@ program define add_eqn_to_model, rclass
 	
 	// no longer needed so clear from Mata
 	cap mata: mata drop `t'
-
 
 end

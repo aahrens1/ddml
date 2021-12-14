@@ -87,6 +87,7 @@ program define crossfit, rclass sortpreserve
 		mata: st_local("vtlist", invtokens(`eqn_info'.vtlist))
 		mata: st_local("nlearners", strofreal(`eqn_info'.nlearners))
 		mata: st_local("shortstack", `eqn_info'.shortstack)
+		mata: st_local("lieflag", strofreal(`eqn_info'.lieflag))
 		local ssflag	= "`shortstack'"~=""
 	}
 	
@@ -677,6 +678,9 @@ program define crossfit, rclass sortpreserve
 			}
 			else if `lieflag' {
 	
+				qui gen `vtilde'_`m' = `dhat`i''
+				qui gen `vtilde'_h_`m' = `hhat`i''
+
 				// calculate and return mspe and sample size
 				tempvar hres dres hres_sq dres_sq
 				// vtilde has fitted values
@@ -697,6 +701,11 @@ program define crossfit, rclass sortpreserve
 				mat `N_list'			= (nullmat(`N_list') \ `N')
 				mat `mse_folds_list'	= (nullmat(`mse_folds_list') \ `mse_folds')
 				mat `N_folds_list'		= (nullmat(`N_folds_list')\ `N_folds')
+				
+				mata: add_result_item(`eqn_info',"`vtilde'","N",         "`m'", `N')
+				mata: add_result_item(`eqn_info',"`vtilde'","N_folds",   "`m'", st_matrix("`N_folds'"))
+				mata: add_result_item(`eqn_info',"`vtilde'","MSE",       "`m'", `mse')
+				mata: add_result_item(`eqn_info',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
 	
 				qui sum `hres_sq' if `touse', meanonly
 				local mse_h			= r(mean)
@@ -713,13 +722,33 @@ program define crossfit, rclass sortpreserve
 				mat `mse_h_folds_list'	= (nullmat(`mse_h_folds_list') \ `mse_h_folds')
 				mat `N_h_folds_list'	= (nullmat(`N_h_folds_list')\ `N_h_folds')
 				
-				mata: add_result_item(`eqn_info',"`vtilde'","N_h",         "`m'", `N')
+				mata: add_result_item(`eqn_info',"`vtilde'","N_h",         "`m'", `N_h')
 				mata: add_result_item(`eqn_info',"`vtilde'","N_h_folds",   "`m'", st_matrix("`N_h_folds'"))
-				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h",       "`m'", `mse')
+				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h",       "`m'", `mse_h')
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h_folds", "`m'", st_matrix("`mse_h_folds'"))
 								
 				if "`cmd'"=="pystacked" {
-					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights_h","`m'", st_matrix("`pysw_H'"))
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights_h","`m'", st_matrix("`pysw_h'"))
+				}
+				
+				// optimal D and H
+				if `i'==1 {
+					local mse_opt		= `mse'
+					mata: add_learner_item(`eqn_info',"opt","`m'","`vtilde'")
+				}
+				else if `mse' < `mse_opt' {
+					// overwrite with new opt
+					local mse_opt		= `mse'
+					mata: add_learner_item(`eqn_info',"opt","`m'","`vtilde'")
+				}
+				if `i'==1 {
+					local mse_h_opt		= `mse_h'
+					mata: add_learner_item(`eqn_info',"opt_h","`m'","`vtilde'_h")
+				}
+				else if `mse_h' < `mse_h_opt' {
+					// overwrite with new opt
+					local mse_h_opt		= `mse_h'
+					mata: add_learner_item(`eqn_info',"opt_H","`m'","`vtilde'_h")
 				}
 				
 			}

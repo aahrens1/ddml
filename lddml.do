@@ -27,6 +27,7 @@ struct eStruct {
 	string scalar		shortstack		// name of shortstack variable
 	real scalar			nlearners		// number of learners
 	real scalar			nreps			// number of resamplings
+	real scalar			lieflag			// =1 if LIE spec with two estimation strings etc.
 
 	pointer(class AssociativeArray) scalar	plrnAA		// pointer to AssociativeArray with all learners (keys=vtilde,object)
 	pointer(class AssociativeArray) scalar	presAA		// pointer to AssociativeArray with all learner results (keys=vtilde,object,rep)
@@ -44,6 +45,7 @@ struct eStruct init_eStruct()
 	d.shortstack	= ""
 	d.nlearners		= 0
 	d.nreps			= 0
+	d.lieflag		= 0
 		
 	A2.reinit("string",2)
 	A3.reinit("string",3)
@@ -68,6 +70,7 @@ struct mStruct {
 	string colvector						nameZ			// instrument(s)
 	real scalar								ssflag			// flag for shortstacking
 	string scalar							strDatavars		// string with expanded names of Stata variables
+	real scalar								crossfitted   	// =1 if crossvalidation has been done; 0 if not
 }
 
 struct mStruct init_mStruct()
@@ -80,6 +83,7 @@ struct mStruct init_mStruct()
 	A.notfound(NULL)
 	
 	d.model			= ""
+	d.id			= J(0,1,.)
 	d.nreps			= 0
 	d.kfolds		= 0
 	d.peqnAA		= &A
@@ -88,6 +92,7 @@ struct mStruct init_mStruct()
 	d.nameZ			= J(1,0,"")
 	d.ssflag		= 0
 	d.strDatavars	= ""
+	d.crossfitted	= 0
 	return(d)
 }
 

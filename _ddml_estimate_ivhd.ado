@@ -11,31 +11,38 @@ program _ddml_estimate_ivhd, eclass sortpreserve
 								debug			///
 								* ]
 
-	// what does this do?
-	if ("`show'"=="") {
-		local show opt 
-	}
-
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	
 	// base sample for estimation - determined by if/in
 	marksample touse
 	// also exclude obs already excluded by ddml sample
 	qui replace `touse' = 0 if `mname'_sample==0
-
-	//mata: `mname'.nameDtilde
-	mata: st_local("Ytilde",invtokens(`mname'.nameYtilde))
-	mata: st_local("Dtilde",invtokens(`mname'.nameDtilde))
-	mata: st_local("DHtilde",invtokens(`mname'.nameDHtilde))
+	
+	// locals used below
+	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
-	mata: st_local("nameY",invtokens(`mname'.nameY))
+	// not needed?
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	
+	// ssflag is a model characteristic but is well-defined only if every equation has multiple learners.
+	// will need to check this...
+	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 
 	// get varlists
 	_ddml_make_varlists, mname(`mname')
+	local yvars `r(yvars)'
+	local dvars `r(dvars)'
+	local zvars `r(zvars)'
+	local zpos	`r(zpos_start)'
+	
 	// obtain all combinations
-	_ddml_allcombos `r(yvars)' - `r(dvars)' - `r(zvars)' ,	///
-		`debug'												///
-		zpos(`r(zpos_start)') 								///
+	_ddml_allcombos `yvars' - `dvars' - `zvars' ,	///
+		`debug'										///
+		zpos(`zpos')		 						///
 		addprefix("")
-
+	
 	local ncombos = r(ncombos)
 	local tokenlen = `ncombos'*2
 	local ylist `r(ystr)'
@@ -62,16 +69,28 @@ program _ddml_estimate_ivhd, eclass sortpreserve
 	tempname bagg vagg 
 	foreach m in `replist' {
 
+		// reset locals
+		local Dopt
+		local Dss
+		
 		*** retrieve best model
-		mata: st_local("Yopt",`mname'.nameYopt[`m'])
-		add_suffix `Yopt', suffix("_`m'")
-		local Yopt `s(vnames)'
-		mata: st_local("Dopt",invtokens(`mname'.nameDopt[`m',.]))
-		add_suffix `Dopt', suffix("_`m'")
-		local Dopt `s(vnames)'
-		mata: st_local("DHopt",invtokens(`mname'.nameDHopt[`m',.]))
-		add_suffix `DHopt', suffix("_`m'")
-		local DHopt `s(vnames)'
+		mata: `eqn' = (*(`mname'.peqnAA)).get("`nameY'")
+		mata: st_local("Yopt",return_learner_item(`eqn',"opt","`m'"))
+		foreach var of varlist `nameD' {
+			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: st_local("oneDopt",return_learner_item(`eqn',"opt","`m'"))
+			local Dopt `Dopt' `oneDopt'
+			mata: st_local("oneDHopt",return_learner_item(`eqn',"opt_h","`m'"))
+			local DHopt `DHopt' `oneDHopt'
+		}
+		*** shortstack names
+		if `ssflag' {
+			local Yss `nameY'_ss
+			foreach var of varlist `nameD' {
+				local Dss `Dss' `var'_ss
+				local DHss `DHss' `var'_ss_h
+			}
+		}
 
 		// text used in output below
 		if `numreps'>1 {
@@ -101,11 +120,11 @@ program _ddml_estimate_ivhd, eclass sortpreserve
 		}
 
 		// estimate best model
-		local nodisp 
-		if `nreplist'>1 local nodisp qui
+		// local nodisp 
+		// if `nreplist'>1 local nodisp qui
 		`nodisp' {
-			_ddml_optiv, yvar(`nameY') ytilde(`Yopt')				///
-				dvar(`nameD') dhtilde(`DHopt') dtilde(`Dopt')		///
+			_ddml_optiv, yvar(`nameY') ytilde(`Yopt'_`m')				///
+				dvar(`nameD') dhtilde(`DHopt'_`m') dtilde(`Dopt'_`m')	///
 				touse(`touse') `debug'
 			if `ncombos' > 1 {
 				di as text "Optimal DML model`stext':" _c
@@ -119,7 +138,24 @@ program _ddml_estimate_ivhd, eclass sortpreserve
 			di as text "E[D^|X,Z] = " as res "`DHopt'"
 			ereturn display
 		}
-
+		
+		if `ssflag' {
+			_ddml_optiv, yvar(`nameY') ytilde(`Yss'_`m')				///
+				dvar(`nameD') dhtilde(`DHss'_`m') dtilde(`Dss'_`m')		///
+				touse(`touse') `debug'
+			if `ncombos' > 1 {
+				di as text "Shortstack DML model`stext':" _c
+			}
+			else {
+				di as text "DML`stext':" _c
+			}
+			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
+			di as text "E[Y|X]   = " as res "`Yss'"
+			di as text "E[D|X]   = " as res "`Dss'"
+			di as text "E[D^|X,Z] = " as res "`DHss'"
+			ereturn display
+		}
+		/*
 		*** aggregate over resampling iterations if there is more than one
 		if `nreplist'>1 {
 			tempname bi vi
@@ -140,6 +176,7 @@ program _ddml_estimate_ivhd, eclass sortpreserve
 				ereturn display
 			}
 		}
+		*/
 	}
 	
 end
