@@ -27,9 +27,11 @@ program _ddml_crossfit, eclass sortpreserve
 	// used multiple times below
 	tempname eqn
 	mata: `eqn' = init_eStruct()
-
-	*** extract details of estimation
 	
+	// clear any preexisting equation results from the model struct
+	mata: clear_model_results(`mname')
+	
+	*** extract details of estimation
 	// model
 	mata: st_local("model",`mname'.model)
 	mata: st_local("nameY",`mname'.nameY)

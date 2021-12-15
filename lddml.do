@@ -37,7 +37,7 @@ struct eStruct {
 // should perhaps make vname a required argument for this function
 struct eStruct init_eStruct()
 {
-	struct eStruct scalar	d
+	struct eStruct scalar			d
 	class AssociativeArray scalar	A2, A3
 
 	d.vname			= ""
@@ -57,6 +57,14 @@ struct eStruct init_eStruct()
 	d.presAA		= &A3
 	
 	return(d)
+}
+
+// clear results from eStruct
+void clear_equation_results(struct eStruct e)
+{
+	class AssociativeArray scalar	A2, A3
+	A3.reinit("string",3)
+	e.presAA		= &A3
 }
 
 struct mStruct {
@@ -95,6 +103,22 @@ struct mStruct init_mStruct()
 	d.crossfitted	= 0
 	return(d)
 }
+
+// clear results from all eStructs in mStruct
+void clear_model_results(struct mStruct d)
+{
+	
+	struct eStruct scalar			e
+	class AssociativeArray scalar	A3
+	
+	eqnlist = (d.nameY, d.nameD, d.nameZ)
+	for (i=1; i<=cols(eqnlist); i++) {
+		clear_equation_results((*(d.peqnAA)).get(eqnlist[i]))
+	}
+	d.crossfitted	= 0
+	
+}
+
 
 /*
 // some of the string matrices are actually vectors
