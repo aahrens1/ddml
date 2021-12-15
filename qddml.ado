@@ -21,6 +21,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		NOLie									///
 		NOIsily 								///
 		REPs(integer 1)							///
+		shortstack 								///
 		* ]
 
 	mata: s_ivparse("`anything'")
@@ -109,7 +110,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if "`mname'"=="" local mname m0		
 
 	*** estimation
-	`qui' ddml init `model', mname(`mname') `nolie'
+	`qui' ddml init `model', mname(`mname') `nolie' `shortstack' kfolds(`kfolds') reps(`reps') `tabfold'
 	if ("`model'"=="optimaliv"&"`nolie'"!="") {
 		`qui' ddml yeq, gen(`depvar't) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
 		`qui' ddml deq, gen(`dendog't) mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
@@ -150,7 +151,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		`qui' ddml yeq, gen(`depvar't) mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		`qui' ddml deq, gen(`dexog't) mname(`mname') vname(`dexog'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
 	}		
-	`qui' ddml crossfit, mname(`mname') kfolds(`kfolds') `tabfold' `noisily' reps(`reps')
+	`qui' ddml crossfit, mname(`mname') `noisily' 
 	if "`verbose'"!="" ddml desc
 	ddml estimate, mname(`mname')  
 
