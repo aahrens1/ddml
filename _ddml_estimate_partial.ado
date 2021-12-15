@@ -42,9 +42,6 @@ program _ddml_estimate_partial, eclass sortpreserve
 	local ylist `r(ystr)'
 	local Dlist `r(dstr)'
 	
-	di as text "ylist: `ylist'"
-	di as text "Dlist: `Dlist'"
-	
 	// replist empty => do all
 	// replist = integer; do for specified resample iteration
 	mata: st_local("numreps",strofreal(`mname'.nreps))

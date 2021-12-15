@@ -51,10 +51,6 @@ program _ddml_estimate_interactive, eclass sortpreserve
 	local y0list `r(colstr1)'
 	local y1list `r(colstr2)'
 	local Dlist `r(colstr3)'
-
-	di "y0list: `y0list'"
-	di "y1list: `y1list'"
-	di "Dist:   `Dlist'"
 	
 	// replist empty => do all
 	// replist = integer; do for specified resample iteration

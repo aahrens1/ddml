@@ -14,18 +14,35 @@ program ddml, eclass
 	version 13
 	
 	local allargs `0'
-	tokenize "`allargs'", parse(",")
-	local mainargs `1'
-	macro shift
-	local restargs `*'
-
-	// local subcmd : word 1 of `mainargs'
+	
+	// split into before/after :
+	tokenize "`allargs'", parse(":")
+	local maincmd `1'
+	macro shift 2
+	local eqn `*'
+	
+	// parse first part using syntax
+	local 0 "`maincmd'"
+	// options used here already parsed out
+	syntax [anything(name=mainargs)]		///
+			 `if' `in'						/// if/in sent to _ddml_sample
+			 	 , [						///
+					mname(name)				///
+					newmname(name)			///
+					gen(name)				///
+					vname(name)				///
+					vtype(string)			///  "double", "float" etc
+					REPlace					///
+					/* NOPrefix */ 			/// don't add model name as prefix (disabled - interferes with save/use option)
+					*						///
+					]
+	// now parse main args; first element is subcmd
 	tokenize "`mainargs'"
 	local subcmd `1'
 	macro shift
 	// restmainargs is main args minus the subcommand
 	local restmainargs `*'
-	
+
 	local allsubcmds	update describe save export use drop copy sample init yeq deq dheq zeq crossfit estimate
 	if strpos("`allsubcmds'","`subcmd'")==0 {
 		di as err "error - unknown subcommand `subcmd'"
@@ -93,8 +110,6 @@ program ddml, eclass
 
 	*** drop model
 	if "`subcmd'"=="drop" {
-		local 0 "`restargs'"
-		syntax , [mname(name)]
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
@@ -104,10 +119,12 @@ program ddml, eclass
 
 	*** copy model
 	if "`subcmd'"=="copy" {
-		local 0 "`restargs'"
-		syntax , mname(name) newmname(name)
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
+		}
+		if "`newmname'"=="" {
+			di as err "error - newmname(.) option required"
+			exit 198
 		}
 		check_mname "`mname'"
 		_ddml_copy, mname(`mname') newmname(`newmname')
@@ -115,14 +132,12 @@ program ddml, eclass
 
 	*** initialize new estimation
 	if "`subcmd'"=="init" {
-		local model: word 2 of `mainargs'
-		if ("`model'"!="partial"&"`model'"!="iv"&"`model'"!="interactive"&"`model'"!="late"&"`model'"!="ivhd") {
+		local model: word 1 of `restmainargs'
+		local allmodels		partial iv interactive late ivhd
+		if strpos("`allmodels'","`model'")==0 {
 			di as err "no or wrong model specified." 
-			exit 1
+			exit 198
 		}
-		local 0 "`restargs'"
-		// fold variable is option; default is ddmlfold
-		syntax `if' `in', [mname(name) NOLie *]
 
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
@@ -147,8 +162,6 @@ program ddml, eclass
 	
 	*** set sample, foldvar, etc.
 	if "`subcmd'"=="sample" {
-		local 0 "`restmainargs' `restargs'"
-		syntax [if] [in] , [mname(name)  * ]
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
@@ -159,22 +172,6 @@ program ddml, eclass
 	*** add equation  
 	if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="dheq"|"`subcmd'"=="zeq" {
 
-		** parsing
-		// macro options has eqn to be estimated set off from the reset by a :
-		tokenize `" `restargs' "', parse(":")
-		// parse character is in macro `2'
-		local eqn `3'
-		local 0 "`1'"
-		syntax ,	///			
-					[				///
-					gen(name)		///
-					vname(name)		///
-					mname(name)		///
-					vtype(string)   ///  "double", "float" etc
-					REPlace         ///
-					/* NOPrefix */ 		/// don't add model name as prefix (disabled - interferes with save/use option)
-					]
-
 		** check that ddml has been initialized
 		// to add
 		if "`mname'"=="" {
@@ -182,19 +179,16 @@ program ddml, eclass
 		}
 		check_mname "`mname'"
 
-		** vname: use 2nd word of eq as the default 
-		if "`vname'"=="" {
-			local vname : word 2 of `eqn'
-		}
-
-		** 
+		** vtilde: use 2nd and 1st words of eq (estimator) + "_hat" as the default
 		if "`gen'"=="" {
-			local gen `vname'_t
+			tokenize `"`eqn'"'
+			local gen `2'_`1'_hat
 		}
 
-		** drop gen var if it already exists
-		if "`replace'"!="" {
-			cap drop `gen'
+		** vname: use 2nd word of eq (dep var) as the default 
+		if "`vname'"=="" {
+			tokenize `"`eqn'"'
+			local vname `2'
 		}
 
 		** check that equation is consistent with model
@@ -226,12 +220,8 @@ program ddml, eclass
 		// parsimonious way of getting posof that doesn't require checking eqn type
 		local posof = `posof_y' + `posof_d' + `posof_z'
 		
-		** split equation -- only required for D-eq with LIE
+		// check syntax of D-eq with LIE
 		if "`subcmd'"=="dheq" {
-			tokenize `" `eqn' "', parse("|")
-			// parse character is in macro `2'
-			local eqn `1'
-			local eqn_h `3'
 			if regexm(`"`eqn'"',"{D}")==0 {
 				di as err "placeholder {D} for E[D^|X] is missing"
 				exit 198				
@@ -386,7 +376,6 @@ program define add_eqn_to_model, rclass
 	}
 
 	// insert eqn struct into model struct
-	// mata: (*(`mname'.peqnAA)).put("`vname'",`ename')
 	mata: (`mname'.eqnAA).put("`vname'",`ename')
 	
 	// update rest of model struct
