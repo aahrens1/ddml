@@ -128,8 +128,7 @@ program define crossfit, rclass sortpreserve
 	
 	*** syntax
 	if `ssflag' & `nlearners'==1 {
-		di as err "error - shortstack option available only for multiple learners"
-		exit 198
+		di as res "warning - shortstack option relevant only for multiple learners"
 	}
 	
 	// datatype for fitted values/residuals
@@ -487,7 +486,6 @@ program define crossfit, rclass sortpreserve
 						mata: st_local("est_options", return_learner_item(`eqn_info',"`vtilde'","est_options_h"))
 						
 						// replace {D}-placeholder in estimation string with variable name
-						//list `fid' `dhat_isSS_`k''
 						local est_main_h_k = subinstr("`est_main_h'","{D}","`dhat_isSS_`k''",1)
 			
 						// estimation	
@@ -510,7 +508,6 @@ program define crossfit, rclass sortpreserve
 						local hhatSS_list `hhatSS_list' `hhatSS`i''
 					}
 					`qui' di as text "Stacking NNLS (LIE, E[D|X]):"
-					// sum `dhat_oosSS' `hhatSS_list'
 					`qui' _ddml_nnls `dhat_oosSS' `hhatSS_list'
 					tempvar vtemp
 					qui predict `vtype' `vtemp'
@@ -524,6 +521,35 @@ program define crossfit, rclass sortpreserve
 			else {
 				di as err "internal crossfit error"
 				exit 198
+			}
+		}
+		else {
+			// single learner case, so shortstack vars are just copies of learner vars
+			
+			if ~`tvflag' & ~`lieflag' { // case 1
+				qui replace `shortstack'_`m' = `vhat1'
+				if "`resid'"~="" {
+					// vtilde is the residual
+					qui replace `shortstack'_`m' = `vname' - `shortstack'_`m'
+				}
+			}
+			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
+				qui replace `shortstack'1_`m'=`vhat11'
+				if "`resid'"~="" {
+					// vtilde is the residual
+					qui replace `shortstack'1_`m' = `vname' - `shortstack'1_`m' if `treatvar'==1
+				}
+				qui replace `shortstack'0_`m'=`vhat01'
+				if "`resid'"~="" {
+					// vtilde is the residual
+					qui replace `shortstack'0_`m' = `vname' - `shortstack'0_`m' if `treatvar'==0
+				}
+			}
+			else if `lieflag' {
+				qui replace `shortstack'_`m'=`dhat1'
+				label var `shortstack'_`m' "short-stacking cross-fitted E[D|Z,X]"
+				qui replace `shortstack'_h_`m'=`hhat1'
+				label var `shortstack'_h_`m' "short-stacking cross-fitted E[D|X]"
 			}
 		}
 	
@@ -678,6 +704,9 @@ program define crossfit, rclass sortpreserve
 			}
 			else if `lieflag' {
 	
+				cap drop `vtilde'_`m'
+				cap drop `vtilde'_h_`m'
+				
 				qui gen `vtilde'_`m' = `dhat`i''
 				qui gen `vtilde'_h_`m' = `hhat`i''
 
