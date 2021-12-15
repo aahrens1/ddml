@@ -31,13 +31,15 @@ program _ddml_estimate_interactive, eclass sortpreserve
 	// will need to check this...
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 	
-	mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameY)
+	// mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameY)
+	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
 	foreach var in `vtlistY' {
 		local Y0tilde `Y0tilde' `var'0
 		local Y1tilde `Y1tilde' `var'1
 	}
-	mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameD)
+	// mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameD)
+	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameD)
 	mata: st_local("Dtilde",invtokens(`eqn'.vtlist))
 
 	_ddml_allcombos `Y0tilde'- `Y1tilde' - `Dtilde',		///
@@ -72,12 +74,14 @@ program _ddml_estimate_interactive, eclass sortpreserve
 	foreach m in `replist' {
 		
 		*** retrieve best model
-		mata: `eqn' = (*(`mname'.peqnAA)).get("`nameY'")
+		// mata: `eqn' = (*(`mname'.peqnAA)).get("`nameY'")
+		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 		mata: st_local("Y0opt",return_learner_item(`eqn',"opt0","`m'"))
 		mata: st_local("Y1opt",return_learner_item(`eqn',"opt1","`m'"))
 		local Y0opt `Y0opt'0
 		local Y1opt `Y1opt'1
-		mata: `eqn' = (*(`mname'.peqnAA)).get("`nameD'")
+		// mata: `eqn' = (*(`mname'.peqnAA)).get("`nameD'")
+		mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
 		mata: st_local("Dopt",return_learner_item(`eqn',"opt","`m'"))
 		
 		*** shortstack names

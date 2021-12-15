@@ -16,13 +16,15 @@ program define _ddml_make_varlists, rclass
 	local numeqnD	: word count `nameD'
 	local numeqnZ	: word count `nameZ'
 	
-	mata: `eqn' = (*(`mname'.peqnAA)).get("`nameY'")
+	// mata: `eqn' = (*(`mname'.peqnAA)).get("`nameY'")
+	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
 	local numlnrY : word count `vtlistY'
 	
 	if `numeqnD' {
 		foreach var of varlist `nameD' {
-			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			tempname Dt_list
@@ -33,7 +35,8 @@ program define _ddml_make_varlists, rclass
 	
 	if `numeqnD' & `lieflag' {
 		foreach var of varlist `nameD' {
-			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			foreach vn in `vtlistD' {
@@ -47,7 +50,8 @@ program define _ddml_make_varlists, rclass
 	
 	if `numeqnZ' {
 		foreach var of varlist `nameZ' {
-			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
 			tempname Zt_list
 			local `Zt_list' `vtlistZ'

@@ -37,14 +37,16 @@ program define _ddml_describe
 	
 	// equations and learners
 	di as res "Dependent variable (Y): `nameY'"
-	mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameY)
+	// mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameY)
+	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
 	local numlnrY : word count `vtlistY'
 	di as res _col(2) "`nameY' learners:" as res _col(25) "`vtlistY'"
 	if `numeqnD' {
 		di as res "D equations (`numeqnD'): `nameD'"
 		foreach var of varlist `nameD' {
-			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			di as res _col(2) "`var' learners:" _col(25) "`vtlistD'"
 		}
@@ -52,7 +54,8 @@ program define _ddml_describe
 	if `numeqnZ' {
 		di as res "Z equations (`numeqnZ'): `nameZ'"
 		foreach var of varlist `nameZ' {
-			mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
 			di as res _col(2) "`var' learners:" _col(25) "`vtlistZ'"
 		}
@@ -124,7 +127,8 @@ prog define desc_learners
 		local heqn	= 1
 	}
 	
-	mata: `eqn' = (*(`mname'.peqnAA)).get("`vname'")
+	// mata: `eqn' = (*(`mname'.peqnAA)).get("`vname'")
+	mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 	mata: st_local("vtlist",invtokens(`eqn'.vtlist))
 	foreach vtilde in `vtlist' {
 		di as res _col(2) "Learner:" _col(15) "`vtilde'"

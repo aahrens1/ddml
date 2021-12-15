@@ -585,7 +585,7 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","N_folds",   "`m'", st_matrix("`N_folds'"))
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE",       "`m'", `mse')
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
-
+				
 				if "`cmd'"=="pystacked" {
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw'"))
 				}

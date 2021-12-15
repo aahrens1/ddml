@@ -7,8 +7,7 @@
 * spin off init code into a subroutine?
 * init code current calls _ddml_sample to set fold var, kfolds, etc. Allow options with init?
 
-// should reps be an option for ddml model or ddml estimate or both?
-// add_eqn and elsewhere needs to handle prefix/noprefix option (where prefix = `model'_)
+// (no)prefix option not implemented; prefixes not added (where prefix = `model'_)
 
 program ddml, eclass
 
@@ -130,7 +129,7 @@ program ddml, eclass
 		}
 
 		// distinct model: no-LIE optimal IV
-		if "`model'"=="ivhd"&"`nolie'"!="" local model ivhd_nolie
+		// if "`model'"=="ivhd"&"`nolie'"!="" local model ivhd_nolie
 		
 		mata: `mname'=init_mStruct()
 		cap drop `mname'_id
@@ -144,10 +143,6 @@ program ddml, eclass
 		// initialize with default fold var, kfolds, number of resamplings, shortstack
 		_ddml_sample `if' `in' , mname(`mname') `options'
 
-		/*
-		// add sample indicator to model struct (col 1 = id, col 2 = fold id)
-		mata: `mname'.idSample		= st_data(., ("`mname'_id", "`mname'_sample"))
-		*/
 	}
 	
 	*** set sample, foldvar, etc.
@@ -177,7 +172,7 @@ program ddml, eclass
 					mname(name)		///
 					vtype(string)   ///  "double", "float" etc
 					REPlace         ///
-					NOPrefix 		/// don't add model name as prefix
+					/* NOPrefix */ 		/// don't add model name as prefix (disabled - interferes with save/use option)
 					]
 
 		** check that ddml has been initialized
@@ -230,14 +225,6 @@ program ddml, eclass
 		}
 		// parsimonious way of getting posof that doesn't require checking eqn type
 		local posof = `posof_y' + `posof_d' + `posof_z'
-
-		** add prefix to vtilde
-		if "`noprefix'"=="" {
-			local prefix `mname'_
-		}
-		else {
-			local prefix
-		}
 		
 		** split equation -- only required for D-eq with LIE
 		if "`subcmd'"=="dheq" {
@@ -269,19 +256,12 @@ program ddml, eclass
 			local mname m0 // sets the default name
 		}
 		check_mname "`mname'"
-
-		/*
-		// clear previous results or initialize if no prev results
-		_ddml_reset_model_results, mname(`mname')
-		*/
 		
 		// why is this needed?
 		mata: st_global("r(model)",`mname'.model)
 		
 		// crossfit
 		_ddml_crossfit, `options' mname(`mname') 
-		// set model crossfitted flag = 1
-		mata: `mname'.crossfitted	= 1
 		
 	}
 
@@ -406,7 +386,8 @@ program define add_eqn_to_model, rclass
 	}
 
 	// insert eqn struct into model struct
-	mata: (*(`mname'.peqnAA)).put("`vname'",`ename')
+	// mata: (*(`mname'.peqnAA)).put("`vname'",`ename')
+	mata: (`mname'.eqnAA).put("`vname'",`ename')
 	
 	// update rest of model struct
 	if `posof'==0 {

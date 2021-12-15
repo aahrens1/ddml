@@ -10,7 +10,7 @@ program _ddml_use
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	// used multiple times below
 	tempname eqn
-	mata: `eqn' = init_eqnStruct()
+	mata: `eqn' = init_eStruct()
 
 	// does model already exist?
 	mata: st_local("isnull",strofreal(findexternal("`mname'")==NULL))
@@ -23,6 +23,7 @@ program _ddml_use
 		exit 198
 	}
 
+	/*
 	*** extract details of estimation
 	
 	// model
@@ -76,6 +77,7 @@ program _ddml_use
 			mata: st_store( ., ("`mname'_`vtilde'"), (`eqn'.idVtilde)[.,2])
 		}
 	}
+	*/
 
 end
 
@@ -85,15 +87,9 @@ end
 
 mata:
 
-struct eqnStruct init_eqnStruct()
+struct mStruct use_model(string scalar fname)
 {
-	struct eqnStruct scalar		e
-	return(e)
-}
-
-struct ddmlStruct use_model(		string scalar fname)
-{
-	struct ddmlStruct scalar	m
+	struct mStruct scalar	m
 	
 	if (!fileexists(fname)) {
 		errprintf("file %s not found\n", fname)
