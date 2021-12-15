@@ -107,16 +107,17 @@ struct mStruct init_mStruct()
 // clear results from all eStructs in mStruct
 void clear_model_results(struct mStruct d)
 {
-	
-	struct eStruct scalar			e
-	class AssociativeArray scalar	A3
-	
-	eqnlist = (d.nameY, d.nameD, d.nameZ)
-	for (i=1; i<=cols(eqnlist); i++) {
-		clear_equation_results((*(d.peqnAA)).get(eqnlist[i]))
+	// if not crossfitted, nothing to clear
+	if (d.crossfitted==1) {
+		struct eStruct scalar			e
+		class AssociativeArray scalar	A3
+		
+		eqnlist = (d.nameY, d.nameD, d.nameZ)
+		for (i=1; i<=cols(eqnlist); i++) {
+			clear_equation_results((*(d.peqnAA)).get(eqnlist[i]))
+		}
+		d.crossfitted	= 0
 	}
-	d.crossfitted	= 0
-	
 }
 
 

@@ -13,6 +13,9 @@ program _ddml_sample
 							]
 	
 	marksample touse
+	
+	// clear any preexisting equation results from the model struct
+	mata: clear_model_results(`mname')
 
 	if "`sreset'"~="" {
 		// reset sample indicator
@@ -51,14 +54,15 @@ program _ddml_sample
 			tempvar uni cuni
 			if `m'==1 & "`norandom'"~="" {
 				qui gen `uni' = _n
+				local labtext "(original order)"
 			}
 			else {
 				qui gen double `uni' = runiform() if `mname'_sample
+				local labtext "(randomly generated)"
 			}
 			qui cumul `uni' if `mname'_sample, gen(`cuni')
 			qui gen int `mname'_fid_`m' = ceil(`kfolds'*`cuni') if `mname'_sample
-			// add fold id to model struct (col 1 = id, col 2 = fold id)
-			// mata: `mname'.idFold = (`mname'.idFold , st_data(., ("`mname'_fid_`m'")))
+			label var `mname'_fid_`m' "`labtext'"
 		}
 	}
 	else {
@@ -80,7 +84,7 @@ program _ddml_sample
 				qui replace `touse' = 0 if `vname'==.
 			}
 			qui egen `mname'_fid_`m' = group(`vname')
-			label var `mname'_fid_`m'
+			label var `mname'_fid_`m' "(based on `vname')"
 			// enforce that the number of folds is the same for all fold vars
 			qui tab `mname'_fid_`m'
 			if `m'==1 {
@@ -97,21 +101,11 @@ program _ddml_sample
 		}
 		// update sample indicator to account for missing fold vars
 		qui replace `mname'_sample = `touse'
-		// add fold id to model struct (col 1 = id, col 2 = fold id)
-		//mata: `mname'.idFold = (`mname'.idFold , st_data(., ("`mname'_fid_`m'")))
 	}
 
-	// add sample indicator to model struct (col 1 = id, col 2 = fold id)
-	// mata: `mname'.idSample = st_data(., ("`mname'_id", "`mname'_sample"))
-	
 	// update model struct
 	mata: `mname'.kfolds = `kfolds'
 	mata: `mname'.nreps = `reps'
-
-/*
-	// clear previous results or initialize if no prev results
-	_ddml_reset_model_results, mname(`mname')
-*/
 
 	forvalues m=1/`reps' {
 		if ("`tabfold'"!="") {

@@ -93,13 +93,3 @@ program define _ddml_make_varlists, rclass
 	return local zvars `Ztilde' `DHtilde'
 
 end
-
-
-
-mata: 
-struct eqnStruct init_eqnStruct()
-{
-	struct eqnStruct scalar		e
-	return(e)
-}
-end
