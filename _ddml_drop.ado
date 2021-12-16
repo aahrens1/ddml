@@ -5,37 +5,77 @@ program _ddml_drop, eclass
 	syntax , mname(name)
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
-	// used multiple times below
 	tempname eqn
-	mata: `eqn' = init_eqnStruct()
+	mata: `eqn' = init_eStruct()
 
-	mata: st_local("numeqns",strofreal(cols(`mname'.eqnlist)))
+	// locals used below
+	mata: st_local("model",`mname'.model)
+	
+	mata: st_local("nameY",`mname'.nameY)
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameZ",invtokens(`mname'.nameZ))
+	// as used in other code - below these macros are numbers of learners
+	local numeqnD	: word count `nameD'
+	local numeqnZ	: word count `nameZ'
 
-	*** drop id and fold id
-	cap drop `mname'_id
-	cap drop `mname'_fid
-
-	*** loop through equations and drop Stata variables
-	forvalues i=1/`numeqns' {
-		mata: `eqn'=*(`mname'.eqnlist[1,`i'])
-		mata: st_local("vtilde",`eqn'.Vtilde)
-		cap drop `mname'_`vtilde'
+	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+	// equation struct naming is the model name + dep variable name
+	local eqnlist `mname'_`nameY'
+	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
+	mata: st_local("ssvname",invtokens(`eqn'.shortstack))
+	local vtlist `vtlistY' `ssvname'
+	
+	if `numeqnD' {
+		foreach var of varlist `nameD' {
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			local eqnlist `eqnlist' `mname'_`var'
+			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
+			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
+			mata: st_local("ssvname",invtokens(`eqn'.shortstack))
+			local vtlist `vtlist' `vtlistD' `ssvname'
+			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
+			if `lieflag' {
+				foreach vn in `vtlistD' {
+					local vtlistD_h `vtlistD_h' `vn'_h
+				}
+				local vtlist `vtlist' `vtlistD_h'			
+			}
+		}
 	}
 	
+	if `numeqnZ' {
+		foreach var of varlist `nameZ' {
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			local eqnlist `eqnlist' `mname'_`var'
+			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
+			mata: st_local("ssvname",invtokens(`eqn'.shortstack))
+			local vtlist `vtlistZ' `ssvname'
+		}
+	}
+	
+	// Add wildcards, add prefixed variables, then unabbreviate
+	foreach var in `vtlist' {
+		local evtlist `evtlist' `var'*
+	}
+	unab evtlist : `evtlist'
+	
+	*** drop variables
+	foreach var of varlist `evtlist' {
+		cap drop `var'
+	}
+
+	*** drop id, fold id, sample var
+	cap drop `mname'_id
+	cap drop `mname'_sample
+	cap drop `mname'_fid*		// multiple folds
+	
+	*** drop eqn structs
+	foreach estruct in `eqnlist' {
+		mata: mata drop `estruct'
+	}
+	mata: mata drop `eqn'		// temp eqn
+
+	*** drop model structs
 	mata: mata drop `mname'
-
-end
-
-********************************************************************************
-*** Mata section															 ***
-********************************************************************************
-
-mata:
-
-struct eqnStruct init_eqnStruct()
-{
-	struct eqnStruct scalar		e
-	return(e)
-}
 
 end

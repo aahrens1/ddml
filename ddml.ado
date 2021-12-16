@@ -42,7 +42,7 @@ program ddml, eclass
 	macro shift
 	// restmainargs is main args minus the subcommand
 	local restmainargs `*'
-
+	
 	local allsubcmds	update describe save export use drop copy sample init yeq deq dheq zeq crossfit estimate
 	if strpos("`allsubcmds'","`subcmd'")==0 {
 		di as err "error - unknown subcommand `subcmd'"
@@ -240,8 +240,6 @@ program ddml, eclass
 	*** cross-fitting
 	if "`subcmd'" =="crossfit" {
 
-		local 0 "`restargs'"
-		syntax , [ mname(name) nnls * ]
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
