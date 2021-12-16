@@ -255,10 +255,6 @@ program ddml, eclass
 
 	*** estimate
 	if "`subcmd'" =="estimate" {
-		local 0 "`restargs'"
-		// mname is required; could make optional with a default name
-		syntax , [mname(name) * resample(integer 1)]
-
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}

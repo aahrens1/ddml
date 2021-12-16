@@ -103,6 +103,7 @@ program _ddml_estimate_interactive, eclass sortpreserve
 					y1tilde(`y1'_`m')	///
 					dtilde(`d'_`m')		///
 					touse(`touse')
+				di
 				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
 				di as text "E[y|X,D=0] = " as res "`y0'_`m'"
 				di as text "E[y|X,D=1] = " as res "`y1'_`m'"
@@ -116,12 +117,13 @@ program _ddml_estimate_interactive, eclass sortpreserve
 		// if `nreplist'>1 local nodisp qui
 		`nodisp' {
 			_ddml_ate,					///
-				 yvar(`nameY')			///
-				 dvar(`nameD')			///
-				 y0tilde(`Y0opt'_`m')	///
-				 y1tilde(`Y1opt'_`m')	///
-				 dtilde(`Dopt'_`m')		///
-				 touse(`touse')
+				yvar(`nameY')			///
+				dvar(`nameD')			///
+				y0tilde(`Y0opt'_`m')	///
+				y1tilde(`Y1opt'_`m')	///
+				dtilde(`Dopt'_`m')		///
+				touse(`touse')
+			di
 			if `ncombos' > 1 {
 				di as text "Optimal DML model`stext':" _c
 			}
@@ -137,12 +139,13 @@ program _ddml_estimate_interactive, eclass sortpreserve
 		
 		if `ssflag' {
 			_ddml_ate,					///
-				 yvar(`nameY')			///
-				 dvar(`nameD')			///
-				 y0tilde(`Y0ss'_`m')	///
-				 y1tilde(`Y1ss'_`m')	///
-				 dtilde(`Dss'_`m')		///
-				 touse(`touse')
+				yvar(`nameY')			///
+				dvar(`nameD')			///
+				y0tilde(`Y0ss'_`m')		///
+				y1tilde(`Y1ss'_`m')		///
+				dtilde(`Dss'_`m')		///
+				touse(`touse')
+			di
 			di as text "Shortstack DML model`stext':" _c
 			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
 			di as text "E[y|X,D=0] = " as res "`Y0ss'_`m'"

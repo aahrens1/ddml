@@ -112,6 +112,7 @@ program _ddml_estimate_ivhd, eclass sortpreserve
 				_ddml_optiv, yvar(`nameY') ytilde(`y')				///
 					dvar(`nameD') dhtilde(`dh') dtilde(`d')			///
 					touse(`touse') `debug'
+				di
 				di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
 				di as text "E[Y|X]   = " as res "`y'"
 				di as text "E[D|X]   = " as res "`d'"
@@ -127,6 +128,7 @@ program _ddml_estimate_ivhd, eclass sortpreserve
 			_ddml_optiv, yvar(`nameY') ytilde(`Yopt'_`m')				///
 				dvar(`nameD') dhtilde(`DHopt'_`m') dtilde(`Dopt'_`m')	///
 				touse(`touse') `debug'
+			di
 			if `ncombos' > 1 {
 				di as text "Optimal DML model`stext':" _c
 			}
@@ -144,6 +146,7 @@ program _ddml_estimate_ivhd, eclass sortpreserve
 			_ddml_optiv, yvar(`nameY') ytilde(`Yss'_`m')				///
 				dvar(`nameD') dhtilde(`DHss'_`m') dtilde(`Dss'_`m')		///
 				touse(`touse') `debug'
+			di
 			if `ncombos' > 1 {
 				di as text "Shortstack DML model`stext':" _c
 			}

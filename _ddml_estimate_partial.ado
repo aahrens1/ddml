@@ -113,6 +113,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 		`nodisp' {
 			add_suffix `Yopt' `Dopt', suffix("_`m'")
 			do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+			di
 			if `ncombos' > 1 {
 				di as text "Optimal DML model`stext':" _c
 			}
@@ -128,6 +129,7 @@ program _ddml_estimate_partial, eclass sortpreserve
 		if `ssflag' {
 			add_suffix `Yss' `Dss', suffix("_`m'")
 			do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+			di
 			di as text "Shortstack DML model`stext':" _c
 			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
 			di as text "E[y|X] = " as res "`Yss'"
@@ -193,11 +195,11 @@ end
 
 // does OLS/IV and reports with substitute yname and dnames
 program define do_regress, eclass
-	syntax anything [if] [in] , [ yname(name) dnames(namelist) * ]
+	syntax anything [if] [in] , [ yname(name) dnames(namelist) robust * ]
 
 	marksample touse
 
-	qui reg `anything' if `touse', `options'
+	qui reg `anything' if `touse', `robust' `options'
 
 	tempname b
 	tempname V
@@ -210,6 +212,10 @@ program define do_regress, eclass
 	local N = e(N)
 	ereturn clear
 	ereturn post `b' `V', depname(`yname') obs(`N') esample(`touse')
+	if "`robust'"=="robust" {
+		ereturn local vce		robust
+		ereturn local vctype	Robust
+	}
 
 end
 

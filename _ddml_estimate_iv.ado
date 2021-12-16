@@ -134,6 +134,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 			local IVlist `s(vnames)'
 			do_regress `YD' (`IVlist') if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
 			// display
+			di
 			if `ncombos' > 1 {
 				di as text "Optimal DML model`stext':" _c
 			}
@@ -153,6 +154,7 @@ program _ddml_estimate_iv, eclass sortpreserve
 			add_suffix `Zss', suffix("_`m'")
 			local IVlist `s(vnames)'
 			do_regress `YD' (`IVlist') if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
+			di
 			di as text "Shortstack DML model`stext':" _c
 			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
 			di as text "E[y|X] = " as res "`Yss'"

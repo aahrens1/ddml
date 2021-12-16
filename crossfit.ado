@@ -808,6 +808,11 @@ program define crossfit, rclass sortpreserve
 				mat `N_list'			= (nullmat(`N_list') \ `N')
 				mat `mse_folds_list'	= (nullmat(`mse_folds_list') \ `mse_folds')
 				mat `N_folds_list'		= (nullmat(`N_folds_list')\ `N_folds')
+
+				mata: add_result_item(`eqn_info',"`shortstack'","N",         "`m'", `N')
+				mata: add_result_item(`eqn_info',"`shortstack'","N_folds",   "`m'", st_matrix("`N_folds'"))
+				mata: add_result_item(`eqn_info',"`shortstack'","MSE",       "`m'", `mse')
+				mata: add_result_item(`eqn_info',"`shortstack'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
 				
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2
@@ -877,6 +882,11 @@ program define crossfit, rclass sortpreserve
 				mat `N_list'			= (nullmat(`N_list') \ `N')
 				mat `mse_folds_list'	= (nullmat(`mse_folds_list') \ `mse_folds')
 				mat `N_folds_list'		= (nullmat(`N_folds_list')\ `N_folds')
+
+				mata: add_result_item(`eqn_info',"`shortstack'","N",         "`m'", `N')
+				mata: add_result_item(`eqn_info',"`shortstack'","N_folds",   "`m'", st_matrix("`N_folds'"))
+				mata: add_result_item(`eqn_info',"`shortstack'","MSE",       "`m'", `mse')
+				mata: add_result_item(`eqn_info',"`shortstack'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
 	
 				qui sum `hres_sq' if `touse', meanonly
 				local mse_h			= r(mean)
@@ -893,9 +903,9 @@ program define crossfit, rclass sortpreserve
 				mat `mse_h_folds_list'	= (nullmat(`mse_h_folds_list') \ `mse_h_folds')
 				mat `N_h_folds_list'	= (nullmat(`N_h_folds_list')\ `N_h_folds')
 
-				mata: add_result_item(`eqn_info',"`shortstack'","N_h",         "`m'", `N')
+				mata: add_result_item(`eqn_info',"`shortstack'","N_h",         "`m'", `N_h')
 				mata: add_result_item(`eqn_info',"`shortstack'","N_h_folds",   "`m'", st_matrix("`N_h_folds'"))
-				mata: add_result_item(`eqn_info',"`shortstack'","MSE_h",       "`m'", `mse')
+				mata: add_result_item(`eqn_info',"`shortstack'","MSE_h",       "`m'", `mse_h')
 				mata: add_result_item(`eqn_info',"`shortstack'","MSE_h_folds", "`m'", st_matrix("`mse_h_folds'"))
 
 			}
