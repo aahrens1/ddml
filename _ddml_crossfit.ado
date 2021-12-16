@@ -50,7 +50,6 @@ program _ddml_crossfit, eclass sortpreserve
 	di as text "Fold IDs: `fidlist'"
 	
 	// equations and learners
-	// mata: `eqn' = (*(`mname'.peqnAA)).get(`mname'.nameY)
 	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
 	local numlnrY : word count `vtlistY'
@@ -60,7 +59,6 @@ program _ddml_crossfit, eclass sortpreserve
 		di as text "D equations (`numeqnD'): `nameD'"
 		foreach var of varlist `nameD' {
 			di as text _col(5) "D equation `var':"
-			// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			di as text _col(10) "learners: `vtlistD'"
@@ -71,7 +69,6 @@ program _ddml_crossfit, eclass sortpreserve
 		di as text "Z equations (`numeqnZ'): `nameZ'"
 		foreach var of varlist `nameZ' {
 			di as text _col(5) "Z equation `var':"
-			// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
 			di as text _col(10) "learners: `vtlistZ'"
@@ -117,7 +114,6 @@ program _ddml_crossfit, eclass sortpreserve
 				local treatvar
 			}
 			foreach var of varlist `nameD' {
-				// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
 				mata: st_local("ssname",`eqn'.shortstack)
 				di as text "Cross-fitting D equation: `var'"
@@ -134,7 +130,6 @@ program _ddml_crossfit, eclass sortpreserve
 		// Z equations
 		if `numeqnZ' {
 			foreach var of varlist `nameZ' {
-				// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
 				mata: st_local("ssname",`eqn'.shortstack)
 				di as text "Cross-fitting Z equation: `var'"

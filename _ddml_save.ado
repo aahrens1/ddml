@@ -14,7 +14,6 @@ program _ddml_save
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens(`mname'.nameZ))
-	// as used in other code - below these macros are numbers of learners
 	local numeqnD	: word count `nameD'
 	local numeqnZ	: word count `nameZ'
 	

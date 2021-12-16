@@ -71,17 +71,14 @@ program _ddml_estimate_iv, eclass sortpreserve
 		local Dss
 		
 		*** retrieve best model
-		// mata: `eqn' = (*(`mname'.peqnAA)).get("`nameY'")
 		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 		mata: st_local("Yopt",return_learner_item(`eqn',"opt","`m'"))
 		foreach var of varlist `nameD' {
-			// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("oneDopt",return_learner_item(`eqn',"opt","`m'"))
 			local Dopt `Dopt' `oneDopt'
 		}
 		foreach var of varlist `nameZ' {
-			// mata: `eqn' = (*(`mname'.peqnAA)).get("`var'")
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("oneZopt",return_learner_item(`eqn',"opt","`m'"))
 			local Zopt `Zopt' `oneZopt'
