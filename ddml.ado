@@ -1,5 +1,5 @@
-*** feb 1, 2021
-* ddml v0.3
+*! feb 1, 2021
+*! ddml v0.3
 
 * notes:
 * e.command		= tokens(estcmd)[1,1] fails if command string starts with a prefix e.g. capture
