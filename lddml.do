@@ -21,6 +21,7 @@ st_global("s(compiled_date)","`current_date")
 }
 
 // uniquely identified by vname = dep var in the equation
+// equation structure: one for E[y|x], E[d|x] etc
 struct eStruct {
 	string scalar					vname		// name of variable to be orthogonalized
 	real matrix						vtlist		// list of orthogonalized (learner) variables
@@ -28,8 +29,10 @@ struct eStruct {
 	real scalar						nlearners	// number of learners
 	real scalar						nreps		// number of resamplings
 	real scalar						lieflag		// =1 if LIE spec with two estimation strings etc.
-	class AssociativeArray scalar	lrnAA		// pointer to AssociativeArray with all learners (keys=vtilde,object)
-	class AssociativeArray scalar	resAA		// pointer to AssociativeArray with all learner results (keys=vtilde,object,rep)
+	class AssociativeArray scalar	lrnAA		// pointer to AssociativeArray with all learners //
+												// (keys=vtilde,object)
+	class AssociativeArray scalar	resAA		// pointer to AssociativeArray with all learner results //
+												// (keys=vtilde,object,rep)
 
 }
 
@@ -60,6 +63,7 @@ void clear_equation_results(struct eStruct e)
 	(e.resAA).reinit("string",3)
 }
 
+// ddml model structure
 struct mStruct {
 	string scalar					model			// model; partial, iv, late, etc
 	real colvector					id				// id variable (name in Stata will be modelname_id)

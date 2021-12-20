@@ -233,7 +233,10 @@ program define crossfit, rclass sortpreserve
 		}
 	
 		// will save pystacked weights
-		tempname pysw pysw0 pysw1 pysw_t pysw_h
+		forvalues i=1/`nlearners' {
+			tempname pysw_`i' pysw0_`i' pysw1_`i' pyswh_`i'
+			tempname pysw_temp_`i' pysw1_temp_`i' pysw0_temp_`i' pyswh_temp_`i'
+		}
 	
 		// crossfit
 		di as text "Cross-fitting fold " _c
@@ -264,11 +267,11 @@ program define crossfit, rclass sortpreserve
 					// save pystacked weights
 					if ("`cmd'"=="pystacked") {
 						if (`k'==1) {
-							mat `pysw' = e(weights)
+							mat `pysw_`i'' = e(weights)
 						}
 						else {
-							mat `pysw_t' = e(weights)
-							mat `pysw' = (`pysw',`pysw_t')
+							mat `pysw_temp_`i'' = e(weights)
+							mat `pysw_`i'' = (`pysw_`i'',`pysw_temp_`i'')
 						}
 					}
 		
@@ -293,11 +296,11 @@ program define crossfit, rclass sortpreserve
 					// save pystacked weights
 					if ("`cmd'"=="pystacked") {
 						if (`k'==1) {
-							mat `pysw0' = e(weights)
+							mat `pysw1_`i'' = e(weights)
 						}
 						else {
-							mat `pysw_t' = e(weights)
-							mat `pysw0' = (`pysw0',`pysw_t')
+							mat `pysw1_temp_`i'' = e(weights)
+							mat `pysw1_`i'' = (`pysw1_`i'',`pysw1_temp_`i'')
 						}
 					}
 		
@@ -314,14 +317,14 @@ program define crossfit, rclass sortpreserve
 					// save pystacked weights
 					if ("`cmd'"=="pystacked") {
 						if (`k'==1) {
-							mat `pysw1' = e(weights)
+							mat `pysw0_`i'' = e(weights)
 						}
 						else {
-							mat `pysw_t' = e(weights)
-							mat `pysw1' = (`pysw1',`pysw_t')
+							mat `pysw0_temp_`i'' = e(weights)
+							mat `pysw0_`i'' = (`pysw0_`i'',`pysw0_temp_`i'')
 						}
 					}
-		
+
 					// get fitted values for kth fold	
 					tempvar vhat_k
 					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
@@ -343,11 +346,11 @@ program define crossfit, rclass sortpreserve
 					// get pystacked weights
 					if ("`cmd'"=="pystacked") {
 						if (`k'==1) {
-							mat `pysw' = e(weights)
+							mat `pysw_`i'' = e(weights)
 						}
 						else {
-							mat `pysw_t' = e(weights)
-							mat `pysw' = (`pysw',`pysw_t')
+							mat `pysw_temp_`i'' = e(weights)
+							mat `pysw_`i'' = (`pysw_`i'',`pysw_temp_`i'')
 						}
 					}
 					
@@ -370,13 +373,13 @@ program define crossfit, rclass sortpreserve
 					local cmd_h `e(cmd)'
 		
 					// get pystacked weights
-					if ("`cmd_h'"=="pystacked") {
+					if ("`cmd'"=="pystacked") {
 						if (`k'==1) {
-							mat `pysw_h' = e(weights)
+							mat `pyswh_`i'' = e(weights)
 						}
 						else {
-							mat `pysw_t' = e(weights)
-							mat `pysw_h' = (`pysw_h',`pysw_t')
+							mat `pyswh_temp_`i'' = e(weights)
+							mat `pyswh_`i'' = (`pyswh_`i'',`pyswh_temp_`i'')
 						}
 					}
 		
@@ -613,7 +616,7 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
 				
 				if "`cmd'"=="pystacked" {
-					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw'"))
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
 				}
 				
 				if `i'==1 {
@@ -686,8 +689,8 @@ program define crossfit, rclass sortpreserve
 				}
 				
 				if "`cmd'"=="pystacked" {
-					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights0","`m'", st_matrix("`pysw0'"))
-					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1'"))
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights0","`m'", st_matrix("`pysw0_`i''"))
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1_`i''"))
 				}
 				
 				forvalues t=0/1 {
@@ -757,7 +760,7 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h_folds", "`m'", st_matrix("`mse_h_folds'"))
 								
 				if "`cmd'"=="pystacked" {
-					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights_h","`m'", st_matrix("`pysw_h'"))
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights_h","`m'", st_matrix("`pyswh_`i''"))
 				}
 				
 				// optimal D and H
@@ -964,11 +967,15 @@ program define crossfit, rclass sortpreserve
 	return scalar N			= `N'
 	return local cmd		`cmd'
 	return local cmd_h		`cmd_h'
-	if ("`cmd'"=="pystacked" & `lieflag'==0 & `tvflag'==0) return mat pysw = `pysw' // pystacked weights
-	if ("`cmd'"=="pystacked" & `lieflag'==0 & `tvflag'==1) return mat pysw0 = `pysw0'
-	if ("`cmd'"=="pystacked" & `lieflag'==0 & `tvflag'==1) return mat pysw1 = `pysw1'
-	if ("`cmd'"=="pystacked" & `lieflag'==1) return mat pysw_h 		= `pysw_h'
- 
+	forvalues i=1/`nlearners' {
+			
+			local vtilde : word `i' of `vtlist'
+			cap return `vtilde'_pysw = `pysw_`i''
+			cap return `vtilde'_pysw = `pysw0_`i''
+			cap return `vtilde'_pysw = `pysw1_`i''
+			cap return `vtilde'_pysw = `pyswh_`i''
+
+	}
 	return local cmd_list	`cmd_list'
 	
 end

@@ -104,6 +104,7 @@ program _ddml_crossfit, eclass sortpreserve
 			resid `noisily'
 			// resinsert into model struct AA with equations
 			mata: (`mname'.eqnAA).put("`nameY'",`eqn')
+
 		// D equations
 		if `numeqnD' {
 			if ("`model'"=="late") {

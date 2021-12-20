@@ -22,6 +22,12 @@ program _ddml_estimate_partial, eclass sortpreserve
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
+
+	if (`crossfitted'==0) {
+		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
+		exit 198
+	}
 	
 	// ssflag is a model characteristic but is well-defined only if every equation has multiple learners.
 	// will need to check this...
@@ -161,6 +167,8 @@ program _ddml_estimate_partial, eclass sortpreserve
 		}
 		*/
 	}
+
+	_ddml_ereturn, mname(`mname')
 		
 	// plot
 	//if ("`avplot'"!="") {

@@ -33,6 +33,7 @@ program ddml, eclass
 					vname(name)				///
 					vtype(string)			///  "double", "float" etc
 					REPlace					///
+					cmdname(name)			///
 					/* NOPrefix */ 			/// don't add model name as prefix (disabled - interferes with save/use option)
 					*						///
 					]
@@ -242,7 +243,8 @@ program ddml, eclass
 							vtilde(`gen')		///
 							subcmd(`subcmd')	///
 							posof(`posof')		///
-							estring(`eqn')
+							estring(`eqn')		///
+							cmdname(`cmdname')	
 	}
 
 	*** cross-fitting
@@ -331,6 +333,7 @@ program define add_eqn_to_model, rclass
 													/// need asis option in case it includes strings
 							posof(integer 0)		/// position of vname in name list; =0 if a new vname (new eqn)
 							NOIsily					///
+							cmdname(name)			///
 							]
 	
 	// used for temporary Mata object
@@ -363,13 +366,16 @@ program define add_eqn_to_model, rclass
 	syntax [anything] [if] [in] , [*]
 	local est_main `anything'
 	local est_options `options'
+	if "`cmdname'"=="" local cmdname: word 1 of `est_main'
 	if "`subcmd'"=="dheq" {
+		mata: add_learner_item(`ename',"`vtilde'","cmd_h","`cmdname'")
 		mata: add_learner_item(`ename',"`vtilde'","estring_h","`0'")
 		mata: add_learner_item(`ename',"`vtilde'","est_main_h","`est_main'")
 		mata: add_learner_item(`ename',"`vtilde'","est_options_h","`est_options'")
 		mata: `ename'.lieflag = 1
 	}
 	else {
+		mata: add_learner_item(`ename',"`vtilde'","cmd","`cmdname'")
 		mata: add_learner_item(`ename',"`vtilde'","estring","`0'")
 		mata: add_learner_item(`ename',"`vtilde'","est_main","`est_main'")
 		mata: add_learner_item(`ename',"`vtilde'","est_options","`est_options'")
