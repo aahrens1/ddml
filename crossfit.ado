@@ -680,7 +680,7 @@ program define crossfit, rclass sortpreserve
 				mat `N1_list'			= (nullmat(`N1_list') \ `N1')
 				mat `mse1_folds_list'	= (nullmat(`mse1_folds_list') \ `mse1_folds')
 				mat `N1_folds_list'		= (nullmat(`N1_folds_list')\ `N1_folds')
-				
+
 				forvalues t=0/1 {
 					mata: add_result_item(`eqn_info',"`vtilde'","N`t'",         "`m'", `N`t'')
 					mata: add_result_item(`eqn_info',"`vtilde'","N`t'_folds",   "`m'", st_matrix("`N`t'_folds'"))

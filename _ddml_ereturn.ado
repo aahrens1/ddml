@@ -14,15 +14,24 @@ syntax , [mname(name) ]
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	local numeqnD : word count `nameD'
+	local numeqnZ : word count `nameZ'
 
 	ereturn local model `model'
 	ereturn scalar kfolds = `kfolds'
 	ereturn scalar nreps = `nreps'
 
 	ereturn_learners `mname', vname("`nameY'") etype(yeq)
-	//ereturn_learners `mname', vname("`nameD'") etype(deq)
-	//ereturn_learners `mname', vname("`nameY'") etype(yeq)
-
+	if `numeqnD'>0 {
+		foreach var of varlist `nameD' {
+			ereturn_learners `mname', vname("`var'") etype(deq)
+		}	
+	}
+	if `numeqnZ'>0 {
+		foreach var of varlist `nameZ' {
+			ereturn_learners `mname', vname("`var'") etype(zeq)
+		}	
+	}
 end
 
 prog define ereturn_learners, eclass
@@ -98,17 +107,18 @@ prog define ereturn_learners, eclass
 						if (`m'==1) {
 							mata: `mse'=return_result_item(`eqn',"`vtilde'","MSE`j'","`m'")
 							mata: `mse_folds'=return_result_item(`eqn',"`vtilde'","MSE`j'_folds","`m'")
-							if `get_pysw' {
-								mata: `pysw'=mean(return_result_item(`eqn',"`vtilde'","stack_weights","`m'")')
+							if `get_pysw' & 0 {
+								mata: return_result_item(`eqn',"`vtilde'","stack_weights`j'","`m'")
+								mata: `pysw'=mean(return_result_item(`eqn',"`vtilde'","stack_weights`j'","`m'")')
 							}
 						}
 						else {
-							mata: `mse_tmp'=return_result_item(`eqn',"`vtilde'","MSE","`m'")
-							mata: `mse_folds_tmp'=return_result_item(`eqn',"`vtilde'","MSE_folds","`m'")
+							mata: `mse_tmp'=return_result_item(`eqn',"`vtilde'","MSE`j'","`m'")
+							mata: `mse_folds_tmp'=return_result_item(`eqn',"`vtilde'","MSE`j'_folds","`m'")
 							mata: `mse'=(`mse',`mse_tmp')	
 							mata: `mse_folds'=(`mse_folds'\`mse_folds_tmp')		
-							if `get_pysw' {
-								mata: `pysw_tmp'=mean(return_result_item(`eqn',"`vtilde'","stack_weights","`m'")')
+							if `get_pysw' & 0 {
+								mata: `pysw_tmp'=mean(return_result_item(`eqn',"`vtilde'","stack_weights`j'","`m'")')
 								mata: `pysw'=(`pysw'\`pysw_tmp')									
 							}
 						}
@@ -117,7 +127,7 @@ prog define ereturn_learners, eclass
 					mata: st_matrix("`mse_folds'",`mse_folds')
 					ereturn matrix `vtilde'`j'_mse = `mse'
 					ereturn matrix `vtilde'`j'_folds_mse = `mse_folds' 
-					if `get_pysw' {
+					if `get_pysw' & 0 {
 						mata: st_matrix("`pysw'",`pysw')
 						ereturn matrix `vtilde'`j'_pysw = `pysw'
 					}

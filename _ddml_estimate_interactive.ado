@@ -178,6 +178,8 @@ program _ddml_estimate_interactive, eclass sortpreserve
 		*/
 	}
 
+	_ddml_ereturn, mname(`mname')
+
 end
 
 // adds rep number suffixes to list of varnames
