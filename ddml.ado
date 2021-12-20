@@ -1,4 +1,4 @@
-*! feb 1, 2021
+*! dec 20, 2021
 *! ddml v0.3
 
 * notes:
@@ -43,7 +43,7 @@ program ddml, eclass
 	// restmainargs is main args minus the subcommand
 	local restmainargs `*'
 	
-	local allsubcmds	update describe save export use drop copy sample init yeq deq dheq zeq crossfit estimate
+	local allsubcmds	update describe save export use drop copy sample init yeq deq dheq zeq crossfit estimate E[Y|X] E[D|X] E[D|X,Z] E[Y|X,D] E[Z|X] E[Y|X,Z]
 	if strpos("`allsubcmds'","`subcmd'")==0 {
 		di as err "error - unknown subcommand `subcmd'"
 		exit 198
@@ -51,7 +51,7 @@ program ddml, eclass
 
 	*** get latest version
 	if "`subcmd'"=="update" {
-		net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/master/)
+		net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/master/) replace
 	} 
 	
 	*** describe model
@@ -170,7 +170,7 @@ program ddml, eclass
 	}
 
 	*** add equation  
-	if "`subcmd'"=="yeq"|"`subcmd'"=="deq"|"`subcmd'"=="dheq"|"`subcmd'"=="zeq" {
+	if strpos("`subcmd'","E[Y|X] E[D|X] E[D|Z,X] E[D|X,Z] E[Y|X,D] E[Y|D,X] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq dheq")==0 {
 
 		** check that ddml has been initialized
 		// to add
@@ -193,10 +193,18 @@ program ddml, eclass
 
 		** check that equation is consistent with model
 		mata: st_local("model",`mname'.model)
-		if ("`subcmd'"=="zeq"&("`model'"=="ivhd"|"`model'"=="ivhd_nolie"|"`model'"=="partial"|"`model'"=="interactive")) {
-			di as err "not allowed; zeq not allowed with `model'"
+		if ("`subcmd'"=="E[Z|X]"&"`model'"!="iv") {
+			di as err "not allowed; `subcmd' not allowed with `model'"
 		}
-		
+
+		** convert to internal equation names
+		if "`subcmd'"=="E[Y|X]" local subcmd yeq
+		if "`subcmd'"=="E[Y|X,D]"|"`subcmd'"=="E[Y|D,X]" local subcmd yeq
+		if "`subcmd'"=="E[Y|X,Z]"|"`subcmd'"=="E[Y|Z,X]" local subcmd yeq
+		if "`subcmd'"=="E[D|X]" local subcmd deq
+		if "`subcmd'"=="E[Z|X]" local subcmd zeq
+		if "`subcmd'"=="E[D|X,Z]"|"`subcmd'"=="E[D|Z,X]" local subcmd dheq
+
 		** check that dep var in eqn isn't already used for some other eqn
 		** also set flag for whether dep var is new
 		mata: st_local("yvar",`mname'.nameY)

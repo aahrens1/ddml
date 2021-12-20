@@ -523,7 +523,7 @@ program define crossfit, rclass sortpreserve
 				exit 198
 			}
 		}
-		else {
+		else if `ssflag' {
 			// single learner case, so shortstack vars are just copies of learner vars
 			
 			if ~`tvflag' & ~`lieflag' { // case 1
