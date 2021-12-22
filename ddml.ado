@@ -166,9 +166,10 @@ program ddml, eclass
 		_ddml_sample `if' `in' , mname(`mname') `options'
 	}
 
-	*** add equation  
-	// condition will be nonzero (true) if subcmd appears anywhere in the list
-	if strpos("`subcmd'","E[Y|X] E[D|X] E[D|Z,X] E[D|X,Z] E[Y|X,D] E[Y|D,X] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq dheq") {
+	*** add equation
+	// condition will be nonzero (true) if subcmd (2nd arg) appears anywhere in the list (first arg).
+	local alleqntypes E[Y|X] E[D|X] E[D|Z,X] E[D|X,Z] E[Y|X,D] E[Y|D,X] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq dheq
+	if strpos("`alleqntypes'","`subcmd'") {
 
 		** check that ddml has been initialized
 		// to add
@@ -292,8 +293,6 @@ program ddml, eclass
 		*/
 
 	}
-
-mata: mata describe
 
 end
 
