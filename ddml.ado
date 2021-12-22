@@ -44,6 +44,7 @@ program ddml, eclass
 	// restmainargs is main args minus the subcommand
 	local restmainargs `*'
 	
+	// should perhaps make subcmd list all lower case (more forgiving) and replace `subcmd' with strlower("`subcmd'").
 	local allsubcmds	update describe save export use drop copy sample init yeq deq dheq zeq crossfit estimate E[Y|X] E[D|X] E[D|X,Z] E[Y|X,D] E[Z|X] E[Y|X,Z]
 	if strpos("`allsubcmds'","`subcmd'")==0 {
 		di as err "error - unknown subcommand `subcmd'"
@@ -69,13 +70,11 @@ program ddml, eclass
 	*** save model
 	if "`subcmd'"=="save" {
 		local fname: word 2 of `mainargs'
-		local 0 "`restargs'"
-		syntax , [ mname(name) * ]
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
 		check_mname "`mname'"
-		_ddml_save, mname(`mname') fname(`fname') `options'
+		_ddml_save, mname(`mname') fname(`fname') `replace' `options'
 
 	}
 	
@@ -100,13 +99,11 @@ program ddml, eclass
 	*** use model
 	if "`subcmd'"=="use" {
 		local fname: word 2 of `mainargs'
-		local 0 "`restargs'"
-		syntax , [ mname(name) * ]
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
 		// no need to check name
-		_ddml_use, mname(`mname') fname(`fname') `options'
+		_ddml_use, mname(`mname') fname(`fname') `replace' `options'
 	}
 
 	*** drop model
@@ -158,7 +155,6 @@ program ddml, eclass
 		mata: `mname'.model			= "`model'"
 		// initialize with default fold var, kfolds, number of resamplings, shortstack
 		_ddml_sample `if' `in' , mname(`mname') `options'
-
 	}
 	
 	*** set sample, foldvar, etc.
@@ -171,7 +167,8 @@ program ddml, eclass
 	}
 
 	*** add equation  
-	if strpos("`subcmd'","E[Y|X] E[D|X] E[D|Z,X] E[D|X,Z] E[Y|X,D] E[Y|D,X] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq dheq")==0 {
+	// condition will be nonzero (true) if subcmd appears anywhere in the list
+	if strpos("`subcmd'","E[Y|X] E[D|X] E[D|Z,X] E[D|X,Z] E[Y|X,D] E[Y|D,X] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq dheq") {
 
 		** check that ddml has been initialized
 		// to add
@@ -295,6 +292,9 @@ program ddml, eclass
 		*/
 
 	}
+
+mata: mata describe
+
 end
 
 prog define check_mname
@@ -403,5 +403,6 @@ program define add_eqn_to_model, rclass
 	
 	// no longer needed so clear from Mata
 	cap mata: mata drop `t'
+	cap mata: mata drop `ename'
 
 end
