@@ -25,8 +25,9 @@ program ddml, eclass
 	local 0 "`maincmd'"
 	// options used here already parsed out
 	syntax [anything(name=mainargs)]		///
-			 `if' `in'						/// if/in sent to _ddml_sample
-			 	 , [						///
+			[using/]						/// 
+			`if' `in'						/// if/in sent to _ddml_sample
+				 , [						///
 					mname(name)				///
 					newmname(name)			///
 					gen(name)				///
@@ -75,25 +76,19 @@ program ddml, eclass
 		}
 		check_mname "`mname'"
 		_ddml_save, mname(`mname') fname(`fname') `replace' `options'
-
 	}
 	
 	*** export model
 	if "`subcmd'"=="export" {
-		local using: word 2 of `mainargs'
-		if "`using'"~="using" {
-			di as err "invalid syntax - missing destination filename"
+		if "`using'"=="" {
+			di as err "error - syntax is 'using <destination filename>'"
 			exit 198
 		}
-		local fname: word 3 of `mainargs'
-		local 0 "`restargs'"
-		syntax ,[ mname(name) * ]
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
 		check_mname "`mname'"
-		_ddml_export, mname(`mname') fname(`fname') `options'
-
+		_ddml_export, mname(`mname') fname(`using') `replace' `options'
 	}
 	
 	*** use model
