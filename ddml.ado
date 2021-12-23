@@ -338,26 +338,32 @@ program define add_eqn_to_model, rclass
 	// used for temporary Mata object
 	tempname t
 	
-	// `mname'_vname is name of eqn object in Mata
-	local ename `mname'_`vname'
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	
 	if `posof'==0 {
 		// vname new to model so need a new eqn struct for it
-		mata: `ename' = init_eStruct()
-		mata: `ename'.vname = "`vname'"
+		// mata: `eqn' = init_eStruct()
+		mata: `eqn'.vname = "`vname'"
 		// if shortstacking, add (default) shorstack varname
 		mata: st_local("ssflag",strofreal(`mname'.ssflag))
 		if `ssflag' {
-			mata: `ename'.shortstack = "`vname'_ss"
+			mata: `eqn'.shortstack = "`vname'_ss"
 		}
+	}
+	else {
+		// fetch existing eqn struct from model
+		mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 	}
 	
 	// add vtilde to vtlist if not already there
-	mata: st_local("vtlist",invtokens(`ename'.vtlist))
+	mata: st_local("vtlist",invtokens(`eqn'.vtlist))
 	local vtlist `vtlist' `vtilde'
 	local vtlist : list uniq vtlist
 	// in two steps, to accommodate singleton lists (which are otherwise string scalars and not matrices
 	mata: `t' = tokens("`vtlist'")
-	mata: `ename'.vtlist	= `t'
+	mata: `eqn'.vtlist	= `t'
 	
 	// used below with syntax command
 	local 0 `"`estring'"'
@@ -367,23 +373,23 @@ program define add_eqn_to_model, rclass
 	local est_options `options'
 	if "`cmdname'"=="" local cmdname: word 1 of `est_main'
 	if "`subcmd'"=="dheq" {
-		mata: add_learner_item(`ename',"`vtilde'","cmd_h","`cmdname'")
-		mata: add_learner_item(`ename',"`vtilde'","estring_h","`0'")
-		mata: add_learner_item(`ename',"`vtilde'","est_main_h","`est_main'")
-		mata: add_learner_item(`ename',"`vtilde'","est_options_h","`est_options'")
-		mata: `ename'.lieflag = 1
+		mata: add_learner_item(`eqn',"`vtilde'","cmd_h","`cmdname'")
+		mata: add_learner_item(`eqn',"`vtilde'","estring_h","`0'")
+		mata: add_learner_item(`eqn',"`vtilde'","est_main_h","`est_main'")
+		mata: add_learner_item(`eqn',"`vtilde'","est_options_h","`est_options'")
+		mata: `eqn'.lieflag = 1
 	}
 	else {
-		mata: add_learner_item(`ename',"`vtilde'","cmd","`cmdname'")
-		mata: add_learner_item(`ename',"`vtilde'","estring","`0'")
-		mata: add_learner_item(`ename',"`vtilde'","est_main","`est_main'")
-		mata: add_learner_item(`ename',"`vtilde'","est_options","`est_options'")
+		mata: add_learner_item(`eqn',"`vtilde'","cmd","`cmdname'")
+		mata: add_learner_item(`eqn',"`vtilde'","estring","`0'")
+		mata: add_learner_item(`eqn',"`vtilde'","est_main","`est_main'")
+		mata: add_learner_item(`eqn',"`vtilde'","est_options","`est_options'")
 		// update nlearners - counts deq and dheq as a single learner
-		mata: `ename'.nlearners = cols(`ename'.vtlist)
+		mata: `eqn'.nlearners = cols(`eqn'.vtlist)
 	}
 
 	// insert eqn struct into model struct
-	mata: (`mname'.eqnAA).put("`vname'",`ename')
+	mata: (`mname'.eqnAA).put("`vname'",`eqn')
 	
 	// update rest of model struct
 	if `posof'==0 {
@@ -402,6 +408,6 @@ program define add_eqn_to_model, rclass
 	
 	// no longer needed so clear from Mata
 	cap mata: mata drop `t'
-	cap mata: mata drop `ename'
+	cap mata: mata drop `eqn'
 
 end

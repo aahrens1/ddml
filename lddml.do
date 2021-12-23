@@ -10,9 +10,8 @@ mata clear
 void whichddml()
 {
 ""
-"ddml ver xxx 2dec2020"
-"compiled under Stata " + "`stata_version'" + " born " + "`born_date'"
-"Mata library for ddml and related programs"
+"Mata library for ddml and related programs,"
+"compiled `current_date' under Stata " + "`stata_version'" + " born " + "`born_date'."
 "authors AA/MS"
 st_sclear()
 st_global("s(stata_born_date)","`born_date'")
