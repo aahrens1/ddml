@@ -71,8 +71,8 @@ prog define ereturn_learners, eclass
 			local get_pysw = "`cmd'"=="pystacked"
 
 			if `pairs'==0 {
+				tempname mse mse_folds mse_tmp mse_folds_tmp pysw pysw_tmp
 				forvalues m=1/`nreps' {
-					tempname mse mse_folds mse_tmp mse_folds_tmp pysw pysw_tmp
 					if (`m'==1) {
 						mata: `mse'=return_result_item(`eqn',"`vtilde'","MSE","`m'")
 						mata: `mse_folds'=return_result_item(`eqn',"`vtilde'","MSE_folds","`m'")
@@ -84,10 +84,10 @@ prog define ereturn_learners, eclass
 						mata: `mse_tmp'=return_result_item(`eqn',"`vtilde'","MSE","`m'")
 						mata: `mse_folds_tmp'=return_result_item(`eqn',"`vtilde'","MSE_folds","`m'")
 						mata: `mse'=(`mse',`mse_tmp')	
-						mata: `mse_folds'=(`mse_folds'\`mse_folds_tmp')		
+						mata: `mse_folds'=(`mse_folds' \ `mse_folds_tmp')		
 						if `get_pysw' {
 							mata: `pysw_tmp'=mean(return_result_item(`eqn',"`vtilde'","stack_weights","`m'")')
-							mata: `pysw'=(`pysw'\`pysw_tmp')									
+							mata: `pysw'=(`pysw' \ `pysw_tmp')									
 						}
 					}
 				}
