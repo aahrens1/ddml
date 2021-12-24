@@ -115,21 +115,14 @@ program _ddml_estimate_partial2, eclass sortpreserve
 			else {
 				local DMLtitle "DDML"
 			}
-			// add resample suffixes and estimate
-			local y `y'_`m'
-			add_suffix `d', suffix("_`m'")
-			local d `s(vnames)'
-			qui _ddml_reg if `touse' , nocons `robust' y(`y') d(`d') yname(`nameY') dnames(`nameD')
+			qui _ddml_reg if `touse' , nocons `robust' y(`y') d(`d') yname(`nameY') dnames(`nameD') mname(`mname') rep(`m')
+			estimates store `mname'_`i'_`m', title("Model `mname', specification `i' resample `m'`isopt'")
 			mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(b)")
 			mata: `semat'[(`m'-1)*`ncombos'+`i',.] = sqrt(diagonal(st_matrix("e(V)"))')
-			estimates store `mname'_`i'_`m', title("Model `mname', specification `i' resample `m'`isopt'")
 		}
 		
 		if `ssflag' {
-			local y `Yss'_`m'
-			add_suffix `Dss', suffix("_`m'")
-			local d `s(vnames)'
-			qui _ddml_reg if `touse' , nocons `robust' y(`y') d(`d') yname(`nameY') dnames(`nameD')
+			qui _ddml_reg if `touse' , nocons `robust' y(`Yss') d(`Dss') yname(`nameY') dnames(`nameD') mname(`mname') rep(`m')
 			estimates store `mname'_ss_`m', title("Model `mname', shorstack resample `m'")
 		}
 
@@ -259,123 +252,9 @@ program _ddml_estimate_partial2, eclass sortpreserve
 	}
 	
 	// temp Mata object no longer needed
-	cap mata: mata drop `nmat' `bmat' `semat'
+	cap mata: mata drop `eqn' `nmat' `bmat' `semat'
 
-/*
-	// do for each specified resamples
-	tempname bagg vagg 
-	foreach m in `replist' {
-		
-		// reset locals
-		local Dopt
-		local Dss
-		
-		*** retrieve best model
-		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
-		mata: st_local("Yopt",return_learner_item(`eqn',"opt","`m'"))
-		foreach var of varlist `nameD' {
-			mata: `eqn' = (`mname'.eqnAA).get("`var'")
-			mata: st_local("oneDopt",return_learner_item(`eqn',"opt","`m'"))
-			local Dopt `Dopt' `oneDopt'
-		}
-		*** shortstack names
-		if `ssflag' {
-			local Yss `nameY'_ss
-			foreach var of varlist `nameD' {
-				local Dss `Dss' `var'_ss
-			}
-		}
 
-		// text used in output below
-		if `nreps'>1 {
-			local stext " (sample=`m')"
-		}
-		
-		// should show have other option values?
-		if "`show'"=="all" {
-			forvalues i = 1(2)`tokenlen' {
-				tokenize `ylist' , parse("-")
-				local y ``i''_`m'
-				// remove extraneous space before the "_"
-				local y : subinstr local y " " "", all
-				tokenize `Dlist' , parse("-")
-				local d ``i''
-				if ("`y'"!="`Yopt'"|"`d'"!="Dopt") { // omit if opt model to show at the end
-					add_suffix `d', suffix("_`m'")
-					local d `s(vnames)'
-					// do_regress is OLS/IV but with original varnames
-					do_regress `y' `d' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
-					di
-					di as text "DML`stext':" _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-					di as text "E[y|X] = " as res "`y'"
-					di as text "E[D|X] = " as res "`d'"
-					ereturn display				
-				}
-		    }
-		}
-
-		// estimate best model
-		// local nodisp 
-		// if `nreplist'>1 local nodisp qui
-		`nodisp' {
-			add_suffix `Yopt' `Dopt', suffix("_`m'")
-			do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
-			di
-			if `ncombos' > 1 {
-				di as text "Optimal DML model`stext':" _c
-			}
-			else {
-				di as text "DML`stext':" _c
-			}
-			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-			di as text "E[y|X] = " as res "`Yopt'"
-			di as text "E[D|X] = " as res "`Dopt'"
-			ereturn display
-		}
-		
-		if `ssflag' {
-			add_suffix `Yss' `Dss', suffix("_`m'")
-			do_regress `s(vnames)' if `touse' , nocons `robust' yname(`nameY') dnames(`nameD')
-			di
-			di as text "Shortstack DML model`stext':" _c
-			di as text _col(52) "Number of obs   =" _col(70) as res %9.0f e(N)
-			di as text "E[y|X] = " as res "`Yss'"
-			di as text "E[D|X] = " as res "`Dss'"
-			ereturn display
-		}
-		
-		/*
-		*** aggregate over resampling iterations if there is more than one
-		if `nreplist'>1 {
-			tempname bi vi
-			mat `bi' = e(b)
-			mat `vi' = e(V)
-			if `m'==1 {
-				mat `bagg' = 1/`nreps' * `bi'
-				mat `vagg' = 1/`nreps' * `vi'
-			} 
-			else {
-				mat `bagg' = `bagg' + 1/`nreps' * `bi'
-				mat `vagg' = `vagg' + 1/`nreps' * `vi'				
-			}
-			if `m'==`nreps' { // save & display on last iteration
-				local N = e(N)
-				ereturn clear
-				di as text "Aggregate DML model over `nreplist' repetitions:"
-				ereturn post `bagg' `vagg', depname(`nameY') obs(`N') esample(`touse')
-				ereturn display
-			}
-		}
-		*/
-	}
-
-	_ddml_ereturn, mname(`mname')
-		
-	// plot
-	//if ("`avplot'"!="") {
-	//   twoway (scatter `s(vnames)') (lfit `s(vnames)')
-	//}
-*/
 
 end
 
