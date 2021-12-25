@@ -868,8 +868,8 @@ program define crossfit, rclass sortpreserve
 				// calculate and return mspe and sample size
 				tempvar hres dres hres_sq dres_sq
 				// vtilde has fitted values
-				qui gen double `dres_sq' = (`shortstack'_`m')^2 if `touse'
-				qui gen double `hres_sq' = (`shortstack'_h_`m')^2 if `touse'
+				qui gen double `dres_sq' = (`vname' - `shortstack'_`m')^2 if `touse'
+				qui gen double `hres_sq' = (`vname' - `shortstack'_h_`m')^2 if `touse'
 	
 				qui sum `dres_sq' if `touse', meanonly
 				local mse			= r(mean)
