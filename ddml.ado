@@ -267,10 +267,10 @@ program ddml, eclass
 		mata: st_global("r(model)",`mname'.model)
 
 		if ("`r(model)'"=="partial") {
-			_ddml_estimate_partial2 `mname', `options'
+			_ddml_estimate_linear `mname', `options'
 		}
 		if ("`r(model)'"=="iv") {
-			_ddml_estimate_iv `mname', `options'
+			_ddml_estimate_linear `mname', `options'
 		}
 		if ("`r(model)'"=="interactive") {
 			_ddml_estimate_interactive `mname', `options'
