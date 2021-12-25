@@ -558,7 +558,7 @@ program define crossfit, rclass sortpreserve
 	
 		if `ssflag' & `nlearners'>1 {
 			// last fold, insert new line
-			di "...completed short-stacking"
+			di as text "...completed short-stacking"
 		}
 	
 		

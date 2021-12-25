@@ -279,7 +279,7 @@ program ddml, eclass
 			_ddml_estimate_late `mname', `options'
 		}
 		if ("`r(model)'"=="ivhd") {
-			_ddml_estimate_ivhd `mname', `options'
+			_ddml_estimate_linear `mname', `options'
 		}
 		
 		// not yet updated

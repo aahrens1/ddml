@@ -30,7 +30,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
-	local numeqnD	: word count `nameD'
+	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 
@@ -83,12 +83,13 @@ program _ddml_estimate_linear, eclass sortpreserve
 		local idx = 2*`i'-1
 		mata: `nmat'[`i',3] = strtrim("``idx''")
 	}
-	
+		
 	*** shortstack names
 	if `ssflag' {
 		local Yss `nameY'_ss
 		foreach var in `nameD' {
 			local Dss `Dss' `var'_ss
+			local DHss `DHss' `var'_ss_h
 		}
 		foreach var in `nameZ' {
 			local Zss `Zss' `var'_ss
@@ -109,12 +110,19 @@ program _ddml_estimate_linear, eclass sortpreserve
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("oneDopt",return_learner_item(`eqn',"opt","`m'"))
 			local Dopt `Dopt' `oneDopt'
+			// DHopt is stored in list Zopt
+			if "`model'"=="ivhd" {
+				mata: st_local("oneDHopt",return_learner_item(`eqn',"opt_h","`m'"))
+				local Zopt `Zopt' `oneDHopt'
+			}
 		}
+		// nameZ is empty for ivhd model
 		foreach var in `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("oneZopt",return_learner_item(`eqn',"opt","`m'"))
 			local Zopt `Zopt' `oneZopt'
 		}
+		
 		// text used in output below
 		if `nreps'>1 {
 			local stext " (sample=`m')"
@@ -137,20 +145,68 @@ program _ddml_estimate_linear, eclass sortpreserve
 			else {
 				local DMLtitle "DDML"
 			}
-			qui _ddml_reg if `touse' ,									///
-					nocons `robust' y(`y') d(`d') z(`z')				///
-					yname(`nameY') dnames(`nameD') znames(`nameZ')		///
-					 mname(`mname') rep(`m')
+			if "`model'"=="ivhd" {
+				local dlist
+				local zlist
+				forvalues j = 1/`numeqnD' {
+					tempvar zvar`j' 
+					tempvar dx`j'
+					local dh : word `j' of `z'
+					local dt : word `j' of `d'
+					local dd : word `j' of `nameD'
+					qui gen double `zvar`j'' = `dh'_`m'-`dt'_`m' // E[D|ZX]-E[D|X] = instrument
+					qui gen double `dx`j'' = `dd'-`dt'_`m' // D-E[D|X] = endogenous regressor
+					local dlist `dlist' `dx`j''
+					local zlist `zlist' `zvar`j''
+				}
+				local dvtnames `d'
+				local zvtnames `z'
+				local d `dlist'
+				local z `zlist'
+				local norep norep
+			}
+			qui _ddml_reg if `touse' ,								///
+					nocons `robust'									///
+					y(`y') yname(`nameY')							///
+					d(`d') dnames(`nameD') dvtnames(`dvtnames') 	///
+					z(`z') znames(`nameZ') zvtnames(`zvtnames')		///
+					mname(`mname') rep(`m') `norep'
 			estimates store `mname'_`i'_`m', title("Model `mname', specification `i' resample `m'`isopt'")
 			mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(b)")
 			mata: `semat'[(`m'-1)*`ncombos'+`i',.] = sqrt(diagonal(st_matrix("e(V)"))')
 		}
 		
 		if `ssflag' {
-			qui _ddml_reg if `touse' ,									///
-					nocons `robust' y(`Yss') d(`Dss') z(`Zss')			///
-					yname(`nameY') dnames(`nameD') znames(`nameZ')		///
-					mname(`mname') rep(`m')
+			if "`model'"=="ivhd" {
+				local dlist
+				local zlist
+				forvalues j = 1/`numeqnD' {
+					tempvar zvar`j' 
+					tempvar dx`j'
+					local dh : word `j' of `DHss'
+					local dt : word `j' of `Dss'
+					local dd : word `j' of `nameD'
+					qui gen double `zvar`j'' = `dh'_`m'-`dt'_`m' // E[D|ZX]-E[D|X] = instrument
+					qui gen double `dx`j'' = `dd'-`dt'_`m' // D-E[D|X] = endogenous regressor
+					local dlist `dlist' `dx`j''
+					local zlist `zlist' `zvar`j''
+				}
+				local dvtnames `Dss'
+				local zvtnames `DHss'
+				local d `dlist'
+				local z `zlist'
+				local norep norep
+			}
+			else {
+				local d `Dss'
+				local z `Zss'
+			}
+			qui _ddml_reg if `touse' ,								///
+					nocons `robust'									///
+					y(`Yss') yname(`nameY')							///
+					d(`d') dnames(`nameD') dvtnames(`dvtnames') 	///
+					z(`z') znames(`nameZ') zvtnames(`zvtnames')		///
+					mname(`mname') rep(`m') `norep'
 			estimates store `mname'_ss_`m', title("Model `mname', shorstack resample `m'")
 		}
 
@@ -211,6 +267,11 @@ program _ddml_estimate_linear, eclass sortpreserve
 	forvalues j=1/`numeqnD' {
 		di as text %14s "D learner" %10s "b" %10s "SE" _c
 	}
+	if "`model'"=="ivhd" {
+		forvalues j=1/`numeqnD' {
+			di as text %14s "DH learner" _c
+		}
+	}
 	forvalues j=1/`numeqnZ' {
 		di as text %14s "Z learner" _c
 	}
@@ -244,6 +305,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local vt : word `j' of `ztlist'
 				di %14s "`vt'" _c
 			}
+			if "`model'"=="ivhd" {
+				forvalues j=1/`numeqnD' {
+					local vt : word `j' of `ztlist'
+					di %14s "`vt'" _c
+				}
+			}
 			di
 		}
 		if `ssflag' {
@@ -258,6 +325,11 @@ program _ddml_estimate_linear, eclass sortpreserve
 				di %10.3f el(e(b),1,`j') _c
 				local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
 				di %10s "`pse'" _c
+			}
+			if "`model'"=="ivhd" {
+				forvalues j=1/`numeqnD' {
+					di %14s "[ss]" _c
+				}
 			}
 			forvalues j=1/`numeqnZ' {
 				di %14s "[ss]" _c
@@ -299,7 +371,7 @@ end
 
 // adds model name prefixes to list of varnames
 program define add_prefix, sclass
-	syntax anything , prefix(name)
+	syntax [anything] , prefix(name)
 
 	// anything is a list of to-be-varnames that need prefix added to them
 	foreach vn in `anything' {
@@ -311,7 +383,7 @@ end
 
 // adds rep number suffixes to list of varnames
 program define add_suffix, sclass
-	syntax anything , suffix(name)
+	syntax [anything] , suffix(name)
 
 	// anything is a list of to-be-varnames that need suffix added to them
 	foreach vn in `anything' {
