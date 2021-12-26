@@ -446,9 +446,9 @@ program define crossfit, rclass sortpreserve
 				}
 				tempvar vtemp
 				`qui' di as text "Stacking NNLS (interactive model, treatvar=0):"
-				`qui' _ddml_nnls `vname' `vhats0'
+				`qui' _ddml_nnls `vname' `vhats0' if `treatvar'==0
 				qui predict `vtype' `vtemp'
-				qui replace `shortstack'0_`m'=`vtemp' 
+				qui replace `shortstack'0_`m'=`vtemp'
 		
 				if "`resid'"~="" {
 					// vtilde is the residual

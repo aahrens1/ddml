@@ -275,7 +275,7 @@ prog define desc_learners
 				mata: st_matrix("`mse1_folds'", return_result_item(`eqn',"`ssvname'","MSE1_folds","`m'"))
 				forvalues i=0/1 {
 					local lrnabbrev = abbrev("`vtilde'",10)
-					di as res _col(12) "shortstack_h" _c
+					di as res _col(12) "shortstack" _c
 					di _col(26) %2.0f `m' _c
 					di _col(31) %2.0f `i' _c
 					di _col(34) %8.2f `mse`i'' _c

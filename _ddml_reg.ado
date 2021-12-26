@@ -83,7 +83,6 @@ program define _ddml_reg, eclass
 		mata: `eqn' = (`mname'.eqnAA).get("`yname'")
 		mata: st_numscalar("e(`y'_mse)",return_result_item(`eqn',"`y'","MSE","`rep'"))
 		mata: st_matrix("e(`y'_mse_folds)",return_result_item(`eqn',"`y'","MSE_folds","`rep'"))
-		noi mata: return_learner_item(`eqn',"`y'","cmd")
 		mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`y'","cmd")=="pystacked"))
 		if `pyswflag' {
 			mata: st_matrix("e(`y'_pysw)", mean(return_result_item(`eqn',"`y'","stack_weights","`rep'")'))

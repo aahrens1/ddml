@@ -29,15 +29,26 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	// also exclude obs already excluded by ddml sample
 	qui replace `touse' = 0 if `mname'_sample==0
 
-	// locals used below
+	mata: st_local("model",`mname'.model)
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
+	mata: st_local("nreps",strofreal(`mname'.nreps))
+	
+	local ateflag=("`model'"=="interactive")
+
+	// should only ever be 1 D or 1 Z eqn
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
-	mata: st_local("nreps",strofreal(`mname'.nreps))
-
+	if `numeqnD'>1 {
+		di as err "error - model `model' supports only a single treatment variable"
+		exit 198
+	}
+	if `ateflag' & (`numeqnZ'>1) {
+		di as err "error - model `model' supports only a single instrument"
+		exit 198
+	}
 	if (`crossfitted'==0) {
 		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
 		exit 198
@@ -47,28 +58,37 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	// will need to check this...
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 	
+	// ATE and LATE both use Y0/Y1
 	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
-	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
-	foreach var in `vtlistY' {
-		local Y0tilde `Y0tilde' `var'0
-		local Y1tilde `Y1tilde' `var'1
-	}
+	mata: st_local("Ytilde",invtokens(`eqn'.vtlist))
+	// ATE and LATE both have a D eqn
 	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameD)
 	mata: st_local("Dtilde",invtokens(`eqn'.vtlist))
-
-	_ddml_allcombos `Y0tilde'- `Y1tilde' - `Dtilde',		///
-		addprefix("")										///
-		`debug'  
-
-	local ncombos = r(ncombos)
-	local tokenlen = `ncombos'*2 -1
+	if `ateflag' {
+		// ATE has a single Dtilde
+		_ddml_allcombos `Ytilde'- `Ytilde' - `Dtilde',		///
+			addprefix("")									///
+			`debug'  
+		local Dlist `r(colstr3)'
+	}
+	else {
+		// LATE has a D0/D1 and a single Z
+		mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameZ)
+		mata: st_local("Ztilde",invtokens(`eqn'.vtlist))
+		_ddml_allcombos `Ytilde' - `Ytilde' - `Dtilde' - `Dtilde' - `Ztilde' ,	///
+			`debug'																///
+			addprefix("")
+		local d0list `r(colstr3)'
+		local d1list `r(colstr4)'
+		local Zlist `r(colstr5)' 
+	}
 	local y0list `r(colstr1)'
 	local y1list `r(colstr2)'
-	local Dlist `r(colstr3)'
-	
+	local ncombos = r(ncombos)
+	local tokenlen = `ncombos'*2 -1
+		
 	tempname nmat bmat semat
-	// should only ever be 1 D eqn
-	mata: `nmat' = J(`ncombos',3,"")
+	mata: `nmat' = J(`ncombos',5,"")
 	mata: `bmat' = J(`ncombos'*`nreps',`numeqnD',.)
 	mata: `semat' = J(`ncombos'*`nreps',`numeqnD',.)
 	
@@ -83,17 +103,42 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		local idx = 2*`i'-1
 		mata: `nmat'[`i',2] = strtrim("``idx''")
 	}
-	tokenize `Dlist' , parse("-")
-	forvalues i=1/`ncombos' {
-		local idx = 2*`i'-1
-		mata: `nmat'[`i',3] = strtrim("``idx''")
+	if `ateflag' {
+		// ATE has a single D
+		tokenize `Dlist' , parse("-")
+		forvalues i=1/`ncombos' {
+			local idx = 2*`i'-1
+			mata: `nmat'[`i',3] = strtrim("``idx''")
+		}
+	}
+	else {
+		// LATE has D0/D1 and a single Z
+		tokenize `d0list' , parse("-")
+		forvalues i=1/`ncombos' {
+			local idx = 2*`i'-1
+			mata: `nmat'[`i',3] = strtrim("``idx''")
+		}
+		tokenize `d1list' , parse("-")
+		forvalues i=1/`ncombos' {
+			local idx = 2*`i'-1
+			mata: `nmat'[`i',4] = strtrim("``idx''")
+		}
+		tokenize `Zlist' , parse("-")
+		forvalues i=1/`ncombos' {
+			local idx = 2*`i'-1
+			mata: `nmat'[`i',5] = strtrim("``idx''")
+		}
 	}
 	
 	*** shortstack names
 	if `ssflag' {
-		local Y0ss `nameY'_ss0
-		local Y1ss `nameY'_ss1
-		local Dss `nameD'_ss
+		// code works for both ATE and LATE
+		local Y0ss	`nameY'_ss
+		local Y1ss	`nameY'_ss
+		local Dss	`nameD'_ss
+		local D0ss	`nameD'_ss
+		local D1ss	`nameD'_ss
+		local Zss	`nameZ'_ss
 	}
 	
 	forvalues m=1/`nreps' {
@@ -102,15 +147,24 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		local Y0opt
 		local Y1opt
 		local Dopt
+		local D0opt
+		local D1opt
+		local Zopt
 		
 		*** retrieve best model
 		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 		mata: st_local("Y0opt",return_learner_item(`eqn',"opt0","`m'"))
 		mata: st_local("Y1opt",return_learner_item(`eqn',"opt1","`m'"))
-		local Y0opt `Y0opt'0
-		local Y1opt `Y1opt'1
 		mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
-		mata: st_local("Dopt",return_learner_item(`eqn',"opt","`m'"))
+		if `ateflag' {
+			mata: st_local("Dopt",return_learner_item(`eqn',"opt","`m'"))
+		}
+		else {
+			mata: st_local("D0opt",return_learner_item(`eqn',"opt0","`m'"))
+			mata: st_local("D1opt",return_learner_item(`eqn',"opt1","`m'"))
+			mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
+			mata: st_local("Zopt",return_learner_item(`eqn',"opt","`m'"))
+		}
 		
 		// text used in output below
 		if `nreps'>1 {
@@ -120,13 +174,24 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		forvalues i = 1/`ncombos' {
 			mata: st_local("y0",`nmat'[`i',1])
 			mata: st_local("y1",`nmat'[`i',2])
-			mata: st_local("d",`nmat'[`i',3])
-			// check if opt for this resample; note === for D so order doesn't matter
+			if `ateflag' {
+				mata: st_local("d",`nmat'[`i',3])
+			}
+			else {
+				mata: st_local("d0",`nmat'[`i',3])
+				mata: st_local("d1",`nmat'[`i',4])
+				mata: st_local("z",`nmat'[`i',5])
+			}
+			// check if opt for this resample
+			// code works for both ATE and LATE
 			local isopt
-			local isY0opt : list Y0opt == y0
-			local isY1opt : list Y1opt == y1
-			local isDopt : list Dopt === d
-			if `isY0opt' & `isY1opt' & `isDopt' {
+			local isY0opt	: list Y0opt == y0
+			local isY1opt	: list Y1opt == y1
+			local isDopt	: list Dopt == d
+			local isD0opt	: list D0opt == d0
+			local isD1opt	: list D1opt == d1
+			local isZopt	: list Zopt == z
+			if `isY0opt' & `isY1opt' & `isDopt' & `isD0opt' & `isD1opt' & `isZopt' {
 				local optspec`m' = `i'
 				local isopt *
 				local DMLtitle "Optimal DDML model"
@@ -134,12 +199,17 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			else {
 				local DMLtitle "DDML"
 			}
+			// code works for both ATE and LATE
 			qui _ddml_ate_late if `touse',	///
 				yvar(`nameY')				///
 				dvar(`nameD')				///
+				zvar(`nameZ')				///
 				y0tilde(`y0')				///
 				y1tilde(`y1')				///
 				dtilde(`d')					///
+				d0tilde(`d0')				///
+				d1tilde(`d1')				///
+				ztilde(`z')					///
 				rep(`m')					///
 				mname(`mname')				///
 				touse(`touse')
@@ -152,12 +222,17 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		
 		if `ssflag' {
 			
+			// code works for both ATE and LATE
 			qui _ddml_ate_late if `touse',	///
 				yvar(`nameY')				///
 				dvar(`nameD')				///
+				zvar(`nameZ')				///
 				y0tilde(`Y0ss')				///
 				y1tilde(`Y1ss')				///
 				dtilde(`Dss')				///
+				d0tilde(`D0ss')				///
+				d1tilde(`D1ss')				///
+				ztilde(`Zss')				///
 				rep(`m')					///
 				mname(`mname')				///
 				touse(`touse')
@@ -220,14 +295,22 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	di as text "Summary DDML estimation results:"
 	di as text "spec  r" %14s "Y0 learner" _c
 	di as text           %14s "Y1 learner" _c
-	di as text           %14s "D learner" _c
+	if `ateflag' {
+		di as text           %14s "D learner" _c
+	}
+	else {
+		di as text           %14s "D0 learner" _c
+		di as text           %14s "D1 learner" _c
+	}
 	di as text %10s "b" %10s "SE" _c
+	if ~`ateflag' {
+		di as text           %14s "Z learner" _c
+	}
 	di
 	forvalues m=1/`nreps' {
 		forvalues i=1/`ncombos' {
 			mata: st_local("yt0",`nmat'[`i',1])
 			mata: st_local("yt1",`nmat'[`i',2])
-			mata: st_local("dt",`nmat'[`i',3])
 			if "`optspec`m''"=="`i'" {
 				di "*" _c
 			}
@@ -240,12 +323,25 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			di %6s "{stata estimates replay `mname'_`i'_`m':`specrep'}" _c
 			di %14s "`yt0'" _c
 			di %14s "`yt1'" _c
-			di %14s "`dt'" _c
+			if `ateflag' {
+				mata: st_local("dt",`nmat'[`i',3])
+				di %14s "`dt'" _c
+			}
+			else {
+				mata: st_local("dt0",`nmat'[`i',3])
+				mata: st_local("dt1",`nmat'[`i',4])
+				di %14s "`dt0'" _c
+				di %14s "`dt1'" _c
+			}
 			mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
 			mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
 			di %10.3f `b' _c
 			local pse (`: di %6.3f `se'')
 			di %10s "`pse'" _c
+			if ~`ateflag' {
+				mata: st_local("zt",`nmat'[`i',5])
+				di %14s "`zt'" _c
+			}
 			di
 		}
 
@@ -258,9 +354,15 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			di %14s "[shortstack]" _c
 			di %14s "[ss]" _c
 			di %14s "[ss]" _c
+			if ~`ateflag' {
+				di %14s "[ss]" _c
+			}
 			di %10.3f el(e(b),1,1) _c
 			local pse (`: di %6.3f sqrt(el(e(V),1,1))')
 			di %10s "`pse'" _c
+			if ~`ateflag' {
+				di %14s "[ss]" _c
+			}
 			di
 		}
 
@@ -290,7 +392,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		di
 	}
 	
-	// temp Mata object no longer needed
+	// temp Mata objects no longer needed
 	cap mata: mata drop `eqn' `nmat' `bmat' `semat'
 
 

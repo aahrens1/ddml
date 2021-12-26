@@ -276,7 +276,7 @@ program ddml, eclass
 			_ddml_estimate_ate_late `mname', `options'
 		}
 		if ("`r(model)'"=="late") {
-			_ddml_estimate_late `mname', `options'
+			_ddml_estimate_ate_late `mname', `options'
 		}
 		if ("`r(model)'"=="ivhd") {
 			_ddml_estimate_linear `mname', `options'
