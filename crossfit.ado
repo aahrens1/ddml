@@ -438,7 +438,7 @@ program define crossfit, rclass sortpreserve
 					
 				if "`resid'"~="" {
 					// vtilde is the residual
-					qui replace `shortstack'1_`m' = `vname' - `shortstack'1_`m' if `treatvar'==1
+					qui replace `shortstack'1_`m' = `vname' - `shortstack'1_`m'
 				}
 				// treatvar == 0
 				forvalues i=1/`nlearners' {
@@ -452,7 +452,7 @@ program define crossfit, rclass sortpreserve
 		
 				if "`resid'"~="" {
 					// vtilde is the residual
-					qui replace `shortstack'0_`m' = `vname' - `shortstack'0_`m' if `treatvar'==0
+					qui replace `shortstack'0_`m' = `vname' - `shortstack'0_`m'
 				}
 			}
 			else if `lieflag' {

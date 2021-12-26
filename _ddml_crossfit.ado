@@ -102,8 +102,8 @@ program _ddml_crossfit, eclass sortpreserve
 			shortstack(`ssname')					///
 			treatvar(`treatvar')					///
 			resid `noisily'
-			// resinsert into model struct AA with equations
-			mata: (`mname'.eqnAA).put("`nameY'",`eqn')
+		// resinsert into model struct AA with equations
+		mata: (`mname'.eqnAA).put("`nameY'",`eqn')
 
 		// D equations
 		if `numeqnD' {
