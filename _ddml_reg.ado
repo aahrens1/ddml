@@ -64,6 +64,7 @@ program define _ddml_reg, eclass
 		}
 		ereturn local cmd _ddml_reg
 		ereturn local model `model'
+		ereturn local rep `rep'
 		ereturn local y `y_m'
 		if `ivhdflag'==0 {
 			ereturn local d `d_m'

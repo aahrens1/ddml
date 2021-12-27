@@ -7,13 +7,22 @@ program _ddml_estimate_linear, eclass sortpreserve
 								show(string)	///
 								clear			/// deletes all tilde-variables (to be implemented)
 								post(string)	/// specification to post/display
-								REP(integer 1)	/// resampling iteration to post/display
+								REP(string)		/// resampling iteration to post/display or mean/median
 								* ]
-	
 	// if post not specified, post optimal model
 	if "`post'"=="" {
 		local post "opt"
 	}
+	// if rep not specified, default is rep=1
+	if "`rep'"=="" {
+		local rep 1
+	}
+	// opt + mean/median not currently supported
+	if "`post'"=="opt" & real("`rep'")==. {
+		di as err "error - opt model not yet avaiable with mean/median"
+		exit 198
+	}
+	
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
@@ -212,6 +221,23 @@ program _ddml_estimate_linear, eclass sortpreserve
 
 	}
 	
+	// aggregate across resamplings
+	if `nreps' > 1 {
+		// numbered specifications
+		forvalues i = 1/`ncombos' {
+			// default is mean
+			qui _ddml_medmean, mname(`mname') nreps(`nreps') spec(`i') cmd(_ddml_reg)
+			estimates store `mname'_`i'_mean, title("Model `mname', specification `i' resample mean")
+			qui _ddml_medmean, mname(`mname') nreps(`nreps') spec(`i') cmd(_ddml_reg) median
+			estimates store `mname'_`i'_median, title("Model `mname', specification `i' resample median")
+		}
+		// shortstack
+		qui _ddml_medmean, mname(`mname') nreps(`nreps') spec(ss) cmd(_ddml_reg)
+		estimates store `mname'_ss_mean, title("Model `mname', shortstack resample mean")
+		qui _ddml_medmean, mname(`mname') nreps(`nreps') spec(ss) cmd(_ddml_reg) median
+		estimates store `mname'_ss_median, title("Model `mname', shortstack resample median")
+	}
+	
 	if "`show'"=="all" {
 		forvalues m=1/`nreps' {
 			// text used in output below
@@ -319,6 +345,69 @@ program _ddml_estimate_linear, eclass sortpreserve
 			// pad out to 6 spaces
 			local specrep = "  " + "`specrep'"
 			di %6s "{stata estimates replay `mname'_ss_`m':`specrep'}" _c			
+			di %14s "[shortstack]" _c
+			forvalues j=1/`numeqnD' {
+				di %14s "[ss]" _c
+				di %10.3f el(e(b),1,`j') _c
+				local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
+				di %10s "`pse'" _c
+			}
+			if "`model'"=="ivhd" {
+				forvalues j=1/`numeqnD' {
+					di %14s "[ss]" _c
+				}
+			}
+			forvalues j=1/`numeqnZ' {
+				di %14s "[ss]" _c
+			}
+			di
+		}
+	}
+	di as text "Mean/median:"
+	foreach medmean in mean median {
+		if "`medmean'"=="mean" {
+			local mm mn
+		}
+		else {
+			local mm md
+		}
+		forvalues i=1/`ncombos' {
+			qui estimates restore `mname'_`i'_`medmean'
+			mata: st_local("yt",`nmat'[`i',1])
+			mata: st_local("dtlist",`nmat'[`i',2])
+			mata: st_local("ztlist",`nmat'[`i',3])
+			di " " _c
+			local specrep `: di %3.0f `i' %3s "`mm'"'
+			// pad out to 6 spaces
+			local specrep = (6-length("`specrep'"))*" " + "`specrep'"
+			di %6s "{stata estimates replay `mname'_`i'_`medmean':`specrep'}" _c
+			di %14s "`yt'" _c
+			forvalues j=1/`numeqnD' {
+				local vt : word `j' of `dtlist'
+				di %14s "`vt'" _c
+				di %10.3f el(e(b),1,`j') _c
+				local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
+				local pse (`: di %6.3f `se'')
+				di %10s "`pse'" _c
+			}
+			forvalues j=1/`numeqnZ' {
+				local vt : word `j' of `ztlist'
+				di %14s "`vt'" _c
+			}
+			if "`model'"=="ivhd" {
+				forvalues j=1/`numeqnD' {
+					local vt : word `j' of `ztlist'
+					di %14s "`vt'" _c
+				}
+			}
+			di
+		}
+		if `ssflag' {
+			qui estimates restore `mname'_ss_`medmean'
+			local specrep `: di "ss" %3s "`mm'"'
+			// pad out to 6 spaces
+			local specrep = "  " + "`specrep'"
+			di %6s "{stata estimates replay `mname'_ss_`medmean':`specrep'}" _c			
 			di %14s "[shortstack]" _c
 			forvalues j=1/`numeqnD' {
 				di %14s "[ss]" _c
