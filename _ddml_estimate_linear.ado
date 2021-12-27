@@ -287,6 +287,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 		}
 	}
 	
+	*** Summary results ***
+	
 	di
 	di as text "Summary DDML estimation results:"
 	di as text "spec  r" %14s "Y learner" _c
@@ -304,9 +306,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 	di
 	forvalues m=1/`nreps' {
 		forvalues i=1/`ncombos' {
-			mata: st_local("yt",`nmat'[`i',1])
-			mata: st_local("dtlist",`nmat'[`i',2])
+			mata: st_local("yt",abbrev(`nmat'[`i',1],14))
+			mata: st_local("dtlist",invtokens(abbrev(tokens(`nmat'[`i',2]),14)))
 			mata: st_local("ztlist",`nmat'[`i',3])
+			if "`ztlist'"~="" {
+				mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),14)))
+			}
 			if "`optspec`m''"=="`i'" {
 				di "*" _c
 			}
@@ -363,67 +368,72 @@ program _ddml_estimate_linear, eclass sortpreserve
 			di
 		}
 	}
-	di as text "Mean/median:"
-	foreach medmean in mean median {
-		if "`medmean'"=="mean" {
-			local mm mn
-		}
-		else {
-			local mm md
-		}
-		forvalues i=1/`ncombos' {
-			qui estimates restore `mname'_`i'_`medmean'
-			mata: st_local("yt",`nmat'[`i',1])
-			mata: st_local("dtlist",`nmat'[`i',2])
-			mata: st_local("ztlist",`nmat'[`i',3])
-			di " " _c
-			local specrep `: di %3.0f `i' %3s "`mm'"'
-			// pad out to 6 spaces
-			local specrep = (6-length("`specrep'"))*" " + "`specrep'"
-			di %6s "{stata estimates replay `mname'_`i'_`medmean':`specrep'}" _c
-			di %14s "`yt'" _c
-			forvalues j=1/`numeqnD' {
-				local vt : word `j' of `dtlist'
-				di %14s "`vt'" _c
-				di %10.3f el(e(b),1,`j') _c
-				local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
-				local pse (`: di %6.3f `se'')
-				di %10s "`pse'" _c
+	if `nreps' > 1 {
+		di as text "Mean/median:"
+		foreach medmean in mean median {
+			if "`medmean'"=="mean" {
+				local mm mn
 			}
-			forvalues j=1/`numeqnZ' {
-				local vt : word `j' of `ztlist'
-				di %14s "`vt'" _c
+			else {
+				local mm md
 			}
-			if "`model'"=="ivhd" {
+			forvalues i=1/`ncombos' {
+				qui estimates restore `mname'_`i'_`medmean'
+				mata: st_local("yt",abbrev(`nmat'[`i',1],14))
+				mata: st_local("dtlist",invtokens(abbrev(tokens(`nmat'[`i',2]),14)))
+				mata: st_local("ztlist",`nmat'[`i',3])
+				if "`ztlist'"~="" {
+					mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),14)))
+				}
+				di " " _c
+				local specrep `: di %3.0f `i' %3s "`mm'"'
+				// pad out to 6 spaces
+				local specrep = (6-length("`specrep'"))*" " + "`specrep'"
+				di %6s "{stata estimates replay `mname'_`i'_`medmean':`specrep'}" _c
+				di %14s "`yt'" _c
 				forvalues j=1/`numeqnD' {
+					local vt : word `j' of `dtlist'
+					di %14s "`vt'" _c
+					di %10.3f el(e(b),1,`j') _c
+					local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
+					local pse (`: di %6.3f `se'')
+					di %10s "`pse'" _c
+				}
+				forvalues j=1/`numeqnZ' {
 					local vt : word `j' of `ztlist'
 					di %14s "`vt'" _c
 				}
+				if "`model'"=="ivhd" {
+					forvalues j=1/`numeqnD' {
+						local vt : word `j' of `ztlist'
+						di %14s "`vt'" _c
+					}
+				}
+				di
 			}
-			di
-		}
-		if `ssflag' {
-			qui estimates restore `mname'_ss_`medmean'
-			local specrep `: di "ss" %3s "`mm'"'
-			// pad out to 6 spaces
-			local specrep = "  " + "`specrep'"
-			di %6s "{stata estimates replay `mname'_ss_`medmean':`specrep'}" _c			
-			di %14s "[shortstack]" _c
-			forvalues j=1/`numeqnD' {
-				di %14s "[ss]" _c
-				di %10.3f el(e(b),1,`j') _c
-				local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
-				di %10s "`pse'" _c
-			}
-			if "`model'"=="ivhd" {
+			if `ssflag' {
+				qui estimates restore `mname'_ss_`medmean'
+				local specrep `: di "ss" %3s "`mm'"'
+				// pad out to 6 spaces
+				local specrep = "  " + "`specrep'"
+				di %6s "{stata estimates replay `mname'_ss_`medmean':`specrep'}" _c			
+				di %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
 					di %14s "[ss]" _c
+					di %10.3f el(e(b),1,`j') _c
+					local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
+					di %10s "`pse'" _c
 				}
+				if "`model'"=="ivhd" {
+					forvalues j=1/`numeqnD' {
+						di %14s "[ss]" _c
+					}
+				}
+				forvalues j=1/`numeqnZ' {
+					di %14s "[ss]" _c
+				}
+				di
 			}
-			forvalues j=1/`numeqnZ' {
-				di %14s "[ss]" _c
-			}
-			di
 		}
 	}
 	
