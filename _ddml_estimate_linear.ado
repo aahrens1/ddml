@@ -22,8 +22,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 		di as err "error - opt model not yet avaiable with mean/median"
 		exit 198
 	}
-	
-	
+		
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
 	mata: `eqn' = init_eStruct()
@@ -146,13 +145,11 @@ program _ddml_estimate_linear, eclass sortpreserve
 			local isYopt : list Yopt == y
 			local isDopt : list Dopt === d
 			local isZopt : list Zopt === z
+			local title "DDML model, specification `i'`stext'"
 			if `isYopt' & `isDopt' & `isZopt' {
 				local optspec`m' = `i'
 				local isopt *
-				local DMLtitle "Optimal DDML model"
-			}
-			else {
-				local DMLtitle "DDML"
+				local title Optimal `title'
 			}
 			if "`model'"=="ivhd" {
 				local dlist
@@ -174,13 +171,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local z `zlist'
 				local norep norep
 			}
-			qui _ddml_reg if `touse' ,								///
-					nocons `robust'									///
-					y(`y') yname(`nameY')							///
-					d(`d') dnames(`nameD') dvtnames(`dvtnames') 	///
-					z(`z') znames(`nameZ') zvtnames(`zvtnames')		///
-					mname(`mname') rep(`m') `norep'
-			estimates store `mname'_`i'_`m', title("Model `mname', specification `i' resample `m'`isopt'")
+			qui _ddml_reg if `touse' ,										///
+					nocons `robust'											///
+					y(`y') yname(`nameY')									///
+					d(`d') dnames(`nameD') dvtnames(`dvtnames')		 		///
+					z(`z') znames(`nameZ') zvtnames(`zvtnames')				///
+					mname(`mname') spec(`i') rep(`m') title(`title') `norep'
 			mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(b)")
 			mata: `semat'[(`m'-1)*`ncombos'+`i',.] = sqrt(diagonal(st_matrix("e(V)"))')
 		}
@@ -210,13 +206,13 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local d `Dss'
 				local z `Zss'
 			}
-			qui _ddml_reg if `touse' ,								///
-					nocons `robust'									///
-					y(`Yss') yname(`nameY')							///
-					d(`d') dnames(`nameD') dvtnames(`dvtnames') 	///
-					z(`z') znames(`nameZ') zvtnames(`zvtnames')		///
-					mname(`mname') rep(`m') `norep'
-			estimates store `mname'_ss_`m', title("Model `mname', shorstack resample `m'")
+			local title "Shortstack DDML model`stext'"
+			qui _ddml_reg if `touse' ,										///
+					nocons `robust'											///
+					y(`Yss') yname(`nameY')									///
+					d(`d') dnames(`nameD') dvtnames(`dvtnames') 			///
+					z(`z') znames(`nameZ') zvtnames(`zvtnames')				///
+					mname(`mname') spec(ss) rep(`m') title(`title') `norep'
 		}
 
 	}
@@ -225,64 +221,45 @@ program _ddml_estimate_linear, eclass sortpreserve
 	if `nreps' > 1 {
 		// numbered specifications
 		forvalues i = 1/`ncombos' {
-			// default is mean
-			qui _ddml_medmean, mname(`mname') nreps(`nreps') spec(`i') cmd(_ddml_reg)
-			estimates store `mname'_`i'_mean, title("Model `mname', specification `i' resample mean")
-			qui _ddml_medmean, mname(`mname') nreps(`nreps') spec(`i') cmd(_ddml_reg) median
-			estimates store `mname'_`i'_median, title("Model `mname', specification `i' resample median")
+			local title "DDML model, specification `i' (mean)"
+			qui _ddml_reg, mname(`mname') nreps(`nreps') spec(`i') medmean(mean) title(`title')
+			local title "DDML model, specification `i' (median)"
+			qui _ddml_reg, mname(`mname') nreps(`nreps') spec(`i') medmean(median) title(`title')
 		}
 		// shortstack
-		qui _ddml_medmean, mname(`mname') nreps(`nreps') spec(ss) cmd(_ddml_reg)
-		estimates store `mname'_ss_mean, title("Model `mname', shortstack resample mean")
-		qui _ddml_medmean, mname(`mname') nreps(`nreps') spec(ss) cmd(_ddml_reg) median
-		estimates store `mname'_ss_median, title("Model `mname', shortstack resample median")
+		local title "Shortstack DDML model (mean)"
+		qui _ddml_reg, mname(`mname') nreps(`nreps') spec(ss) medmean(mean) title(`title')
+		local title "Shortstack DDML model (median)"
+		qui _ddml_reg, mname(`mname') nreps(`nreps') spec(ss) medmean(median) title(`title')
 	}
 	
 	if "`show'"=="all" {
 		forvalues m=1/`nreps' {
-			// text used in output below
-			if `nreps'>1 {
-				local stext " (sample=`m')"
-			}
 			// all combos including optimal model
 			forvalues i=1/`ncombos' {
-				qui estimates restore `mname'_`i'_`m'
-				if "`optspec`m''"=="`i'" {
-					local DMLtitle "Optimal DDML model"
-				}
-				else {
-					local DMLtitle "DDML"
-				}
 				di
-				di as text "`DMLtitle'`stext':"
-				_ddml_reg	// uses replay
+				_ddml_reg, mname(`mname') spec(`i') rep(`m') replay	// uses replay
 				di
 			}
 			// shortstack
-			qui estimates restore `mname'_ss_`m'
 			di
-			di as text "Shortstack DDML model`stext':"
-			_ddml_reg	// uses replay
+			_ddml_reg, mname(`mname') spec(ss) rep(`m') replay	// uses replay
 			di
 		}
 	}
 		
 	if "`show'"=="optimal" | "`show'"=="all" {
 		forvalues m=1/`nreps' {
-			qui estimates restore `mname'_`optspec`m''_`m'
 			di
-			di as text "Optimal DDML specification, resample `m': `optspec`m''"
-			_ddml_reg
+			_ddml_reg, mname(`mname') spec(`optspec`m'') rep(`m') replay
 			di
 		}
 	}
 		
 	if "`show'"=="shortstack" | "`show'"=="all" {
 		forvalues m=1/`nreps' {
-			qui estimates restore `mname'_ss_`m'
 			di
-			di as text "Shortstack DDML model, resample `m':"
-			_ddml_reg
+			_ddml_reg, mname(`mname') spec(ss) rep(`m') replay
 			di
 		}
 	}
@@ -306,11 +283,11 @@ program _ddml_estimate_linear, eclass sortpreserve
 	di
 	forvalues m=1/`nreps' {
 		forvalues i=1/`ncombos' {
-			mata: st_local("yt",abbrev(`nmat'[`i',1],14))
-			mata: st_local("dtlist",invtokens(abbrev(tokens(`nmat'[`i',2]),14)))
+			mata: st_local("yt",abbrev(`nmat'[`i',1],13))
+			mata: st_local("dtlist",invtokens(abbrev(tokens(`nmat'[`i',2]),13)))
 			mata: st_local("ztlist",`nmat'[`i',3])
 			if "`ztlist'"~="" {
-				mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),14)))
+				mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),13)))
 			}
 			if "`optspec`m''"=="`i'" {
 				di "*" _c
@@ -321,7 +298,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 			local specrep `: di %3.0f `i' %3.0f `m''
 			// pad out to 6 spaces
 			local specrep = (6-length("`specrep'"))*" " + "`specrep'"
-			di %6s "{stata estimates replay `mname'_`i'_`m':`specrep'}" _c
+			local rcmd stata _ddml_reg, mname(`mname') spec(`i') rep(`m') replay
+			di %6s "{`rcmd':`specrep'}" _c
 			di %14s "`yt'" _c
 			forvalues j=1/`numeqnD' {
 				local vt : word `j' of `dtlist'
@@ -345,11 +323,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 			di
 		}
 		if `ssflag' {
-			qui estimates restore `mname'_ss_`m'
+			qui _ddml_reg, mname(`mname') spec(ss) rep(`m') replay
 			local specrep `: di "ss" %3.0f `m''
 			// pad out to 6 spaces
 			local specrep = "  " + "`specrep'"
-			di %6s "{stata estimates replay `mname'_ss_`m':`specrep'}" _c			
+			local rcmd stata _ddml_reg, mname(`mname') spec(ss) rep(`m') replay
+			di %6s "{`rcmd':`specrep'}" _c
 			di %14s "[shortstack]" _c
 			forvalues j=1/`numeqnD' {
 				di %14s "[ss]" _c
@@ -378,18 +357,19 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local mm md
 			}
 			forvalues i=1/`ncombos' {
-				qui estimates restore `mname'_`i'_`medmean'
-				mata: st_local("yt",abbrev(`nmat'[`i',1],14))
-				mata: st_local("dtlist",invtokens(abbrev(tokens(`nmat'[`i',2]),14)))
+				qui _ddml_reg, mname(`mname') spec(`i') rep(`medmean') replay
+				mata: st_local("yt",abbrev(`nmat'[`i',1],13))
+				mata: st_local("dtlist",invtokens(abbrev(tokens(`nmat'[`i',2]),13)))
 				mata: st_local("ztlist",`nmat'[`i',3])
 				if "`ztlist'"~="" {
-					mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),14)))
+					mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),13)))
 				}
 				di " " _c
 				local specrep `: di %3.0f `i' %3s "`mm'"'
 				// pad out to 6 spaces
 				local specrep = (6-length("`specrep'"))*" " + "`specrep'"
-				di %6s "{stata estimates replay `mname'_`i'_`medmean':`specrep'}" _c
+				local rcmd stata _ddml_reg, mname(`mname') spec(`i') rep(`medmean') replay
+				di %6s "{`rcmd':`specrep'}" _c
 				di %14s "`yt'" _c
 				forvalues j=1/`numeqnD' {
 					local vt : word `j' of `dtlist'
@@ -412,11 +392,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 				di
 			}
 			if `ssflag' {
-				qui estimates restore `mname'_ss_`medmean'
+				qui _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay
 				local specrep `: di "ss" %3s "`mm'"'
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
-				di %6s "{stata estimates replay `mname'_ss_`medmean':`specrep'}" _c			
+				local rcmd stata _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay
+				di %6s "{`rcmd':`specrep'}" _c
 				di %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
 					di %14s "[ss]" _c
@@ -439,31 +420,26 @@ program _ddml_estimate_linear, eclass sortpreserve
 	
 	// post selected estimates; rep is the resample number (default=1)
 	if "`post'"=="opt" {
-		qui estimates restore `mname'_`optspec`rep''_`rep'
 		di
-		di as text "Optimal DDML specification, resample `rep': `optspec`rep''"
-		_ddml_reg
+		_ddml_reg, mname(`mname') spec(`optspec`rep'') rep(`rep') replay
 		di
 	}
 	else if "`post'"=="shortstack" {
-		qui estimates restore `mname'_ss_`rep'
 		di
-		di as text "Shortstack DDML model, resample `rep':"
-		_ddml_reg
+		_ddml_reg, mname(`mname') spec(ss) rep(`rep') replay
 		di	
 	}
 	else {
 		// post macro should be an integer denoting the specification
-		qui estimates restore `mname'_`post'_`rep'
 		di
-		di as text "DDML specification `post', resample `rep':"
-		_ddml_reg
+		_ddml_reg, mname(`mname') spec(`post') rep(`rep') replay
 		di
 	}
 	
 	// temp Mata object no longer needed
-	cap mata: mata drop `eqn' `nmat' `bmat' `semat'
-
+	foreach obj in `eqn' `nmat' `bmat' `semat' {
+		cap mata: mata drop `obj'
+	}
 
 
 end

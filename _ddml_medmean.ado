@@ -119,7 +119,5 @@ program _ddml_medmean, eclass
 		ereturn local `vl'	``vl''
 	}
 	
-	// display/replay
-	`cmd'
 
 end

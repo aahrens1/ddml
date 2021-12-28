@@ -69,6 +69,7 @@ struct mStruct {
 	real scalar						nreps			// number of resamplings
 	real scalar						kfolds			// number of crossfitting folds
 	class AssociativeArray scalar	eqnAA			// AssociativeArray with all equations
+	class AssociativeArray scalar	estAA			// AA wth all estimation results
 	string scalar					nameY			// dependent variable 
 	string colvector				nameD			// treatment variable(s)
 	string colvector				nameZ			// instrument(s)
@@ -97,6 +98,9 @@ struct mStruct init_mStruct()
 	
 	(d.eqnAA).reinit("string",1)
 	(d.eqnAA).notfound(NULL)
+	
+	(d.estAA).reinit("string",2)
+	(d.estAA).notfound(NULL)
 	
 	return(d)
 }
