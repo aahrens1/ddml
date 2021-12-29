@@ -128,6 +128,13 @@ program define _ddml_reg, eclass
 			mata: st_matrix("e(`y'_pysw)", mean(return_result_item(`eqn',"`y'","stack_weights","`rep'")'))
 			mata: `A'.put(("`y'_pysw","matrix"),st_matrix("e(`y'_pysw)"))
 		}
+		// ss weights
+		mata: st_local("shortstack_vname", `eqn'.shortstack)
+		if "`shortstack_vname'"!="" {
+			mata: st_matrix("e(`y'_ssw)", return_result_item(`eqn',"`shortstack_vname'","ss_weights","`rep'"))
+			mata: `A'.put(("`y'_ssw","matrix"),st_matrix("e(`y'_ssw)"))
+		}
+
 		// D eqn results - uses vtnames
 		local numeqnD	: word count `dnames'
 		forvalues i=1/`numeqnD' {
@@ -146,8 +153,14 @@ program define _ddml_reg, eclass
 			// pystacked weights
 			mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde'","cmd")=="pystacked"))
 			if `pyswflag' {
-				mata: st_matrix("e(`vtilde'_pysw)", mean(return_result_item(`eqn',"`vtilde'","stack_weights","`rep'")'))
+				mata: st_matrix("e(`vtilde'_pysw)", (return_result_item(`eqn',"`vtilde'","stack_weights","`rep'")'))
 				mata: `A'.put(("`vtilde'_pysw","matrix"),st_matrix("e(`vtilde'_pysw)"))
+			}
+			// ss weights
+			mata: st_local("shortstack_vname", `eqn'.shortstack)
+			if "`shortstack_vname'"!="" {
+				mata: st_matrix("e(`d'_ssw)", return_result_item(`eqn',"`shortstack_vname'","ss_weights","`rep'"))
+				mata: `A'.put(("`d'_ssw","matrix"),st_matrix("e(`d'_ssw)"))
 			}
 			if `ivhdflag' {
 				// MSE
@@ -161,6 +174,12 @@ program define _ddml_reg, eclass
 				if `pyswflag' {
 					mata: st_matrix("e(`vtilde_h'_pysw)", mean(return_result_item(`eqn',"`vtilde_h'","stack_weights","`rep'")'))
 					mata: `A'.put(("`vtilde_h'_pysw","matrix"),st_matrix("e(`vtilde_h'_pysw)"))
+				}
+				// ss weights
+				mata: st_local("shortstack_vname", `eqn'.shortstack)
+				if "`shortstack_vname'"!="" {
+						mata: st_matrix("e(`y'_ssw)", return_result_item(`eqn',"`shortstack_vname'","ss_weights_h","`rep'"))
+						mata: `A'.put(("`y'_ssw","matrix"),st_matrix("e(`y'_ssw)"))
 				}
 			}
 		}

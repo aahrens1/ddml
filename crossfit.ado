@@ -264,7 +264,6 @@ program define crossfit, rclass sortpreserve
 					`qui' `est_main' if `fid'!=`k' & `touse', `est_options'
 					local cmd `e(cmd)'
 		
-					di "`cmd'"
 					// save pystacked weights
 					if ("`cmd'"=="pystacked") {
 						if (`k'==1) {
@@ -404,6 +403,7 @@ program define crossfit, rclass sortpreserve
 
 		******************************** SHORTSTACKING ************************************
 	
+
 		// shortstacking. we need to distinguish between 3 cases again. 
 		if `ssflag' & `nlearners'>1 {
 	
@@ -415,6 +415,8 @@ program define crossfit, rclass sortpreserve
 				tempvar vss
 				`qui' di as text "Stacking NNLS (additive model):"
 				`qui' _ddml_nnls `vname' `vhats'
+				tempname ssw
+				mat `ssw' = e(b)
 				tempvar vtemp
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'_`m' = `vtemp'
@@ -434,6 +436,8 @@ program define crossfit, rclass sortpreserve
 				tempvar vtemp
 				`qui' di as text "Stacking NNLS (interactive model, treatvar=1):"
 				`qui' _ddml_nnls `vname' `vhats1' if `treatvar'==1
+				tempname ssw0
+				mat `ssw0' = e(b)
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'1_`m'=`vtemp'
 					
@@ -448,6 +452,8 @@ program define crossfit, rclass sortpreserve
 				tempvar vtemp
 				`qui' di as text "Stacking NNLS (interactive model, treatvar=0):"
 				`qui' _ddml_nnls `vname' `vhats0' if `treatvar'==0
+				tempname ssw1
+				mat `ssw1' = e(b)
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'0_`m'=`vtemp'
 		
@@ -464,6 +470,8 @@ program define crossfit, rclass sortpreserve
 				}
 				`qui' di as text "Stacking NNLS (LIE, OOS E[D|XZ]):"
 				`qui' _ddml_nnls `vname' `dhats' if `touse'
+				tempname ssw
+				mat `ssw'= e(b)
 				tempvar vtemp
 				qui predict `vtype' `vtemp' if `touse'
 				qui replace `dhatSS'=`vtemp' 
@@ -506,6 +514,7 @@ program define crossfit, rclass sortpreserve
 				}
 	
 				// final stacking for E[D|X]
+				tempname sswh sswh_temp
 				forvalues k = 1(1)`kfolds' {
 					local hhatSS_list
 					forvalues i=1/`nlearners' {
@@ -513,6 +522,13 @@ program define crossfit, rclass sortpreserve
 					}
 					`qui' di as text "Stacking NNLS (LIE, E[D|X]):"
 					`qui' _ddml_nnls `dhat_oosSS' `hhatSS_list'
+					if (`k'==1) {
+						mat `sswh' = e(b)
+					}
+					else {
+						mat `sswh_temp' = e(b)
+						mat  `sswh_temp' = (`sswh'\`sswh_temp' )
+					} 
 					tempvar vtemp
 					qui predict `vtype' `vtemp'
 					qui replace `hhatSS'=`vtemp'
@@ -570,9 +586,6 @@ program define crossfit, rclass sortpreserve
 		tempname mse0_list N0_list mse0_folds_list N0_folds_list
 		tempname mse1_list N1_list mse1_folds_list N1_folds_list
 		
-		// AA: if we loop over "1 2 3 SS" this code would also calculate MSE for short-stacking in case of LIE
-		// MS: this meant some hacky recoding so i gave up; now in a standalone section below
-		
 		forvalues i=1/`nlearners' {
 			
 			local vtilde : word `i' of `vtlist'
@@ -618,8 +631,6 @@ program define crossfit, rclass sortpreserve
 	
 				mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))
 				if "`cmd'"=="pystacked" {
-					di "`vtilde'"
-					mat list `pysw_`i''
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
 				}
 				
@@ -823,6 +834,8 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`shortstack'","N_folds",   "`m'", st_matrix("`N_folds'"))
 				mata: add_result_item(`eqn_info',"`shortstack'","MSE",       "`m'", `mse')
 				mata: add_result_item(`eqn_info',"`shortstack'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
+				mata: add_result_item(`eqn_info',"`shortstack'","ss_flag", "`m'", 1)
+				mata: add_result_item(`eqn_info',"`shortstack'","ss_weights", "`m'", st_matrix("`ssw'"))
 				
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2
@@ -863,11 +876,13 @@ program define crossfit, rclass sortpreserve
 				mat `mse1_folds_list'	= (nullmat(`mse1_folds_list') \ `mse1_folds')
 				mat `N1_folds_list'		= (nullmat(`N1_folds_list')\ `N1_folds')
 				
+				mata: add_result_item(`eqn_info',"`shortstack'","ss_flag", "`m'", 1)
 				forvalues t=0/1 {
 					mata: add_result_item(`eqn_info',"`shortstack'","N`t'",         "`m'", `N`t'')
 					mata: add_result_item(`eqn_info',"`shortstack'","N`t'_folds",   "`m'", st_matrix("`N`t'_folds'"))
 					mata: add_result_item(`eqn_info',"`shortstack'","MSE`t'",       "`m'", `mse`t'')
 					mata: add_result_item(`eqn_info',"`shortstack'","MSE`t'_folds", "`m'", st_matrix("`mse`t'_folds'"))
+					mata: add_result_item(`eqn_info',"`shortstack'","ss_weights`t'", "`m'", st_matrix("`ssw`t'"))
 				}
 			}
 			else if `lieflag' {	// case 3
@@ -917,7 +932,9 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`shortstack'","N_h_folds",   "`m'", st_matrix("`N_h_folds'"))
 				mata: add_result_item(`eqn_info',"`shortstack'","MSE_h",       "`m'", `mse_h')
 				mata: add_result_item(`eqn_info',"`shortstack'","MSE_h_folds", "`m'", st_matrix("`mse_h_folds'"))
-
+				mata: add_result_item(`eqn_info',"`shortstack'","ss_flag", "`m'", 1)
+				mata: add_result_item(`eqn_info',"`shortstack'","ss_weights", "`m'", st_matrix("`ssw'"))
+				mata: add_result_item(`eqn_info',"`shortstack'","ss_weights_h", "`m'", st_matrix("`sswh'"))
 			}
 		}
 	
