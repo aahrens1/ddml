@@ -20,10 +20,11 @@ program _ddml_ate_late, eclass
 							replay				///
 							title(string)		///
 							medmean(string)		///
-							touse(varname)		///
 						]
 		
 	mata: st_local("model",`mname'.model)
+	
+	marksample touse
 	
 	if "`replay'"=="" & "`medmean'"=="" {	// estimate from scratch
 		
@@ -48,11 +49,9 @@ program _ddml_ate_late, eclass
 		local z_m		`ztilde'_`rep'
 		
 		if "`model'"=="interactive" {
-			markout `touse' `yvar' `dvar' `y0_m' `y1_m' `d_m'
 			mata: ATE("`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'")
 		}
 		else {
-			markout `touse' `yvar' `dvar' `zvar' `y0_m' `y1_m' `d0_m' `d1_m' `z_m'
 			mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'")
 		}
 		
@@ -62,13 +61,17 @@ program _ddml_ate_late, eclass
 		mata: `A'.put(("V","post"),st_matrix("r(V)"))
 		mata: `A'.put(("depvar","post"),"`yvar'")
 		
+		// for calling program
+		ereturn clear
+		mata: st_matrix("e(bmat)",st_matrix("r(b)"))
+		mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("r(V)"))'))
+		
 		// store locals
 		foreach obj in title y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar {
 			mata: `A'.put(("`obj'","local"),"``obj''")
 		}
 		
 		// additional estimation results
-		ereturn scalar resample = `rep'
 		tempname eqn
 		mata: `eqn' = init_eStruct()
 		// Y eqn results
@@ -139,7 +142,6 @@ program _ddml_ate_late, eclass
 	
 	}
 	else if "`replay'"=="" & "`medmean'"~="" {	// aggregate over resamples
-		// e(sample) and N not handled correctly yet
 		
 		tempname b V bagg Vagg Vi
 		tempname bvec bmed Vvec Vmed
@@ -153,9 +155,7 @@ program _ddml_ate_late, eclass
 		mata: `B' = AssociativeArray()
 		local isodd = mod(`nreps',2)
 		local medrow = ceil(`nreps'/2)
-		qui gen `esample' = `mname'_sample
-		qui count if `esample'
-		local N = r(N)
+		local N = 0
 		
 		mata: `bagg' = J(1,`K',0)
 		mata: `bvec' = J(`nreps',`K',0)
@@ -166,16 +166,21 @@ program _ddml_ate_late, eclass
 			if `m'==1 {
 				mata: st_local("depvar",`B'.get(("depvar","post")))
 				// retrieve locals
-				foreach obj in title y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar {
+				foreach obj in y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar {
 					mata: st_local("`obj'",`B'.get(("`obj'","local")))
 				}
+			// possible that different estimation samples have different #obs
+			qui count if `mname'_sample_`m'==1
+			local N = `N' + r(N)
 			}
 		}
-		if "`medmean'"=="mean" {
+		local N = round(`N'/`nreps')
+		
+		if "`medmean'"=="mn" {
 			// default is mean
 			mata: st_matrix("`bagg'",mean(`bvec'))
 		}
-		else if "`medmean'"=="median" {
+		else if "`medmean'"=="md" {
 			// median beta
 			forvalues k=1/`K' {
 				mata: _sort(`bvec',`k')
@@ -195,14 +200,14 @@ program _ddml_ate_late, eclass
 		
 		mata: `Vagg' = J(`K',`K',0)
 		mata: `Vvec' = J(`nreps',1,0)
-		if "`medmean'"=="mean" {
+		if "`medmean'"=="mn" {
 			forvalues m=1/`nreps' {
 				mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 				mata: `Vagg' = `Vagg' + 1/`nreps' * `B'.get(("V","post"))
 			}
 			mata: st_matrix("`Vagg'",`Vagg')
 		}
-		else if "`medmean'"=="median" {
+		else if "`medmean'"=="md" {
 			// median VCV
 			// inefficient - does off-diagonals twice
 			forvalues j=1/`K' {
@@ -263,10 +268,6 @@ program _ddml_ate_late, eclass
 	else {
 		// replay
 				
-		// not correct; will need to replace
-		tempvar touse
-		qui gen `touse' = `mname'_sample
-		
 		tempname B keys isscalar islocal ismatrix
 
 		mata: `B' = AssociativeArray()
@@ -291,8 +292,11 @@ program _ddml_ate_late, eclass
 	 	matrix colnames `V' = `dvar'
 		matrix rownames `V' = `dvar'
 		
+		tempvar esample
+		qui gen `esample' = `mname'_sample_`rep'
+		
 		ereturn clear
-		ereturn post `b' `V', depname(`depvar') obs(`N') esample(`touse')
+		ereturn post `b' `V', depname(`depvar') obs(`N') esample(`esample')
 		
 		ereturn local cmd _ddml_ate_late
 		ereturn local model `model'

@@ -263,7 +263,11 @@ program define crossfit, rclass sortpreserve
 					// estimate excluding kth fold
 					`qui' `est_main' if `fid'!=`k' & `touse', `est_options'
 					local cmd `e(cmd)'
-		
+					if "`cmd'"=="" {
+						// macro e(cmd) may be missing, so deduce from command line
+						local cmd : word 1 of `est_main'
+					}
+					
 					// save pystacked weights
 					if ("`cmd'"=="pystacked") {
 						if (`k'==1) {
@@ -292,6 +296,10 @@ program define crossfit, rclass sortpreserve
 					// estimate excluding kth fold
 					`qui' `est_main' if `fid'!=`k' & `treatvar' == 1 & `touse', `est_options'
 					local cmd `e(cmd)'
+					if "`cmd'"=="" {
+						// macro e(cmd) may be missing, so deduce from command line
+						local cmd : word 1 of `est_main'
+					}
 		
 					// save pystacked weights
 					if ("`cmd'"=="pystacked") {
@@ -342,6 +350,10 @@ program define crossfit, rclass sortpreserve
 					// estimate excluding kth fold
 					`qui' `est_main' if `fid'!=`k' & `touse', `est_options'
 					local cmd `e(cmd)'
+					if "`cmd'"=="" {
+						// macro e(cmd) may be missing, so deduce from command line
+						local cmd : word 1 of `est_main'
+					}
 		
 					// get pystacked weights
 					if ("`cmd'"=="pystacked") {
@@ -399,7 +411,7 @@ program define crossfit, rclass sortpreserve
 		}
 	
 		// last fold, insert new line
-		di as text "...completed cross-fitting"
+		di as text "...completed cross-fitting" _c
 		
 
 		******************************** SHORTSTACKING ************************************
@@ -577,6 +589,9 @@ program define crossfit, rclass sortpreserve
 		if `ssflag' & `nlearners'>1 {
 			// last fold, insert new line
 			di as text "...completed short-stacking"
+		}
+		else {
+			di
 		}
 	
 		
@@ -893,7 +908,7 @@ program define crossfit, rclass sortpreserve
 					mata: add_result_item(`eqn_info',"`shortstack'","N`t'_folds",   "`m'", st_matrix("`N`t'_folds'"))
 					mata: add_result_item(`eqn_info',"`shortstack'","MSE`t'",       "`m'", `mse`t'')
 					mata: add_result_item(`eqn_info',"`shortstack'","MSE`t'_folds", "`m'", st_matrix("`mse`t'_folds'"))
-					mata: add_result_item(`eqn_info',"`shortstack'","ss_weights`t'", "`m'", st_matrix("`ssw`t'"))
+					mata: add_result_item(`eqn_info',"`shortstack'","ss_weights`t'", "`m'", st_matrix("`ssw`t''"))
 				}
 			}
 			else if `lieflag' {	// case 3

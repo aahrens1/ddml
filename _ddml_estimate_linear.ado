@@ -22,16 +22,11 @@ program _ddml_estimate_linear, eclass sortpreserve
 		di as err "error - opt model not yet avaiable with mean/median"
 		exit 198
 	}
-		
+	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
 	mata: `eqn' = init_eStruct()
 	
-	// base sample for estimation - determined by if/in
-	marksample touse
-	// also exclude obs already excluded by ddml sample
-	qui replace `touse' = 0 if `mname'_sample==0
-
 	// locals used below
 	mata: st_local("model",`mname'.model)
 	mata: st_local("nameY",`mname'.nameY)
@@ -171,14 +166,15 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local z `zlist'
 				local norep norep
 			}
-			qui _ddml_reg if `touse' ,										///
+			/* qui */ _ddml_reg if `mname'_sample_`m',							///
 					nocons `robust'											///
 					y(`y') yname(`nameY')									///
 					d(`d') dnames(`nameD') dvtnames(`dvtnames')		 		///
 					z(`z') znames(`nameZ') zvtnames(`zvtnames')				///
 					mname(`mname') spec(`i') rep(`m') title(`title') `norep'
-			mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(b)")
-			mata: `semat'[(`m'-1)*`ncombos'+`i',.] = sqrt(diagonal(st_matrix("e(V)"))')
+			
+			mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
+			mata: `semat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(semat)")
 		}
 		
 		if `ssflag' {
@@ -207,7 +203,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local z `Zss'
 			}
 			local title "Shortstack DDML model`stext'"
-			qui _ddml_reg if `touse' ,										///
+			qui _ddml_reg if `mname'_sample_`m',							///
 					nocons `robust'											///
 					y(`Yss') yname(`nameY')									///
 					d(`d') dnames(`nameD') dvtnames(`dvtnames') 			///
@@ -222,15 +218,15 @@ program _ddml_estimate_linear, eclass sortpreserve
 		// numbered specifications
 		forvalues i = 1/`ncombos' {
 			local title "DDML model, specification `i' (mean)"
-			qui _ddml_reg, mname(`mname') spec(`i') medmean(mean) title(`title')
+			qui _ddml_reg, mname(`mname') spec(`i') medmean(mn) title(`title')
 			local title "DDML model, specification `i' (median)"
-			qui _ddml_reg, mname(`mname') spec(`i') medmean(median) title(`title')
+			qui _ddml_reg, mname(`mname') spec(`i') medmean(md) title(`title')
 		}
 		// shortstack
 		local title "Shortstack DDML model (mean)"
-		qui _ddml_reg, mname(`mname') spec(ss) medmean(mean) title(`title')
+		qui _ddml_reg, mname(`mname') spec(ss) medmean(mn) title(`title')
 		local title "Shortstack DDML model (median)"
-		qui _ddml_reg, mname(`mname') spec(ss) medmean(median) title(`title')
+		qui _ddml_reg, mname(`mname') spec(ss) medmean(md) title(`title')
 	}
 	
 	if "`show'"=="all" {
@@ -349,13 +345,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 	}
 	if `nreps' > 1 {
 		di as text "Mean/median:"
-		foreach medmean in mean median {
-			if "`medmean'"=="mean" {
-				local mm mn
-			}
-			else {
-				local mm md
-			}
+		foreach medmean in mn md {
 			forvalues i=1/`ncombos' {
 				qui _ddml_reg, mname(`mname') spec(`i') rep(`medmean') replay
 				mata: st_local("yt",abbrev(`nmat'[`i',1],13))
@@ -365,7 +355,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),13)))
 				}
 				di " " _c
-				local specrep `: di %3.0f `i' %3s "`mm'"'
+				local specrep `: di %3.0f `i' %3s "`medmean'"'
 				// pad out to 6 spaces
 				local specrep = (6-length("`specrep'"))*" " + "`specrep'"
 				local rcmd stata _ddml_reg, mname(`mname') spec(`i') rep(`medmean') replay
@@ -393,7 +383,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 			}
 			if `ssflag' {
 				qui _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay
-				local specrep `: di "ss" %3s "`mm'"'
+				local specrep `: di "ss" %3s "`medmean'"'
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
 				local rcmd stata _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay

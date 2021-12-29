@@ -149,7 +149,10 @@ program _ddml_crossfit, eclass sortpreserve
 				mata: (`mname'.eqnAA).put("`var'",`eqn')
 			}
 		}
-	
+		
+		// create sample dfn variable by resample
+		create_sample_indicators, mname(`mname')
+		
 		// set flag on model struct
 		mata: `mname'.crossfitted = 1
 	
@@ -163,6 +166,105 @@ program _ddml_crossfit, eclass sortpreserve
 	
 	// drop temp eqn struct	
 	mata: mata drop `eqn'
+	
+end
+
+// creates sample indicators and leaves them in memory
+// same naming as main sample variable but with a _m resample subscript
+program create_sample_indicators
+
+	syntax [anything], mname(name)
+	
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	
+	mata: st_local("model",`mname'.model)
+	mata: st_local("nreps",strofreal(`mname'.nreps))
+	mata: st_local("nameY",invtokens(`mname'.nameY))
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameZ",invtokens(`mname'.nameZ))
+	local numeqnD	: word count `nameD'
+	local numeqnZ	: word count `nameZ'
+	
+	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
+	
+	if `numeqnD' {
+		foreach var of varlist `nameD' {
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
+			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
+			local Dt_list `Dt_list' `vtlistD'
+		}
+	}
+	
+	if `numeqnD' & `lieflag' {
+		foreach var of varlist `nameD' {
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
+			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
+			foreach vn in `vtlistD' {
+				local vtlistD_h `vtlistD_h' `vn'_h
+			}
+			local DHt_list `DHt_list' `vtlistD_h'
+		}
+	}
+	
+	if `numeqnZ' {
+		foreach var of varlist `nameZ' {
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
+			local Zt_list `Zt_list' `vtlistZ'
+		}
+	}
+
+	forvalues m=1/`nreps' {
+		
+		// reset local
+		local vtlist
+		
+		cap drop `mname'_sample_`m' 
+		qui gen byte `mname'_sample_`m' = `mname'_sample
+				
+		// Y
+		if "`model'"=="interactive" | "`model'"=="late" {
+			foreach vt in `vtlistY' {
+				local vtlist `vtlist' `vt'0
+				local vtlist `vtlist' `vt'1
+			}
+		}
+		else {
+			local vtlist `vtlistY'
+		}
+		// D and Z
+		if "`model'"=="late" {
+			foreach vt in `vtlistD' {
+				local vtlist `vtlist' `vt'0
+				local vtlist `vtlist' `vt'1
+			}
+			local vtlist `vtlist' `Zt_list'
+		}
+		else {
+			local vtlist `vtlist' `Dt_list' `DHt_list' `Zt_list'
+		}
+		
+		foreach vt in `vtlist' {
+			qui replace `mname'_sample_`m' = 0 if `vt'_`m'==.
+		}
+	}
+	
+	// create mean/median sample indicators
+	if `nreps'>1 {
+		cap drop `mname'_sample_mn
+		qui gen byte `mname'_sample_mn = `mname'_sample_1
+		forvalues m=2/`nreps' {
+			qui replace `mname'_sample_mn = `mname'_sample_`m' if `mname'_sample_mn==0 & `mname'_sample_`m'==1
+		}
+		cap drop `mname'_sample_md
+		qui gen `mname'_sample_md = `mname'_sample_mn
+	}
+	
 	
 end
 

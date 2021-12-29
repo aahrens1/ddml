@@ -199,8 +199,8 @@ program ddml, eclass
 		if "`subcmd'"=="E[D|X]"&"`model'"=="ivhd" local subcmd dheq
 		if "`subcmd'"=="E[Z|X]" local subcmd zeq
 		if "`subcmd'"=="E[D|X,Z]"|"`subcmd'"=="E[D|Z,X]" local subcmd deq
-		di "`model'"
-		di "`subcmd'"
+		// di "`model'"
+		// di "`subcmd'"
 
 		** check that dep var in eqn isn't already used for some other eqn
 		** also set flag for whether dep var is new

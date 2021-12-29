@@ -11,7 +11,7 @@ program define _ddml_reg, eclass
 				medmean(string)									///
 				NOREP											///
 				replay											///
-				*												///
+				*												/// can be e.g. nocons
 				]
 
 	mata: st_local("model",`mname'.model)
@@ -81,6 +81,11 @@ program define _ddml_reg, eclass
 		mata: `A'.put(("b","post"),st_matrix("`b'"))
 		mata: `A'.put(("V","post"),st_matrix("`V'"))
 		mata: `A'.put(("depvar","post"),"`yname'")
+		
+		// for calling program
+		ereturn clear
+		mata: st_matrix("e(bmat)",st_matrix("`b'"))
+		mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("`V'"))'))
 		
 		// store locals
 		foreach obj in title y y_m d d_m dh dh_m z z_m yname dnames vce vcetype {
@@ -182,8 +187,6 @@ program define _ddml_reg, eclass
 	}
 	else if "`replay'"=="" & "`medmean'"~="" {	// aggregate over resamples
 		
-		// e(sample) and N not handled correctly yet
-		
 		tempname b V bagg Vagg Vi
 		tempname bvec bmed Vvec Vmed
 		tempvar esample
@@ -196,9 +199,7 @@ program define _ddml_reg, eclass
 		mata: `B' = AssociativeArray()
 		local isodd = mod(`nreps',2)
 		local medrow = ceil(`nreps'/2)
-		qui gen `esample' = `mname'_sample
-		qui count if `esample'
-		local N = r(N)
+		local N = 0
 		
 		mata: `bagg' = J(1,`K',0)
 		mata: `bvec' = J(`nreps',`K',0)
@@ -213,12 +214,17 @@ program define _ddml_reg, eclass
 					mata: st_local("`obj'",`B'.get(("`obj'","local")))
 				}
 			}
+			// possible that different estimation samples have different #obs
+			qui count if `mname'_sample_`m'==1
+			local N = `N' + r(N)
 		}
-		if "`medmean'"=="mean" {
+		local N = round(`N'/`nreps')
+		
+		if "`medmean'"=="mn" {
 			// default is mean
 			mata: st_matrix("`bagg'",mean(`bvec'))
 		}
-		else if "`medmean'"=="median" {
+		else if "`medmean'"=="md" {
 			// median beta
 			forvalues k=1/`K' {
 				mata: _sort(`bvec',`k')
@@ -238,14 +244,14 @@ program define _ddml_reg, eclass
 		
 		mata: `Vagg' = J(`K',`K',0)
 		mata: `Vvec' = J(`nreps',1,0)
-		if "`medmean'"=="mean" {
+		if "`medmean'"=="mn" {
 			forvalues m=1/`nreps' {
 				mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 				mata: `Vagg' = `Vagg' + 1/`nreps' * `B'.get(("V","post"))
 			}
 			mata: st_matrix("`Vagg'",`Vagg')
 		}
-		else if "`medmean'"=="median" {
+		else if "`medmean'"=="md" {
 			// median VCV
 			// inefficient - does off-diagonals twice
 			forvalues j=1/`K' {
@@ -275,23 +281,15 @@ program define _ddml_reg, eclass
 			exit 198
 		}
 	
-		matrix rownames `bagg' = `depvar'
-		matrix colnames `bagg' = `dnames'
-	 	matrix colnames `Vagg' = `dnames'
-		matrix rownames `Vagg' = `dnames'
-		
-		ereturn clear
-		ereturn post `bagg' `Vagg', depname(`depvar') obs(`N') esample(`esample')
-	
 		tempname A
 		mata: `A' = AssociativeArray()
 		mata: `A'.reinit("string",2)
 		mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
 		
-		mata: `A'.put(("N","post"),st_numscalar("e(N)"))
-		mata: `A'.put(("b","post"),st_matrix("e(b)"))
-		mata: `A'.put(("V","post"),st_matrix("e(V)"))
-		mata: `A'.put(("depvar","post"),st_global("e(depvar)"))
+		mata: `A'.put(("N","post"),`N')
+		mata: `A'.put(("b","post"),st_matrix("`bagg'"))
+		mata: `A'.put(("V","post"),st_matrix("`Vagg'"))
+		mata: `A'.put(("depvar","post"),"`depvar'")
 		
 		// store locals
 		foreach obj in title y d dh z yname dnames vce vcetype {
@@ -314,10 +312,6 @@ program define _ddml_reg, eclass
 	else {
 		// replay
 				
-		// not correct; will need to replace
-		tempvar touse
-		qui gen `touse' = `mname'_sample
-		
 		tempname B keys isscalar islocal ismatrix
 
 		mata: `B' = AssociativeArray()
@@ -342,8 +336,11 @@ program define _ddml_reg, eclass
 	 	matrix colnames `V' = `dnames'
 		matrix rownames `V' = `dnames'
 		
+		tempvar esample
+		qui gen `esample' = `mname'_sample_`rep'
+		
 		ereturn clear
-		ereturn post `b' `V', depname(`depvar') obs(`N') esample(`touse')
+		ereturn post `b' `V', depname(`depvar') obs(`N') esample(`esample')
 		
 		ereturn local cmd _ddml_reg
 		ereturn local model `model'
@@ -378,7 +375,7 @@ program define _ddml_reg, eclass
 		}
 		
 		// display results
-		di as text "`title'"
+		di as text "`e(title)'"
 		di as text "y-E[y|X]" _col(11) "= " as res "`e(y_m)'" _c
 		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
 		if "`e(model)'"~="ivhd" {
