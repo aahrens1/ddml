@@ -222,15 +222,15 @@ program _ddml_estimate_linear, eclass sortpreserve
 		// numbered specifications
 		forvalues i = 1/`ncombos' {
 			local title "DDML model, specification `i' (mean)"
-			qui _ddml_reg, mname(`mname') nreps(`nreps') spec(`i') medmean(mean) title(`title')
+			qui _ddml_reg, mname(`mname') spec(`i') medmean(mean) title(`title')
 			local title "DDML model, specification `i' (median)"
-			qui _ddml_reg, mname(`mname') nreps(`nreps') spec(`i') medmean(median) title(`title')
+			qui _ddml_reg, mname(`mname') spec(`i') medmean(median) title(`title')
 		}
 		// shortstack
 		local title "Shortstack DDML model (mean)"
-		qui _ddml_reg, mname(`mname') nreps(`nreps') spec(ss) medmean(mean) title(`title')
+		qui _ddml_reg, mname(`mname') spec(ss) medmean(mean) title(`title')
 		local title "Shortstack DDML model (median)"
-		qui _ddml_reg, mname(`mname') nreps(`nreps') spec(ss) medmean(median) title(`title')
+		qui _ddml_reg, mname(`mname') spec(ss) medmean(median) title(`title')
 	}
 	
 	if "`show'"=="all" {
@@ -238,12 +238,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 			// all combos including optimal model
 			forvalues i=1/`ncombos' {
 				di
-				_ddml_reg, mname(`mname') spec(`i') rep(`m') replay	// uses replay
+				_ddml_reg, mname(`mname') spec(`i') rep(`m') replay
 				di
 			}
 			// shortstack
 			di
-			_ddml_reg, mname(`mname') spec(ss) rep(`m') replay	// uses replay
+			_ddml_reg, mname(`mname') spec(ss) rep(`m') replay
 			di
 		}
 	}
@@ -430,7 +430,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 		di	
 	}
 	else {
-		// post macro should be an integer denoting the specification
+		// post macro denotes the specification to post
 		di
 		_ddml_reg, mname(`mname') spec(`post') rep(`rep') replay
 		di
