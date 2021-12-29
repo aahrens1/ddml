@@ -373,7 +373,7 @@ program define crossfit, rclass sortpreserve
 					local cmd_h `e(cmd)'
 		
 					// get pystacked weights
-					if ("`cmd'"=="pystacked") {
+					if ("`cmd_h'"=="pystacked") {
 						if (`k'==1) {
 							mat `pyswh_`i'' = e(weights)
 						}
@@ -392,7 +392,8 @@ program define crossfit, rclass sortpreserve
 				}
 				
 				if `k'==1 & `m'==1 {
-					local cmd_list `cmd_list' `cmd'
+					local cmd_list   `cmd_list'   `cmd'
+					local cmd_h_list `cmd_h_list' `cmd_h'
 				}
 			}
 		}
@@ -588,7 +589,9 @@ program define crossfit, rclass sortpreserve
 		
 		forvalues i=1/`nlearners' {
 			
-			local vtilde : word `i' of `vtlist'
+			local vtilde	: word `i' of `vtlist'
+			local cmd		: word `i' of `cmd_list'
+			local cmd_h		: word `i' of `cmd_h_list'
 
 			// vtilde, mspe, etc.
 			if ~`tvflag' & ~`lieflag' {
@@ -628,8 +631,10 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","N_folds",   "`m'", st_matrix("`N_folds'"))
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE",       "`m'", `mse')
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
-	
-				mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))
+				
+				// MS: this line fails if cmd hasn't been stored by ddml init; will happen if crossfit called directly 
+				// mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))
+				// instead use cmd selected from cmd_list above
 				if "`cmd'"=="pystacked" {
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
 				}
@@ -702,8 +707,10 @@ program define crossfit, rclass sortpreserve
 					mata: add_result_item(`eqn_info',"`vtilde'","MSE`t'",       "`m'", `mse`t'')
 					mata: add_result_item(`eqn_info',"`vtilde'","MSE`t'_folds", "`m'", st_matrix("`mse`t'_folds'"))
 				}
-
-				mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))				
+				
+				// MS: this line fails if cmd hasn't been stored by ddml init; will happen if crossfit called directly 
+				// mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))				
+				// instead use cmd selected from cmd_list above
 				if "`cmd'"=="pystacked" {
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights0","`m'", st_matrix("`pysw0_`i''"))
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1_`i''"))
@@ -774,10 +781,14 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","N_h_folds",   "`m'", st_matrix("`N_h_folds'"))
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h",       "`m'", `mse_h')
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h_folds", "`m'", st_matrix("`mse_h_folds'"))
-	
-				mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))							
+				
+				// MS: this line fails if cmd hasn't been stored by ddml init; will happen if crossfit called directly 
+				// mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))							
+				// instead use cmd selected from cmd_list above
 				if "`cmd'"=="pystacked" {
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
+				}
+				if "`cmd_h'"=="pystacked" {
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights_h","`m'", st_matrix("`pyswh_`i''"))
 				}
 				
@@ -989,8 +1000,6 @@ program define crossfit, rclass sortpreserve
 	}
 
 	return scalar N			= `N'
-	return local cmd		`cmd'
-	return local cmd_h		`cmd_h'
 	forvalues i=1/`nlearners' {
 			
 			local vtilde : word `i' of `vtlist'
@@ -1001,6 +1010,7 @@ program define crossfit, rclass sortpreserve
 
 	}
 	return local cmd_list	`cmd_list'
+	return local cmd_h_list	`cmd_h_list'
 	
 end
 
