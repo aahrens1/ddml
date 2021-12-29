@@ -264,6 +264,7 @@ program define crossfit, rclass sortpreserve
 					`qui' `est_main' if `fid'!=`k' & `touse', `est_options'
 					local cmd `e(cmd)'
 		
+					di "`cmd'"
 					// save pystacked weights
 					if ("`cmd'"=="pystacked") {
 						if (`k'==1) {
@@ -614,8 +615,11 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","N_folds",   "`m'", st_matrix("`N_folds'"))
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE",       "`m'", `mse')
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
-				
+	
+				mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))
 				if "`cmd'"=="pystacked" {
+					di "`vtilde'"
+					mat list `pysw_`i''
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
 				}
 				
@@ -687,7 +691,8 @@ program define crossfit, rclass sortpreserve
 					mata: add_result_item(`eqn_info',"`vtilde'","MSE`t'",       "`m'", `mse`t'')
 					mata: add_result_item(`eqn_info',"`vtilde'","MSE`t'_folds", "`m'", st_matrix("`mse`t'_folds'"))
 				}
-				
+
+				mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))				
 				if "`cmd'"=="pystacked" {
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights0","`m'", st_matrix("`pysw0_`i''"))
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1_`i''"))
@@ -758,8 +763,10 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","N_h_folds",   "`m'", st_matrix("`N_h_folds'"))
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h",       "`m'", `mse_h')
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h_folds", "`m'", st_matrix("`mse_h_folds'"))
-								
+	
+				mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))							
 				if "`cmd'"=="pystacked" {
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights_h","`m'", st_matrix("`pyswh_`i''"))
 				}
 				
