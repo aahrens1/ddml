@@ -527,8 +527,8 @@ program define crossfit, rclass sortpreserve
 					}
 					else {
 						mat `sswh_temp' = e(b)
-						mat  `sswh_temp' = (`sswh'\`sswh_temp' )
-					} 
+						mat  `sswh_temp' = (`sswh' \ `sswh_temp' )
+					}
 					tempvar vtemp
 					qui predict `vtype' `vtemp'
 					qui replace `hhatSS'=`vtemp'
