@@ -17,6 +17,7 @@ program _ddml_crossfit, eclass sortpreserve
 							debug					/// 
 							Robust					///
 							mname(name)				///
+							Verbose 				///
 							]
 
 	// no checks included yet
@@ -75,7 +76,7 @@ program _ddml_crossfit, eclass sortpreserve
 			local vtlist `vtlist' `vtlistZ'
 		}
 	}
-	di as text "All learners: `vtlist'"
+	//di as text "All learners: `vtlist'" // AA: don't think this output is required
 	
 	if `debugflag' {
 		*** report estimates for full sample for debugging purposes
@@ -95,7 +96,10 @@ program _ddml_crossfit, eclass sortpreserve
 			local treatvar
 		}
 		mata: st_local("ssname",`eqn'.shortstack)
-		di as text "Cross-fitting Y equation: `nameY'"
+		if ("`model'"=="partial") di as text "Cross-fitting E[Y|X] equation: `nameY'"
+		if ("`model'"=="ivhd"|"`model'"=="late") di as text "Cross-fitting E[Y|X,Z] equation: `nameY'"
+		if ("`model'"=="interactive") di as text "Cross-fitting E[Y|X,D] equation: `nameY'"
+		if ("`model'"=="iv") di as text "Cross-fitting E[Y|X] equation: `nameY'"
 		crossfit if `touse',						///
 			ename(`eqn') noreplace					///
 			foldvar(`fidlist')						///
@@ -117,7 +121,9 @@ program _ddml_crossfit, eclass sortpreserve
 			foreach var of varlist `nameD' {
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
 				mata: st_local("ssname",`eqn'.shortstack)
-				di as text "Cross-fitting D equation: `var'"
+				if ("`model'"=="partial") di as text "Cross-fitting E[D|X] equation: `var'"
+				if ("`model'"=="ivhd"|"`model'"=="late") di as text "Cross-fitting E[D|X,Z] equation: `var'"
+				if ("`model'"=="interactive"|"`model'"=="iv") di as text "Cross-fitting E[D|X] equation: `var'"
 				// All learners for each D eqn
 				crossfit if `touse',						///
 					ename(`eqn') noreplace					///
@@ -133,7 +139,7 @@ program _ddml_crossfit, eclass sortpreserve
 			foreach var of varlist `nameZ' {
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
 				mata: st_local("ssname",`eqn'.shortstack)
-				di as text "Cross-fitting Z equation: `var'"
+				di as text "Cross-fitting E[Z|X]: `var'"
 				// All learners for each Z eqn
 				crossfit if `touse',						///
 					ename(`eqn') noreplace					///
@@ -148,9 +154,11 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: `mname'.crossfitted = 1
 	
 		// report results by equation type with resamplings grouped together
-		di
-		di as res "Reporting crossfitting results:"
-		_ddml_describe `mname'
+		if ("`verbose'"!="") {
+			di
+			di as res "Reporting crossfitting results:"
+			_ddml_describe `mname'
+		}
 	}
 	
 	// drop temp eqn struct	
