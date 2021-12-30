@@ -615,10 +615,12 @@ program define crossfit, rclass sortpreserve
 				if "`resid'"=="" {
 					// vtilde is predicted values
 					qui gen `vtilde'_`m' = `vhat`i''
+					qui label var `vtilde'_`m' "Predicted values cond. exp. of `vname' using `cmd'"
 				}
 				else {
 					// vtilde is residuals
 					qui gen `vtilde'_`m' = `vres`i''
+					qui label var `vtilde'_`m' "Residuals cond. exp. of `vname' using `cmd'"
 				}
 		
 				// calculate and return mspe and sample size
@@ -673,11 +675,15 @@ program define crossfit, rclass sortpreserve
 					// vtilde is predicted values
 					qui gen `vtilde'0_`m' = `vhat0`i''
 					qui gen `vtilde'1_`m' = `vhat1`i''
+					qui label var `vtilde'0_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using `cmd'"
+					qui label var `vtilde'1_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using `cmd'"
 				}
 				else {
 					// vtilde is residuals
 					qui gen `vtilde'0_`m' = `vres0`i''
 					qui gen `vtilde'1_`m' = `vres1`i''
+					qui label var `vtilde'0_`m' "Residuals cond. exp. of `vname' given `treatvar'==0 using `cmd'"
+					qui label var `vtilde'1_`m' "Residuals cond. exp. of `vname' given `treatvar'==1 using `cmd'"
 				}
 		
 				// calculate and return mspe and sample size
@@ -749,7 +755,9 @@ program define crossfit, rclass sortpreserve
 				cap drop `vtilde'_h_`m'
 				
 				qui gen `vtilde'_`m' = `dhat`i''
+				qui label var `vtilde'_`m' "Predicted values E[`vname'|X,Z]"
 				qui gen `vtilde'_h_`m' = `hhat`i''
+				qui label var `vtilde'_h_`m' "Predicted values E[`vtilde'_`m'|X]"
 
 				// calculate and return mspe and sample size
 				tempvar hres dres hres_sq dres_sq

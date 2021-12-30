@@ -87,13 +87,20 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 		if "`model'"=="interactive" {
 			local treatvar	`nameD'
+			local resid
 		}
 		else if ("`model'"=="late") {
 			local treatvar	`nameZ'
+			local resid
 		}
+		else if ("`model'"=="ivhd") {
+			local treatvar
+			local resid
+		} 
 		else {
 			// clear local
 			local treatvar
+			local resid resid
 		}
 		mata: st_local("ssname",`eqn'.shortstack)
 		if ("`model'"=="partial") di as text "Cross-fitting E[Y|X] equation: `nameY'"
@@ -105,7 +112,7 @@ program _ddml_crossfit, eclass sortpreserve
 			foldvar(`fidlist')						///
 			shortstack(`ssname')					///
 			treatvar(`treatvar')					///
-			resid `noisily'
+			`resid' `noisily'
 		// resinsert into model struct AA with equations
 		mata: (`mname'.eqnAA).put("`nameY'",`eqn')
 
@@ -130,7 +137,7 @@ program _ddml_crossfit, eclass sortpreserve
 					foldvar(`fidlist')						///
 					shortstack(`ssname')					///
 					treatvar(`treatvar')					///
-					resid `noisily'
+					`resid' `noisily'
 				mata: (`mname'.eqnAA).put("`var'",`eqn')
 			}
 		}
@@ -145,7 +152,7 @@ program _ddml_crossfit, eclass sortpreserve
 					ename(`eqn') noreplace					///
 					foldvar(`fidlist')						///
 					shortstack(`ssname')					///
-					resid `noisily'
+					`resid' `noisily'
 				mata: (`mname'.eqnAA).put("`var'",`eqn')
 			}
 		}
