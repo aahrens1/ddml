@@ -115,7 +115,7 @@ program _ddml_ate_late, eclass
 			// pystacked weights, D
 			mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`d0tilde'","cmd")=="pystacked"))
 			if `pyswflag' {
-				mata: `A'.put(("`d0tilde'_pysw","matrix"), mean(return_result_item(`eqn',"`d0tilde'","stack_weights0","`rep'")')
+				mata: `A'.put(("`d0tilde'_pysw","matrix"), mean(return_result_item(`eqn',"`d0tilde'","stack_weights0","`rep'")'))
 			}
 			mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`d1tilde'","cmd")=="pystacked"))
 			if `pyswflag' {

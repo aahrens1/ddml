@@ -187,8 +187,25 @@ program ddml, eclass
 
 		** check that equation is consistent with model
 		mata: st_local("model",`mname'.model)
-		if ("`subcmd'"=="E[Z|X]"&"`model'"!="iv") {
+		if ("`model'"=="late"&strpos("E[D|Z,X] E[D|X,Z] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq","`subcmd'")==0) {
 			di as err "not allowed; `subcmd' not allowed with `model'"
+			exit 198
+		}
+		if ("`model'"=="iv"&strpos("E[Y|X] E[D|X] E[Z|X] yeq deq zeq","`subcmd'")==0) {
+			di as err "not allowed; `subcmd' not allowed with `model'"
+			exit 198
+		}
+		if ("`model'"=="partial"&strpos("E[Y|X] E[D|X] yeq deq","`subcmd'")==0) {
+			di as err "not allowed; `subcmd' not allowed with `model'"
+			exit 198
+		}
+		if ("`model'"=="interactive"&strpos("E[D|X] E[Y|X,D] E[Y|D,X] yeq deq","`subcmd'")==0) {
+			di as err "not allowed; `subcmd' not allowed with `model'"
+			exit 198
+		}
+		if ("`model'"=="ivhd"&strpos("E[D|Z,X] E[D|X,Z] E[Y|X,D] E[Y|D,X] yeq deq zeq dheq","`subcmd'")==0) {
+			di as err "not allowed; `subcmd' not allowed with `model'"
+			exit 198
 		}
 
 		** convert to internal equation names
