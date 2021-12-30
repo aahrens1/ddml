@@ -150,7 +150,7 @@ program _ddml_export
 	
 	// preserve, drop unneeded vars, rename, export, restore
 	preserve
-	keep `mname'_id `mname'_sample `fidlist' `vtlistY' `vtlistD' `vtlistDH' `vtlistZ'
+	keep `mname'_id `mname'_sample* `fidlist' `vtlistY' `vtlistD' `vtlistDH' `vtlistZ'
 
 	local numvt	: word count `vtlistY'
 	forvalues i=1/`numvt' {

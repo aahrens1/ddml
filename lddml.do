@@ -67,6 +67,7 @@ struct mStruct {
 	string scalar					model			// model; partial, iv, late, etc
 	real colvector					id				// id variable (name in Stata will be modelname_id)
 	real scalar						nreps			// number of resamplings
+	real scalar						ncombos			// number of possible specifications (=0 if not yet estimated)
 	real scalar						kfolds			// number of crossfitting folds
 	class AssociativeArray scalar	eqnAA			// AssociativeArray with all equations
 	class AssociativeArray scalar	estAA			// AA wth all estimation results
@@ -87,6 +88,7 @@ struct mStruct init_mStruct()
 	d.model			= ""
 	d.id			= J(0,1,.)
 	d.nreps			= 0
+	d.ncombos		= 0
 	d.kfolds		= 0
 	d.nameY			= ""
 	d.nameD			= J(1,0,"")

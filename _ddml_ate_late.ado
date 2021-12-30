@@ -306,21 +306,21 @@ program _ddml_ate_late, eclass
 		forvalues i=1/`nentries' {
 			mata: st_local("topost",strofreal(`isscalar'[`i']))
 			if `topost' {
-				mata: st_local("sname",`keys'[`i',1])
+				mata: st_local("sname",substr(`keys'[`i',1],1,32))
 				mata: st_numscalar("e(`sname')",`B'.get(`keys'[`i',.]))
 			}
 		}
 		forvalues i=1/`nentries' {
 			mata: st_local("topost",strofreal(`islocal'[`i']))
 			if `topost' {
-				mata: st_local("lname",`keys'[`i',1])
+				mata: st_local("lname",substr(`keys'[`i',1],1,32))
 				mata: st_global("e(`lname')",`B'.get(`keys'[`i',.]))
 			}
 		}
 		forvalues i=1/`nentries' {
 			mata: st_local("topost",strofreal(`ismatrix'[`i']))
 			if `topost' {
-				mata: st_local("mname",`keys'[`i',1])
+				mata: st_local("mname",substr(`keys'[`i',1],1,32))
 				mata: st_matrix("e(`mname')",`B'.get(`keys'[`i',.]))
 			}
 		}

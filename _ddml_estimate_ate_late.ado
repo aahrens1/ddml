@@ -238,6 +238,12 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		local title "Shortstack DDML model (median)"
 		qui _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title')
 	}
+	
+	// estimation complete
+	mata: `mname'.ncombos = `ncombos'
+	
+	
+	************** REPORT RESULTS **************
 
 	if "`show'"=="all" {
 		forvalues m=1/`nreps' {
@@ -292,8 +298,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	di
 	forvalues m=1/`nreps' {
 		forvalues i=1/`ncombos' {
-			mata: st_local("yt0",`nmat'[`i',1])
-			mata: st_local("yt1",`nmat'[`i',2])
+			mata: st_local("yt0",abbrev(`nmat'[`i',1],13))
+			mata: st_local("yt1",abbrev(`nmat'[`i',2],13))
 			if "`optspec`m''"=="`i'" {
 				di "*" _c
 			}
@@ -312,8 +318,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				di %14s "`dt'" _c
 			}
 			else {
-				mata: st_local("dt0",`nmat'[`i',3])
-				mata: st_local("dt1",`nmat'[`i',4])
+				mata: st_local("dt0",abbrev(`nmat'[`i',3],13))
+				mata: st_local("dt1",abbrev(`nmat'[`i',4],13))
 				di %14s "`dt0'" _c
 				di %14s "`dt1'" _c
 			}
@@ -323,7 +329,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			local pse (`: di %6.3f `se'')
 			di %10s "`pse'" _c
 			if ~`ateflag' {
-				mata: st_local("zt",`nmat'[`i',5])
+				mata: st_local("zt",abbrev(`nmat'[`i',5],13))
 				di %14s "`zt'" _c
 			}
 			di

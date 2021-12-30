@@ -166,7 +166,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local z `zlist'
 				local norep norep
 			}
-			/* qui */ _ddml_reg if `mname'_sample_`m',							///
+			qui _ddml_reg if `mname'_sample_`m',							///
 					nocons `robust'											///
 					y(`y') yname(`nameY')									///
 					d(`d') dnames(`nameD') dvtnames(`dvtnames')		 		///
@@ -228,6 +228,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 		local title "Shortstack DDML model (median)"
 		qui _ddml_reg, mname(`mname') spec(ss) medmean(md) title(`title')
 	}
+	
+	// estimation complete
+	mata: `mname'.ncombos = `ncombos'
+	
+	
+	************** REPORT RESULTS **************
 	
 	if "`show'"=="all" {
 		forvalues m=1/`nreps' {

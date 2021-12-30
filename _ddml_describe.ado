@@ -14,6 +14,7 @@ program define _ddml_describe
 
 	mata: st_local("model",`mname'.model)
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
+	mata: st_local("ncombos",strofreal(`mname'.ncombos))
 	mata: st_local("kfolds",strofreal(`mname'.kfolds))
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 	mata: st_local("nameY",`mname'.nameY)
@@ -24,16 +25,42 @@ program define _ddml_describe
 	// fold IDs
 	forvalues m=1/`nreps' {
 		local fidlist `fidlist' `mname'_fid_`m'
+		local rslist `rslist' `mname'_sample_`m'
 	}
 	
-	di as res "Model: `model'"
-	di as res "ID: `mname'_id"
-	di as res "Fold ID(s): `fidlist'"
-	di as res "Sample indicator: `mname'_sample" _c
+	di as text "Model: `model'"
+	di as text "ID: `mname'_id"
+	di as text "Sample indicator: `mname'_sample" _c
 	qui count if `mname'_sample
-	di as res " (N=`r(N)')"
-	di as res "Number of folds     =" %3.0f `kfolds'
-	di as res "Number of resamples =" %3.0f `nreps'
+	di as text " (N=`r(N)')"
+	di as text "Number of resamples =" %3.0f `nreps'
+	di as text "Number of folds     =" %3.0f `kfolds'
+	di as text "Fold ID:" _col(16) _c
+	forvalues m=1/`nreps' {
+		local fid : word `m' of `fidlist'
+		di as text %~12s "`fid'" _c
+	}
+	di
+	di as text "Sample indic.:" _col(16) _c
+	forvalues m=1/`nreps' {
+		local rs : word `m' of `rslist'
+		di as text %~12s "`rs'" _c
+	}
+	di
+	di as text "Estimation N:" _col(16) _c
+	forvalues m=1/`nreps' {
+		if `ncombos' {
+			local rs : word `m' of `rslist'
+			qui count if `rs'
+			local N "`: di %2.0f r(N)'"
+		}
+		else {
+			local N "(n.a.)"
+		}
+		di as text %~12s "`N'" _c
+	}
+	di
+	di
 	
 	// equations and learners
 	di as res "Dependent variable (Y): `nameY'"
