@@ -3,15 +3,17 @@
 
 program define _ddml_describe
 
-	syntax name(name=mname), [NOCMD all byfold]
+	syntax name(name=mname), [LEARNers CROSSfit ESTimates all *]
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
 	mata: `eqn' = init_eStruct()
 	
-	local showcmd	= ("`nocmd'"=="")
-	local showall	= ("`all'"~="")
-
+	local all		= "`all'"~=""
+	local lflag		= "`learners'"~=""	| `all'
+	local cflag		= "`crossfit'"~=""	| `all'
+	local eflag		= "`estimates'"~=""	| `all'
+	
 	mata: st_local("model",`mname'.model)
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	mata: st_local("ncombos",strofreal(`mname'.ncombos))
@@ -28,6 +30,17 @@ program define _ddml_describe
 		local rslist `rslist' `mname'_sample_`m'
 	}
 	
+	// syntax checks
+	if `cflag' & ~`crossfitted' {
+		di as err "error - no crossfited results to display"
+		exit 198
+	}
+	if `eflag' & ~`ncombos' {
+		di as err "error - no estimation results to display"
+		exit 198
+	}
+	
+	// basic info - always displayed
 	di as text "Model: `model'"
 	di as text "ID: `mname'_id"
 	di as text "Sample indicator: `mname'_sample" _c
@@ -62,73 +75,68 @@ program define _ddml_describe
 	di
 	di
 	
-	// equations and learners
-	di as res "Dependent variable (Y): `nameY'"
+	// basic info about equations and learners - always displayed
+	di as text "Dependent variable (Y): `nameY'"
 	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
 	local numlnrY : word count `vtlistY'
-	di as res _col(2) "`nameY' learners:" as res _col(25) "`vtlistY'"
+	di as text _col(2) "`nameY' learners:" as text _col(25) "`vtlistY'"
 	if `numeqnD' {
-		di as res "D equations (`numeqnD'): `nameD'"
+		di as text "D equations (`numeqnD'): `nameD'"
 		foreach var of varlist `nameD' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
-			di as res _col(2) "`var' learners:" _col(25) "`vtlistD'"
+			di as text _col(2) "`var' learners:" _col(25) "`vtlistD'"
 		}
 	}
 	if `numeqnZ' {
-		di as res "Z equations (`numeqnZ'): `nameZ'"
+		di as text "Z equations (`numeqnZ'): `nameZ'"
 		foreach var of varlist `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
-			di as res _col(2) "`var' learners:" _col(25) "`vtlistZ'"
+			di as text _col(2) "`var' learners:" _col(25) "`vtlistZ'"
 		}
 	}
 	
 	// learners in detail
-	di
-	di as res "Y learners (detail):"
-	desc_learners `mname', vname(`nameY') etype(yeq)
-	if `numeqnD' {
-		di as res "D learners (detail):"
-		foreach var of varlist `nameD' {
-			desc_learners `mname', vname(`var') etype(deq)
+	if `lflag' {
+		di
+		di as text "Y learners (detail):"
+		desc_learners `mname', vname(`nameY') etype(yeq)
+		if `numeqnD' {
+			di as text "D learners (detail):"
+			foreach var of varlist `nameD' {
+				desc_learners `mname', vname(`var') etype(deq)
+			}
+		}
+		if `numeqnZ' {
+			di as text "Z learners (detail):"
+			foreach var of varlist `nameZ' {
+				desc_learners `mname', vname(`var') etype(zeq)
+			}
 		}
 	}
-	if `numeqnZ' {
-		di as res "Z learners (detail):"
-		foreach var of varlist `nameZ' {
-			desc_learners `mname', vname(`var') etype(zeq)
+		
+	// crossfit results in detail
+	if `cflag' {
+		di
+		di as text "Crossfit results (detail):"
+		desc_learners `mname', vname(`nameY') etype(yeq) results header
+		if `numeqnD' {
+			foreach var of varlist `nameD' {
+				desc_learners `mname', vname(`var') etype(deq) results
+			}
 		}
-	}
-	// results in detail
-	di
-	di "Crossfit results (detail):"
-	desc_learners `mname', vname(`nameY') etype(yeq) results header
-	if `numeqnD' {
-		foreach var of varlist `nameD' {
-			desc_learners `mname', vname(`var') etype(deq) results
-		}
-	}
-
-	/*
-	if `showall' {
-		di
-		di as res "Other:"
-		di
-		di as res "liststruct(.):"
-		mata: liststruct(`mname')
-		di
-		di as res "Equation pointers:"
-		mata: `mname'.eqnlist
-		di as res "Corresponding tilde names:"
-		mata: `mname'.eqnlistNames
 	}
 	
-	if `crossfitted' {
-		_ddml_crossfit_report `mname', `byfold'
+	// estimate results in detail
+	if `eflag' & ("`model'"=="interactive" | "`model'"=="late") {
+	
 	}
-	*/
+	else if `eflag' {
+		di
+		_ddml_estimate_linear `mname', `options' results
+	} 
 	
 	// clear this global from Mata
 	mata: mata drop `eqn'
@@ -167,18 +175,18 @@ prog define desc_learners
 	}
 	
 	if ~`showcmd' & `showheader' {
-		di as res _col(38) "All" _c
-		di as res _col(45) "By fold:" _c
+		di as text _col(38) "All" _c
+		di as text _col(45) "By fold:" _c
 		di
-		di as res "Cond. exp." _c
-		di as res _col(13) "Learner" _c
-		di as res _col(26) "rep" _c
+		di as text "Cond. exp." _c
+		di as text _col(13) "Learner" _c
+		di as text _col(26) "rep" _c
 		if `pairs' {
-			di as res _col(31) "tv" _c
+			di as text _col(31) "tv" _c
 		}
-		di as res _col(38) "MSE" _c
+		di as text _col(38) "MSE" _c
 		forvalues k=1/`kfolds' {
-			di as res "        `k' " _c
+			di as text "        `k' " _c
 		}
 		di
 	}

@@ -51,6 +51,14 @@ program ddml, eclass
 		di as err "error - unknown subcommand `subcmd'"
 		exit 198
 	}
+	
+	// assign and check model name
+	if "`mname'"=="" {
+		local mname m0 // sets the default name
+	}
+	if "`subcmd'"~="init" {
+		check_mname "`mname'"
+	}
 
 	*** get latest version
 	if "`subcmd'"=="update" {
@@ -59,22 +67,12 @@ program ddml, eclass
 	
 	*** describe model
 	if substr("`subcmd'",1,4)=="desc" {
-		local 0 "`restargs'"
-		syntax , [ mname(name)  * ]
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
-		}
-		check_mname "`mname'"
 		_ddml_describe `mname', `options'
 	}
 
 	*** save model
 	if "`subcmd'"=="save" {
 		local fname: word 2 of `mainargs'
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
-		}
-		check_mname "`mname'"
 		_ddml_save, mname(`mname') fname(`fname') `replace' `options'
 	}
 	
@@ -84,42 +82,26 @@ program ddml, eclass
 			di as err "error - syntax is 'using <destination filename>'"
 			exit 198
 		}
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
-		}
-		check_mname "`mname'"
 		_ddml_export, mname(`mname') fname(`using') `replace' `options'
 	}
 	
 	*** use model
 	if "`subcmd'"=="use" {
 		local fname: word 2 of `mainargs'
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
-		}
-		// no need to check name
 		_ddml_use, mname(`mname') fname(`fname') `replace' `options'
 	}
 
 	*** drop model
 	if "`subcmd'"=="drop" {
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
-		}
-		check_mname "`mname'"
 		_ddml_drop, mname(`mname')
 	}
 
 	*** copy model
 	if "`subcmd'"=="copy" {
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
-		}
 		if "`newmname'"=="" {
 			di as err "error - newmname(.) option required"
 			exit 198
 		}
-		check_mname "`mname'"
 		_ddml_copy, mname(`mname') newmname(`newmname')
 	}
 
@@ -130,10 +112,6 @@ program ddml, eclass
 		if strpos("`allmodels'","`model'")==0 {
 			di as err "no or wrong model specified." 
 			exit 198
-		}
-
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
 		}
 
 		// distinct model: no-LIE optimal IV
@@ -154,10 +132,6 @@ program ddml, eclass
 	
 	*** set sample, foldvar, etc.
 	if "`subcmd'"=="sample" {
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
-		}
-		check_mname "`mname'"
 		_ddml_sample `if' `in' , mname(`mname') `options'
 	}
 
@@ -168,10 +142,6 @@ program ddml, eclass
 
 		** check that ddml has been initialized
 		// to add
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
-		}
-		check_mname "`mname'"
 
 		** vtilde: use 2nd and 1st words of eq (estimator) + "_hat" as the default
 		if "`gen'"=="" {
@@ -263,14 +233,6 @@ program ddml, eclass
 	*** cross-fitting
 	if "`subcmd'" =="crossfit" {
 
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
-		}
-		check_mname "`mname'"
-		
-		// why is this needed?
-		mata: st_global("r(model)",`mname'.model)
-		
 		// crossfit
 		_ddml_crossfit, `options' mname(`mname') 
 		
@@ -278,11 +240,6 @@ program ddml, eclass
 
 	*** estimate
 	if "`subcmd'" =="estimate" {
-		if "`mname'"=="" {
-			local mname m0 // sets the default name
-		}
-		
-		check_mname "`mname'"
 				
 		mata: st_global("r(model)",`mname'.model)
 

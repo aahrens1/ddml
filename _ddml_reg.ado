@@ -210,7 +210,7 @@ program define _ddml_reg, eclass
 			if `m'==1 {
 				mata: st_local("depvar",`B'.get(("depvar","post")))
 				// retrieve locals
-				foreach obj in title y d dh z yname dnames vce vcetype {
+				foreach obj in y d dh z yname dnames vce vcetype {
 					mata: st_local("`obj'",`B'.get(("`obj'","local")))
 				}
 			}
