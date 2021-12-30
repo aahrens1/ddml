@@ -256,7 +256,12 @@ program ddml, eclass
 							subcmd(`subcmd')	///
 							posof(`posof')		///
 							estring(`eqn')		///
-							cmdname(`cmdname')	
+							cmdname(`cmdname')
+		
+		if `posof' {
+			di as text "Replacing existing learner `gen'... "
+		}
+		di as text "Learner `gen' added successfully."
 	}
 
 	*** cross-fitting
