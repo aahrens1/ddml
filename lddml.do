@@ -26,7 +26,6 @@ struct eStruct {
 	real matrix						vtlist		// list of orthogonalized (learner) variables
 	string scalar					shortstack	// name of shortstack variable
 	real scalar						nlearners	// number of learners
-	real scalar						nreps		// number of resamplings
 	real scalar						lieflag		// =1 if LIE spec with two estimation strings etc.
 	class AssociativeArray scalar	lrnAA		// pointer to AssociativeArray with all learners //
 												// (keys=vtilde,object)
@@ -45,7 +44,6 @@ struct eStruct init_eStruct()
 	d.vtlist		= J(1,0,"")
 	d.shortstack	= ""
 	d.nlearners		= 0
-	d.nreps			= 0
 	d.lieflag		= 0
 	
 	(d.lrnAA).reinit("string",2)
@@ -60,6 +58,7 @@ struct eStruct init_eStruct()
 void clear_equation_results(struct eStruct e)
 {
 	(e.resAA).reinit("string",3)
+	e.shortstack	= ""
 }
 
 // ddml model structure

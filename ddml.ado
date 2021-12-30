@@ -128,15 +128,14 @@ program ddml, eclass
 		qui gen byte `mname'_sample = 1
 		// fill by hand
 		mata: `mname'.model			= "`model'"
-		// initialize with default fold var, kfolds, number of resamplings, shortstack
+		// initialize with default fold var, kfolds, number of resamplings
 		_ddml_sample `if' `in' , mname(`mname') `options'
 	}
 	
 	*** reinitialize = drop crossfit and estimation results
 	if "`subcmd'"=="reinit" {
-		
 		mata: clear_model_results(`mname')
-		// update fold vars, kfolds, number of resamplings, shortstack
+		// update fold vars, kfolds, number of resamplings
 		_ddml_sample `if' `in' , mname(`mname') `options'
 	}
 	
@@ -258,10 +257,6 @@ program ddml, eclass
 							estring(`eqn')		///
 							cmdname(`cmdname')
 		
-		if `posof' {
-			di as text "Replacing existing learner `gen'... "
-		}
-		di as text "Learner `gen' added successfully."
 	}
 
 	*** cross-fitting
@@ -293,11 +288,6 @@ program ddml, eclass
 			_ddml_estimate_linear `mname', `options'
 		}
 		
-		// not yet updated
-		/*
-		_ddml_ereturn, mname(`mname')
-		*/
-
 	}
 
 end
@@ -352,11 +342,6 @@ program define add_eqn_to_model, rclass
 		// vname new to model so need a new eqn struct for it
 		// mata: `eqn' = init_eStruct()
 		mata: `eqn'.vname = "`vname'"
-		// if shortstacking, add (default) shorstack varname
-		mata: st_local("ssflag",strofreal(`mname'.ssflag))
-		if `ssflag' {
-			mata: `eqn'.shortstack = "`vname'_ss"
-		}
 	}
 	else {
 		// fetch existing eqn struct from model
@@ -365,11 +350,17 @@ program define add_eqn_to_model, rclass
 	
 	// add vtilde to vtlist if not already there
 	mata: st_local("vtlist",invtokens(`eqn'.vtlist))
-	local vtlist `vtlist' `vtilde'
-	local vtlist : list uniq vtlist
-	// in two steps, to accommodate singleton lists (which are otherwise string scalars and not matrices
-	mata: `t' = tokens("`vtlist'")
-	mata: `eqn'.vtlist	= `t'
+	local posof_vt : list posof "`vtilde'" in vtlist
+	if `posof_vt' {
+		di as text "Replacing existing learner `vtilde'..."
+	}
+	else {
+		local vtlist `vtlist' `vtilde'
+		local vtlist : list uniq vtlist		// should be unnecessary
+		// in two steps, to accommodate singleton lists (which are otherwise string scalars and not matrices
+		mata: `t' = tokens("`vtlist'")
+		mata: `eqn'.vtlist	= `t'
+	}
 	
 	// used below with syntax command
 	local 0 `"`estring'"'
@@ -411,6 +402,8 @@ program define add_eqn_to_model, rclass
 			mata: `mname'.nameZ = (`mname'.nameZ, `t')			
 		}
 	}
+	
+	di as text "Learner `gen' added successfully."
 	
 	// no longer needed so clear from Mata
 	cap mata: mata drop `t'

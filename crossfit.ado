@@ -122,9 +122,6 @@ program define crossfit, rclass sortpreserve
 			local fidlist `fidlist' `fid'
 		}
 	}
-	// insert reps on eqn struct
-	mata: `eqn_info'.nreps = `reps'
-	
 	
 	*** syntax
 	if `ssflag' & `nlearners'==1 {

@@ -17,6 +17,7 @@ program _ddml_crossfit, eclass sortpreserve
 							debug					/// 
 							Robust					///
 							mname(name)				///
+							shortstack				///
 							Verbose 				///
 							]
 
@@ -42,8 +43,20 @@ program _ddml_crossfit, eclass sortpreserve
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
 	local touse `mname'_sample
-	di as text "Model: `model'"
 	
+	// set shortstack indictor on model struct
+	if "`shortstack'" ~= "" {
+		if ~(`reps' > 1) {
+			di as err "warning - shortstack option ignored - reps must be > 1"
+			// clear macro
+			local shortstack
+		}
+		else {
+			mata: `mname'.ssflag = 1
+		}
+	}
+	
+	di as text "Model: `model'"
 	// fold IDs
 	forvalues m=1/`reps' {
 		local fidlist `fidlist' `mname'_fid_`m'
@@ -102,7 +115,14 @@ program _ddml_crossfit, eclass sortpreserve
 			local treatvar
 			local resid resid
 		}
-		mata: st_local("ssname",`eqn'.shortstack)
+		if "`shortstack'"~="" {
+			local ssname `nameY'_ss
+			mata: `eqn'.shortstack = "`ssname'"
+		}
+		else {
+			// clear local
+			local ssname		
+		}
 		if ("`model'"=="partial") di as text "Cross-fitting E[Y|X] equation: `nameY'"
 		if ("`model'"=="ivhd"|"`model'"=="late") di as text "Cross-fitting E[Y|X,Z] equation: `nameY'"
 		if ("`model'"=="interactive") di as text "Cross-fitting E[Y|X,D] equation: `nameY'"
@@ -127,7 +147,14 @@ program _ddml_crossfit, eclass sortpreserve
 			}
 			foreach var of varlist `nameD' {
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
-				mata: st_local("ssname",`eqn'.shortstack)
+				if "`shortstack'"~="" {
+					local ssname `var'_ss
+					mata: `eqn'.shortstack = "`ssname'"
+				}
+				else {
+					// clear local
+					local ssname		
+				}
 				if ("`model'"=="partial") di as text "Cross-fitting E[D|X] equation: `var'"
 				if ("`model'"=="ivhd"|"`model'"=="late") di as text "Cross-fitting E[D|X,Z] equation: `var'"
 				if ("`model'"=="interactive"|"`model'"=="iv") di as text "Cross-fitting E[D|X] equation: `var'"
@@ -145,7 +172,14 @@ program _ddml_crossfit, eclass sortpreserve
 		if `numeqnZ' {
 			foreach var of varlist `nameZ' {
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
-				mata: st_local("ssname",`eqn'.shortstack)
+				if "`shortstack'"~="" {
+					local ssname `var'_ss
+					mata: `eqn'.shortstack = "`ssname'"
+				}
+				else {
+					// clear local
+					local ssname		
+				}
 				di as text "Cross-fitting E[Z|X]: `var'"
 				// All learners for each Z eqn
 				crossfit if `touse',						///

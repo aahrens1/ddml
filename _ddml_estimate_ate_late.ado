@@ -16,9 +16,19 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								debug			///
 								* ]
 	
+	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
+	mata: st_local("ssflag",strofreal(`mname'.ssflag))
+	
+	// model needs to be estimated
+	local estflag = "`resultsonly'"==""
+	
 	// if post not specified, post optimal model
 	if "`post'"=="" {
 		local post "opt"
+	}
+	if "`post'"=="shortstack" & ~`ssflag' {
+		di as err "error - no shortstack crossfit estimates available to post"
+		exit 198
 	}
 	// if rep not specified, default is rep=1
 	if "`rep'"=="" {
@@ -37,8 +47,10 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			exit 198
 		}
 	}
-	// model needs to be estimated
-	local estflag = "`resultsonly'"==""
+	if (`crossfitted'==0) {
+		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
+		exit 198
+	}
 	// opt + mean/median not currently supported
 	if "`post'"=="opt" & real("`rep'")==. {
 		di as err "error - post(opt) model not yet avaiable with mean/median"
@@ -53,7 +65,6 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
-	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 	
 	local ateflag=("`model'"=="interactive")
@@ -69,14 +80,6 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		di as err "error - model `model' supports only a single instrument"
 		exit 198
 	}
-	if (`crossfitted'==0) {
-		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
-		exit 198
-	}
-	
-	// ssflag is a model characteristic but is well-defined only if every equation has multiple learners.
-	// will need to check this...
-	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 	
 	************* ESTIMATE ************
 	
@@ -282,10 +285,12 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				qui _ddml_ate_late, mname(`mname') spec(`i') medmean(md) title(`title')
 			}
 			// shortstack
-			local title "Shortstack DDML model (mean)"
-			qui _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title')
-			local title "Shortstack DDML model (median)"
-			qui _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title')
+			if `ssflag' {
+				local title "Shortstack DDML model (mean)"
+				qui _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title')
+				local title "Shortstack DDML model (median)"
+				qui _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title')
+			}
 		}
 		
 		// estimation complete
@@ -299,20 +304,12 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 
 	if "`show'"=="all" {
 		forvalues m=1/`nreps' {
-			// text used in output below
-			if `nreps'>1 {
-				local stext " (sample=`m')"
-			}
 			// all combos including optimal model
 			forvalues i=1/`ncombos' {
 				di
 				_ddml_ate_late, mname(`mname') spec(`i') rep(`m') replay
 				di
 			}
-			// shortstack
-			di
-			_ddml_ate_late, mname(`mname') spec(ss) rep(`m') replay
-			di
 		}
 	}
 		
@@ -323,15 +320,17 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			di
 		}
 	}
-		
-	if "`show'"=="shortstack" | "`show'"=="all" {
-		forvalues m=1/`nreps' {
-			di
-			_ddml_ate_late, mname(`mname') spec(ss) rep(`m') replay
-			di
+	
+	if `ssflag' {
+		if "`show'"=="shortstack" | "`show'"=="all" {
+			forvalues m=1/`nreps' {
+				di
+				_ddml_ate_late, mname(`mname') spec(ss) rep(`m') replay
+				di
+			}
 		}
 	}
-
+	
 	di
 	di as text "Summary DDML estimation results:"
 	di as text "spec  r" %14s "Y0 learner" _c
@@ -415,36 +414,32 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		foreach medmean in mn md {
 			forvalues i=1/`ncombos' {
 				qui _ddml_ate_late, mname(`mname') spec(`i') rep(`medmean') replay
-				mata: st_local("yt",abbrev(`nmat'[`i',1],13))
-				mata: st_local("dtlist",invtokens(abbrev(tokens(`nmat'[`i',2]),13)))
-				mata: st_local("ztlist",`nmat'[`i',3])
-				if "`ztlist'"~="" {
-					mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),13)))
-				}
+				mata: st_local("yt0",abbrev(`nmat'[`i',1],13))
+				mata: st_local("yt1",abbrev(`nmat'[`i',2],13))
 				di " " _c
 				local specrep `: di %3.0f `i' %3s "`medmean'"'
 				// pad out to 6 spaces
 				local specrep = (6-length("`specrep'"))*" " + "`specrep'"
 				local rcmd stata _ddml_ate_late, mname(`mname') spec(`i') rep(`medmean') replay
 				di %6s "{`rcmd':`specrep'}" _c
-				di %14s "`yt'" _c
-				forvalues j=1/`numeqnD' {
-					local vt : word `j' of `dtlist'
-					di %14s "`vt'" _c
-					di %10.3f el(e(b),1,`j') _c
-					local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
-					local pse (`: di %6.3f `se'')
-					di %10s "`pse'" _c
+				di %14s "`yt0'" _c
+				di %14s "`yt1'" _c
+				if `ateflag' {
+					mata: st_local("dt",`nmat'[`i',3])
+					di %14s "`dt'" _c
 				}
-				forvalues j=1/`numeqnZ' {
-					local vt : word `j' of `ztlist'
-					di %14s "`vt'" _c
+				else {
+					mata: st_local("dt0",abbrev(`nmat'[`i',3],13))
+					mata: st_local("dt1",abbrev(`nmat'[`i',4],13))
+					di %14s "`dt0'" _c
+					di %14s "`dt1'" _c
 				}
-				if "`model'"=="ivhd" {
-					forvalues j=1/`numeqnD' {
-						local vt : word `j' of `ztlist'
-						di %14s "`vt'" _c
-					}
+				di %10.3f el(e(b),1,1) _c
+				local pse (`: di %6.3f sqrt(el(e(V),1,1))')
+				di %10s "`pse'" _c
+				if ~`ateflag' {
+					mata: st_local("zt",abbrev(`nmat'[`i',5],13))
+					di %14s "`zt'" _c
 				}
 				di
 			}
@@ -456,18 +451,15 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				local rcmd stata _ddml_ate_late, mname(`mname') spec(ss) rep(`medmean') replay
 				di %6s "{`rcmd':`specrep'}" _c
 				di %14s "[shortstack]" _c
-				forvalues j=1/`numeqnD' {
+				di %14s "[ss]" _c
+				di %14s "[ss]" _c
+				if ~`ateflag' {
 					di %14s "[ss]" _c
-					di %10.3f el(e(b),1,`j') _c
-					local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
-					di %10s "`pse'" _c
 				}
-				if "`model'"=="ivhd" {
-					forvalues j=1/`numeqnD' {
-						di %14s "[ss]" _c
-					}
-				}
-				forvalues j=1/`numeqnZ' {
+				di %10.3f el(e(b),1,1) _c
+				local pse (`: di %6.3f sqrt(el(e(V),1,1))')
+				di %10s "`pse'" _c
+				if ~`ateflag' {
 					di %14s "[ss]" _c
 				}
 				di

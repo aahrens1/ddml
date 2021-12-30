@@ -11,9 +11,19 @@ program _ddml_estimate_linear, eclass sortpreserve
 								RESULTSonly		/// model has been estimated, just display results
 								* ]
 	
+	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
+	mata: st_local("ssflag",strofreal(`mname'.ssflag))
+	
+	// model needs to be estimated
+	local estflag = "`resultsonly'"==""
+	
 	// if post not specified, post optimal model
 	if "`post'"=="" {
 		local post "opt"
+	}
+	if "`post'"=="shortstack" & ~`ssflag' {
+		di as err "error - no shortstack crossfit estimates available to post"
+		exit 198
 	}
 	// if rep not specified, default is rep=1
 	if "`rep'"=="" {
@@ -32,8 +42,10 @@ program _ddml_estimate_linear, eclass sortpreserve
 			exit 198
 		}
 	}
-	// model needs to be estimated
-	local estflag = "`resultsonly'"==""
+	if ~`crossfitted' {
+		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
+		exit 198
+	}
 	// opt + mean/median not currently supported
 	if "`post'"=="opt" & real("`rep'")==. {
 		di as err "error - post(opt) model not yet avaiable with mean/median"
@@ -49,20 +61,10 @@ program _ddml_estimate_linear, eclass sortpreserve
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
-	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 
-	if (`crossfitted'==0) {
-		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
-		exit 198
-	}
-	
-	// ssflag is a model characteristic but is well-defined only if every equation has multiple learners.
-	// will need to check this...
-	mata: st_local("ssflag",strofreal(`mname'.ssflag))
-	
 	
 	************* ESTIMATE ************
 	
@@ -265,10 +267,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 				qui _ddml_reg, mname(`mname') spec(`i') medmean(md) title(`title')
 			}
 			// shortstack
-			local title "Shortstack DDML model (mean)"
-			qui _ddml_reg, mname(`mname') spec(ss) medmean(mn) title(`title')
-			local title "Shortstack DDML model (median)"
-			qui _ddml_reg, mname(`mname') spec(ss) medmean(md) title(`title')
+			if `ssflag' {
+				local title "Shortstack DDML model (mean)"
+				qui _ddml_reg, mname(`mname') spec(ss) medmean(mn) title(`title')
+				local title "Shortstack DDML model (median)"
+				qui _ddml_reg, mname(`mname') spec(ss) medmean(md) title(`title')
+			}
 		}
 		
 		// estimation complete
@@ -288,10 +292,6 @@ program _ddml_estimate_linear, eclass sortpreserve
 				_ddml_reg, mname(`mname') spec(`i') rep(`m') replay
 				di
 			}
-			// shortstack
-			di
-			_ddml_reg, mname(`mname') spec(ss) rep(`m') replay
-			di
 		}
 	}
 		
@@ -302,12 +302,14 @@ program _ddml_estimate_linear, eclass sortpreserve
 			di
 		}
 	}
-		
-	if "`show'"=="shortstack" | "`show'"=="all" {
-		forvalues m=1/`nreps' {
-			di
-			_ddml_reg, mname(`mname') spec(ss) rep(`m') replay
-			di
+	
+	if `ssflag' {
+		if "`show'"=="shortstack" | "`show'"=="all" {
+			forvalues m=1/`nreps' {
+				di
+				_ddml_reg, mname(`mname') spec(ss) rep(`m') replay
+				di
+			}
 		}
 	}
 	
@@ -417,7 +419,6 @@ program _ddml_estimate_linear, eclass sortpreserve
 					di %14s "`vt'" _c
 					di %10.3f el(e(b),1,`j') _c
 					local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
-					local pse (`: di %6.3f `se'')
 					di %10s "`pse'" _c
 				}
 				forvalues j=1/`numeqnZ' {
