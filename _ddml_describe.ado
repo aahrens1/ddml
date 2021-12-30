@@ -73,7 +73,6 @@ program define _ddml_describe
 		di as text %~12s "`N'" _c
 	}
 	di
-	di
 	
 	// basic info about equations and learners - always displayed
 	di as text "Dependent variable (Y): `nameY'"
@@ -131,7 +130,8 @@ program define _ddml_describe
 	
 	// estimate results in detail
 	if `eflag' & ("`model'"=="interactive" | "`model'"=="late") {
-	
+		di
+		_ddml_estimate_ate_late `mname', `options' results
 	}
 	else if `eflag' {
 		di

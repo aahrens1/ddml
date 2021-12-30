@@ -11,6 +11,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								clear			/// deletes all tilde-variables (to be implemented)
 								post(string)	/// specification to post/display
 								REP(integer 1)	/// resampling iteration to post/display
+								RESULTSonly		/// model has been estimated, just display results
 								avplot			///
 								debug			///
 								* ]
@@ -18,6 +19,30 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	// if post not specified, post optimal model
 	if "`post'"=="" {
 		local post "opt"
+	}
+	// if rep not specified, default is rep=1
+	if "`rep'"=="" {
+		local rep 1
+	}
+	if real("`rep'")==. {
+		// rep is an integer or mn/md
+		if "`rep'"~="mn" & "`rep'"~="md" {
+			di as err "error - illegal rep(.) option `rep'"
+			exit 198
+		}
+	}
+	else {
+		if (real("`rep'")<1) | (real("`rep'")~=int(real("`rep'"))) {
+			di as err "error - illegal rep(.) option `rep'"
+			exit 198
+		}
+	}
+	// model needs to be estimated
+	local estflag = "`resultsonly'"==""
+	// opt + mean/median not currently supported
+	if "`post'"=="opt" & real("`rep'")==. {
+		di as err "error - post(opt) model not yet avaiable with mean/median"
+		exit 198
 	}
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
@@ -53,195 +78,222 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	// will need to check this...
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 	
-	// ATE and LATE both use Y0/Y1
-	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
-	mata: st_local("Ytilde",invtokens(`eqn'.vtlist))
-	// ATE and LATE both have a D eqn
-	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameD)
-	mata: st_local("Dtilde",invtokens(`eqn'.vtlist))
-	if `ateflag' {
-		// ATE has a single Dtilde
-		_ddml_allcombos `Ytilde'- `Ytilde' - `Dtilde',		///
-			addprefix("")									///
-			`debug'  
-		local Dlist `r(colstr3)'
-	}
-	else {
-		// LATE has a D0/D1 and a single Z
-		mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameZ)
-		mata: st_local("Ztilde",invtokens(`eqn'.vtlist))
-		_ddml_allcombos `Ytilde' - `Ytilde' - `Dtilde' - `Dtilde' - `Ztilde' ,	///
-			`debug'																///
-			addprefix("")
-		local d0list `r(colstr3)'
-		local d1list `r(colstr4)'
-		local Zlist `r(colstr5)' 
-	}
-	local y0list `r(colstr1)'
-	local y1list `r(colstr2)'
-	local ncombos = r(ncombos)
-	local tokenlen = `ncombos'*2 -1
-		
-	tempname nmat bmat semat
-	mata: `nmat' = J(`ncombos',5,"")
-	mata: `bmat' = J(`ncombos'*`nreps',`numeqnD',.)
-	mata: `semat' = J(`ncombos'*`nreps',`numeqnD',.)
+	************* ESTIMATE ************
 	
-	// simplest if put into a Mata string matrix
-	tokenize `y0list' , parse("-")
-	forvalues i=1/`ncombos' {
-		local idx = 2*`i'-1
-		mata: `nmat'[`i',1] = strtrim("``idx''")
-	}
-	tokenize `y1list' , parse("-")
-	forvalues i=1/`ncombos' {
-		local idx = 2*`i'-1
-		mata: `nmat'[`i',2] = strtrim("``idx''")
-	}
-	if `ateflag' {
-		// ATE has a single D
-		tokenize `Dlist' , parse("-")
-		forvalues i=1/`ncombos' {
-			local idx = 2*`i'-1
-			mata: `nmat'[`i',3] = strtrim("``idx''")
+	// estimate or not
+	if ~`estflag' {
+		// model has already been estimated, so just recover ncombos macro
+		mata: st_local("ncombos", strofreal(`mname'.ncombos))
+		if `ncombos'==0 {
+			di as err "internal ddml error - model has not be estimated, no results to display"
+			exit 198
+		}
+		// recover matrices
+		tempname nmat bmat semat
+		mata: `nmat' = (`mname'.estAA).get(("nmat","all"))
+		mata: `bmat' = (`mname'.estAA).get(("bmat","all"))
+		mata: `semat' = (`mname'.estAA).get(("semat","all"))
+		// recover optimal specs
+		forvalues m=1/`nreps' {
+			mata: st_local("spec",(`mname'.estAA).get(("optspec","`m'")))
+			local optspec`m' = `spec'
 		}
 	}
 	else {
-		// LATE has D0/D1 and a single Z
-		tokenize `d0list' , parse("-")
-		forvalues i=1/`ncombos' {
-			local idx = 2*`i'-1
-			mata: `nmat'[`i',3] = strtrim("``idx''")
-		}
-		tokenize `d1list' , parse("-")
-		forvalues i=1/`ncombos' {
-			local idx = 2*`i'-1
-			mata: `nmat'[`i',4] = strtrim("``idx''")
-		}
-		tokenize `Zlist' , parse("-")
-		forvalues i=1/`ncombos' {
-			local idx = 2*`i'-1
-			mata: `nmat'[`i',5] = strtrim("``idx''")
-		}
-	}
-	
-	*** shortstack names
-	if `ssflag' {
-		// code works for both ATE and LATE
-		local Y0ss	`nameY'_ss
-		local Y1ss	`nameY'_ss
-		local Dss	`nameD'_ss
-		local D0ss	`nameD'_ss
-		local D1ss	`nameD'_ss
-		local Zss	`nameZ'_ss
-	}
-	
-	forvalues m=1/`nreps' {
-		
-		// reset locals
-		local Y0opt
-		local Y1opt
-		local Dopt
-		local D0opt
-		local D1opt
-		local Zopt
-		
-		*** retrieve best model
-		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
-		mata: st_local("Y0opt",return_learner_item(`eqn',"opt0","`m'"))
-		mata: st_local("Y1opt",return_learner_item(`eqn',"opt1","`m'"))
-		mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
+		// ATE and LATE both use Y0/Y1
+		mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
+		mata: st_local("Ytilde",invtokens(`eqn'.vtlist))
+		// ATE and LATE both have a D eqn
+		mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameD)
+		mata: st_local("Dtilde",invtokens(`eqn'.vtlist))
 		if `ateflag' {
-			mata: st_local("Dopt",return_learner_item(`eqn',"opt","`m'"))
+			// ATE has a single Dtilde
+			_ddml_allcombos `Ytilde'- `Ytilde' - `Dtilde',		///
+				addprefix("")									///
+				`debug'  
+			local Dlist `r(colstr3)'
 		}
 		else {
-			mata: st_local("D0opt",return_learner_item(`eqn',"opt0","`m'"))
-			mata: st_local("D1opt",return_learner_item(`eqn',"opt1","`m'"))
-			mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
-			mata: st_local("Zopt",return_learner_item(`eqn',"opt","`m'"))
+			// LATE has a D0/D1 and a single Z
+			mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameZ)
+			mata: st_local("Ztilde",invtokens(`eqn'.vtlist))
+			_ddml_allcombos `Ytilde' - `Ytilde' - `Dtilde' - `Dtilde' - `Ztilde' ,	///
+				`debug'																///
+				addprefix("")
+			local d0list `r(colstr3)'
+			local d1list `r(colstr4)'
+			local Zlist `r(colstr5)' 
+		}
+		local y0list `r(colstr1)'
+		local y1list `r(colstr2)'
+		local ncombos = r(ncombos)
+		local tokenlen = `ncombos'*2 -1
+			
+		tempname nmat bmat semat
+		mata: `nmat' = J(`ncombos',5,"")
+		mata: `bmat' = J(`ncombos'*`nreps',`numeqnD',.)
+		mata: `semat' = J(`ncombos'*`nreps',`numeqnD',.)
+		
+		// simplest if put into a Mata string matrix
+		tokenize `y0list' , parse("-")
+		forvalues i=1/`ncombos' {
+			local idx = 2*`i'-1
+			mata: `nmat'[`i',1] = strtrim("``idx''")
+		}
+		tokenize `y1list' , parse("-")
+		forvalues i=1/`ncombos' {
+			local idx = 2*`i'-1
+			mata: `nmat'[`i',2] = strtrim("``idx''")
+		}
+		if `ateflag' {
+			// ATE has a single D
+			tokenize `Dlist' , parse("-")
+			forvalues i=1/`ncombos' {
+				local idx = 2*`i'-1
+				mata: `nmat'[`i',3] = strtrim("``idx''")
+			}
+		}
+		else {
+			// LATE has D0/D1 and a single Z
+			tokenize `d0list' , parse("-")
+			forvalues i=1/`ncombos' {
+				local idx = 2*`i'-1
+				mata: `nmat'[`i',3] = strtrim("``idx''")
+			}
+			tokenize `d1list' , parse("-")
+			forvalues i=1/`ncombos' {
+				local idx = 2*`i'-1
+				mata: `nmat'[`i',4] = strtrim("``idx''")
+			}
+			tokenize `Zlist' , parse("-")
+			forvalues i=1/`ncombos' {
+				local idx = 2*`i'-1
+				mata: `nmat'[`i',5] = strtrim("``idx''")
+			}
 		}
 		
-		// text used in output below
-		if `nreps'>1 {
-			local stext " (sample=`m')"
+		*** shortstack names
+		if `ssflag' {
+			// code works for both ATE and LATE
+			local Y0ss	`nameY'_ss
+			local Y1ss	`nameY'_ss
+			local Dss	`nameD'_ss
+			local D0ss	`nameD'_ss
+			local D1ss	`nameD'_ss
+			local Zss	`nameZ'_ss
 		}
 		
-		forvalues i = 1/`ncombos' {
-			mata: st_local("y0",`nmat'[`i',1])
-			mata: st_local("y1",`nmat'[`i',2])
+		forvalues m=1/`nreps' {
+			
+			// reset locals
+			local Y0opt
+			local Y1opt
+			local Dopt
+			local D0opt
+			local D1opt
+			local Zopt
+			
+			*** retrieve best model
+			mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+			mata: st_local("Y0opt",return_learner_item(`eqn',"opt0","`m'"))
+			mata: st_local("Y1opt",return_learner_item(`eqn',"opt1","`m'"))
+			mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
 			if `ateflag' {
-				mata: st_local("d",`nmat'[`i',3])
+				mata: st_local("Dopt",return_learner_item(`eqn',"opt","`m'"))
 			}
 			else {
-				mata: st_local("d0",`nmat'[`i',3])
-				mata: st_local("d1",`nmat'[`i',4])
-				mata: st_local("z",`nmat'[`i',5])
+				mata: st_local("D0opt",return_learner_item(`eqn',"opt0","`m'"))
+				mata: st_local("D1opt",return_learner_item(`eqn',"opt1","`m'"))
+				mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
+				mata: st_local("Zopt",return_learner_item(`eqn',"opt","`m'"))
 			}
-			// check if opt for this resample
-			// code works for both ATE and LATE
-			local isopt
-			local isY0opt	: list Y0opt == y0
-			local isY1opt	: list Y1opt == y1
-			local isDopt	: list Dopt == d
-			local isD0opt	: list D0opt == d0
-			local isD1opt	: list D1opt == d1
-			local isZopt	: list Zopt == z
-			local title "DDML model, specification `i'`stext'"
-			if `isY0opt' & `isY1opt' & `isDopt' & `isD0opt' & `isD1opt' & `isZopt' {
-				local optspec`m' = `i'
-				local isopt *
-				local title Optimal `title'
+			
+			// text used in output below
+			if `nreps'>1 {
+				local stext " (sample=`m')"
 			}
-			// code works for both ATE and LATE
-			qui _ddml_ate_late if `mname'_sample_`m',			///
-				yvar(`nameY') dvar(`nameD') zvar(`nameZ')		///
-				y0tilde(`y0') y1tilde(`y1')						///
-				dtilde(`d') d0tilde(`d0') d1tilde(`d1')			///
-				ztilde(`z')										///
-				spec(`i') rep(`m')								///
-				mname(`mname')									///
-				title(`title')
 			
-			mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
-			mata: `semat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(semat)")
+			forvalues i = 1/`ncombos' {
+				mata: st_local("y0",`nmat'[`i',1])
+				mata: st_local("y1",`nmat'[`i',2])
+				if `ateflag' {
+					mata: st_local("d",`nmat'[`i',3])
+				}
+				else {
+					mata: st_local("d0",`nmat'[`i',3])
+					mata: st_local("d1",`nmat'[`i',4])
+					mata: st_local("z",`nmat'[`i',5])
+				}
+				// check if opt for this resample
+				// code works for both ATE and LATE
+				local isopt
+				local isY0opt	: list Y0opt == y0
+				local isY1opt	: list Y1opt == y1
+				local isDopt	: list Dopt == d
+				local isD0opt	: list D0opt == d0
+				local isD1opt	: list D1opt == d1
+				local isZopt	: list Zopt == z
+				local title "DDML model, specification `i'`stext'"
+				if `isY0opt' & `isY1opt' & `isDopt' & `isD0opt' & `isD1opt' & `isZopt' {
+					local optspec`m' = `i'
+					local isopt *
+					local title Optimal `title'
+					// save in AA
+					mata: (`mname'.estAA).put(("optspec","`m'"),"`i'")
+				}
+				// code works for both ATE and LATE
+				qui _ddml_ate_late if `mname'_sample_`m',			///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')		///
+					y0tilde(`y0') y1tilde(`y1')						///
+					dtilde(`d') d0tilde(`d0') d1tilde(`d1')			///
+					ztilde(`z')										///
+					spec(`i') rep(`m')								///
+					mname(`mname')									///
+					title(`title')
+				
+				mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
+				mata: `semat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(semat)")
+				
+			}
 			
+			if `ssflag' {
+				
+				// code works for both ATE and LATE
+				local title "Shortstack DDML model`stext'"
+				qui _ddml_ate_late if `mname'_sample_`m',			///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')		///
+					y0tilde(`Y0ss') y1tilde(`Y1ss')					///
+					dtilde(`Dss') d0tilde(`D0ss') d1tilde(`D1ss')	///
+					ztilde(`Zss')									///
+					spec(ss) rep(`m')								///
+					mname(`mname')									///
+					title(`title')
+			
+			}
 		}
 		
-		if `ssflag' {
-			
-			// code works for both ATE and LATE
-			local title "Shortstack DDML model`stext'"
-			qui _ddml_ate_late if `mname'_sample_`m',			///
-				yvar(`nameY') dvar(`nameD') zvar(`nameZ')		///
-				y0tilde(`Y0ss') y1tilde(`Y1ss')					///
-				dtilde(`Dss') d0tilde(`D0ss') d1tilde(`D1ss')	///
-				ztilde(`Zss')									///
-				spec(ss) rep(`m')								///
-				mname(`mname')									///
-				title(`title')
+		// aggregate across resamplings
+		if `nreps' > 1 {
+			// numbered specifications
+			forvalues i = 1/`ncombos' {
+				local title "DDML model, specification `i' (mean)"
+				qui _ddml_ate_late, mname(`mname') spec(`i') medmean(mn) title(`title')
+				local title "DDML model, specification `i' (median)"
+				qui _ddml_ate_late, mname(`mname') spec(`i') medmean(md) title(`title')
+			}
+			// shortstack
+			local title "Shortstack DDML model (mean)"
+			qui _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title')
+			local title "Shortstack DDML model (median)"
+			qui _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title')
+		}
 		
-		}
+		// estimation complete
+		mata: `mname'.ncombos = `ncombos'
+		mata: (`mname'.estAA).put(("nmat","all"),`nmat')
+		mata: (`mname'.estAA).put(("bmat","all"),`bmat')
+		mata: (`mname'.estAA).put(("semat","all"),`semat')
 	}
-	
-	// aggregate across resamplings
-	if `nreps' > 1 {
-		// numbered specifications
-		forvalues i = 1/`ncombos' {
-			local title "DDML model, specification `i' (mean)"
-			qui _ddml_ate_late, mname(`mname') spec(`i') medmean(mn) title(`title')
-			local title "DDML model, specification `i' (median)"
-			qui _ddml_ate_late, mname(`mname') spec(`i') medmean(md) title(`title')
-		}
-		// shortstack
-		local title "Shortstack DDML model (mean)"
-		qui _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title')
-		local title "Shortstack DDML model (median)"
-		qui _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title')
-	}
-	
-	// estimation complete
-	mata: `mname'.ncombos = `ncombos'
-	
 	
 	************** REPORT RESULTS **************
 

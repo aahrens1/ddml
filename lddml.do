@@ -119,10 +119,15 @@ void clear_model_results(struct mStruct d)
 		for (i=1; i<=cols(eqnlist); i++) {
 			clear_equation_results((d.eqnAA).get(eqnlist[i]))
 		}
-		// also clear stored vtilde variables if any
+		
+		// also clear:
+		d.ncombos		= 0
+		d.crossfitted	= 0
+		d.ssflag		= 0
 		d.strDatavars	= ""
 		d.matDatavars	= J(0,0,.)
-		d.crossfitted	= 0
+		(d.estAA).reinit("string",2)
+		(d.estAA).notfound(NULL)
 	}
 }
 
