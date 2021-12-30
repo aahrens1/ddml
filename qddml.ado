@@ -42,6 +42,12 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		di "excluded instr = `exexog'"		
 	}
 
+	** check if pystacked is available
+	cap pystacked
+	if _rc == 199 {
+		local pystacked_avail = 0
+	}
+
 	if "`vverbose'"=="" local qui qui
 	if "`cmd'"=="" local cmd pystacked
 	if "`ycmd'"=="" local ycmd `cmd'
@@ -54,7 +60,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	local dhcmdoptions `dhcmdoptions' `cmdoptions'
 
 	**** syntax checks
-	if ("`model'"=="optimaliv") {
+	if ("`model'"=="ivhd") {
 		if "`dexog'"!="" {
 			di as error "no exogenous treatments allowed"
 			exit 198
@@ -115,18 +121,14 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	*** estimation
 	`qui' ddml init `model', `nolie' `shortstack' kfolds(`kfolds') reps(`reps') `tabfold'
 
-	if ("`model'"=="ivhd"&"`nolie'"!="") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
-		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dendog'): `dhcmd' {D} `xctrl', `dhcmdoptions' 
+	*** IV-HD
+	if ("`model'"=="ivhd") {
+		`qui' ddml E[Y|X,Z], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
+		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') gen(`dendog't): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
+		`qui' ddml E[D|X], mname(`mname') vname(`dendog') gen(`dendog't): `dhcmd' {D} `xctrl', `dhcmdoptions' 
 	} 
 
-	else if ("`model'"=="ivhd"&"`nolie'"=="") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
-		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions'
-		`qui' ddml E[D|X], mname(`mname') vname(`dendog'h): `dcmd' {D} `xctrl' , `dhcmdoptions' 
-	} 
-
+	*** IV 
 	else if ("`model'"=="iv") {
 		`qui' ddml E[Y|X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		local j = 1
@@ -141,12 +143,14 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		}
 	}
 
+	*** late / interactive IV
 	else if ("`model'"=="late") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
+		`qui' ddml E[Y|Z,X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml E[D|Z,X], mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
 		`qui' ddml E[Z|X], mname(`mname') vname(`exexog'): `zcmd' `exexog' `xctrl', `zcmdoptions' 
 	}
 
+	*** partial linear model
 	else if ("`model'"=="partial") {
 		`qui' ddml E[Y|X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		local j = 1
@@ -156,8 +160,9 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		}
 	}
 
+	*** interactive model
 	else if ("`model'"=="interactive") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml E[Y|D,X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		`qui' ddml E[D|X], mname(`mname') vname(`dexog'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
 	}	
 		

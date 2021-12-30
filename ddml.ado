@@ -46,7 +46,9 @@ program ddml, eclass
 	local restmainargs `*'
 	
 	// should perhaps make subcmd list all lower case (more forgiving) and replace `subcmd' with strlower("`subcmd'").
-	local allsubcmds	update describe save export use drop copy sample init yeq deq dheq zeq crossfit estimate E[Y|X] E[D|X] E[D|X,Z] E[Y|X,D] E[Z|X] E[Y|X,Z]
+	local alleqntypes E[Y|X] E[Y|X,D] E[Y|D,X] E[Y|X,Z] E[Y|Z,X] E[D|X] E[D|Z,X] E[D|X,Z] E[Z|X] yeq deq zeq dheq
+	local allsubcmds  update describe save export use drop copy sample init yeq deq dheq zeq crossfit estimate 
+	local allsubcmds `allsubcmds' `alleqntypes'
 	if strpos("`allsubcmds'","`subcmd'")==0 {
 		di as err "error - unknown subcommand `subcmd'"
 		exit 198
@@ -163,7 +165,6 @@ program ddml, eclass
 
 	*** add equation
 	// condition will be nonzero (true) if subcmd (2nd arg) appears anywhere in the list (first arg).
-	local alleqntypes E[Y|X] E[D|X] E[D|Z,X] E[D|X,Z] E[Y|X,D] E[Y|D,X] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq dheq
 	if strpos("`alleqntypes'","`subcmd'") {
 
 		** check that ddml has been initialized
@@ -203,7 +204,7 @@ program ddml, eclass
 			di as err "not allowed; `subcmd' not allowed with `model'"
 			exit 198
 		}
-		if ("`model'"=="ivhd"&strpos("E[D|Z,X] E[D|X,Z] E[Y|X,D] E[Y|D,X] yeq deq zeq dheq","`subcmd'")==0) {
+		if ("`model'"=="ivhd"&strpos("E[D|Z,X] E[D|X,Z] E[Y|X,Z] E[Y|Z,X] E[D|X] yeq deq zeq dheq","`subcmd'")==0) {
 			di as err "not allowed; `subcmd' not allowed with `model'"
 			exit 198
 		}
