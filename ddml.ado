@@ -145,25 +145,13 @@ program ddml, eclass
 	if "`subcmd'"=="sample" {
 		_ddml_sample `if' `in' , mname(`mname') `options'
 	}
-
+	
 	*** add equation
 	// condition will be nonzero (true) if subcmd (2nd arg) appears anywhere in the list (first arg).
 	if strpos("`alleqntypes'","`subcmd'") {
 
 		** check that ddml has been initialized
 		// to add
-
-		** vtilde: use 2nd and 1st words of eq (estimator) + "_hat" as the default
-		if "`gen'"=="" {
-			tokenize `"`eqn'"'
-			local gen `2'_`1'_hat
-		}
-
-		** vname: use 2nd word of eq (dep var) as the default 
-		if "`vname'"=="" {
-			tokenize `"`eqn'"'
-			local vname `2'
-		}
 
 		** check that equation is consistent with model
 		mata: st_local("model",`mname'.model)
@@ -198,6 +186,37 @@ program ddml, eclass
 		if "`subcmd'"=="E[D|X,Z]"|"`subcmd'"=="E[D|Z,X]" local subcmd deq
 		// di "`model'"
 		// di "`subcmd'"
+
+		** vtilde: use 2nd and 1st words of eq (estimator) as the default
+		if "`gen'"=="" {
+			if "`subcmd'"=="yeq" {
+				mata: st_local("counter",strofreal((`mname'.estAA).get(("ycounter","all"))))
+				mata: (`mname'.estAA).put(("ycounter","all"),`counter'+1)
+				local prefix Y`counter'
+			}
+			else if "`subcmd'"=="deq" {
+				mata: st_local("counter",strofreal((`mname'.estAA).get(("dcounter","all"))))
+				mata: (`mname'.estAA).put(("dcounter","all"),`counter'+1)
+				local prefix D`counter'
+			}
+			else if "`subcmd'"=="zeq" {
+				mata: st_local("counter",strofreal((`mname'.estAA).get(("zcounter","all"))))
+				mata: (`mname'.estAA).put(("zcounter","all"),`counter'+1)
+				local prefix Z`counter'
+			}
+			else {
+				di as err "ddml equation error - subcmd `subcmd'"
+				exit 198
+			}
+			tokenize `"`eqn'"'
+			local gen `prefix'_`1'
+		}
+
+		** vname: use 2nd word of eq (dep var) as the default 
+		if "`vname'"=="" {
+			tokenize `"`eqn'"'
+			local vname `2'
+		}
 
 		** check that dep var in eqn isn't already used for some other eqn
 		** also set flag for whether dep var is new

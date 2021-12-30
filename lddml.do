@@ -104,6 +104,11 @@ struct mStruct init_mStruct()
 	(d.estAA).reinit("string",2)
 	(d.estAA).notfound(NULL)
 	
+	// initialize counters used for default learner names
+	(d.estAA).put(("ycounter","all"),1)
+	(d.estAA).put(("dcounter","all"),1)
+	(d.estAA).put(("zcounter","all"),1)
+	
 	return(d)
 }
 
