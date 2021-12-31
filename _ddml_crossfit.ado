@@ -156,7 +156,8 @@ program _ddml_crossfit, eclass sortpreserve
 					local ssname		
 				}
 				if ("`model'"=="partial") di as text "Cross-fitting E[D|X] equation: `var'"
-				if ("`model'"=="ivhd"|"`model'"=="late") di as text "Cross-fitting E[D|X,Z] equation: `var'"
+				if ("`model'"=="late") di as text "Cross-fitting E[D|X,Z] equation: `var'"
+				if ("`model'"=="ivhd") di as text "Cross-fitting E[D|X,Z] and E[D|X] equation: `var'"
 				if ("`model'"=="interactive"|"`model'"=="iv") di as text "Cross-fitting E[D|X] equation: `var'"
 				// All learners for each D eqn
 				crossfit if `touse',						///
