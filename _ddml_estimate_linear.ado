@@ -199,8 +199,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 						local dh : word `j' of `z'
 						local dt : word `j' of `d'
 						local dd : word `j' of `nameD'
-						qui gen double `zvar`j'' = `dh'_`m'-`dt'_`m' // E[D|ZX]-E[D|X] = instrument
-						qui gen double `dx`j'' = `dd'-`dt'_`m' // D-E[D|X] = endogenous regressor
+						qui gen double `zvar`j'' = `dt'_`m'-`dh'_`m' // E[D|ZX]-E[D|X] = instrument
+						qui gen double `dx`j'' = `dd'-`dh'_`m' // D-E[D|X] = endogenous regressor
 						local dlist `dlist' `dx`j''
 						local zlist `zlist' `zvar`j''
 					}
@@ -231,8 +231,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 						local dh : word `j' of `DHss'
 						local dt : word `j' of `Dss'
 						local dd : word `j' of `nameD'
-						qui gen double `zvar`j'' = `dh'_`m'-`dt'_`m' // E[D|ZX]-E[D|X] = instrument
-						qui gen double `dx`j'' = `dd'-`dt'_`m' // D-E[D|X] = endogenous regressor
+						qui gen double `zvar`j'' = `dt'_`m'-`dh'_`m' // E[D|ZX]-E[D|X] = instrument
+						qui gen double `dx`j'' = `dd'-`dh'_`m' // D-E[D|X] = endogenous regressor
 						local dlist `dlist' `dx`j''
 						local zlist `zlist' `zvar`j''
 					}

@@ -101,19 +101,22 @@ program _ddml_crossfit, eclass sortpreserve
 		if "`model'"=="interactive" {
 			local treatvar	`nameD'
 			local resid
+			local residy
 		}
 		else if ("`model'"=="late") {
 			local treatvar	`nameZ'
 			local resid
+			local residy 
 		}
 		else if ("`model'"=="ivhd") {
 			local treatvar
 			local resid
+			local residy resid
 		} 
 		else {
-			// clear local
 			local treatvar
 			local resid resid
+			local residy resid
 		}
 		if "`shortstack'"~="" {
 			local ssname `nameY'_ss
@@ -132,7 +135,7 @@ program _ddml_crossfit, eclass sortpreserve
 			foldvar(`fidlist')						///
 			shortstack(`ssname')					///
 			treatvar(`treatvar')					///
-			`resid' `noisily'
+			`residy' `noisily'
 		// resinsert into model struct AA with equations
 		mata: (`mname'.eqnAA).put("`nameY'",`eqn')
 
