@@ -342,9 +342,11 @@ program define _ddml_reg, eclass
 		ereturn clear
 		ereturn post `b' `V', depname(`depvar') obs(`N') esample(`esample')
 		
-		ereturn local cmd _ddml_reg
+		ereturn local cmd ddml
 		ereturn local model `model'
 		ereturn local rep `rep'
+		ereturn local spec `spec'
+		ereturn local mname `mname'
 		
 		// extract and post scalars, locals, matrices
 		forvalues i=1/`nentries' {
