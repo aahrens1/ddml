@@ -81,6 +81,32 @@ program _ddml_estimate_linear, eclass sortpreserve
 	local numeqnZ : word count `nameZ'
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 
+	// check whether shortstack is available for all equations
+	if `ssflag' {
+		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+		mata: st_local("numlnr",strofreal(cols(`eqn'.vtlist)))
+		if `numlnr'==1 {
+			local ssflag = 0
+		}
+		foreach var in `nameD' {
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			mata: st_local("numlnr",strofreal(cols(`eqn'.vtlist)))
+			if `numlnr'==1 {
+				local ssflag = 0
+			}
+		}
+		foreach var in `nameZ' {
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			mata: st_local("numlnr",strofreal(cols(`eqn'.vtlist)))
+			if `numlnr'==1 {
+				local ssflag = 0
+			}
+		}
+		if `ssflag' == 0 {
+			di as err "warning - shortstack not available for all equations; option ignored"
+		}
+	}
+
 	
 	************* ESTIMATE ************
 	
@@ -395,6 +421,9 @@ program _ddml_estimate_linear, eclass sortpreserve
 			}
 			if `ssflag' {
 				qui _ddml_reg, mname(`mname') spec(ss) rep(`m') replay
+				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+				mat `btemp' = e(b)
+				mat `Vtemp' = e(V)
 				local specrep `: di "ss" %3.0f `m''
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
@@ -403,8 +432,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 				di %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
 					di %14s "[ss]" _c
-					di %10.3f el(e(b),1,`j') _c
-					local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
+					di %10.3f el(`btemp',1,`j') _c
+					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
 					di %10s "`pse'" _c
 				}
 				if "`model'"=="ivhd" {
@@ -423,6 +452,9 @@ program _ddml_estimate_linear, eclass sortpreserve
 			foreach medmean in mn md {
 				forvalues i=1/`ncombos' {
 					qui _ddml_reg, mname(`mname') spec(`i') rep(`medmean') replay
+					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+					mat `btemp' = e(b)
+					mat `Vtemp' = e(V)
 					mata: st_local("yt",abbrev(`nmat'[`i',1],13))
 					mata: st_local("dtlist",invtokens(abbrev(tokens(`nmat'[`i',2]),13)))
 					mata: st_local("ztlist",`nmat'[`i',3])
@@ -439,8 +471,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 					forvalues j=1/`numeqnD' {
 						local vt : word `j' of `dtlist'
 						di %14s "`vt'" _c
-						di %10.3f el(e(b),1,`j') _c
-						local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
+						di %10.3f el(`btemp',1,`j') _c
+						local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
 						di %10s "`pse'" _c
 					}
 					forvalues j=1/`numeqnZ' {
@@ -457,6 +489,9 @@ program _ddml_estimate_linear, eclass sortpreserve
 				}
 				if `ssflag' {
 					qui _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay
+					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+					mat `btemp' = e(b)
+					mat `Vtemp' = e(V)
 					local specrep `: di "ss" %3s "`medmean'"'
 					// pad out to 6 spaces
 					local specrep = "  " + "`specrep'"
@@ -465,8 +500,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 					di %14s "[shortstack]" _c
 					forvalues j=1/`numeqnD' {
 						di %14s "[ss]" _c
-						di %10.3f el(e(b),1,`j') _c
-						local pse (`: di %6.3f sqrt(el(e(V),`j',`j'))')
+						di %10.3f el(`btemp',1,`j') _c
+						local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
 						di %10s "`pse'" _c
 					}
 					if "`model'"=="ivhd" {

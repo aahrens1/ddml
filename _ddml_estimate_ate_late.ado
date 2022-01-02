@@ -83,6 +83,32 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 	
+	// check whether shortstack is available for all equations
+	if `ssflag' {
+		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+		mata: st_local("numlnr",strofreal(cols(`eqn'.vtlist)))
+		if `numlnr'==1 {
+			local ssflag = 0
+		}
+		foreach var in `nameD' {
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			mata: st_local("numlnr",strofreal(cols(`eqn'.vtlist)))
+			if `numlnr'==1 {
+				local ssflag = 0
+			}
+		}
+		foreach var in `nameZ' {
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			mata: st_local("numlnr",strofreal(cols(`eqn'.vtlist)))
+			if `numlnr'==1 {
+				local ssflag = 0
+			}
+		}
+		if `ssflag' == 0 {
+			di as err "warning - shortstack not available for all equations; option ignored"
+		}
+	}
+	
 	local ateflag=("`model'"=="interactive")
 
 	// should only ever be 1 D or 1 Z eqn
@@ -412,6 +438,9 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	
 			if `ssflag' {
 				qui _ddml_ate_late, mname(`mname') spec(ss) rep(`m') replay
+				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+				mat `btemp' = e(b)
+				mat `Vtemp' = e(V)
 				local specrep `: di "ss" %3.0f `m''
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
@@ -423,8 +452,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				if ~`ateflag' {
 					di %14s "[ss]" _c
 				}
-				di %10.3f el(e(b),1,1) _c
-				local pse (`: di %6.3f sqrt(el(e(V),1,1))')
+				di %10.3f el(`btemp',1,1) _c
+				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
 				di %10s "`pse'" _c
 				if ~`ateflag' {
 					di %14s "[ss]" _c
@@ -438,6 +467,9 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			foreach medmean in mn md {
 				forvalues i=1/`ncombos' {
 					qui _ddml_ate_late, mname(`mname') spec(`i') rep(`medmean') replay
+					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+					mat `btemp' = e(b)
+					mat `Vtemp' = e(V)
 					mata: st_local("yt0",abbrev(`nmat'[`i',1],13))
 					mata: st_local("yt1",abbrev(`nmat'[`i',2],13))
 					di " " _c
@@ -458,8 +490,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 						di %14s "`dt0'" _c
 						di %14s "`dt1'" _c
 					}
-					di %10.3f el(e(b),1,1) _c
-					local pse (`: di %6.3f sqrt(el(e(V),1,1))')
+					di %10.3f el(`btemp',1,1) _c
+					local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
 					di %10s "`pse'" _c
 					if ~`ateflag' {
 						mata: st_local("zt",abbrev(`nmat'[`i',5],13))
@@ -469,6 +501,9 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				}
 				if `ssflag' {
 					qui _ddml_ate_late, mname(`mname') spec(ss) rep(`medmean') replay
+					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+					mat `btemp' = e(b)
+					mat `Vtemp' = e(V)
 					local specrep `: di "ss" %3s "`medmean'"'
 					// pad out to 6 spaces
 					local specrep = "  " + "`specrep'"
@@ -480,8 +515,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					if ~`ateflag' {
 						di %14s "[ss]" _c
 					}
-					di %10.3f el(e(b),1,1) _c
-					local pse (`: di %6.3f sqrt(el(e(V),1,1))')
+					di %10.3f el(`btemp',1,1) _c
+					local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
 					di %10s "`pse'" _c
 					if ~`ateflag' {
 						di %14s "[ss]" _c

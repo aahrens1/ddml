@@ -91,6 +91,14 @@ program define crossfit, rclass sortpreserve
 		local ssflag	= "`shortstack'"~=""
 	}
 	
+	// check
+	if `ssflag' & ~(`nlearners' > 1) {
+		di as err "warning - shortstack option ignored - #learners must be > 1"
+		// clear macro, reset flag
+		local shortstack
+		local ssflag = 0
+	}
+	
 	*** set up fold/reps variables
 	
 	// fold id variables

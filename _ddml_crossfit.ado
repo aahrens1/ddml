@@ -46,17 +46,9 @@ program _ddml_crossfit, eclass sortpreserve
 	
 	// set shortstack indictor on model struct
 	if "`shortstack'" ~= "" {
-		if ~(`reps' > 1) {
-			di as err "warning - shortstack option ignored - reps must be > 1"
-			// clear macro
-			local shortstack
-		}
-		else {
-			mata: `mname'.ssflag = 1
-		}
+		mata: `mname'.ssflag = 1
 	}
-	
-	di as text "Model: `model'"
+
 	// fold IDs
 	forvalues m=1/`reps' {
 		local fidlist `fidlist' `mname'_fid_`m'
@@ -118,13 +110,14 @@ program _ddml_crossfit, eclass sortpreserve
 			local resid resid
 			local residy resid
 		}
-		if "`shortstack'"~="" {
+		if "`shortstack'"~="" & `numlnrY' > 1 {
 			local ssname `nameY'_ss
 			mata: `eqn'.shortstack = "`ssname'"
 		}
 		else {
-			// clear local
+			// clear local and indicator
 			local ssname		
+			mata: `eqn'.shortstack = ""
 		}
 		if ("`model'"=="partial") di as text "Cross-fitting E[Y|X] equation: `nameY'"
 		if ("`model'"=="ivhd"|"`model'"=="late") di as text "Cross-fitting E[Y|X,Z] equation: `nameY'"
@@ -150,13 +143,15 @@ program _ddml_crossfit, eclass sortpreserve
 			}
 			foreach var of varlist `nameD' {
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
-				if "`shortstack'"~="" {
+				mata: st_local("numlnrD",strofreal(cols(`eqn'.vtlist)))
+				if "`shortstack'"~=""  & `numlnrD' > 1 {
 					local ssname `var'_ss
 					mata: `eqn'.shortstack = "`ssname'"
 				}
 				else {
-					// clear local
+					// clear local and indicator
 					local ssname		
+					mata: `eqn'.shortstack = ""
 				}
 				if ("`model'"=="partial") di as text "Cross-fitting E[D|X] equation: `var'"
 				if ("`model'"=="late") di as text "Cross-fitting E[D|X,Z] equation: `var'"
@@ -176,13 +171,15 @@ program _ddml_crossfit, eclass sortpreserve
 		if `numeqnZ' {
 			foreach var of varlist `nameZ' {
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
-				if "`shortstack'"~="" {
+				mata: st_local("numlnrZ",strofreal(cols(`eqn'.vtlist)))
+				if "`shortstack'"~=""  & `numlnrZ' > 1 {
 					local ssname `var'_ss
 					mata: `eqn'.shortstack = "`ssname'"
 				}
 				else {
-					// clear local
+					// clear local and indicator
 					local ssname		
+					mata: `eqn'.shortstack = ""
 				}
 				di as text "Cross-fitting E[Z|X]: `var'"
 				// All learners for each Z eqn
