@@ -176,7 +176,7 @@ program ddml, eclass
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
-			if ("`model'"=="ivhd"&strpos("E[D|Z,X] E[D|X,Z] E[Y|X,Z] E[Y|Z,X] E[D|X] yeq deq zeq dheq","`subcmd'")==0) {
+			if ("`model'"=="ivhd"&strpos("E[D|Z,X] E[D|X,Z] E[Y|X] E[D|X] yeq deq dheq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
@@ -189,8 +189,6 @@ program ddml, eclass
 			if "`subcmd'"=="E[D|X]"&"`model'"=="ivhd" local subcmd dheq
 			if "`subcmd'"=="E[Z|X]" local subcmd zeq
 			if "`subcmd'"=="E[D|X,Z]"|"`subcmd'"=="E[D|Z,X]" local subcmd deq
-			// di "`model'"
-			// di "`subcmd'"
 	
 			** vtilde: use 2nd and 1st words of eq (estimator) as the default
 			if "`learner'"=="" {
@@ -209,6 +207,10 @@ program ddml, eclass
 					mata: (`mname'.estAA).put(("zcounter","all"),`counter'+1)
 					local prefix Z`counter'
 				}
+				else if "`subcmd'"=="dheq" {
+					di as err "learner() required with 'ddml E[D|X]'"
+					exit 198
+				}
 				else {
 					di as err "ddml equation error - subcmd `subcmd'"
 					exit 198
@@ -218,7 +220,10 @@ program ddml, eclass
 			}
 	
 			** vname: use 2nd word of eq (dep var) as the default 
-			if "`vname'"=="" {
+			if "`vname'"=="" & "`subcmd'"=="dheq" {
+				di as err "vname() required with 'ddml E[D|X]'"
+			}
+			else if "`vname'"=="" & "`subcmd'"!="dheq" {
 				tokenize `"`eqn'"'
 				local vname `2'
 			}
@@ -358,17 +363,21 @@ program define add_eqn_to_model, rclass
 	// add vtilde to vtlist if not already there
 	mata: st_local("vtlist",invtokens(`eqn'.vtlist))
 	local posof_vt : list posof "`vtilde'" in vtlist
-	if `posof_vt' {
+	if `posof_vt'!=0 & "`subcmd'"!="dheq" {
 		di as text "Replacing existing learner `vtilde'..."
 	}
-	else {
+	else if `posof_vt'==0 & "`subcmd'"!="dheq" {
 		local vtlist `vtlist' `vtilde'
 		local vtlist : list uniq vtlist		// should be unnecessary
 		// in two steps, to accommodate singleton lists (which are otherwise string scalars and not matrices
 		mata: `t' = tokens("`vtlist'")
 		mata: `eqn'.vtlist	= `t'
 	}
-	
+	else if `posof_vt'==0 & "`subcmd'"=="dheq" {
+		di as text "Learner `vtilde' not found. You first need to add learner for E[D|X,Z]."
+		exit 198
+	}
+
 	// used below with syntax command
 	local 0 `"`estring'"'
 	// parse estimation string into main command and options; if and in will be stripped out
@@ -377,6 +386,8 @@ program define add_eqn_to_model, rclass
 	local est_options `options'
 	if "`cmdname'"=="" local cmdname: word 1 of `est_main'
 	if "`subcmd'"=="dheq" {
+		mata: st_local("lieflag",strofreal(`eqn'.lieflag))
+		if ("`lieflag'"=="1") di as text "Replacing existing learner `vtilde'_h..."
 		mata: add_learner_item(`eqn',"`vtilde'","cmd_h","`cmdname'")
 		mata: add_learner_item(`eqn',"`vtilde'","estring_h","`0'")
 		mata: add_learner_item(`eqn',"`vtilde'","est_main_h","`est_main'")
@@ -390,6 +401,7 @@ program define add_eqn_to_model, rclass
 		mata: add_learner_item(`eqn',"`vtilde'","est_options","`est_options'")
 		// update nlearners - counts deq and dheq as a single learner
 		mata: `eqn'.nlearners = cols(`eqn'.vtlist)
+		mata: `eqn'.lieflag = 0
 	}
 
 	// insert eqn struct into model struct
@@ -410,7 +422,12 @@ program define add_eqn_to_model, rclass
 		}
 	}
 	
-	di as text "Learner `learner' added successfully."
+	if "`subcmd'"=="dheq" {
+		di as text "Learner `vtilde'_h added successfully."
+	}
+	else {
+		di as text "Learner `vtilde' added successfully."
+	}
 	
 	// no longer needed so clear from Mata
 	cap mata: mata drop `t'
