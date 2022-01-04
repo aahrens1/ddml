@@ -123,9 +123,9 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	*** IV-HD
 	if ("`model'"=="ivhd") {
-		`qui' ddml E[Y|X,Z], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
-		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') gen(`dendog't): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dendog') gen(`dendog't): `dhcmd' {D} `xctrl', `dhcmdoptions' 
+		`qui' ddml E[Y|X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
+		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
+		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd'): `dhcmd' {D} `xctrl', `dhcmdoptions' 
 	} 
 
 	*** IV 
