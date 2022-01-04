@@ -126,7 +126,7 @@ program _ddml_crossfit, eclass sortpreserve
 		crossfit if `touse',						///
 			ename(`eqn') noreplace					///
 			foldvar(`fidlist')						///
-			shortstack(`ssname')					///
+			shortstack(`ssname')					/// arg may not be needed
 			treatvar(`treatvar')					///
 			`residy' `noisily'
 		// resinsert into model struct AA with equations

@@ -431,6 +431,7 @@ program define crossfit, rclass sortpreserve
 					local vhats `vhats' `vhat`i''
 				}
 				tempvar vss
+				`qui' di
 				`qui' di as text "Stacking NNLS (additive model):"
 				`qui' _ddml_nnls `vname' `vhats'
 				tempname ssw
@@ -452,6 +453,7 @@ program define crossfit, rclass sortpreserve
 					local vhats1 `vhats1' `vhat1`i''
 				}
 				tempvar vtemp
+				`qui' di
 				`qui' di as text "Stacking NNLS (interactive model, treatvar=1):"
 				`qui' _ddml_nnls `vname' `vhats1' if `treatvar'==1
 				tempname ssw0
@@ -468,6 +470,7 @@ program define crossfit, rclass sortpreserve
 					local vhats0 `vhats0' `vhat0`i''
 				}
 				tempvar vtemp
+				`qui' di
 				`qui' di as text "Stacking NNLS (interactive model, treatvar=0):"
 				`qui' _ddml_nnls `vname' `vhats0' if `treatvar'==0
 				tempname ssw1
@@ -486,6 +489,7 @@ program define crossfit, rclass sortpreserve
 				forvalues i=1/`nlearners' {
 					local dhats `dhats' `dhat`i''
 				}
+				`qui' di
 				`qui' di as text "Stacking NNLS (LIE, OOS E[D|XZ]):"
 				`qui' _ddml_nnls `vname' `dhats' if `touse'
 				tempname ssw
@@ -501,6 +505,7 @@ program define crossfit, rclass sortpreserve
 						local dhats_is `dhats_is' `dhat_`i'_`k''
 					}
 					tempvar vtemp
+					`qui' di
 					`qui' di as text "Stacking NNLS (LIE, in-sample E[D|XZ] fold `k':"
 					`qui' _ddml_nnls `vname' `dhats_is' if `fid'!=`k' & `touse' 
 					qui predict `vtype' `vtemp'
@@ -538,6 +543,7 @@ program define crossfit, rclass sortpreserve
 					forvalues i=1/`nlearners' {
 						local hhatSS_list `hhatSS_list' `hhatSS`i''
 					}
+					`qui' di
 					`qui' di as text "Stacking NNLS (LIE, E[D|X]):"
 					`qui' _ddml_nnls `dhat_oosSS' `hhatSS_list'
 					if (`k'==1) {
@@ -1029,13 +1035,11 @@ program define crossfit, rclass sortpreserve
 
 	return scalar N			= `N'
 	forvalues i=1/`nlearners' {
-			
-			local vtilde : word `i' of `vtlist'
-			cap return `vtilde'_pysw = `pysw_`i''
-			cap return `vtilde'_pysw = `pysw0_`i''
-			cap return `vtilde'_pysw = `pysw1_`i''
-			cap return `vtilde'_pysw = `pyswh_`i''
-
+		local vtilde : word `i' of `vtlist'
+		cap return `vtilde'_pysw = `pysw_`i''
+		cap return `vtilde'_pysw = `pysw0_`i''
+		cap return `vtilde'_pysw = `pysw1_`i''
+		cap return `vtilde'_pysw = `pyswh_`i''
 	}
 	return local cmd_list	`cmd_list'
 	return local cmd_h_list	`cmd_h_list'

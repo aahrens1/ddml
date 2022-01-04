@@ -219,10 +219,13 @@ program ddml, eclass
 	
 			** vname: use 2nd word of eq (dep var) as the default 
 			if "`vname'"=="" {
-				tokenize `"`eqn'"'
-				local vname `2'
+				// tokenize `"`eqn'"'
+				// local vname `2'
+				// below deals with commas e.g. stacking y, ...
+				local 0 `"`eqn'"'
+				syntax [anything] [if] [in] [ , * ]
+				local vname : word 2 of `anything'
 			}
-	
 			** check that dep var in eqn isn't already used for some other eqn
 			** also set flag for whether dep var is new
 			mata: st_local("yvar",`mname'.nameY)
@@ -257,7 +260,7 @@ program ddml, eclass
 			add_eqn_to_model,						///
 								mname(`mname')		///
 								vname(`vname')		///
-								vtilde(`learner')		///
+								vtilde(`learner')	///
 								subcmd(`subcmd')	///
 								posof(`posof')		///
 								estring(`eqn')		///
@@ -410,7 +413,7 @@ program define add_eqn_to_model, rclass
 		}
 	}
 	
-	di as text "Learner `learner' added successfully."
+	di as text "Learner `vtilde' added successfully."
 	
 	// no longer needed so clear from Mata
 	cap mata: mata drop `t'
