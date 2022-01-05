@@ -150,7 +150,6 @@ program define crossfit, rclass sortpreserve
 		local vtype double
 	}
 
-
 	// loop over resamples (crossfitting, shortstacking, store results)
 	forvalues m=1/`reps' {
 
@@ -262,12 +261,15 @@ program define crossfit, rclass sortpreserve
 				local vtilde : word `i' of `vtlist'
 				mata: st_local("est_main", return_learner_item(`eqn_info',"`vtilde'","est_main"))
 				mata: st_local("est_options", return_learner_item(`eqn_info',"`vtilde'","est_options"))
-
+				mata: st_local("predopt",return_learner_item(`eqn_info',"`vtilde'","predopt"))
+				mata: st_local("vtype",return_learner_item(`eqn_info',"`vtilde'","vtype"))				
 				if `lieflag' {
 					// LIE locals
 					local hhat `vtilde'_h
 					mata: st_local("est_main_h", return_learner_item(`eqn_info',"`vtilde'","est_main_h"))
 					mata: st_local("est_options_h", return_learner_item(`eqn_info',"`vtilde'","est_options_h"))
+					mata: st_local("predopt_h",return_learner_item(`eqn_info',"`vtilde'","predopt_h"))
+					mata: st_local("vtype_h",return_learner_item(`eqn_info',"`vtilde'","vtype_h"))			
 				}
 				
 				if ~`tvflag' & ~`lieflag' { // case 1
@@ -294,7 +296,7 @@ program define crossfit, rclass sortpreserve
 					}
 		
 					// get fitted values and residuals for kth fold	
-					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
+					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
 		
 					// get predicted values
 					qui replace `vhat`i'' = `vhat_k' if `fid'==`k' & `touse'
@@ -328,7 +330,7 @@ program define crossfit, rclass sortpreserve
 		
 					// get fitted values for kth fold	
 					tempvar vhat_k
-					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
+					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
 					qui replace `vhat1`i'' = `vhat_k' if `fid'==`k' & `touse'
 					qui replace `vres1`i'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
 		
@@ -349,7 +351,7 @@ program define crossfit, rclass sortpreserve
 
 					// get fitted values for kth fold	
 					tempvar vhat_k
-					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
+					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
 					qui replace `vhat0`i'' = `vhat_k' if `fid'==`k' & `touse'
 					qui replace `vres0`i'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
 	
@@ -381,7 +383,7 @@ program define crossfit, rclass sortpreserve
 					}
 					
 					// get fitted values (in and out of sample)
-					qui predict `vtype' `vhat_k' if `touse'
+					qui predict `vtype' `vhat_k' if `touse', `predopt'
 		
 					// get *combined* out-of-sample predicted values
 					qui replace `dhat`i'' = `vhat_k' if `fid'==`k' & `touse'
@@ -410,7 +412,7 @@ program define crossfit, rclass sortpreserve
 					}
 		
 					// get fitted values  
-					qui predict `vtype' `vtil_k' if `touse'
+					qui predict `vtype_h' `vtil_k' if `touse', `predopt_h'
 		
 					// get *combined* out-of-sample predicted values
 					qui replace `hhat`i'' = `vtil_k' if `fid'==`k' & `touse'
@@ -525,10 +527,12 @@ program define crossfit, rclass sortpreserve
 				// need to cross-fit stacked in-sample predicted values against X
 				forvalues k = 1(1)`kfolds' {
 					forvalues i=1/`nlearners' {
-					
-						mata: st_local("est_main", return_learner_item(`eqn_info',"`vtilde'","est_main_h"))
-						mata: st_local("est_options", return_learner_item(`eqn_info',"`vtilde'","est_options_h"))
-						
+						local vtilde : word `i' of `vtlist'
+						mata: st_local("est_main_h", return_learner_item(`eqn_info',"`vtilde'","est_main_h"))
+						mata: st_local("est_options_h", return_learner_item(`eqn_info',"`vtilde'","est_options_h"))
+						mata: st_local("predopt_h",return_learner_item(`eqn_info',"`vtilde'","predopt_h"))
+						mata: st_local("vtype_h",return_learner_item(`eqn_info',"`vtilde'","vtype_h"))				
+	
 						// replace {D}-placeholder in estimation string with variable name
 						local est_main_h_k = subinstr("`est_main_h'","{D}","`dhat_isSS_`k''",1)
 			
@@ -538,7 +542,7 @@ program define crossfit, rclass sortpreserve
 					
 						// get fitted values  
 						tempvar vtemp
-						qui predict `vtype' `vtemp' if `touse'
+						qui predict `vtype_h' `vtemp' if `touse', `predopt_h'
 			
 						// get out-of-sample predicted values
 						qui replace `hhatSS`i'' = `vtemp' if `fid'==`k' & `touse'

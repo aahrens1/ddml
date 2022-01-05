@@ -37,6 +37,7 @@ program ddml, eclass
 						mname(name)				///
 						newmname(name)			///
 						Learner(name)			///
+						predopt(string asis)	///
 						vname(name)				///
 						vtype(string)			///  "double", "float" etc
 						REPlace					///
@@ -157,6 +158,10 @@ program ddml, eclass
 	
 			** check that ddml has been initialized
 			// to add
+
+			** variable type
+			if "`vtype'"=="" local vtype double
+			if "`vtype'"=="none" local vtype
 	
 			** check that equation is consistent with model
 			mata: st_local("model",`mname'.model)
@@ -266,6 +271,8 @@ program ddml, eclass
 								mname(`mname')		///
 								vname(`vname')		///
 								vtilde(`learner')	///
+								vtype(`vtype')		///
+								predopt(`predopt') 	///
 								subcmd(`subcmd')	///
 								posof(`posof')		///
 								estring(`eqn')		///
@@ -338,6 +345,8 @@ program define add_eqn_to_model, rclass
 							mname(name)				/// name of mata struct with model
 							vname(varname)			/// name of dep var in equation (to be orthogonalized)
 							vtilde(name)			/// names of tilde variable
+							vtype(string)			///
+							predopt(string asis)	///
 							subcmd(string)			/// yeq, deq, dheq or zeq
 							estring(string asis)	/// names of estimation strings
 													/// need asis option in case it includes strings
@@ -395,6 +404,8 @@ program define add_eqn_to_model, rclass
 		mata: add_learner_item(`eqn',"`vtilde'","estring_h","`0'")
 		mata: add_learner_item(`eqn',"`vtilde'","est_main_h","`est_main'")
 		mata: add_learner_item(`eqn',"`vtilde'","est_options_h","`est_options'")
+		mata: add_learner_item(`eqn',"`vtilde'","predopt_h","`predopt'")
+		mata: add_learner_item(`eqn',"`vtilde'","vtype_h","`vtype'")
 		mata: `eqn'.lieflag = 1
 	}
 	else {
@@ -402,6 +413,8 @@ program define add_eqn_to_model, rclass
 		mata: add_learner_item(`eqn',"`vtilde'","estring","`0'")
 		mata: add_learner_item(`eqn',"`vtilde'","est_main","`est_main'")
 		mata: add_learner_item(`eqn',"`vtilde'","est_options","`est_options'")
+		mata: add_learner_item(`eqn',"`vtilde'","predopt","`predopt'")
+		mata: add_learner_item(`eqn',"`vtilde'","vtype","`vtype'")
 		// update nlearners - counts deq and dheq as a single learner
 		mata: `eqn'.nlearners = cols(`eqn'.vtlist)
 		 mata: `eqn'.lieflag = 0
