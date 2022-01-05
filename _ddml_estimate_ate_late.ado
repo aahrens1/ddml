@@ -27,27 +27,39 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	// display all regression outpus
 	local allflag = "`allest'"~=""
 	
-	// if spec not specified, post min MSE model
-	if "`spec'"=="" {
-		local post "minmse"
-	}
-	else {
-		local post `spec'
-		// clear local
-		local spec
-	}
-	// allowable forms
-	if "`post'"=="shortstack"	local post ss
-	if "`post'"=="mse"			local post minmse
-	if "`rep'"=="mean"			local rep mn
-	if "`rep'"=="median"		local rep md
-	// checks
-	if "`post'"=="ss" & ~`ssflag' {
-		di as err "error - no shortstack crossfit estimates available to post"
+	if ~`crossfitted' {
+		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
 		exit 198
 	}
-	// if rep not specified, default is rep=1
-	if "`rep'"=="" {
+
+	if "`spec'"=="" {
+		local spec "mse"
+	}
+
+	// allowable forms
+	if "`spec'"=="shortstack"	local spec ss
+	if "`spec'"=="minmse"		local spec mse
+	if "`rep'"=="mean"			local rep mn
+	if "`rep'"=="median"		local rep md
+
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	
+	// locals used below
+	mata: st_local("model",`mname'.model)
+	mata: st_local("nameY",`mname'.nameY)
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	local numeqnD : word count `nameD'
+	local numeqnZ : word count `nameZ'
+	mata: st_local("nreps",strofreal(`mname'.nreps))
+
+	// if rep not specified, default is rep=1 when nreps==1; md if nreps>1
+	if "`rep'"=="" & `nreps'>1 {
+		local rep md
+	}
+	else if "`rep'"=="" & `nreps'==1 {
 		local rep 1
 	}
 	if real("`rep'")==. {
@@ -63,26 +75,14 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			exit 198
 		}
 	}
-	if (`crossfitted'==0) {
-		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
-		exit 198
-	}
-	// opt + mean/median not currently supported
-	if "`post'"=="opt" & real("`rep'")==. {
-		di as err "error - post(opt) model not yet avaiable with mean/median"
-		exit 198
+	// check that rep, if integer, isn't larger than nreps
+	if real("`rep'")!=. {
+		if `rep'>`nreps' {
+			di as err "rep() cannot be larger than `nreps'"
+			exit 198
+		}
 	}
 
-	// blank eqn - declare this way so that it's a struct and not transmorphic
-	tempname eqn
-	mata: `eqn' = init_eStruct()
-	
-	mata: st_local("model",`mname'.model)
-	mata: st_local("nameY",`mname'.nameY)
-	mata: st_local("nameD",invtokens(`mname'.nameD))
-	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
-	mata: st_local("nreps",strofreal(`mname'.nreps))
-	
 	// check whether shortstack is available for all equations
 	if `ssflag' {
 		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
@@ -316,9 +316,19 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			
 			}
 		}
+
+		// we make a copy of the MSE-optimal model for each m
+		forvalues m=1/`nreps' {
+			tempname Bopt
+			mata: st_local("optspec",(`mname'.estAA).get(("optspec","`m'")))
+			mata: `Bopt' = (`mname'.estAA).get(("`optspec'","`m'"))
+			mata: (`mname'.estAA).put(("mse","`m'"),`Bopt')
+		}
 		
 		// aggregate across resamplings
 		if `nreps' > 1 {
+ 			qui _ddml_reg, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") // min-mse specification
+ 			qui _ddml_reg, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") // min-mse specification
 			// numbered specifications
 			forvalues i = 1/`ncombos' {
 				local title "DDML model, specification `i' (mean)"
@@ -465,46 +475,34 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		if `nreps' > 1 {
 			di as text "Mean/median:"
 			foreach medmean in mn md {
-				forvalues i=1/`ncombos' {
-					qui _ddml_ate_late, mname(`mname') spec(`i') rep(`medmean') replay
+					qui _ddml_ate_late, mname(`mname') spec(mse) rep(`medmean') replay
 					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 					mat `btemp' = e(b)
 					mat `Vtemp' = e(V)
-					mata: st_local("yt0",abbrev(`nmat'[`i',1],13))
-					mata: st_local("yt1",abbrev(`nmat'[`i',2],13))
-					di " " _c
-					local specrep `: di %3.0f `i' %3s "`medmean'"'
+					local specrep `: di "ss" %3s "`medmean'"' //'
 					// pad out to 6 spaces
-					local specrep = (6-length("`specrep'"))*" " + "`specrep'"
-					local rcmd stata ddml estimate `mname', spec(`i') rep(`medmean') replay notable
+					local specrep = "  " + "`specrep'"
+					local rcmd stata ddml estimate `mname', spec(mse) rep(`medmean') replay notable
 					di %6s "{`rcmd':`specrep'}" _c
-					di %14s "`yt0'" _c
-					di %14s "`yt1'" _c
-					if `ateflag' {
-						mata: st_local("dt",`nmat'[`i',3])
-						di %14s "`dt'" _c
-					}
-					else {
-						mata: st_local("dt0",abbrev(`nmat'[`i',3],13))
-						mata: st_local("dt1",abbrev(`nmat'[`i',4],13))
-						di %14s "`dt0'" _c
-						di %14s "`dt1'" _c
+					di %14s "[min-mse]" _c
+					di %14s "[mse]" _c
+					di %14s "[mse]" _c
+					if ~`ateflag' {
+						di %14s "[mse]" _c
 					}
 					di %10.3f el(`btemp',1,1) _c
 					local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
 					di %10s "`pse'" _c
 					if ~`ateflag' {
-						mata: st_local("zt",abbrev(`nmat'[`i',5],13))
-						di %14s "`zt'" _c
+						di %14s "[mse]" _c
 					}
 					di
-				}
 				if `ssflag' {
 					qui _ddml_ate_late, mname(`mname') spec(ss) rep(`medmean') replay
 					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 					mat `btemp' = e(b)
 					mat `Vtemp' = e(V)
-					local specrep `: di "ss" %3s "`medmean'"'
+					local specrep `: di "ss" %3s "`medmean'"' //'
 					// pad out to 6 spaces
 					local specrep = "  " + "`specrep'"
 					local rcmd stata ddml estimate `mname', spec(ss) rep(`medmean') replay notable
@@ -528,22 +526,9 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	}
 		
 	// post selected estimates; rep is the resample number (default=1)
-	if "`post'"=="minmse" {
-		di
-		_ddml_ate_late, mname(`mname') spec(`optspec`rep'') rep(`rep') replay
-		di
-	}
-	else if "`post'"=="ss" {
-		di
-		_ddml_ate_late, mname(`mname') spec(ss) rep(`rep') replay
-		di	
-	}
-	else {
-		// post macro denotes the specification to post
-		di
-		_ddml_ate_late, mname(`mname') spec(`post') rep(`rep') replay
-		di
-	}
+	di
+	_ddml_ate_late, mname(`mname') spec(`spec') rep(`rep') replay
+	di
 	
 	// temp Mata objects no longer needed
 	foreach obj in `eqn' `nmat' `bmat' `semat' {

@@ -308,8 +308,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 		// aggregate across resamplings
 		if `nreps' > 1 {
 			// numbered specifications
- 			_ddml_reg, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") // min-mse specification
- 			_ddml_reg, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") // min-mse specification
+ 			qui _ddml_reg, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") // min-mse specification
+ 			qui _ddml_reg, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") // min-mse specification
 			forvalues i = 1/`ncombos' {
 				local title "DDML model, specification `i' (mean)"
 				qui _ddml_reg, mname(`mname') spec(`i') medmean(mn) title(`title')
