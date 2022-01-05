@@ -290,7 +290,7 @@ program ddml, eclass
 	
 		*** estimate
 		if "`subcmd'" =="estimate" {
-					
+			
 			mata: st_global("r(model)",`mname'.model)
 	
 			if ("`r(model)'"=="partial") {

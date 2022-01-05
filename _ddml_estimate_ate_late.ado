@@ -11,7 +11,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								NOTable			/// suppress summary table
 								clear			/// deletes all tilde-variables (to be implemented)
 								spec(string)	/// specification to post/display
-								REP(integer 1)	/// resampling iteration to post/display
+								REP(string)		/// resampling iteration to post/display
 								replay			/// model has been estimated, just display results
 								avplot			///
 								debug			///
@@ -140,8 +140,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		mata: `semat' = (`mname'.estAA).get(("semat","all"))
 		// recover min MSE specs
 		forvalues m=1/`nreps' {
-			mata: st_local("spec",(`mname'.estAA).get(("optspec","`m'")))
-			local optspec`m' = `spec'
+			mata: st_local("optspec",(`mname'.estAA).get(("optspec","`m'")))
+			local optspec`m' = `optspec'
 		}
 	}
 	else {
@@ -327,8 +327,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		
 		// aggregate across resamplings
 		if `nreps' > 1 {
- 			qui _ddml_reg, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") // min-mse specification
- 			qui _ddml_reg, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") // min-mse specification
+ 			qui _ddml_ate_late, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") // min-mse specification
+ 			qui _ddml_ate_late, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") // min-mse specification
 			// numbered specifications
 			forvalues i = 1/`ncombos' {
 				local title "DDML model, specification `i' (mean)"
@@ -422,26 +422,26 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				local specrep = (6-length("`specrep'"))*" " + "`specrep'"
 				local rcmd stata ddml estimate `mname', spec(`i') rep(`m') replay notable
 				di %6s "{`rcmd':`specrep'}" _c
-				di %14s "`yt0'" _c
-				di %14s "`yt1'" _c
+				di as res %14s "`yt0'" _c
+				di as res %14s "`yt1'" _c
 				if `ateflag' {
 					mata: st_local("dt",`nmat'[`i',3])
-					di %14s "`dt'" _c
+					di as res %14s "`dt'" _c
 				}
 				else {
 					mata: st_local("dt0",abbrev(`nmat'[`i',3],13))
 					mata: st_local("dt1",abbrev(`nmat'[`i',4],13))
-					di %14s "`dt0'" _c
-					di %14s "`dt1'" _c
+					di as res %14s "`dt0'" _c
+					di as res %14s "`dt1'" _c
 				}
 				mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
 				mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
-				di %10.3f `b' _c
+				di as res %10.3f `b' _c
 				local pse (`: di %6.3f `se'')
-				di %10s "`pse'" _c
+				di as res %10s "`pse'" _c
 				if ~`ateflag' {
 					mata: st_local("zt",abbrev(`nmat'[`i',5],13))
-					di %14s "`zt'" _c
+					di as res %14s "`zt'" _c
 				}
 				di
 			}
@@ -456,17 +456,17 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				local specrep = "  " + "`specrep'"
 				local rcmd stata ddml estimate `mname', spec(ss) rep(`m') replay notable
 				di %6s "{`rcmd':`specrep'}" _c
-				di %14s "[shortstack]" _c
-				di %14s "[ss]" _c
-				di %14s "[ss]" _c
+				di as res %14s "[shortstack]" _c
+				di as res %14s "[ss]" _c
+				di as res %14s "[ss]" _c
 				if ~`ateflag' {
-					di %14s "[ss]" _c
+					di as res %14s "[ss]" _c
 				}
-				di %10.3f el(`btemp',1,1) _c
+				di as res %10.3f el(`btemp',1,1) _c
 				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-				di %10s "`pse'" _c
+				di as res %10s "`pse'" _c
 				if ~`ateflag' {
-					di %14s "[ss]" _c
+					di as res %14s "[ss]" _c
 				}
 				di
 			}
@@ -475,28 +475,28 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		if `nreps' > 1 {
 			di as text "Mean/median:"
 			foreach medmean in mn md {
-					qui _ddml_ate_late, mname(`mname') spec(mse) rep(`medmean') replay
-					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
-					mat `btemp' = e(b)
-					mat `Vtemp' = e(V)
-					local specrep `: di "ss" %3s "`medmean'"' //'
-					// pad out to 6 spaces
-					local specrep = "  " + "`specrep'"
-					local rcmd stata ddml estimate `mname', spec(mse) rep(`medmean') replay notable
-					di %6s "{`rcmd':`specrep'}" _c
-					di %14s "[min-mse]" _c
-					di %14s "[mse]" _c
-					di %14s "[mse]" _c
-					if ~`ateflag' {
-						di %14s "[mse]" _c
-					}
-					di %10.3f el(`btemp',1,1) _c
-					local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-					di %10s "`pse'" _c
-					if ~`ateflag' {
-						di %14s "[mse]" _c
-					}
-					di
+				qui _ddml_ate_late, mname(`mname') spec(mse) rep(`medmean') replay
+				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+				mat `btemp' = e(b)
+				mat `Vtemp' = e(V)
+				local specrep `: di "mse" %3s "`medmean'"' //'
+				// pad out to 6 spaces
+				local specrep = " " + "`specrep'"
+				local rcmd stata ddml estimate `mname', spec(mse) rep(`medmean') replay notable
+				di %6s "{`rcmd':`specrep'}" _c
+				di as res %14s "[min-mse]" _c
+				di as res %14s "[mse]" _c
+				di as res %14s "[mse]" _c
+				if ~`ateflag' {
+					di as res %14s "[mse]" _c
+				}
+				di as res %10.3f el(`btemp',1,1) _c
+				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
+				di as res %10s "`pse'" _c
+				if ~`ateflag' {
+					di as res %14s "[mse]" _c
+				}
+				di
 				if `ssflag' {
 					qui _ddml_ate_late, mname(`mname') spec(ss) rep(`medmean') replay
 					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
@@ -506,18 +506,18 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					// pad out to 6 spaces
 					local specrep = "  " + "`specrep'"
 					local rcmd stata ddml estimate `mname', spec(ss) rep(`medmean') replay notable
-					di %6s "{`rcmd':`specrep'}" _c
-					di %14s "[shortstack]" _c
-					di %14s "[ss]" _c
-					di %14s "[ss]" _c
+					di as res %6s "{`rcmd':`specrep'}" _c
+					di as res %14s "[shortstack]" _c
+					di as res %14s "[ss]" _c
+					di as res %14s "[ss]" _c
 					if ~`ateflag' {
-						di %14s "[ss]" _c
+						di as res %14s "[ss]" _c
 					}
-					di %10.3f el(`btemp',1,1) _c
+					di as res %10.3f el(`btemp',1,1) _c
 					local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-					di %10s "`pse'" _c
+					di as res %10s "`pse'" _c
 					if ~`ateflag' {
-						di %14s "[ss]" _c
+						di as res %14s "[ss]" _c
 					}
 					di
 				}

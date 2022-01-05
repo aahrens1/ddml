@@ -26,7 +26,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
 		exit 198
 	}
-
+	
 	if "`spec'"=="" {
 		local spec "mse"
 	}
@@ -122,8 +122,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 		mata: `semat' = (`mname'.estAA).get(("semat","all"))
 		// recover min MSE specs
 		forvalues m=1/`nreps' {
-			mata: st_local("spec",(`mname'.estAA).get(("optspec","`m'")))
-			local optspec`m' = `spec'
+			mata: st_local("optspec",(`mname'.estAA).get(("optspec","`m'")))
+			local optspec`m' = `optspec'
 		}
 	}
 	else {
@@ -307,9 +307,9 @@ program _ddml_estimate_linear, eclass sortpreserve
 		
 		// aggregate across resamplings
 		if `nreps' > 1 {
-			// numbered specifications
  			qui _ddml_reg, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") // min-mse specification
  			qui _ddml_reg, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") // min-mse specification
+			// numbered specifications
 			forvalues i = 1/`ncombos' {
 				local title "DDML model, specification `i' (mean)"
 				qui _ddml_reg, mname(`mname') spec(`i') medmean(mn) title(`title')
@@ -405,24 +405,24 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local specrep = (6-length("`specrep'"))*" " + "`specrep'"
 				local rcmd stata ddml estimate `mname', spec(`i') rep(`m') replay notable
 				di %6s "{`rcmd':`specrep'}" _c
-				di %14s "`yt'" _c
+				di as res %14s "`yt'" _c
 				forvalues j=1/`numeqnD' {
 					local vt : word `j' of `dtlist'
 					mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
 					mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
-					di %14s "`vt'" _c
-					di %10.3f `b' _c
+					di as res %14s "`vt'" _c
+					di as res %10.3f `b' _c
 					local pse (`: di %6.3f `se'')
-					di %10s "`pse'" _c
+					di as res %10s "`pse'" _c
 				}
 				forvalues j=1/`numeqnZ' {
 					local vt : word `j' of `ztlist'
-					di %14s "`vt'" _c
+					di as res %14s "`vt'" _c
 				}
 				if "`model'"=="ivhd" {
 					forvalues j=1/`numeqnD' {
 						local vt : word `j' of `ztlist'
-						di %14s "`vt'" _c
+						di as res %14s "`vt'" _c
 					}
 				}
 				di
@@ -437,20 +437,20 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local specrep = "  " + "`specrep'"
 				local rcmd stata ddml estimate `mname', spec(ss) rep(`m') replay notable
 				di %6s "{`rcmd':`specrep'}" _c
-				di %14s "[shortstack]" _c
+				di as res %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
-					di %14s "[ss]" _c
-					di %10.3f el(`btemp',1,`j') _c
+					di as res %14s "[ss]" _c
+					di as res %10.3f el(`btemp',1,`j') _c
 					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-					di %10s "`pse'" _c
+					di as res %10s "`pse'" _c
 				}
 				if "`model'"=="ivhd" {
 					forvalues j=1/`numeqnD' {
-						di %14s "[ss]" _c
+						di as res %14s "[ss]" _c
 					}
 				}
 				forvalues j=1/`numeqnZ' {
-					di %14s "[ss]" _c
+					di as res %14s "[ss]" _c
 				}
 				di
 			}
@@ -459,31 +459,31 @@ program _ddml_estimate_linear, eclass sortpreserve
 			di as text "Mean/median:"
 			foreach medmean in mn md {
 				** mean and median over mse
-					qui _ddml_reg, mname(`mname') spec(mse) rep(`medmean') replay
-					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
-					mat `btemp' = e(b)
-					mat `Vtemp' = e(V)
-					local specrep `: di "mse" %3s "`medmean'"' //'
-					// pad out to 6 spaces
-					local specrep = "  " + "`specrep'"
-					local rcmd stata ddml estimate `mname', spec(mse) rep(`medmean') replay notable
-					di %6s "{`rcmd':`specrep'}" _c
-					di %14s "[min-mse]" _c
+				qui _ddml_reg, mname(`mname') spec(mse) rep(`medmean') replay
+				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+				mat `btemp' = e(b)
+				mat `Vtemp' = e(V)
+				local specrep `: di "mse" %3s "`medmean'"' //'
+				// pad out to 6 spaces
+				local specrep = " " + "`specrep'"
+				local rcmd stata ddml estimate `mname', spec(mse) rep(`medmean') replay notable
+				di %6s "{`rcmd':`specrep'}" _c
+				di as res %14s "[min-mse]" _c
+				forvalues j=1/`numeqnD' {
+					di as res %14s "[mse]" _c
+					di as res %10.3f el(`btemp',1,`j') _c
+					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
+					di as res %10s "`pse'" _c
+				}
+				if "`model'"=="ivhd" {
 					forvalues j=1/`numeqnD' {
-						di %14s "[mse]" _c
-						di %10.3f el(`btemp',1,`j') _c
-						local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-						di %10s "`pse'" _c
+						di as res %14s "[mse]" _c
 					}
-					if "`model'"=="ivhd" {
-						forvalues j=1/`numeqnD' {
-							di %14s "[mse]" _c
-						}
-					}
-					forvalues j=1/`numeqnZ' {
-						di %14s "[mse]" _c
-					}
-					di
+				}
+				forvalues j=1/`numeqnZ' {
+					di as res %14s "[mse]" _c
+				}
+				di
 				if `ssflag' {
 					qui _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay
 					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
@@ -491,23 +491,23 @@ program _ddml_estimate_linear, eclass sortpreserve
 					mat `Vtemp' = e(V)
 					local specrep `: di "ss" %4s "`medmean'"' //'
 					// pad out to 6 spaces
-					local specrep = "  " + "`specrep'"
+					local specrep = " " + "`specrep'"
 					local rcmd stata ddml estimate `mname', spec(ss) rep(`medmean') replay notable
 					di %6s "{`rcmd':`specrep'}" _c
-					di %14s "[shortstack]" _c
+					di as res %14s "[shortstack]" _c
 					forvalues j=1/`numeqnD' {
-						di %14s "[ss]" _c
-						di %10.3f el(`btemp',1,`j') _c
+						di as res %14s "[ss]" _c
+						di as res %10.3f el(`btemp',1,`j') _c
 						local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-						di %10s "`pse'" _c
+						di as res %10s "`pse'" _c
 					}
 					if "`model'"=="ivhd" {
 						forvalues j=1/`numeqnD' {
-							di %14s "[ss]" _c
+							di as res %14s "[ss]" _c
 						}
 					}
 					forvalues j=1/`numeqnZ' {
-						di %14s "[ss]" _c
+						di as res %14s "[ss]" _c
 					}
 					di
 				}
