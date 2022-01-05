@@ -50,7 +50,6 @@ program _ddml_estimate_linear, eclass sortpreserve
 	local numeqnZ : word count `nameZ'
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 
-
 	// if rep not specified, default is rep=1 when nreps==1; md if nreps>1
 	if "`rep'"=="" & `nreps'>1 {
 		local rep md
@@ -516,23 +515,9 @@ program _ddml_estimate_linear, eclass sortpreserve
 		}
 	}
 	
-	// post selected estimates; rep is the resample number (default=1)
-	/*if "`post'"=="minmse" {
-		di
-		_ddml_reg, mname(`mname') spec(mse) rep(`rep') replay
-		di
-	}
-	else if "`post'"=="ss" {
-		di
-		_ddml_reg, mname(`mname') spec(ss) rep(`rep') replay
-		di	
-	}
-	else {*/
-		// post macro denotes the specification to post
-		di
-		_ddml_reg, mname(`mname') spec(`spec') rep(`rep') replay  
-		di
-	//}
+	di
+	_ddml_reg, mname(`mname') spec(`spec') rep(`rep') replay  
+	di
 	
 	// temp Mata object no longer needed
 	foreach obj in `eqn' `nmat' `bmat' `semat' {
