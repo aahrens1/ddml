@@ -6,9 +6,9 @@
 program define crossfit, rclass sortpreserve
 
 	syntax [anything] [if] [in] ,					/// 
-							estring(string asis)	/// estimation string
+							[ estring(string asis)	/// estimation string
 													/// need asis option in case it includes strings
-							[						///
+													///
 							ename(name)				/// name for Mata struct; default is "crossfit"
 							NOREPLACE				///
 							foldvar(varlist)		/// one fold var per resample
