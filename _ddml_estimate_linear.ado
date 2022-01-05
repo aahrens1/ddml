@@ -302,6 +302,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 		// aggregate across resamplings
 		if `nreps' > 1 {
 			// numbered specifications
+ 			_ddml_reg, mname(`mname') spec(mse) medmean(mn) title(`title') // min-mse specification
 			forvalues i = 1/`ncombos' {
 				local title "DDML model, specification `i' (mean)"
 				qui _ddml_reg, mname(`mname') spec(`i') medmean(mn) title(`title')
@@ -462,7 +463,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 						mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),13)))
 					}
 					di " " _c
-					local specrep `: di %3.0f `i' %3s "`medmean'"'
+					local specrep `: di %3.0f `i' %3s "`medmean'"' //'
 					// pad out to 6 spaces
 					local specrep = (6-length("`specrep'"))*" " + "`specrep'"
 					local rcmd stata ddml estimate `mname', spec(`i') rep(`medmean') replay notable
@@ -492,7 +493,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 					mat `btemp' = e(b)
 					mat `Vtemp' = e(V)
-					local specrep `: di "ss" %3s "`medmean'"'
+					local specrep `: di "ss" %3s "`medmean'"' //'
 					// pad out to 6 spaces
 					local specrep = "  " + "`specrep'"
 					local rcmd stata ddml estimate `mname', spec(ss) rep(`medmean') replay notable
