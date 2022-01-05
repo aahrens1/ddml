@@ -6,6 +6,8 @@
 program define crossfit, rclass sortpreserve
 
 	syntax [anything] [if] [in] ,					/// 
+							estring(string asis)	/// estimation string
+													/// need asis option in case it includes strings
 							[						///
 							ename(name)				/// name for Mata struct; default is "crossfit"
 							NOREPLACE				///
@@ -16,8 +18,6 @@ program define crossfit, rclass sortpreserve
 							resid					///
 							vtilde(namelist)		/// name(s) of fitted variable(s)
 							vname(varname)			/// name of original variable
-							estring(string asis)	/// estimation string
-													/// need asis option in case it includes strings
 							vtype(string)			/// datatype of fitted variable; default=double
 							treatvar(varname)		/// 1 or 0 RHS variable; relevant for interactive model only
 													/// if omitted then default is additive model
@@ -48,10 +48,6 @@ program define crossfit, rclass sortpreserve
 		di as res "resid option ignored"
 		local resid
 	}
-
-	marksample touse
-	// if dep var is missing, automatically not in estimation sample
-	markout `touse' `vname'
 	
 	if "`noisily'"=="" {
 		local qui quietly
@@ -78,6 +74,14 @@ program define crossfit, rclass sortpreserve
 							estring(`estring') estringh(`estringh')	///
 							`noisily'
 		local nlearners = r(nlearners)
+		if "`vtlist'"=="" {
+			// default names set by subroutine
+			mata: st_local("vtlist", invtokens(`eqn_info'.vtlist))
+		}
+		if "`vname'"=="" {
+			// depvar identified by subroutine
+			mata: st_local("vname", `eqn_info'.vname)
+		}
 
 	}
 	else {
@@ -98,6 +102,11 @@ program define crossfit, rclass sortpreserve
 		local shortstack
 		local ssflag = 0
 	}
+	
+	*** set sample
+	marksample touse
+	// if dep var is missing, automatically not in estimation sample
+	markout `touse' `vname'
 	
 	*** set up fold/reps variables
 	
@@ -1102,11 +1111,19 @@ program define initialize_eqn_info, rclass
 	// name for temp mata object
 	tempname t
 	
+	parse_estring, vtlist(`vtlist') ename(`ename') estring(`estring') `noisily'
+	if "`vtlist'"=="" {
+		// parse_estring set the default vtilde names
+		local vtlist `r(vtlist)'
+	}
+	if "`vname'"=="" {
+		// parse_estring set the default vname
+		local vname `r(vname)'
+	}
+	
 	mata: `ename'.vname = "`vname'"
 	mata: `ename'.shortstack = "`shortstack'"	// may be empty string
-	
-	parse_estring, vtlist(`vtlist') ename(`ename') estring(`estring') `noisily'
-
+		
 	if "`estringh'"~="" {
 		parse_estring, vtlist(`vtlist') ename(`ename') estring(`estringh') h `noisily'
 	}
@@ -1149,9 +1166,9 @@ program define parse_estring, rclass
 	
 	local doparse = 1
 	local vnum = 1
+	local hasvtlist = "`vtlist'"~=""
 	while `doparse' {
 		
-		local vtilde : word `vnum' of `vtlist'
 		tokenize `"`estring'"', parse("||")
 		mata: `t' = "`1'"
 		// used below with syntax command
@@ -1170,6 +1187,28 @@ program define parse_estring, rclass
 		syntax [anything] [if] [in] , [*]
 		local est_main `anything'
 		local est_options `options'
+		
+		if `hasvtlist' {
+			local vtilde : word `vnum' of `vtlist'
+		}
+		else {
+			// assign default name
+			local vtilde : word 1 of `1'
+			local vtilde Y`vnum'_`vtilde'
+			local vtlist `vtlist' `vtilde'
+		}
+		
+		if "`h'"=="" {
+			local nvname : word 2 of `1'
+			if "`vname'"=="" {
+				local vname `nvname'
+			}
+			// check
+			if "`vname'"~="`nvname'" {
+				di as err "warning - conflicting depvar names, `vname' and `nvname'"
+			}
+		}
+		
 		if "`h'"=="" {
 			mata: add_learner_item(`ename',"`vtilde'","estring","`0'")
 			mata: add_learner_item(`ename',"`vtilde'","est_main","`est_main'")
@@ -1192,6 +1231,9 @@ program define parse_estring, rclass
 		
 		local ++vnum
 	}
+	
+	return local vtlist `vtlist'
+	return local vname `vname'
 	
 	// no longer needed so clear from Mata
 	mata: mata drop `t'
