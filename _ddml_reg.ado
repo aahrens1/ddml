@@ -200,16 +200,6 @@ program define _ddml_reg, eclass
 		local isodd = mod(`nreps',2)
 		local medrow = ceil(`nreps'/2)
 		local N = 0
-
-		// we make a copy of the MSE-optimal model for each m
-		if "`spec'"=="mse" {
-			forvalues m=1/`nreps' {
-				tempname Bopt
-				mata: st_local("optspec",(`mname'.estAA).get(("optspec","`m'")))
-				mata: `Bopt' = (`mname'.estAA).get(("`optspec'","`m'"))
-				mata: (`mname'.estAA).put(("mse","`m'"),`Bopt')
-			}
-		}
 		
 		mata: `bagg' = J(1,`K',0)
 		mata: `bvec' = J(`nreps',`K',0)
