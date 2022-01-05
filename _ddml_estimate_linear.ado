@@ -22,30 +22,41 @@ program _ddml_estimate_linear, eclass sortpreserve
 	// display all regression outpus
 	local allflag = "`allest'"~=""
 	
-	// if spec not specified, post min MSE model
-	if "`spec'"=="" local spec mse 
-	/*if "`spec'"=="" {
-		local post "mse"
-	}
-	else {
-		local post `spec'
-		// clear local
-		local spec
-	}
-	// allowable forms
-	if "`post'"=="shortstack"	local post ss
-	if "`post'"=="minmse"		local post mse
-	if "`rep'"=="mean"			local rep mn
-	if "`rep'"=="median"		local rep md
-	// checks
-	if "`post'"=="ss" & ~`ssflag' {
-		di as err "error - no shortstack crossfit estimates available to post"
+	if ~`crossfitted' {
+		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
 		exit 198
 	}
-	*/
-	// if rep not specified, default is rep=1
-	if "`rep'"=="" {
+
+	if "`spec'"=="" {
+		local spec "mse"
+	}
+
+	// allowable forms
+	if "`spec'"=="shortstack"	local spec ss
+	if "`spec'"=="minmse"		local spec mse
+	if "`rep'"=="mean"			local rep mn
+	if "`rep'"=="median"		local rep md
+
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	
+	// locals used below
+	mata: st_local("model",`mname'.model)
+	mata: st_local("nameY",`mname'.nameY)
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	local numeqnD : word count `nameD'
+	local numeqnZ : word count `nameZ'
+	mata: st_local("nreps",strofreal(`mname'.nreps))
+
+
+	// if rep not specified, default is rep=1 when nreps==1; md if nreps>1
+	if "`rep'"=="" & `nreps'>1 {
 		local rep md
+	}
+	else if "`rep'"=="" & `nreps'==1 {
+		local rep 1
 	}
 	if real("`rep'")==. {
 		// rep is an integer or mn/md
@@ -60,29 +71,6 @@ program _ddml_estimate_linear, eclass sortpreserve
 			exit 198
 		}
 	}
-	if ~`crossfitted' {
-		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
-		exit 198
-	}
-	// opt + mean/median not currently supported
-	if "`post'"=="opt" & real("`rep'")==. {
-		di as err "error - post(opt) model not yet avaiable with mean/median"
-		exit 198
-	}
-	
-	// blank eqn - declare this way so that it's a struct and not transmorphic
-	tempname eqn
-	mata: `eqn' = init_eStruct()
-	
-	// locals used below
-	mata: st_local("model",`mname'.model)
-	mata: st_local("nameY",`mname'.nameY)
-	mata: st_local("nameD",invtokens(`mname'.nameD))
-	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
-	local numeqnD : word count `nameD'
-	local numeqnZ : word count `nameZ'
-	mata: st_local("nreps",strofreal(`mname'.nreps))
-
 	// check that rep, if integer, isn't larger than nreps
 	if real("`rep'")!=. {
 		if `rep'>`nreps' {
