@@ -123,6 +123,7 @@ program _ddml_crossfit, eclass sortpreserve
 		if ("`model'"=="ivhd"|"`model'"=="late") di as text "Cross-fitting E[Y|X,Z] equation: `nameY'"
 		if ("`model'"=="interactive") di as text "Cross-fitting E[Y|X,D] equation: `nameY'"
 		if ("`model'"=="iv") di as text "Cross-fitting E[Y|X] equation: `nameY'"
+
 		crossfit if `touse',						///
 			ename(`eqn') noreplace					///
 			foldvar(`fidlist')						///
@@ -307,6 +308,8 @@ program create_sample_indicators
 		qui gen `mname'_sample_md = `mname'_sample_mn
 	}
 	
+	// no longer needed
+	mata: mata drop `eqn'
 	
 end
 

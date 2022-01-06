@@ -303,6 +303,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 			mata: st_local("optspec",(`mname'.estAA).get(("optspec","`m'")))
 			mata: `Bopt' = (`mname'.estAA).get(("`optspec'","`m'"))
 			mata: (`mname'.estAA).put(("mse","`m'"),`Bopt')
+			mata: mata drop `Bopt'
 		}
 		
 		// aggregate across resamplings

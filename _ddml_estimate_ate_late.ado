@@ -323,6 +323,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			mata: st_local("optspec",(`mname'.estAA).get(("optspec","`m'")))
 			mata: `Bopt' = (`mname'.estAA).get(("`optspec'","`m'"))
 			mata: (`mname'.estAA).put(("mse","`m'"),`Bopt')
+			mata: mata drop `Bopt'
 		}
 		
 		// aggregate across resamplings
@@ -350,6 +351,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		mata: (`mname'.estAA).put(("nmat","all"),`nmat')
 		mata: (`mname'.estAA).put(("bmat","all"),`bmat')
 		mata: (`mname'.estAA).put(("semat","all"),`semat')
+		
 	}
 	
 	************** REPORT RESULTS **************

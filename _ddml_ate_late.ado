@@ -293,7 +293,11 @@ program _ddml_ate_late, eclass
 		matrix rownames `V' = `dvar'
 		
 		tempvar esample
-		qui gen `esample' = `mname'_sample_`rep'
+		cap gen `esample' = `mname'_sample_`rep'
+		if _rc>0 {
+			// sample variable doesn't exist; ignore
+			local esample
+		}
 		
 		ereturn clear
 		ereturn post `b' `V', depname(`depvar') obs(`N') esample(`esample')
