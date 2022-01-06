@@ -90,9 +90,11 @@ program define stacking_p
 	if "`transform'"=="" {
 		if "`xb'" != "" {
 			qui rename `xbstacked' `varlist'
+			label var `varlist' "Prediction stacking"
 		}
 		else {
 			qui generate `typlist' `varlist' = `depvar' - `xbstacked' if `touse'
+			label var `varlist' "Residuals stacking"
 		}
 		`qui' count if `varlist'==.
 		di as text "(`r(N)' missing values generated)"

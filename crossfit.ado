@@ -5,7 +5,7 @@
 
 program define crossfit, rclass sortpreserve
 
-	syntax [varlist] [if] [in] ,					/// 
+	syntax [anything] [if] [in] ,					/// 
 							[ estring(string asis)	/// estimation string
 													/// need asis option in case it includes strings
 													///
@@ -32,7 +32,7 @@ program define crossfit, rclass sortpreserve
 
 	// renaming for clarity
 	local vtlist `vtilde'
-	local vname `varlist'
+	local vname `anything'
 	// clear the local macro
 	local vtilde
 

@@ -95,7 +95,7 @@ program define _stacking, eclass
 							kfolds(integer 5)		/// ignored if foldvars provided
 							estring(string asis)	/// estimation string
 							vtilde(namelist)		/// name(s) of fitted variable(s)
-							stack(name)				///
+							stack(name)				/// varname for stacking predictions (optional)
 							eqn(name)				///
 							NOIsily					///
 							]
@@ -112,6 +112,15 @@ program define _stacking, eclass
 	marksample touse
 	// if dep var is missing, automatically not in estimation sample
 	markout `touse' `vname'
+	
+	if "`stack'"=="" {
+		// name for in-sample stacking predictions not provided, so drop when done
+		local stack __stacking
+		local dropstack 1
+	}
+	else {
+		local dropstack 0
+	}
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	if "`eqn'" == "" {
@@ -190,8 +199,14 @@ program define _stacking, eclass
 	foreach vtilde in `vtlist' {
 		cap drop `vtilde'_1
 	}
-	cap drop `stack'_1
-		
+	if `dropstack' {
+		drop `stack'_1
+	}
+	else {
+		rename `stack'_1 `stack'
+		label var `stack' "Stacking out-of-sample (fold) predictions"
+	}
+	
 	ereturn clear
 	ereturn post, depname(`varlist') obs(`N') esample(`touse')
 	ereturn local cmd stacking
