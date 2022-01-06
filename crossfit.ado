@@ -5,7 +5,7 @@
 
 program define crossfit, rclass sortpreserve
 
-	syntax [anything] [if] [in] ,					/// 
+	syntax [varlist] [if] [in] ,					/// 
 							[ estring(string asis)	/// estimation string
 													/// need asis option in case it includes strings
 													///
@@ -17,7 +17,6 @@ program define crossfit, rclass sortpreserve
 							NORANDOM				/// first fold ID uses obs in existing order
 							resid					///
 							vtilde(namelist)		/// name(s) of fitted variable(s)
-							vname(varname)			/// name of original variable
 							vtype(string)			/// datatype of fitted variable; default=double
 							treatvar(varname)		/// 1 or 0 RHS variable; relevant for interactive model only
 													/// if omitted then default is additive model
@@ -26,11 +25,14 @@ program define crossfit, rclass sortpreserve
 													/// options specific to LIE/DDML-IV
 							estringh(string asis)	/// est string for E[D^|XZ]		
 													/// 
+							predopt(string asis)	///
+							vtype(string)			///  "double", "float" etc
 							NOIsily					///
 							]
 
 	// renaming for clarity
 	local vtlist `vtilde'
+	local vname `varlist'
 	// clear the local macro
 	local vtilde
 
@@ -64,6 +66,14 @@ program define crossfit, rclass sortpreserve
 		else {
 			local eqn_info `ename'
 		}
+		
+		*** variable type
+		if "`vtype'"=="" {
+			local vtype double
+		}
+		if "`vtype'"=="none" {
+			local vtype
+		}
 	
 		mata: `eqn_info' = init_eStruct()
 		initialize_eqn_info,										///
@@ -72,6 +82,8 @@ program define crossfit, rclass sortpreserve
 							vtlist(`vtlist')						///
 							shortstack(`shortstack')				///
 							estring(`estring') estringh(`estringh')	///
+							vtype(`vtype')							///
+							predopt(`predopt')					 	///
 							`noisily'
 		local nlearners = r(nlearners)
 		if "`vtlist'"=="" {
@@ -262,7 +274,7 @@ program define crossfit, rclass sortpreserve
 				mata: st_local("est_main", return_learner_item(`eqn_info',"`vtilde'","est_main"))
 				mata: st_local("est_options", return_learner_item(`eqn_info',"`vtilde'","est_options"))
 				mata: st_local("predopt",return_learner_item(`eqn_info',"`vtilde'","predopt"))
-				mata: st_local("vtype",return_learner_item(`eqn_info',"`vtilde'","vtype"))				
+				mata: st_local("vtype",return_learner_item(`eqn_info',"`vtilde'","vtype"))
 				if `lieflag' {
 					// LIE locals
 					local hhat `vtilde'_h
@@ -1105,6 +1117,8 @@ program define initialize_eqn_info, rclass
 													/// need asis option in case it includes strings
 							estringh(string asis)	/// names of LIE estimation strings
 													/// need asis option in case it includes strings
+							vtype(string)			///
+							predopt(string asis)	///
 							NOIsily					///
 							]
 	
@@ -1115,7 +1129,7 @@ program define initialize_eqn_info, rclass
 	// name for temp mata object
 	tempname t
 	
-	parse_estring, vtlist(`vtlist') ename(`ename') estring(`estring') `noisily'
+	parse_estring, vtlist(`vtlist') ename(`ename') estring(`estring') vtype(`vtype') predopt(`predopt') `noisily'
 	if "`vtlist'"=="" {
 		// parse_estring set the default vtilde names
 		local vtlist `r(vtlist)'
@@ -1129,7 +1143,7 @@ program define initialize_eqn_info, rclass
 	mata: `ename'.shortstack = "`shortstack'"	// may be empty string
 		
 	if "`estringh'"~="" {
-		parse_estring, vtlist(`vtlist') ename(`ename') estring(`estringh') h `noisily'
+		parse_estring, vtlist(`vtlist') ename(`ename') estring(`estringh') h vtype(`vtype') predopt(`predopt') `noisily'
 	}
 	
 	// if there were duplicate vtilde names in vtlist, info for the last learner would be stored in the AA
@@ -1158,6 +1172,8 @@ program define parse_estring, rclass
 							estring(string asis)	/// names of estimation strings
 													/// need asis option in case it includes strings
 							h						/// indicates LIE eqn
+							vtype(string)			///
+							predopt(string asis)	///
 							NOIsily					///
 							]
 	
@@ -1217,11 +1233,15 @@ program define parse_estring, rclass
 			mata: add_learner_item(`ename',"`vtilde'","estring","`0'")
 			mata: add_learner_item(`ename',"`vtilde'","est_main","`est_main'")
 			mata: add_learner_item(`ename',"`vtilde'","est_options","`est_options'")
+			mata: add_learner_item(`ename',"`vtilde'","predopt","`predopt'")
+			mata: add_learner_item(`ename',"`vtilde'","vtype","`vtype'")
 		}
 		else {
 			mata: add_learner_item(`ename',"`vtilde'","estring_h","`0'")
 			mata: add_learner_item(`ename',"`vtilde'","est_main_h","`est_main'")
 			mata: add_learner_item(`ename',"`vtilde'","est_options_h","`est_options'")
+			mata: add_learner_item(`ename',"`vtilde'","predopt_h","`predopt'")
+			mata: add_learner_item(`ename',"`vtilde'","vtype_h","`vtype'")
 		}
 
 		if "`2'"~="|" & "`3'"~="|" {
