@@ -27,9 +27,9 @@ struct eStruct {
 	string scalar					shortstack	// name of shortstack variable
 	real scalar						nlearners	// number of learners
 	real scalar						lieflag		// =1 if LIE spec with two estimation strings etc.
-	class AssociativeArray scalar	lrnAA		// pointer to AssociativeArray with all learners //
+	class AssociativeArray scalar	lrnAA		// AssociativeArray with all learners //
 												// (keys=vtilde,object)
-	class AssociativeArray scalar	resAA		// pointer to AssociativeArray with all learner results //
+	class AssociativeArray scalar	resAA		// AssociativeArray with all learner results //
 												// (keys=vtilde,object,rep)
 
 }
