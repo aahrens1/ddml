@@ -129,7 +129,7 @@ program define _ddml_reg, eclass
 			// pystacked weights
 			mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde'","cmd")=="pystacked"))
 			if `pyswflag' {
-				mata: `A'.put(("`vtilde'_pysw","matrix"), (return_result_item(`eqn',"`vtilde'","stack_weights","`rep'")'))
+				mata: `A'.put(("`vtilde'_pysw","matrix"), mean(return_result_item(`eqn',"`vtilde'","stack_weights","`rep'")'))
 			}
 			// ss weights
 			mata: st_local("shortstack_vname", `eqn'.shortstack)
