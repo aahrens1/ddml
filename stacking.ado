@@ -1,6 +1,5 @@
 program define stacking, eclass
 	
-	// no replay - must estimate
 	if ~replay() {
 		_stacking `0'
 	}
