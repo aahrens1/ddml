@@ -11,6 +11,7 @@ program _ddml_nnls, eclass sortpreserve
 							 	double /// datatype for fitted value
 								///ml /// use ML instead of NL
 								VERBose ///
+								SE ///
 								* ///
 							]
 
@@ -63,24 +64,35 @@ program _ddml_nnls, eclass sortpreserve
 	local N = e(N)
 
 	** create nlcom eq
-	local nlcom_eq 
-	local j = 1
-	foreach var of varlist `xvars' {
-		local nlcom_eq `nlcom_eq' (`var': `nlcom_coef`j'')
-		local j = `j'+1
-	}
+	if "`se'"!="" {
+		local nlcom_eq 
+		local j = 1
+		foreach var of varlist `xvars' {
+			local nlcom_eq `nlcom_eq' (`var': `nlcom_coef`j'')
+			local j = `j'+1
+		}
 
-	** get coefficients
-	`qui' di "`nlcom_eq'"
- 	`qui' nlcom `nlcom_eq'
-   
-    tempname bhat vhat
-    matrix `bhat' = r(b)
-    matrix `vhat' = r(V)
-    matrix colnames `bhat' = `xvars'
-    matrix rownames `bhat' = "`yvar'"
-    matrix colnames `vhat' = `xvars'
-    matrix rownames `vhat' = `xvars'
+		** get coefficients
+		`qui' di "`nlcom_eq'"
+	 	`qui' nlcom `nlcom_eq'
+	   
+	    tempname bhat vhat
+	    matrix `bhat' = r(b)
+	    matrix `vhat' = r(V)
+	    matrix colnames `bhat' = `xvars'
+	    matrix rownames `bhat' = "`yvar'"
+	    matrix colnames `vhat' = `xvars'
+	    matrix rownames `vhat' = `xvars'
+	}
+	else {
+		tempname bhat  
+		mat `bhat' = J(1,`k',.)
+		forvalues j = 1(1)`k' {
+			mat `bhat'[1,`j'] = `nlcom_coef`j''
+		}
+	    matrix colnames `bhat' = `xvars'
+	    matrix rownames `bhat' = "`yvar'"
+	}
 
     ereturn clear
     ereturn post `bhat' `vhat', depname(`yvar') obs(`N') esample(`touse')
