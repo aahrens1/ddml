@@ -52,25 +52,27 @@ program _ddml_drop, eclass
 		}
 	}
 	
-	// Add wildcards, add prefixed variables, then unabbreviate
+	*** Add wildcards, then unabbreviate
 	foreach var in `vtlist' {
-		local evtlist `evtlist' `var'*
+		// variables may not exist yet
+		cap unab evtlist : `var'*
+		if _rc==0 {
+			// variables exist so drop them
+			foreach var of varlist `evtlist' {
+				cap drop `var'
+			}
+		}
 	}
-	unab evtlist : `evtlist'
 	
-	*** drop variables
-	foreach var of varlist `evtlist' {
-		cap drop `var'
-	}
-
 	*** drop id, fold id, sample var
 	cap drop `mname'_id
-	cap drop `mname'_sample
+	cap drop `mname'_sample*
 	cap drop `mname'_fid*		// multiple folds
 	
 	*** drop eqn structs
 	foreach estruct in `eqnlist' {
-		mata: mata drop `estruct'
+		// eqn structs may not exist yet
+		cap mata: mata drop `estruct'
 	}
 	mata: mata drop `eqn'		// temp eqn
 
