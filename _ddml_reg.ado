@@ -102,11 +102,11 @@ program define _ddml_reg, eclass
 		mata: `A'.put(("`y'_mse","scalar"),return_result_item(`eqn',"`y'","MSE","`rep'"))
 		// MSE folds
 		mata: `A'.put(("`y'_mse_folds","matrix"),return_result_item(`eqn',"`y'","MSE_folds","`rep'"))
-		// pystacked weights
-		mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`y'","cmd")=="pystacked"))
-		if `pyswflag' {
-			mata: `A'.put(("`y'_pysw","matrix"), mean(return_result_item(`eqn',"`y'","stack_weights","`rep'")'))
-		}
+		// pystacked weightss - don't use, mean across folds doesn't mean anything
+		// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`y'","cmd")=="pystacked"))
+		// if `pyswflag' {
+		//	mata: `A'.put(("`y'_pysw","matrix"), mean(return_result_item(`eqn',"`y'","stack_weights","`rep'")'))
+		// }
 		// ss weights
 		mata: st_local("shortstack_vname", `eqn'.shortstack)
 		if "`shortstack_vname'"!="" {
@@ -126,11 +126,11 @@ program define _ddml_reg, eclass
 			mata: `A'.put(("`vtilde'_mse","scalar"),return_result_item(`eqn',"`vtilde'","MSE","`rep'"))
 			// MSE folds
 			mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
-			// pystacked weights
-			mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde'","cmd")=="pystacked"))
-			if `pyswflag' {
-				mata: `A'.put(("`vtilde'_pysw","matrix"), mean(return_result_item(`eqn',"`vtilde'","stack_weights","`rep'")'))
-			}
+			// pystacked weights - don't use, mean across folds doesn't mean anything
+			// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde'","cmd")=="pystacked"))
+			// if `pyswflag' {
+			//	mata: `A'.put(("`vtilde'_pysw","matrix"), mean(return_result_item(`eqn',"`vtilde'","stack_weights","`rep'")'))
+			// }
 			// ss weights
 			mata: st_local("shortstack_vname", `eqn'.shortstack)
 			if "`shortstack_vname'"!="" {
@@ -141,11 +141,11 @@ program define _ddml_reg, eclass
 				mata: `A'.put(("`vtilde_h'_mse","scalar"),return_result_item(`eqn',"`vtilde_h'","MSE_h","`rep'"))
 				// MSE folds
 				mata: `A'.put(("`vtilde_h'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde_h'","MSE_h_folds","`rep'"))
-				// pystacked weights
-				mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde_h'","cmd")=="pystacked"))
-				if `pyswflag' {
-					mata: `A'.put(("`vtilde_h'_pysw","matrix"), mean(return_result_item(`eqn',"`vtilde_h'","stack_weights","`rep'")'))
-				}
+				// pystacked weightss - don't use, mean across folds doesn't mean anything
+				// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde_h'","cmd")=="pystacked"))
+				// if `pyswflag' {
+				//	mata: `A'.put(("`vtilde_h'_pysw","matrix"), mean(return_result_item(`eqn',"`vtilde_h'","stack_weights","`rep'")'))
+				// }
 				// ss weights
 				mata: st_local("shortstack_vname", `eqn'.shortstack)
 				if "`shortstack_vname'"!="" {
@@ -164,11 +164,11 @@ program define _ddml_reg, eclass
 				mata: `A'.put(("`vtilde'_mse","scalar"),return_result_item(`eqn',"`vtilde'","MSE","`rep'"))
 				// MSE folds
 				mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
-				mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde'","cmd")=="pystacked"))
-				// pystacked weights
-				if `pyswflag' {
-					mata: `A'.put(("`vtilde'_pysw","matrix"), mean(return_result_item(`eqn',"`vtilde'","stack_weights","`rep'")'))
-				}
+				// pystacked weightss - don't use, mean across folds doesn't mean anything
+				// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde'","cmd")=="pystacked"))
+				// if `pyswflag' {
+				//	mata: `A'.put(("`vtilde'_pysw","matrix"), mean(return_result_item(`eqn',"`vtilde'","stack_weights","`rep'")'))
+				// }
 				// ss weights
 				mata: st_local("shortstack_vname", `eqn'.shortstack)
 				if "`shortstack_vname'"!="" {

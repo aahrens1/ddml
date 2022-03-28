@@ -434,6 +434,10 @@ program define crossfit, rclass sortpreserve
 				if `k'==1 & `m'==1 {
 					local cmd_list   `cmd_list'   `cmd'
 					local cmd_h_list `cmd_h_list' `cmd_h'
+					// pystacked learners
+					if ("`cmd'"=="pystacked") {
+						local base_est_`i' `e(base_est)'
+					}
 				}
 			}
 		}
@@ -872,6 +876,12 @@ program define crossfit, rclass sortpreserve
 				}
 				
 			}
+			
+			// add pystacked learner info (applies to all folds and resamples)
+			if "`cmd'"=="pystacked" & `m'==1 {
+				mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")
+			}
+
 		}
 		
 		// add shortstack results
@@ -1010,7 +1020,7 @@ program define crossfit, rclass sortpreserve
 	
 	}		// end of resampling loop
 	
-	
+		
 	******************************** RETURN RESULTS ************************************
 
 	if ~`tvflag' {

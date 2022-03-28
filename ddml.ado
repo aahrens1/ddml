@@ -9,7 +9,7 @@
 
 // (no)prefix option not implemented; prefixes not added (where prefix = `model'_)
 
-program ddml, eclass
+program ddml	// no class - some subcommands are eclass, some are rclass
 
 	version 13
 	
@@ -54,7 +54,7 @@ program ddml, eclass
 		
 		// should perhaps make subcmd list all lower case (more forgiving) and replace `subcmd' with strlower("`subcmd'").
 		local alleqntypes E[Y|X] E[Y|X,D] E[Y|D,X] E[Y|X,Z] E[Y|Z,X] E[D|X] E[D|Z,X] E[D|X,Z] E[Z|X] yeq deq zeq dheq
-		local allsubcmds  update describe save export use drop copy sample init reinit yeq deq dheq zeq crossfit estimate 
+		local allsubcmds  update describe save export use drop copy sample init reinit yeq deq dheq zeq crossfit estimate extract
 		local allsubcmds `allsubcmds' `alleqntypes'
 		if strpos("`allsubcmds'","`subcmd'")==0 {
 			di as err "error - unknown subcommand `subcmd'"
@@ -112,6 +112,12 @@ program ddml, eclass
 				exit 198
 			}
 			_ddml_copy, mname(`mname') newmname(`newmname')
+		}
+		
+		*** extract from model
+		if "`subcmd'"=="extract" {
+			local objname: word 2 of `mainargs'
+			_ddml_extract `objname', mname(`mname') vname(`vname') `options'		
 		}
 	
 		*** initialize new estimation
