@@ -56,7 +56,8 @@ program _ddml_sample
 				local labtext "(randomly generated)"
 			}
 			qui cumul `uni' if `mname'_sample, gen(`cuni')
-			qui gen int `mname'_fid_`m' = ceil(`kfolds'*`cuni') if `mname'_sample
+			// epsfloat() used below so that if cuni is on boundary it goes to the lower group
+			qui gen int `mname'_fid_`m' = ceil(`kfolds'*(`cuni'-epsfloat())) if `mname'_sample
 			label var `mname'_fid_`m' "`labtext'"
 		}
 	}

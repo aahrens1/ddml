@@ -23,6 +23,8 @@ program define _ddml_extract, rclass
 		di as err "error - incompatible options mname(.) and ename(.)"
 		exit 198
 	}
+	// show macro can be lower or upper case; upper required below
+	local show = upper("`show'")
 	
 	local keysflag = ("`keys'"~="")
 	
@@ -100,7 +102,7 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 	struct eStruct scalar eqn
 	class AssociativeArray scalar AA
 
-	if (show=="pystacked") {
+	if (show=="PYSTACKED") {
 		rmatlist = J(1,0,"")
 		vnames =(d.eqnAA).keys()
 		vnames = sort(vnames,(1::cols(vnames))')
@@ -110,20 +112,33 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 			vkeys = sort(vkeys,(1::cols(vkeys))')
 			for (j=1;j<=rows(vkeys);j++) {
 				if (strpos(vkeys[j,2],"stack_weights")) {
+					rname=vkeys[j,1]
 					if (vkeys[j,2]=="stack_weights") {
-						rname=vkeys[j,1]+"_"+vkeys[j,3]
+						rname=rname+"_"+vkeys[j,3]
 						rmatlist = (rmatlist, rname)
-						split = ""
+						DZeq01 = ""
 					}
 					else if (vkeys[j,2]=="stack_weights0") {
-						rname=vkeys[j,1]+"0_"+vkeys[j,3]
+						if (d.model=="interactive") {
+							rname = rname + "_Deq0"
+						}
+						else {	// LATE
+							rname = rname + "_Zeq0"
+						}
+						rname=rname+"_"+vkeys[j,3]
 						rmatlist = (rmatlist, rname)
-						split = "0"
+						DZeq01 = "0"
 					}
 					else if (vkeys[j,2]=="stack_weights1") {
-						rname=vkeys[j,1]+"1_"+vkeys[j,3]
+						if (d.model=="interactive") {
+							rname = rname + "_Deq1"
+						}
+						else {	// LATE
+							rname = rname + "_Zeq1"
+						}
+						rname=rname+"_"+vkeys[j,3]
 						rmatlist = (rmatlist, rname)
-						split = "1"
+						DZeq01 = "1"
 					}
 					rmat = (eqn.resAA).get(vkeys[j,.])
 					st_matrix("r("+rname+")",rmat)
@@ -131,13 +146,13 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 					rstripe = (J(rows(base_est),1,""), base_est)
 					st_matrixrowstripe("r("+rname+")",rstripe)
 					// display
-					display_pystacked_weights(d,vnames[i],rname,rmat,base_est,split)
+					display_pystacked_weights(d,vnames[i],rname,rmat,base_est,DZeq01)
 				}
 			}
 		}
 		st_global("r(matlist)",invtokens(sort(rmatlist,1)))
 	}
-	else if (show=="mse") {
+	else if ((show=="MSE") | (show=="N")) {
 		rmatlist = J(1,0,"")
 		vnames =(d.eqnAA).keys()
 		vnames = sort(vnames,(1::cols(vnames))')
@@ -148,36 +163,56 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 			reqn = J(0,1,"")
 			rvtilde = J(0,1,"")
 			rsmp = J(0,1,.)
+			DZeq01 = J(0,1,.)
 			vkeys = (eqn.resAA).keys()
 			// sort keys by vtilde, rep, and lastly "MSE" or "MSE_folds"
 			// means that when looping through, when j=MSE then j+1=MSE_folds for same vtilde and rep
 			vkeys = sort(vkeys,(1,3,2))
 			for (j=1;j<=rows(vkeys);j++) {
-				if (vkeys[j,2]=="MSE") {
+				if ((strpos(vkeys[j,2],show)==1) & (strpos(vkeys[j,2],"folds")==0)) {
 					rmatmse = (rmatmse \ (eqn.resAA).get(vkeys[j,.]))
 					reqn = (reqn \ vnames[i])
-					rvtilde = (rvtilde \ vkeys[j,1])
+					if (strpos(vkeys[j,2],"0")) {
+						DZeq01 = (DZeq01 \ 0)
+					}
+					else if (strpos(vkeys[j,2],"1")) {
+						DZeq01 = (DZeq01 \ 1)
+					}
+					rvtilde = (rvtilde \ (vkeys[j,1]))
 					rsmp = (rsmp \ strtoreal(vkeys[j,3]))
 				}
-				if (vkeys[j,2]=="MSE_folds") {
+				if ((strpos(vkeys[j,2],show)==1) & (strpos(vkeys[j,2],"folds")>0)) {
 					rmatmse_folds =(rmatmse_folds \ (eqn.resAA).get(vkeys[j,.]))
 				}
 			}
 			// store as r(.) macro
-			rmat = (rsmp, rmatmse, rmatmse_folds)
+			// if interactive or LATE, include column for D/Z=0 or D/Z=1
+			if (rows(DZeq01)>0) {
+				rmat = (DZeq01, rsmp, rmatmse, rmatmse_folds)
+				if (d.model=="interactive") {
+					cstripe = ("D=0/1" \ "rep" \ "full_sample")
+				}
+				else {	// LATE
+					cstripe = ("Z=0/1" \ "rep" \ "full_sample")
+				}
+			}
+			else {
+				rmat = (rsmp, rmatmse, rmatmse_folds)
+				cstripe = ("rep" \ "full_sample")
+			}
 			rname = vnames[i]+"_mse"
 			st_matrix("r("+rname+")",rmat)
 			rstripe = (J(rows(rmat),1,""), rvtilde)
 			st_matrixrowstripe("r("+rname+")",rstripe)
-			cstripe = ("rep" \ "full_sample")
+			// add fold numbers to column stripe
 			for (k=1;k<=d.kfolds;k++) {
 				cstripe = (cstripe \ "fold"+strofreal(k))
 			}
-			cstripe = (J(d.kfolds+2,1,""), cstripe)
+			cstripe = (J(rows(cstripe),1,""), cstripe)
 			st_matrixcolstripe("r("+rname+")",cstripe)
 			rmatlist = (rmatlist, rname)
 			st_global("r(matlist)",invtokens(sort(rmatlist,1)))
-			display_mse(d,reqn, rvtilde, rsmp, rmatmse, rmatmse_folds)
+			display_mse(d, show, reqn, rvtilde, DZeq01, rsmp, rmatmse, rmatmse_folds)
 		}
 	}
 	else if (ename~="") {
@@ -283,26 +318,58 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 
 void display_mse(												///
 									struct mStruct d,			///
+									string scalar show,			///
 									string matrix reqn,			///
 									string matrix rvtilde,		///
+									real matrix DZeq01,			///
 									real matrix rsmp,			///
 									real matrix rmatmse,		///
 									real matrix rmatmse_folds	///
 									)
 {
+	
+	if ((rows(DZeq01)>0) & (d.model=="interactive")) {
+		// interactive
+		DZeq01text = "D="
+	}		
+	else if (rows(DZeq01)>0) {
+		// LATE
+		DZeq01text = "Z="
+	}
+	else {
+		// all others
+		DZeq01text = ""
+	}
+	
+	if (show=="MSE") {
+		fmt = "{res}%10.3f  "
+	}
+	else {
+		fmt = "{res}%10.0f  "
+	}
+
+
 	printf("\n{txt}MSEs for %s:\n",reqn[1])
-	printf("{txt}%18s ","rep")
-	printf("{txt}%11s ","full smp")
+	printf("{txt}{space 16}")
+	if (DZeq01text~="") {
+		printf("{txt}%2s ", DZeq01text)
+	}
+	printf("{txt}%4s ","rep")
+	printf("{txt}%10s ","full smp")
 	for (j=1; j<=cols(rmatmse_folds);j++) {
-		printf("{txt} %8s ", "fold "+strofreal(j))
+		printf("{txt} %10s ", "fold "+strofreal(j))
 	}
 	printf("\n")
 	for (i=1;i<=rows(rvtilde);i++) {
-		printf("{txt}%12s ", rvtilde[i])
-		printf("{res}%6.0f ", rsmp[i])
-		printf("{res}%10.3f  ", rmatmse[i])
+		printf("{txt}%13s", rvtilde[i])
+		printf("{txt}{space 3}")
+		if (DZeq01text~="") {
+			printf("{res}%2.0f ", DZeq01[i])
+		}
+		printf("{res}%4.0f ", rsmp[i])
+		printf(fmt, rmatmse[i])
 		for (j=1; j<=cols(rmatmse_folds);j++) {
-			printf("{res}%8.3f  ", rmatmse_folds[i,j])
+			printf(fmt, rmatmse_folds[i,j])
 		}
 		printf("\n")
 	}
@@ -314,7 +381,7 @@ void display_pystacked_weights(									///
 									string scalar rname,		///
 									real matrix rmat,			///
 									string matrix base_est,		///
-									string scalar split			///
+									string scalar DZeq01			///
 									)
 {
 
@@ -324,7 +391,7 @@ void display_pystacked_weights(									///
 	// assemble message
 	if (d.model=="interactive") {
 		if (d.nameY==vname) {
-			condit = "X,D="+split
+			condit = "X,D="+DZeq01
 		}
 		else {
 			condit = "X"
@@ -335,7 +402,7 @@ void display_pystacked_weights(									///
 			condit = "X"
 		}
 		else {
-			condit = "X,Z="+split
+			condit = "X,Z="+DZeq01
 		}
 	}
 	else if (d.model=="ivhd") {

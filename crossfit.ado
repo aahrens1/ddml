@@ -746,9 +746,9 @@ program define crossfit, rclass sortpreserve
 					mat `mse0_folds' = (nullmat(`mse0_folds'), r(mean))
 					qui sum `vres1_sq' if `treatvar' == 1 & `touse' & `fid'==`k', meanonly
 					mat `mse1_folds' = (nullmat(`mse1_folds'), r(mean))
-					qui count if `treatvar' == 0 & `touse' & `fid'==`k' & `vres1_sq'<.
+					qui count if `treatvar' == 0 & `touse' & `fid'==`k' & `vres0_sq'<.
 					mat `N0_folds' = (nullmat(`N0_folds'), r(N))
-					qui count if `treatvar' == 1 & `touse' & `fid'==`k' & `vres0_sq'<.
+					qui count if `treatvar' == 1 & `touse' & `fid'==`k' & `vres1_sq'<.
 					mat `N1_folds' = (nullmat(`N1_folds'), r(N))
 				}
 	
