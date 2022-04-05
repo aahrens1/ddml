@@ -20,6 +20,8 @@ program _ddml_ate_late, eclass
 							replay				///
 							title(string)		///
 							medmean(string)		///
+							clustervar(varname) ///
+							ATET ///
 						]
 		
 	mata: st_local("model",`mname'.model)
@@ -49,10 +51,10 @@ program _ddml_ate_late, eclass
 		local z_m		`ztilde'_`rep'
 		
 		if "`model'"=="interactive" {
-			mata: ATE("`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'")
+			mata: ATE("`atet'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustervar'")
 		}
 		else {
-			mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'")
+			mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'","`clustervar'")
 		}
 		
 		// store post objects
@@ -361,14 +363,17 @@ end
 
 mata:
 
-void ATE(   string scalar yvar,	 // Y
+void ATE(   
+			string scalar atet,
+			string scalar yvar,	 // Y
 			string scalar dvar,	 // D
 			string scalar y0tilde,  // E[Y|X,D=0]
 			string scalar y1tilde,  // E[Y|X,D=1]
 			string scalar dtilde,   // E[D|X]
 			string scalar sample,   // sample
 			string scalar outate,   // output: name of matrix to store b
-			string scalar outatese  // output: name of matrix to store V
+			string scalar outatese,  // output: name of matrix to store V
+			string scalar clustervar
 			)
 {
 	st_view(my_d0x,.,y0tilde,sample)
@@ -376,17 +381,45 @@ void ATE(   string scalar yvar,	 // Y
 	st_view(md_x,.,dtilde,sample)
 	st_view(d,.,dvar,sample)
 	st_view(y,.,yvar,sample)
+	if (clustervar!="") {
+		st_view(clustid,.,clustervar,sample)
+		clusterid_uni=uniqrows(clustid)
+		nclust = rows(clusterid_uni)
+	}
 
 	n = rows(y)
 
-	te
-	te  = (d :* (y :- my_d1x) :/ md_x) :-  ((1 :- d) :* (y :- my_d0x) :/ (1 :- md_x)) :+ my_d1x :- my_d0x  
-	ate = mean(te)
-	ate_V =  variance(te)/n
+	// psi = psi_b - psi_a*theta
+	if (atet=="") {
+		psi_b  = (d :* (y :- my_d1x) :/ md_x) :-  ((1 :- d) :* (y :- my_d0x) :/ (1 :- md_x)) :+ my_d1x :- my_d0x 
+		psi_a  = J(n,1,-1) 
+	}
+	else {
+		p_hat = mean(d)
+		psi_b = (d :* (y :- my_d0x) :/ p_hat) :-  md_x :* (1 :- d) :* (y :- my_d0x) :/ (p_hat :*(1 :- md_x)) 
+		psi_a = -d :/ p_hat 
+	}
+	theta = -mean(psi_b) / mean(psi_a)
+	psi = psi_a :* theta :- psi_b
+
+	if (clustervar=="") {
+		V =  mean(psi:^2) :/ mean(psi_a):^2 :/ n	
+	}
+	else {
+		gamma = 0
+		jhat = 0
+		for (i=1;i<=nclust;i++) {
+			psi_c = select(psi,clustid:==clusterid_uni[i,1])
+			psi_a_c = select(psi_a,clustid:==clusterid_uni[i,1])
+			gamma = gamma :+ 1/nclust :* sum(psi_c*psi_c')
+			jhat = jhat :+  1/nclust :* sum(psi_a_c)
+		}
+		V = gamma / jhat:^2 / nclust
+	}
 
 	st_numscalar("r(N)",n)
-	st_matrix("r(b)",ate)
-	st_matrix("r(V)",ate_V)
+	st_matrix("r(b)",theta)
+	st_matrix("r(V)",V)
 }
 
 void LATE(  string scalar yvar,      // Y
@@ -399,7 +432,8 @@ void LATE(  string scalar yvar,      // Y
             string scalar ztilde,    // E[Z|X]
             string scalar sample,    // sample
             string scalar outlate,   // output: name of matrix to store b
-            string scalar outlatese  // output: name of matrix to store V
+            string scalar outlatese,  // output: name of matrix to store V
+            string scalar clustervar
             )
 {
     st_view(my_z0x,.,y0tilde,sample)
@@ -410,39 +444,38 @@ void LATE(  string scalar yvar,      // Y
     st_view(d,.,dvar,sample)
     st_view(y,.,yvar,sample)
     st_view(z,.,zvar,sample)
+    if (clustervar!="") {
+			st_view(clustid,.,clustervar,sample)
+			clusterid_uni=uniqrows(clustid)
+			nclust = rows(clusterid_uni)
+		}
+
     n = rows(y)
-    late =  mean( z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x ) /
-                mean( z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x ) 
-    late_se = variance(( z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x ) :/ 
-               mean( z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x )) / n
+
+    psi_b =  mean( z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x )
+    psi_a =  mean( z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x ) 
+
+		theta = -mean(psi_b) / mean(psi_a)
+		psi = psi_a :* theta :- psi_b
+
+		if (clustervar=="") {
+			V =  mean(psi:^2) :/ mean(psi_a):^2 :/ n	
+		}
+		else {
+			gamma = 0
+			jhat = 0
+			for (i=1;i<=nclust;i++) {
+				psi_c = select(psi,clustid:==clusterid_uni[i,1])
+				psi_a_c = select(psi_a,clustid:==clusterid_uni[i,1])
+				gamma = gamma :+ 1/nclust :* sum(psi_c*psi_c')
+				jhat = jhat :+  1/nclust :* sum(psi_a_c)
+			}
+			V = gamma / jhat:^2 / nclust
+		}
+
     st_numscalar("r(N)",n)
-    st_matrix("r(b)",late)
-    st_matrix("r(V)",late_se)
+    st_matrix("r(b)",theta)
+    st_matrix("r(V)",V)
 }
 
 end
-
-/*
-
-ATE <- function(y, d, my_d1x, my_d0x, md_x)
-{
-  return( mean( (d * (y - my_d1x) / md_x) -  ((1 - d) * (y - my_d0x) / (1 - md_x)) + my_d1x - my_d0x ) );
-}
-
-SE.ATE <- function(y, d, my_d1x, my_d0x, md_x)
-{
-  return( sd( (d * (y - my_d1x) / md_x) -  ((1 - d) * (y - my_d0x) / (1 - md_x)) + my_d1x - my_d0x )/sqrt(length(y)) );
-}
-
-LATE <- function(y, d, z, my_z1x, my_z0x, mz_x, md_z1x, md_z0x)
-{
-  return( mean( z * (y - my_z1x) / mz_x -  ((1 - z) * (y - my_z0x) / (1 - mz_x)) + my_z1x - my_z0x ) / 
-            mean( z * (d - md_z1x) / mz_x -  ((1 - z) * (d - md_z0x) / (1 - mz_x)) + md_z1x - md_z0x ) );
-}
-SE.LATE <- function(y, d, z, my_z1x, my_z0x, mz_x, md_z1x, md_z0x)
-{
-  return( sd(( z * (y - my_z1x) / mz_x -  ((1 - z) * (y - my_z0x) / (1 - mz_x)) + my_z1x - my_z0x ) / 
-               mean( z * (d - md_z1x) / mz_x -  ((1 - z) * (d - md_z0x) / (1 - mz_x)) + md_z1x - md_z0x )) / sqrt(length(y)) );
-}
-
-*/

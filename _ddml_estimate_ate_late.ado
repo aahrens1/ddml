@@ -6,6 +6,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 
 	syntax namelist(name=mname) [if] [in] ,		/// 
 								[				///
+								ATET 			///
 								ROBust			///
 								ALLest			/// show all regression outputs
 								NOTable			/// suppress summary table
@@ -15,10 +16,14 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								replay			/// model has been estimated, just display results
 								avplot			///
 								debug			///
+								clustervar(varname) ///
 								* ]
 	
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
+
+	local qui qui
+	if "`debug'"!="" local qui 
 	
 	// model needs to be estimated
 	local estflag = "`replay'"==""
@@ -287,14 +292,15 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					mata: (`mname'.estAA).put(("optspec","`m'"),"`i'")
 				}
 				// code works for both ATE and LATE
-				qui _ddml_ate_late if `mname'_sample_`m',			///
+				`qui' _ddml_ate_late if `mname'_sample_`m',			///
 					yvar(`nameY') dvar(`nameD') zvar(`nameZ')		///
 					y0tilde(`y0') y1tilde(`y1')						///
 					dtilde(`d') d0tilde(`d0') d1tilde(`d1')			///
 					ztilde(`z')										///
 					spec(`i') rep(`m')								///
 					mname(`mname')									///
-					title(`title')
+					title(`title')									///
+					clustervar(`clustervar')
 				
 				mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
 				mata: `semat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(semat)")
@@ -305,14 +311,15 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				
 				// code works for both ATE and LATE
 				local title "Shortstack DDML model`stext'"
-				qui _ddml_ate_late if `mname'_sample_`m',			///
+				`qui' _ddml_ate_late if `mname'_sample_`m',			///
 					yvar(`nameY') dvar(`nameD') zvar(`nameZ')		///
 					y0tilde(`Y0ss') y1tilde(`Y1ss')					///
 					dtilde(`Dss') d0tilde(`D0ss') d1tilde(`D1ss')	///
 					ztilde(`Zss')									///
 					spec(ss) rep(`m')								///
 					mname(`mname')									///
-					title(`title')
+					title(`title')									///
+					clustervar(`clustervar')
 			
 			}
 		}
@@ -328,21 +335,21 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		
 		// aggregate across resamplings
 		if `nreps' > 1 {
- 			qui _ddml_ate_late, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") // min-mse specification
- 			qui _ddml_ate_late, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") // min-mse specification
+ 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") clustervar(`clustervar') // min-mse specification
+ 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") clustervar(`clustervar') // min-mse specification
 			// numbered specifications
 			forvalues i = 1/`ncombos' {
 				local title "DDML model, specification `i' (mean)"
-				qui _ddml_ate_late, mname(`mname') spec(`i') medmean(mn) title(`title')
+				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(mn) title(`title') clustervar(`clustervar')
 				local title "DDML model, specification `i' (median)"
-				qui _ddml_ate_late, mname(`mname') spec(`i') medmean(md) title(`title')
+				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(md) title(`title') clustervar(`clustervar')
 			}
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean)"
-				qui _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title')
+				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title') clustervar(`clustervar')
 				local title "Shortstack DDML model (median)"
-				qui _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title')
+				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title') clustervar(`clustervar')
 			}
 		}
 		
