@@ -300,7 +300,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					spec(`i') rep(`m')								///
 					mname(`mname')									///
 					title(`title')									///
-					clustervar(`clustervar')
+					clustervar(`clustervar') `atet'
 				
 				mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
 				mata: `semat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(semat)")
@@ -319,7 +319,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					spec(ss) rep(`m')								///
 					mname(`mname')									///
 					title(`title')									///
-					clustervar(`clustervar')
+					clustervar(`clustervar') `atet'
 			
 			}
 		}
@@ -335,21 +335,21 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		
 		// aggregate across resamplings
 		if `nreps' > 1 {
- 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") clustervar(`clustervar') // min-mse specification
- 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") clustervar(`clustervar') // min-mse specification
+ 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") clustervar(`clustervar') `atet' // min-mse specification
+ 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") clustervar(`clustervar') `atet' // min-mse specification
 			// numbered specifications
 			forvalues i = 1/`ncombos' {
 				local title "DDML model, specification `i' (mean)"
-				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(mn) title(`title') clustervar(`clustervar')
+				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(mn) title(`title') clustervar(`clustervar') `atet'
 				local title "DDML model, specification `i' (median)"
-				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(md) title(`title') clustervar(`clustervar')
+				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(md) title(`title') clustervar(`clustervar') `atet'
 			}
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean)"
-				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title') clustervar(`clustervar')
+				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title') clustervar(`clustervar') `atet'
 				local title "Shortstack DDML model (median)"
-				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title') clustervar(`clustervar')
+				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title') clustervar(`clustervar') `atet'
 			}
 		}
 		

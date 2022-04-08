@@ -403,7 +403,7 @@ void ATE(
 	psi = psi_a :* theta :- psi_b
 
 	if (clustervar=="") {
-		V =  mean(psi:^2) :/ mean(psi_a):^2 :/ n	
+		V =  mean(psi:^2) :/ mean(psi_a):^2 :/ n
 	}
 	else {
 		gamma = 0
@@ -414,7 +414,7 @@ void ATE(
 			gamma = gamma :+ 1/nclust :* sum(psi_c*psi_c')
 			jhat = jhat :+  1/nclust :* sum(psi_a_c)
 		}
-		V = gamma / jhat:^2 / nclust
+		V = gamma / jhat:^2 / nclust 
 	}
 
 	st_numscalar("r(N)",n)
