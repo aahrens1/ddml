@@ -12,6 +12,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 								replay			/// model has been estimated, just display results
 								* ]
 	
+	marksample touse
+	
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 	
@@ -250,7 +252,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					local z `zlist'
 					local norep norep
 				}
-				qui _ddml_reg if `mname'_sample_`m',							///
+				qui _ddml_reg if `mname'_sample_`m' & `touse',					///
 						nocons `robust'											///
 						y(`y') yname(`nameY')									///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames')		 		///
@@ -287,7 +289,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					local z `Zss'
 				}
 				local title "Shortstack DDML model`stext'"
-				qui _ddml_reg if `mname'_sample_`m',							///
+				qui _ddml_reg if `mname'_sample_`m' & `touse',					///
 						nocons `robust'											///
 						y(`Yss') yname(`nameY')									///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames') 			///

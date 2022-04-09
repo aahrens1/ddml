@@ -32,7 +32,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		// options used here already parsed out
 		syntax [anything(name=mainargs)]		///
 				[using/]						/// 
-				`if' `in'						/// if/in sent to _ddml_sample
+				[if] [in]						/// if/in sent to _ddml_sample
 					 , [						///
 						mname(name)				///
 						newmname(name)			///
@@ -300,19 +300,19 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			mata: st_global("r(model)",`mname'.model)
 	
 			if ("`r(model)'"=="partial") {
-				_ddml_estimate_linear `mname', `options'
+				_ddml_estimate_linear `mname' `if' `in', `options'
 			}
 			if ("`r(model)'"=="iv") {
-				_ddml_estimate_linear `mname', `options'
+				_ddml_estimate_linear `mname' `if' `in', `options'
 			}
 			if ("`r(model)'"=="interactive") {
-				_ddml_estimate_ate_late `mname', `options'
+				_ddml_estimate_ate_late `mname' `if' `in', `options'
 			}
 			if ("`r(model)'"=="late") {
-				_ddml_estimate_ate_late `mname', `options'
+				_ddml_estimate_ate_late `mname' `if' `in', `options'
 			}
 			if ("`r(model)'"=="ivhd") {
-				_ddml_estimate_linear `mname', `options'
+				_ddml_estimate_linear `mname' `if' `in', `options'
 			}
 			
 		}

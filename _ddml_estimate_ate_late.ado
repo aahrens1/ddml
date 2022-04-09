@@ -19,6 +19,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								clustervar(varname) ///
 								* ]
 	
+	marksample touse
+	
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 
@@ -292,14 +294,14 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					mata: (`mname'.estAA).put(("optspec","`m'"),"`i'")
 				}
 				// code works for both ATE and LATE
-				`qui' _ddml_ate_late if `mname'_sample_`m',			///
-					yvar(`nameY') dvar(`nameD') zvar(`nameZ')		///
-					y0tilde(`y0') y1tilde(`y1')						///
-					dtilde(`d') d0tilde(`d0') d1tilde(`d1')			///
-					ztilde(`z')										///
-					spec(`i') rep(`m')								///
-					mname(`mname')									///
-					title(`title')									///
+				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
+					y0tilde(`y0') y1tilde(`y1')							///
+					dtilde(`d') d0tilde(`d0') d1tilde(`d1')				///
+					ztilde(`z')											///
+					spec(`i') rep(`m')									///
+					mname(`mname')										///
+					title(`title')										///
 					clustervar(`clustervar') `atet'
 				
 				mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
@@ -311,14 +313,14 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				
 				// code works for both ATE and LATE
 				local title "Shortstack DDML model`stext'"
-				`qui' _ddml_ate_late if `mname'_sample_`m',			///
-					yvar(`nameY') dvar(`nameD') zvar(`nameZ')		///
-					y0tilde(`Y0ss') y1tilde(`Y1ss')					///
-					dtilde(`Dss') d0tilde(`D0ss') d1tilde(`D1ss')	///
-					ztilde(`Zss')									///
-					spec(ss) rep(`m')								///
-					mname(`mname')									///
-					title(`title')									///
+				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
+					y0tilde(`Y0ss') y1tilde(`Y1ss')						///
+					dtilde(`Dss') d0tilde(`D0ss') d1tilde(`D1ss')		///
+					ztilde(`Zss')										///
+					spec(ss) rep(`m')									///
+					mname(`mname')										///
+					title(`title')										///
 					clustervar(`clustervar') `atet'
 			
 			}
