@@ -18,6 +18,7 @@ f _ddml_drop.ado
 f _ddml_estimate_ate_late.ado
 f _ddml_estimate_linear.ado
 f _ddml_export.ado
+f _ddml_extract.ado
 f _ddml_make_varlists.ado
 f _ddml_nnls.ado
 f _ddml_nnls_p.ado
