@@ -84,15 +84,6 @@ program _ddml_ate_late, eclass
 		// MSE folds
 		mata: `A'.put(("`y0tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y0tilde'","MSE0_folds","`rep'"))
 		mata: `A'.put(("`y1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y1tilde'","MSE1_folds","`rep'"))
-		// pystacked weightss - don't use, mean across folds doesn't mean anything
-		// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`y0tilde'","cmd")=="pystacked"))
-		// if `pyswflag' {
-		//	mata: `A'.put(("`y0tilde'_pysw","matrix"),mean(return_result_item(`eqn',"`y0tilde'","stack_weights0","`rep'")'))
-		// }
-		// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`y1tilde'","cmd")=="pystacked"))
-		// if `pyswflag' {
-		//	mata: `A'.put(("`y1tilde'_pysw","matrix"),mean(return_result_item(`eqn',"`y1tilde'","stack_weights1","`rep'")'))
-		// }
 		if "`model'"=="interactive" {
 			// D eqn results
 			mata: `eqn' = (`mname'.eqnAA).get("`dvar'")
@@ -100,11 +91,6 @@ program _ddml_ate_late, eclass
 			mata: `A'.put(("`dtilde'_mse","scalar"),return_result_item(`eqn',"`dtilde'","MSE","`rep'"))
 			// MSE folds
 			mata: `A'.put(("`dtilde'_mse_folds","matrix"),return_result_item(`eqn',"`dtilde'","MSE_folds","`rep'"))
-			// pystacked weightss - don't use, mean across folds doesn't mean anything
-			// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`dtilde'","cmd")=="pystacked"))
-			// if `pyswflag' {
-			// 	mata: `A'.put(("`dtilde'_pysw","matrix"), mean(return_result_item(`eqn',"`dtilde'","stack_weights","`rep'")'))
-			// }
 		}
 		else {
 			mata: `eqn' = (`mname'.eqnAA).get("`dvar'")
@@ -114,25 +100,11 @@ program _ddml_ate_late, eclass
 			// MSE folds, D
 			mata: `A'.put(("`d0tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d0tilde'","MSE0_folds","`rep'"))
 			mata: `A'.put(("`d1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d1tilde'","MSE1_folds","`rep'"))
-			// pystacked weights, Ds - don't use, mean across folds doesn't mean anything
-			// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`d0tilde'","cmd")=="pystacked"))
-			// if `pyswflag' {
-			//	mata: `A'.put(("`d0tilde'_pysw","matrix"), mean(return_result_item(`eqn',"`d0tilde'","stack_weights0","`rep'")'))
-			// }
-			// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`d1tilde'","cmd")=="pystacked"))
-			// if `pyswflag' {
-			//	mata: `A'.put(("`d1tilde'_pysw","matrix"), mean(return_result_item(`eqn',"`d1tilde'","stack_weights1","`rep'")'))
-			// }
 			mata: `eqn' = (`mname'.eqnAA).get("`zvar'")
 			// MSE, Z
 			mata: `A'.put(("`ztilde'_mse","scalar"),return_result_item(`eqn',"`ztilde'","MSE","`rep'"))
 			// MSE folds, Z
 			mata: `A'.put(("`ztilde'_mse_folds","matrix"),return_result_item(`eqn',"`ztilde'","MSE_folds","`rep'"))
-			// pystacked weights, Zs - don't use, mean across folds doesn't mean anything
-			// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`ztilde'","cmd")=="pystacked"))
-			// if `pyswflag' {
-			//	mata: `A'.put(("`ztilde'_pysw","matrix"), mean(return_result_item(`eqn',"`ztilde'","stack_weights","`rep'")'))
-			// }
 		}
 	
 		mata: (`mname'.estAA).put(("`spec'","`rep'"),`A')
@@ -170,11 +142,11 @@ program _ddml_ate_late, eclass
 				// retrieve locals
 				foreach obj in y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar {
 					mata: st_local("`obj'",`B'.get(("`obj'","local")))
-				}
+					}
+			}
 			// possible that different estimation samples have different #obs
 			qui count if `mname'_sample_`m'==1
 			local N = `N' + r(N)
-			}
 		}
 		local N = round(`N'/`nreps')
 		
