@@ -4,6 +4,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 	syntax namelist(name=mname) [if] [in] ,		/// 
 								[				///
 								ROBust			///
+								vce(string)		///
 								ALLest			/// show all regression outputs
 								NOTable			/// suppress summary table
 								clear			/// deletes all tilde-variables (to be implemented)
@@ -23,6 +24,10 @@ program _ddml_estimate_linear, eclass sortpreserve
 	local tableflag = "`notable'"==""
 	// display all regression outpus
 	local allflag = "`allest'"~=""
+
+	** standard errors
+	if "`robust'"!="" local vce robust
+	if "`vce'"=="" local ols
 	
 	if ~`crossfitted' {
 		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
@@ -253,7 +258,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					local norep norep
 				}
 				qui _ddml_reg if `mname'_sample_`m' & `touse',					///
-						nocons `robust'											///
+						nocons vce(`vce')										///
 						y(`y') yname(`nameY')									///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames')		 		///
 						z(`z') znames(`nameZ') zvtnames(`zvtnames')				///
@@ -290,7 +295,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 				}
 				local title "Shortstack DDML model`stext'"
 				qui _ddml_reg if `mname'_sample_`m' & `touse',					///
-						nocons `robust'											///
+						nocons vce(`vce')										///
 						y(`Yss') yname(`nameY')									///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames') 			///
 						z(`z') znames(`nameZ') zvtnames(`zvtnames')				///

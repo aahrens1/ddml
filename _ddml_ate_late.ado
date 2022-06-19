@@ -20,8 +20,8 @@ program _ddml_ate_late, eclass
 							replay				///
 							title(string)		///
 							medmean(string)		///
-							clustervar(varname) ///
-							ATET ///
+							vce(string) 		///
+							ATET 				///
 						]
 		
 	mata: st_local("model",`mname'.model)
@@ -49,6 +49,11 @@ program _ddml_ate_late, eclass
 		local d0_m		`d0tilde'0_`rep'
 		local d1_m		`d1tilde'1_`rep'
 		local z_m		`ztilde'_`rep'
+
+		local vce1: word 1 of `vce'
+		if "`vce1'"=="cluster" {
+			local clustervar : word 2 of `vce'
+		}
 		
 		if "`model'"=="interactive" {
 			mata: ATE("`atet'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustervar'")
@@ -361,7 +366,7 @@ void ATE(
 
 	n = rows(y)
 
-	// psi = psi_b - psi_a*theta
+	// psi = psi_b + psi_a*theta, e.g. equation 5.62
 	if (atet=="") {
 		psi_b  = (d :* (y :- my_d1x) :/ md_x) :-  ((1 :- d) :* (y :- my_d0x) :/ (1 :- md_x)) :+ my_d1x :- my_d0x 
 		psi_a  = J(n,1,-1) 
@@ -372,10 +377,10 @@ void ATE(
 		psi_a = -d :/ p_hat 
 	}
 	theta = -mean(psi_b) / mean(psi_a)
-	psi = psi_a :* theta :- psi_b
+	psi = psi_a :* theta :+ psi_b
 
 	if (clustervar=="") {
-		V =  mean(psi:^2) :/ mean(psi_a):^2 :/ n
+		V =  mean(psi:^2) / (mean(psi_a):^2) / n
 	}
 	else {
 		gamma = 0
@@ -428,7 +433,7 @@ void LATE(  string scalar yvar,      // Y
     psi_a =  mean( z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x ) 
 
 		theta = -mean(psi_b) / mean(psi_a)
-		psi = psi_a :* theta :- psi_b
+		psi = psi_a :* theta :+ psi_b
 
 		if (clustervar=="") {
 			V =  mean(psi:^2) :/ mean(psi_a):^2 :/ n	

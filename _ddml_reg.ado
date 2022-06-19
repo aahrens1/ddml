@@ -6,7 +6,7 @@ program define _ddml_reg, eclass
 				z(namelist) znames(namelist) zvtnames(namelist)	///
 				mname(name)										///
 				spec(string) rep(string)						///
-				robust											///
+				vce(string)										///
 				title(string)									///
 				medmean(string)									///
 				NOREP											///
@@ -50,17 +50,17 @@ program define _ddml_reg, eclass
 		
 		// estimate
 		if "`z_m'"=="" {
-			qui reg `y_m' `d_m'         if `touse', `robust' `options'
+			qui reg `y_m' `d_m'         if `touse', vce(`vce') `options'
 		}
 		else {
 			// old-style regress syntax: put IVs in parentheses
-			qui reg `y_m' `d_m' (`z_m') if `touse', `robust' `options'
+			qui reg `y_m' `d_m' (`z_m') if `touse', vce(`vce') `options'
 		}
 		tempname b V
 		mat `b' = e(b)
 		mat `V' = e(V)
 		local N = e(N)
-		if "`robust'"=="robust" {
+		if "`vce'"=="robust" | "`vce'"=="hc2" | "`vce'"=="hc3" {
 			local vce		robust
 			local vctype	Robust
 		}

@@ -3,7 +3,7 @@
 
 program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	syntax [anything] [if] [in] [aw pw],		/// note no "/" after pw
-		model(name)								///
+		Model(name)								///
 		[										///
 		VERBose VVERBOSE						///
 		mname(name)								///
