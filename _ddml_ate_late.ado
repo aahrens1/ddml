@@ -422,33 +422,33 @@ void LATE(  string scalar yvar,      // Y
     st_view(y,.,yvar,sample)
     st_view(z,.,zvar,sample)
     if (clustervar!="") {
-			st_view(clustid,.,clustervar,sample)
-			clusterid_uni=uniqrows(clustid)
-			nclust = rows(clusterid_uni)
-		}
+		st_view(clustid,.,clustervar,sample)
+		clusterid_uni=uniqrows(clustid)
+		nclust = rows(clusterid_uni)
+	}
 
     n = rows(y)
 
-    psi_b =  mean( z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x )
-    psi_a =  mean( z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x ) 
+    psi_b =  z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x 
+    psi_a =  z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x 
 
-		theta = -mean(psi_b) / mean(psi_a)
-		psi = psi_a :* theta :+ psi_b
+	theta = -mean(psi_b) / mean(psi_a)
+	psi = psi_a :* theta :+ psi_b
 
-		if (clustervar=="") {
-			V =  mean(psi:^2) :/ mean(psi_a):^2 :/ n	
+	if (clustervar=="") {
+		V =  mean(psi:^2) :/ mean(psi_a):^2 :/ n
+	}
+	else {
+		gamma = 0
+		jhat = 0
+		for (i=1;i<=nclust;i++) {
+			psi_c = select(psi,clustid:==clusterid_uni[i,1])
+			psi_a_c = select(psi_a,clustid:==clusterid_uni[i,1])
+			gamma = gamma :+ 1/nclust :* sum(psi_c*psi_c')
+			jhat = jhat :+  1/nclust :* sum(psi_a_c)
 		}
-		else {
-			gamma = 0
-			jhat = 0
-			for (i=1;i<=nclust;i++) {
-				psi_c = select(psi,clustid:==clusterid_uni[i,1])
-				psi_a_c = select(psi_a,clustid:==clusterid_uni[i,1])
-				gamma = gamma :+ 1/nclust :* sum(psi_c*psi_c')
-				jhat = jhat :+  1/nclust :* sum(psi_a_c)
-			}
-			V = gamma / jhat:^2 / nclust
-		}
+		V = gamma / jhat:^2 / nclust
+	}
 
     st_numscalar("r(N)",n)
     st_matrix("r(b)",theta)
