@@ -123,7 +123,7 @@ program _ddml_ate_late, eclass
 	else if "`replay'"=="" & "`medmean'"~="" {	// aggregate over resamples
 		
 		tempname b V bagg Vagg Vi
-		tempname bvec bmed Vvec Vmed
+		tempname bvec sbvec bmed Vvec sVvec Vmed
 		tempvar esample
 		tempname B
 		
@@ -156,18 +156,21 @@ program _ddml_ate_late, eclass
 		local N = round(`N'/`nreps')
 		
 		if "`medmean'"=="mn" {
-			// default is mean
-			mata: st_matrix("`bagg'",mean(`bvec'))
+			// mean beta
+			mata: `bagg' = mean(`bvec')
+			mata: st_matrix("`bagg'",`bagg')
 		}
 		else if "`medmean'"=="md" {
 			// median beta
 			forvalues k=1/`K' {
-				mata: _sort(`bvec',`k')
+				// leave order of bvec unchanged
+				mata: `sbvec' = sort(`bvec',`k')
+				// mata: _sort(`bvec',`k')
 				if `isodd' {
-					mata: `bagg'[1,`k'] = `bvec'[`medrow',`k']
+					mata: `bagg'[1,`k'] = `sbvec'[`medrow',`k']
 				}
 				else {
-					mata: `bagg'[1,`k'] = (`bvec'[`medrow',`k'] + `bvec'[`medrow'+1,`k'])/2
+					mata: `bagg'[1,`k'] = (`sbvec'[`medrow',`k'] + `sbvec'[`medrow'+1,`k'])/2
 				}
 			}
 			mata: st_matrix("`bagg'",`bagg')
@@ -180,10 +183,25 @@ program _ddml_ate_late, eclass
 		mata: `Vagg' = J(`K',`K',0)
 		mata: `Vvec' = J(`nreps',1,0)
 		if "`medmean'"=="mn" {
+			// forvalues m=1/`nreps' {
+			//	mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
+			//	mata: `Vagg' = `Vagg' + 1/`nreps' * `B'.get(("V","post"))
+			// }
+			// mata: st_matrix("`Vagg'",`Vagg')
+			// harmonic mean
+			// inefficient - does off-diagonals twice
 			forvalues m=1/`nreps' {
 				mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-				mata: `Vagg' = `Vagg' + 1/`nreps' * `B'.get(("V","post"))
+				mata: `Vi' = `B'.get(("V","post"))
+				forvalues j=1/`K' {
+					forvalues k=1/`K' {
+						// abs(.) needed?
+						mata: `Vi'[`j',`k'] = `Vi'[`j',`k'] + abs((`bvec'[`m',`j'] - `bagg'[1,`j'])*(`bvec'[`m',`k'] - `bagg'[1,`k']))
+					}
+				}
+				mata: `Vagg' = `Vagg' + 1:/`Vi'
 			}
+			mata: `Vagg' = `nreps' :/ `Vagg'
 			mata: st_matrix("`Vagg'",`Vagg')
 		}
 		else if "`medmean'"=="md" {
@@ -200,12 +218,14 @@ program _ddml_ate_late, eclass
 					// https://docs.doubleml.org/stable/guide/resampling.html#repeated-cross-fitting-with-k-folds-and-m-repetition
 					// (generalized to multiple D variables)
 					mata: `Vvec' = `Vvec' + abs((`bvec'[.,`j'] :- `bagg'[1,`j']):*(`bvec'[.,`k'] :- `bagg'[1,`k']))
-					mata: _sort(`Vvec',1)
+					// leave order of Vvec unchanged
+					mata: `sVvec' = sort(`Vvec',1)
+					// mata: _sort(`Vvec',1)
 					if `isodd' {
-						mata: `Vagg'[`j',`k'] = `Vvec'[`medrow',1]
+						mata: `Vagg'[`j',`k'] = `sVvec'[`medrow',1]
 					}
 					else {
-						mata: `Vagg'[`j',`k'] = (`Vvec'[`medrow',1] + `Vvec'[`medrow'+1,1])/2
+						mata: `Vagg'[`j',`k'] = (`sVvec'[`medrow',1] + `sVvec'[`medrow'+1,1])/2
 					}
 				}
 			}
@@ -239,7 +259,7 @@ program _ddml_ate_late, eclass
 		mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
 		
 		// no longer needed
-		foreach obj in `A' `B' `bagg' `bvec' `Vagg' `Vvec' `Vi' {
+		foreach obj in `A' `B' `bagg' `bvec' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' {
 			cap mata: mata drop `obj'
 		}
 			
