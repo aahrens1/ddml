@@ -129,6 +129,7 @@ program _ddml_ate_late, eclass
 		
 		tempname b V bagg Vagg Vi
 		tempname bvec sbvec bmed Vvec sVvec Vmed
+		tempname nlltrim nultrim trimval
 		tempvar esample
 		tempname B
 		
@@ -159,7 +160,6 @@ program _ddml_ate_late, eclass
 			local N = `N' + r(N)
 		}
 		local N = round(`N'/`nreps')
-		
 		if "`medmean'"=="mn" {
 			// mean beta
 			mata: `bagg' = mean(`bvec')
@@ -235,6 +235,17 @@ program _ddml_ate_late, eclass
 			di as err "_ddml_ate_late error - unrecognized option `medmean'"
 			exit 198
 		}
+		
+		// count trim instances
+		mata: `nlltrim' = 0
+		mata: `nultrim' = 0
+		forvalues m=1/`nreps' {
+			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
+			mata: `nlltrim' = `nlltrim' + (`B'.get(("lltrim","scalar"))>0)
+			mata: `nultrim' = `nultrim' + (`B'.get(("ultrim","scalar"))>0)
+		}
+		// retrieve from last rep (will be stored in all)
+		mata: `trimval' = `B'.get(("trim","scalar"))
 	
 		tempname A
 		mata: `A' = AssociativeArray()
@@ -255,11 +266,16 @@ program _ddml_ate_late, eclass
 		foreach obj in title y0 y1 d d0 d1 z {
 			mata: `A'.put(("`obj'_m","local"),"``obj''")
 		}
+		// store scalars
+		// store scalars
+		mata: `A'.put(("nlltrim","scalar"),`nlltrim')
+		mata: `A'.put(("nultrim","scalar"),`nultrim')
+		mata: `A'.put(("trim","scalar"),`trimval')
 		
 		mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
 		
 		// no longer needed
-		foreach obj in `A' `B' `bagg' `bvec' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' {
+		foreach obj in `A' `B' `bagg' `bvec' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' `nlltrim' `nultrim' `trimval' {
 			cap mata: mata drop `obj'
 		}
 			
@@ -352,13 +368,22 @@ program _ddml_ate_late, eclass
 	}
 	
 	// warn if any values trimmed
-	if e(lltrim) {
+	if e(lltrim)>0 & e(lltrim)<. {
 		di as res "Warning" as text ": " _c
 		di as text e(lltrim) " propensity scores trimmed to lower limit " e(trim) "."
 	}
-	if e(ultrim) {
+	if e(ultrim) & e(ultrim)<. {
 		di as res "Warning" as text ": " _c
 		di as text e(ultrim) " propensity scores trimmed to upper limit " 1-e(trim) "."
+	}
+	// for mean/median over resamples
+	if e(nlltrim)>0 & e(nlltrim)<. {
+		di as res "Warning" as text ": " _c
+		di as text e(nlltrim) " resamples had propensity scores trimmed to lower limit " e(trim) "."
+	}
+	if e(ultrim) & e(ultrim)<. {
+		di as res "Warning" as text ": " _c
+		di as text e(nultrim) " resamples had propensity scores trimmed to upper limit " 1-e(trim) "."
 	}
 	
 end
