@@ -22,6 +22,7 @@ program _ddml_ate_late, eclass
 							medmean(string)		///
 							vce(string) 		///
 							ATET 				///
+							trim(real 0)		/// value should be provided by calling program
 						]
 		
 	mata: st_local("model",`mname'.model)
@@ -56,10 +57,10 @@ program _ddml_ate_late, eclass
 		}
 		
 		if "`model'"=="interactive" {
-			mata: ATE("`atet'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustervar'")
+			mata: ATE("`atet'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustervar'",`trim')
 		}
 		else {
-			mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'","`clustervar'")
+			mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'","`clustervar'",`trim')
 		}
 		
 		// store post objects
@@ -77,6 +78,10 @@ program _ddml_ate_late, eclass
 		foreach obj in title y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar {
 			mata: `A'.put(("`obj'","local"),"``obj''")
 		}
+		// store scalars
+		mata: `A'.put(("lltrim","scalar"),`r(lltrim)')
+		mata: `A'.put(("ultrim","scalar"),`r(ultrim)')
+		mata: `A'.put(("trim","scalar"),`trim')
 		
 		// additional estimation results
 		tempname eqn
@@ -183,11 +188,6 @@ program _ddml_ate_late, eclass
 		mata: `Vagg' = J(`K',`K',0)
 		mata: `Vvec' = J(`nreps',1,0)
 		if "`medmean'"=="mn" {
-			// forvalues m=1/`nreps' {
-			//	mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-			//	mata: `Vagg' = `Vagg' + 1/`nreps' * `B'.get(("V","post"))
-			// }
-			// mata: st_matrix("`Vagg'",`Vagg')
 			// harmonic mean
 			// inefficient - does off-diagonals twice
 			forvalues m=1/`nreps' {
@@ -351,6 +351,16 @@ program _ddml_ate_late, eclass
 		ereturn display
 	}
 	
+	// warn if any values trimmed
+	if e(lltrim) {
+		di as res "Warning" as text ": " _c
+		di as text e(lltrim) " propensity scores trimmed to lower limit " e(trim) "."
+	}
+	if e(ultrim) {
+		di as res "Warning" as text ": " _c
+		di as text e(ultrim) " propensity scores trimmed to upper limit " 1-e(trim) "."
+	}
+	
 end
 
 
@@ -362,22 +372,24 @@ mata:
 
 void ATE(   
 			string scalar atet,
-			string scalar yvar,	 // Y
-			string scalar dvar,	 // D
-			string scalar y0tilde,  // E[Y|X,D=0]
-			string scalar y1tilde,  // E[Y|X,D=1]
-			string scalar dtilde,   // E[D|X]
-			string scalar sample,   // sample
-			string scalar outate,   // output: name of matrix to store b
-			string scalar outatese,  // output: name of matrix to store V
-			string scalar clustervar
+			string scalar yvar,       // Y
+			string scalar dvar,       // D
+			string scalar y0tilde,    // E[Y|X,D=0]
+			string scalar y1tilde,    // E[Y|X,D=1]
+			string scalar dtilde,     // E[D|X]
+			string scalar sample,     // sample
+			string scalar outate,     // output: name of matrix to store b
+			string scalar outatese,   // output: name of matrix to store V
+			string scalar clustervar,
+			real scalar trim          // trim the propensity score
 			)
 {
 	st_view(my_d0x,.,y0tilde,sample)
 	st_view(my_d1x,.,y1tilde,sample)
-	st_view(md_x,.,dtilde,sample)
 	st_view(d,.,dvar,sample)
 	st_view(y,.,yvar,sample)
+	// copy since we may trim it
+	md_x=st_data(.,dtilde,sample)
 	if (clustervar!="") {
 		st_view(clustid,.,clustervar,sample)
 		clusterid_uni=uniqrows(clustid)
@@ -385,6 +397,17 @@ void ATE(
 	}
 
 	n = rows(y)
+	
+	// first a vector
+	lltrim = md_x :< trim
+	ultrim = md_x :> (1-trim)
+	// trim
+	md_x = md_x :* (1:-lltrim) + trim * lltrim
+	md_x = md_x :* (1:-ultrim) + (1-trim) * ultrim
+	// now a scalar
+	lltrim = sum(lltrim)
+	ultrim = sum(ultrim)
+
 
 	// psi = psi_b + psi_a*theta, e.g. equation 5.62
 	if (atet=="") {
@@ -417,6 +440,8 @@ void ATE(
 	st_numscalar("r(N)",n)
 	st_matrix("r(b)",theta)
 	st_matrix("r(V)",V)
+	st_numscalar("r(lltrim)",lltrim)
+	st_numscalar("r(ultrim)",ultrim)
 }
 
 void LATE(  string scalar yvar,      // Y
@@ -430,17 +455,19 @@ void LATE(  string scalar yvar,      // Y
             string scalar sample,    // sample
             string scalar outlate,   // output: name of matrix to store b
             string scalar outlatese,  // output: name of matrix to store V
-            string scalar clustervar
-            )
+            string scalar clustervar,
+ 			real scalar trim          // trim the propensity score
+           )
 {
     st_view(my_z0x,.,y0tilde,sample)
     st_view(my_z1x,.,y1tilde,sample)
     st_view(md_z0x,.,d0tilde,sample)
     st_view(md_z1x,.,d1tilde,sample)
-    st_view(mz_x,.,ztilde,sample)
     st_view(d,.,dvar,sample)
     st_view(y,.,yvar,sample)
     st_view(z,.,zvar,sample)
+	// copy since we may trim it
+    mz_x=st_data(.,ztilde,sample)
     if (clustervar!="") {
 		st_view(clustid,.,clustervar,sample)
 		clusterid_uni=uniqrows(clustid)
@@ -449,6 +476,16 @@ void LATE(  string scalar yvar,      // Y
 
     n = rows(y)
 
+	// first a vector
+	lltrim = mz_x :< trim
+	ultrim = mz_x :> (1-trim)
+	// trim
+	md_z = md_z :* (1:-lltrim) + trim * lltrim
+	md_z = md_z :* (1:-ultrim) + (1-trim) * ultrim
+	// now a scalar
+	lltrim = sum(lltrim)
+	ultrim = sum(ultrim)
+	
     psi_b =  z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x 
     psi_a =  z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x 
 
@@ -473,6 +510,8 @@ void LATE(  string scalar yvar,      // Y
     st_numscalar("r(N)",n)
     st_matrix("r(b)",theta)
     st_matrix("r(V)",V)
+	st_numscalar("r(lltrim)",lltrim)
+	st_numscalar("r(ultrim)",ultrim)
 }
 
 end

@@ -16,6 +16,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								REP(string)		/// resampling iteration to post/display
 								replay			/// model has been estimated, just display results
 								avplot			///
+								trim(real 0.01)	///
 								debug			///
 								* ]
 	
@@ -302,6 +303,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					spec(`i') rep(`m')									///
 					mname(`mname')										///
 					title(`title')										///
+					trim(`trim')										///
 					vce(`vce') `atet'
 				
 				mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
@@ -321,6 +323,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					spec(ss) rep(`m')									///
 					mname(`mname')										///
 					title(`title')										///
+					trim(`trim')										///
 					vce(`vce') `atet'
 			
 			}
