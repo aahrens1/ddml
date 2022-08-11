@@ -3,7 +3,7 @@
 
 program define _ddml_describe
 
-	syntax name(name=mname), [LEARNers CROSSfit ESTimates all *]
+	syntax name(name=mname), [LEARNers CROSSfit ESTimates SAMple all *]
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
@@ -13,10 +13,11 @@ program define _ddml_describe
 	local lflag		= "`learners'"~=""	| `all'
 	local cflag		= "`crossfit'"~=""	| `all'
 	local eflag		= "`estimates'"~=""	| `all'
+	local sflag		= "`sample'"~=""	| `all'
 	
 	mata: st_local("model",`mname'.model)
-	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
-	mata: st_local("ncombos",strofreal(`mname'.ncombos))
+	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))	// flag for crossfitting results available
+	mata: st_local("ncombos",strofreal(`mname'.ncombos))			// flag for estimation results available
 	mata: st_local("kfolds",strofreal(`mname'.kfolds))
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 	mata: st_local("nameY",`mname'.nameY)
@@ -29,72 +30,66 @@ program define _ddml_describe
 		local fidlist `fidlist' `mname'_fid_`m'
 		local rslist `rslist' `mname'_sample_`m'
 	}
-	
-	// syntax checks
-	if `cflag' & ~`crossfitted' {
-		di as err "error - no crossfited results to display"
-		exit 198
-	}
-	if `eflag' & ~`ncombos' {
-		di as err "error - no estimation results to display"
-		exit 198
-	}
-	
-	// basic info - always displayed
-	di as text "Model: `model'"
-	di as text "ID: `mname'_id"
-	di as text "Sample indicator: `mname'_sample" _c
-	qui count if `mname'_sample
-	di as text " (N=`r(N)')"
-	di as text "Number of resamples =" %3.0f `nreps'
-	di as text "Number of folds     =" %3.0f `kfolds'
-	di as text "Fold ID:" _col(16) _c
-	forvalues m=1/`nreps' {
-		local fid : word `m' of `fidlist'
-		di as text %~12s "`fid'" _c
-	}
-	di
-	di as text "Sample indic.:" _col(16) _c
-	forvalues m=1/`nreps' {
-		local rs : word `m' of `rslist'
-		di as text %~12s "`rs'" _c
-	}
-	di
-	di as text "Estimation N:" _col(16) _c
-	forvalues m=1/`nreps' {
-		if `ncombos' {
-			local rs : word `m' of `rslist'
-			qui count if `rs'
-			local N "`: di %2.0f r(N)'"
-		}
-		else {
-			local N "(n.a.)"
-		}
-		di as text %~12s "`N'" _c
-	}
-	di
-	
+
 	// basic info about equations and learners - always displayed
-	di as text "Dependent variable (Y): `nameY'"
+	di
+	di as text "Model:" _col(25) as res "`model', crossfit folds k=" `kfolds' ", resamples r=" `nreps'
+	di as text "Dependent variable (Y):" _col(25) as res "`nameY'"
 	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
 	local numlnrY : word count `vtlistY'
-	di as text _col(2) "`nameY' learners:" as text _col(25) "`vtlistY'"
+	di as text _col(2) "`nameY' learners:" as text _col(25) as res "`vtlistY'"
 	if `numeqnD' {
-		di as text "D equations (`numeqnD'): `nameD'"
+		di as text "D equations (`numeqnD'):" _col(25) as res "`nameD'"
 		foreach var of varlist `nameD' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
-			di as text _col(2) "`var' learners:" _col(25) "`vtlistD'"
+			di as text _col(2) "`var' learners:" _col(25) as res "`vtlistD'"
 		}
 	}
 	if `numeqnZ' {
-		di as text "Z equations (`numeqnZ'): `nameZ'"
+		di as text "Z equations (`numeqnZ'):" _col(25) as res "`nameZ'"
 		foreach var of varlist `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
-			di as text _col(2) "`var' learners:" _col(25) "`vtlistZ'"
+			di as text _col(2) "`var' learners:" _col(25) as res "`vtlistZ'"
 		}
+	}
+	
+	// sample and folds in detail
+	if `sflag' {
+		di
+		di as text "ID:" _col(25) as res "`mname'_id"
+		di as text "Full sample indic.:" _col(25) as res "`mname'_sample" _c
+		qui count if `mname'_sample
+		di as res " (N=`r(N)')"
+		// di as text "Number of resamples =" _col(25) as res %3.0f `nreps'
+		// di as text "Number of folds     =" _col(25) as res %3.0f `kfolds'
+		di as text "Fold ID:" _col(25) as res _c
+		forvalues m=1/`nreps' {
+			local fid : word `m' of `fidlist'
+			di as res %~12s "`fid'" _c
+		}
+		di
+		di as text "Fold sample indic.:" _col(25) as res _c
+		forvalues m=1/`nreps' {
+			local rs : word `m' of `rslist'
+			di as res %~12s "`rs'" _c
+		}
+		di
+		di as text "Estimation N:" _col(25) as res _c
+		forvalues m=1/`nreps' {
+			if `ncombos' {
+				local rs : word `m' of `rslist'
+				qui count if `rs'
+				local N "`: di %2.0f r(N)'"
+			}
+			else {
+				local N "(n.a.)"
+			}
+			di as res %~12s "`N'" _c
+		}
+		di
 	}
 	
 	// learners in detail
@@ -117,7 +112,7 @@ program define _ddml_describe
 	}
 		
 	// crossfit results in detail
-	if `cflag' {
+	if `cflag' & `crossfitted' {
 		di
 		di as text "Crossfit results (detail):"
 		desc_learners `mname', vname(`nameY') etype(yeq) results header
@@ -127,16 +122,24 @@ program define _ddml_describe
 			}
 		}
 	}
+	else if `cflag' {
+		di
+		di as text "No crossfitting results to display."
+	}
 	
 	// estimate results in detail
-	if `eflag' & ("`model'"=="interactive" | "`model'"=="late") {
+	if `eflag' & ("`model'"=="interactive" | "`model'"=="late") & `ncombos' {
 		di
 		_ddml_estimate_ate_late `mname', `options' results
 	}
-	else if `eflag' {
+	else if `eflag' & `ncombos' {
 		di
 		_ddml_estimate_linear `mname', `options' results
-	} 
+	}
+	else if `eflag' {
+		di
+		di as text "No estimation results to display."
+	}
 	
 	// clear this global from Mata
 	mata: mata drop `eqn'

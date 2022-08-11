@@ -53,31 +53,31 @@ program _ddml_crossfit, eclass sortpreserve
 	forvalues m=1/`reps' {
 		local fidlist `fidlist' `mname'_fid_`m'
 	}
-	di as text "Fold IDs: `fidlist'"
+	// di as text "Fold IDs: `fidlist'"
 	
 	// equations and learners
 	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
 	local numlnrY : word count `vtlistY'
-	di as text "Y eqn learners (`numlnrY'): `vtlistY'"
+	// di as text "Y eqn learners (`numlnrY'): `vtlistY'"
 	local vtlist `vtlistY'
 	if `numeqnD' {
-		di as text "D equations (`numeqnD'): `nameD'"
+		// di as text "D equations (`numeqnD'): `nameD'"
 		foreach var of varlist `nameD' {
-			di as text _col(5) "D equation `var':"
+			// di as text _col(5) "D equation `var':"
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
-			di as text _col(10) "learners: `vtlistD'"
+			// di as text _col(10) "learners: `vtlistD'"
 			local vtlist `vtlist' `vtlistD'
 		}
 	}
 	if `numeqnZ' {
 		di as text "Z equations (`numeqnZ'): `nameZ'"
 		foreach var of varlist `nameZ' {
-			di as text _col(5) "Z equation `var':"
+			// di as text _col(5) "Z equation `var':"
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
-			di as text _col(10) "learners: `vtlistZ'"
+			// di as text _col(10) "learners: `vtlistZ'"
 			local vtlist `vtlist' `vtlistZ'
 		}
 	}

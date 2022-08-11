@@ -201,8 +201,9 @@ program define _ddml_reg, eclass
 		local medrow = ceil(`nreps'/2)
 		local N = 0
 		
-		mata: `bagg' = J(1,`K',0)
+		// bvec a misnomer - usually a vector, but can be a matrix if multiple D variables
 		mata: `bvec' = J(`nreps',`K',0)
+		mata: `bagg' = J(1,`K',0)
 		forvalues m=1/`nreps' {
 			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 			mata: `bvec'[`m',.] = `B'.get(("b","post"))
@@ -298,9 +299,10 @@ program define _ddml_reg, eclass
 		mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
 		
 		mata: `A'.put(("N","post"),`N')
-		mata: `A'.put(("b","post"),st_matrix("`bagg'"))
-		mata: `A'.put(("V","post"),st_matrix("`Vagg'"))
+		mata: `A'.put(("b","post"),`bagg')
+		mata: `A'.put(("V","post"),`Vagg')
 		mata: `A'.put(("depvar","post"),"`depvar'")
+		mata: `A'.put(("b_resamples","matrix"),`bvec')
 		
 		// store locals
 		foreach obj in title y d dh z yname dnames vce vcetype {
@@ -312,6 +314,7 @@ program define _ddml_reg, eclass
 			mata: `A'.put(("`obj'_m","local"),"``obj''")
 		}
 		
+		// store AA with median/mean results
 		mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
 		
 		// no longer needed

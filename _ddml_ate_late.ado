@@ -142,8 +142,9 @@ program _ddml_ate_late, eclass
 		local medrow = ceil(`nreps'/2)
 		local N = 0
 		
-		mata: `bagg' = J(1,`K',0)
+		// bvec a misnomer - usually a vector, but can be a matrix if multiple D variables
 		mata: `bvec' = J(`nreps',`K',0)
+		mata: `bagg' = J(1,`K',0)
 		forvalues m=1/`nreps' {
 			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 			mata: `bvec'[`m',.] = `B'.get(("b","post"))
@@ -253,9 +254,10 @@ program _ddml_ate_late, eclass
 		mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
 		
 		mata: `A'.put(("N","post"),`N')
-		mata: `A'.put(("b","post"),st_matrix("`bagg'"))
-		mata: `A'.put(("V","post"),st_matrix("`Vagg'"))
+		mata: `A'.put(("b","post"),`bagg')
+		mata: `A'.put(("V","post"),`Vagg')
 		mata: `A'.put(("depvar","post"),"`depvar'")
+		mata: `A'.put(("b_resamples","matrix"),`bvec')
 		
 		// store locals
 		foreach obj in title y0 y1 d d0 d1 z yvar dvar {
@@ -266,12 +268,13 @@ program _ddml_ate_late, eclass
 		foreach obj in title y0 y1 d d0 d1 z {
 			mata: `A'.put(("`obj'_m","local"),"``obj''")
 		}
-		// store scalars
+		
 		// store scalars
 		mata: `A'.put(("nlltrim","scalar"),`nlltrim')
 		mata: `A'.put(("nultrim","scalar"),`nultrim')
 		mata: `A'.put(("trim","scalar"),`trimval')
 		
+		// store AA with median/mean results
 		mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
 		
 		// no longer needed

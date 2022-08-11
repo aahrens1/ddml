@@ -377,10 +377,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 		}
 	}
 	
-	*** Summary results ***
+	*** Results ***
+	
+	// optional table of all results
 	if `tableflag' {
 		di
-		di as text "Summary DDML estimation results:"
+		di as text "DDML estimation results:"
 		di as text "spec  r" %14s "Y learner" _c
 		forvalues j=1/`numeqnD' {
 			di as text %14s "D learner" %10s "b" %10s "SE" _c
@@ -463,62 +465,77 @@ program _ddml_estimate_linear, eclass sortpreserve
 				di
 			}
 		}
-		if `nreps' > 1 {
-			di as text "Mean/median:"
-			foreach medmean in mn md {
-				** mean and median over mse
-				qui _ddml_reg, mname(`mname') spec(mse) rep(`medmean') replay
+	di as res "*" as text " = minimum MSE specification for that resample."
+	}
+
+	if `nreps' > 1 {
+		di
+		di as text "Mean/med.   Y learner" _c
+		forvalues j=1/`numeqnD' {
+			di as text %14s "D learner" %10s "b" %10s "SE" _c
+		}
+		if "`model'"=="ivhd" {
+			forvalues j=1/`numeqnD' {
+				di as text %14s "DH learner" _c
+			}
+		}
+		forvalues j=1/`numeqnZ' {
+			di as text %14s "Z learner" _c
+		}
+		di
+		foreach medmean in mn md {
+			** mean and median over mse
+			qui _ddml_reg, mname(`mname') spec(mse) rep(`medmean') replay
+			tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+			mat `btemp' = e(b)
+			mat `Vtemp' = e(V)
+			local specrep `: di "mse" %3s "`medmean'"' //'
+			// pad out to 6 spaces
+			local specrep = " " + "`specrep'"
+			local rcmd stata ddml estimate `mname', spec(mse) rep(`medmean') replay notable
+			di %6s "{`rcmd':`specrep'}" _c
+			di as res %14s "[min-mse]" _c
+			forvalues j=1/`numeqnD' {
+				di as res %14s "[mse]" _c
+				di as res %10.3f el(`btemp',1,`j') _c
+				local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
+				di as res %10s "`pse'" _c
+			}
+			if "`model'"=="ivhd" {
+				forvalues j=1/`numeqnD' {
+					di as res %14s "[mse]" _c
+				}
+			}
+			forvalues j=1/`numeqnZ' {
+				di as res %14s "[mse]" _c
+			}
+			di
+			if `ssflag' {
+				qui _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
-				local specrep `: di "mse" %3s "`medmean'"' //'
+				local specrep `: di "ss" %4s "`medmean'"' //'
 				// pad out to 6 spaces
 				local specrep = " " + "`specrep'"
-				local rcmd stata ddml estimate `mname', spec(mse) rep(`medmean') replay notable
+				local rcmd stata ddml estimate `mname', spec(ss) rep(`medmean') replay notable
 				di %6s "{`rcmd':`specrep'}" _c
-				di as res %14s "[min-mse]" _c
+				di as res %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
-					di as res %14s "[mse]" _c
+					di as res %14s "[ss]" _c
 					di as res %10.3f el(`btemp',1,`j') _c
 					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
 					di as res %10s "`pse'" _c
 				}
 				if "`model'"=="ivhd" {
 					forvalues j=1/`numeqnD' {
-						di as res %14s "[mse]" _c
+						di as res %14s "[ss]" _c
 					}
 				}
 				forvalues j=1/`numeqnZ' {
-					di as res %14s "[mse]" _c
+					di as res %14s "[ss]" _c
 				}
 				di
-				if `ssflag' {
-					qui _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay
-					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
-					mat `btemp' = e(b)
-					mat `Vtemp' = e(V)
-					local specrep `: di "ss" %4s "`medmean'"' //'
-					// pad out to 6 spaces
-					local specrep = " " + "`specrep'"
-					local rcmd stata ddml estimate `mname', spec(ss) rep(`medmean') replay notable
-					di %6s "{`rcmd':`specrep'}" _c
-					di as res %14s "[shortstack]" _c
-					forvalues j=1/`numeqnD' {
-						di as res %14s "[ss]" _c
-						di as res %10.3f el(`btemp',1,`j') _c
-						local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-						di as res %10s "`pse'" _c
-					}
-					if "`model'"=="ivhd" {
-						forvalues j=1/`numeqnD' {
-							di as res %14s "[ss]" _c
-						}
-					}
-					forvalues j=1/`numeqnZ' {
-						di as res %14s "[ss]" _c
-					}
-					di
-				}
 			}
 		}
 	}
@@ -526,6 +543,28 @@ program _ddml_estimate_linear, eclass sortpreserve
 	di
 	_ddml_reg, mname(`mname') spec(`spec') rep(`rep') replay  
 	di
+	
+	if `nreps' > 1 {
+		tempvar bhat
+		svmat e(b_resamples), names(`bhat')
+		// variables in Stata will look like _000000A1, _000000A2, etc. and will disappear as temps after exit
+		local dnames : colnames e(b)
+		
+		di as text "Summary over " `nreps' " resamples:"
+		di as text %12s "D eqn" %10s "mean" %10s "min" %10s "p25" %10s "p50" %10s "p75" %10s "max"
+		local i 1
+		foreach vn in `dnames' {
+			di %12s as text "`vn'" _col(15) _c
+			qui sum `bhat'`i', detail
+			di as res %10.4f r(mean) _c
+			di as res %10.4f r(min) _c
+			di as res %10.4f r(p25) _c
+			di as res %10.4f r(p50) _c
+			di as res %10.4f r(p75) _c
+			di as res %10.4f r(max)
+			local ++i
+		}
+	}
 	
 	// temp Mata object no longer needed
 	foreach obj in `eqn' `nmat' `bmat' `semat' {

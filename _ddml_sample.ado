@@ -1,8 +1,12 @@
+* creates fold indicators <mname>_fid_<rep number>; will be copies of foldvar(.) if provided
+* overall sample indicator <mname>_sample already exists; will reseet with sreset option
+* nb: should probably create sample indicator and main id indicator here instead of in ddml.ado
+
 program _ddml_sample
 	version 13
 
 	syntax [if] [in] , mname(name) [				///
-							foldvar(varlist)		///
+							foldvar(varlist)		/// optional list of variables indicating folds
 							reps(integer 0)			///
 							NORANDOM				/// first fold ID uses obs in existing order
 							vars(varlist)			///
