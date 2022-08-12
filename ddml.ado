@@ -428,7 +428,7 @@ program define add_eqn_to_model, rclass
 		if "`model'"=="interactive" & "`subcmd'"=="yeq" {
 			mata: `eqn'.ateflag = 1
 		}
-		else if "`model'"=="late" & "`subcmd'"=="deq" {
+		else if "`model'"=="late" & ("`subcmd'"=="yeq" | "`subcmd'"=="deq") {
 			mata: `eqn'.ateflag = 1
 		}
 	}
