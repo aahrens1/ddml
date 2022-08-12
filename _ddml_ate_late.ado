@@ -508,8 +508,8 @@ void LATE(  string scalar yvar,      // Y
 	lltrim = mz_x :< trim
 	ultrim = mz_x :> (1-trim)
 	// trim
-	md_z = md_z :* (1:-lltrim) + trim * lltrim
-	md_z = md_z :* (1:-ultrim) + (1-trim) * ultrim
+	mz_x = mz_x :* (1:-lltrim) + trim * lltrim
+	mz_x = mz_x :* (1:-ultrim) + (1-trim) * ultrim
 	// now a scalar
 	lltrim = sum(lltrim)
 	ultrim = sum(ultrim)
