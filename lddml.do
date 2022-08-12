@@ -27,6 +27,7 @@ struct eStruct {
 	string scalar					shortstack	// name of shortstack variable
 	real scalar						nlearners	// number of learners
 	real scalar						lieflag		// =1 if LIE spec with two estimation strings etc.
+	real scalar						ateflag		// =1 if treatment variable in ATE/LATE
 	class AssociativeArray scalar	lrnAA		// AssociativeArray with all learners //
 												// (keys=vtilde,object)
 	class AssociativeArray scalar	resAA		// AssociativeArray with all learner results //
@@ -45,6 +46,7 @@ struct eStruct init_eStruct()
 	d.shortstack	= ""
 	d.nlearners		= 0
 	d.lieflag		= 0
+	d.ateflag		= 0
 	
 	(d.lrnAA).reinit("string",2)
 	(d.resAA).reinit("string",3)

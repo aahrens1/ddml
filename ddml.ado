@@ -423,7 +423,14 @@ program define add_eqn_to_model, rclass
 		mata: add_learner_item(`eqn',"`vtilde'","vtype","`vtype'")
 		// update nlearners - counts deq and dheq as a single learner
 		mata: `eqn'.nlearners = cols(`eqn'.vtlist)
-		 mata: `eqn'.lieflag = 0
+		mata: `eqn'.lieflag = 0
+		mata: st_local("model",`mname'.model)
+		if "`model'"=="interactive" & "`subcmd'"=="yeq" {
+			mata: `eqn'.ateflag = 1
+		}
+		else if "`model'"=="late" & "`subcmd'"=="deq" {
+			mata: `eqn'.ateflag = 1
+		}
 	}
 
 	// insert eqn struct into model struct
