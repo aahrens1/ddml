@@ -1,10 +1,10 @@
 program define _ddml_extract, rclass
 
 	syntax [name] , [				///
-				mname(name)			///
+				mname(name)			/// ignored if ename(.) provided
 				ename(name)			///
 				vname(name)			///
-				show(name)			///
+				show(name)			/// pystacked, mse or n allowed
 				keys				///
 				key1(string)		///
 				key2(string)		///
@@ -20,13 +20,25 @@ program define _ddml_extract, rclass
 		exit 198
 	}
 	if "`mname'"~="" & "`ename'"~="" {
-		di as err "error - incompatible options mname(.) and ename(.)"
-		exit 198
+		// ignore mname if ename provide
+		local mname
 	}
 	// show macro can be lower or upper case; upper required below
 	local show = upper("`show'")
+	// syntax check
+	local showlist PYSTACKED MSE N
+	if "`show'"~="" {
+		local showok : list posof "`show'" in showlist
+		if `showok'==0 {
+			di as err "error - show(" lower("`show'") ") not supported"
+			exit 198
+		}
+	}
 	
 	local keysflag = ("`keys'"~="")
+	
+	// "return clear" clears return(.) but not r(.); use this instead
+	mata : st_rclear()
 	
 	tempname obj mtemp etemp
 
@@ -37,16 +49,6 @@ program define _ddml_extract, rclass
 	else if "`ename'"=="" {
 		mata: `etemp' = init_eStruct()
 		mata: `obj' = m_ddml_extract("`mname'",`mname',"",`etemp',`keysflag',"`show'","`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
-	}
-	
-	// return matrix values; transfer from Mata to Stata so that any preexisting r(.) values are cleared
-	local matlist `r(matlist)'
-	foreach mname in `matlist' {
-		tempname `mname'
-		mat `mname' = r(`mname')
-	}
-	foreach mname in `matlist' {
-		return matrix `mname' = `mname'
 	}
 	
 	if "`namelist'"=="" {
@@ -61,19 +63,20 @@ program define _ddml_extract, rclass
 		mata: st_local("eltype",eltype(`obj'))
 		mata: st_local("orgtype",orgtype(`obj'))
 		if "`eltype'"=="string" {
-			mata: st_global("`namelist'",`obj')
+			mata: st_global("r(`namelist')",`obj')
 		}
 		else if "`orgtype'"=="scalar" {
-			mata: st_numscalar("`namelist'",`obj')
+			mata: st_numscalar("r(`namelist')",`obj')
 		}
 		else if ("`orgtype'"=="matrix") | ("`orgtype'"=="rowvector") | ("`orgtype'"=="colvector") {
-			mata: st_matrix("`namelist'",`obj')
+			mata: st_matrix("r(`namelist')",`obj')
 		}
 		else {
 			di as err "unsupported eltype `eltype' / orgtype `orgtype'"
 			exit 198
 		}
 	}
+	return add
 	cap mata: mata drop `mtemp'
 	cap mata: mata drop `etemp'
 	
@@ -411,13 +414,14 @@ void display_mse(												///
 	
 	if (show=="MSE") {
 		fmt = "{res}%10.3f  "
+		printf("\n{txt}MSEs for %s:\n",reqn[1])
 	}
 	else {
 		fmt = "{res}%10.0f  "
+		printf("\n{txt}Sample sizes for %s:\n",reqn[1])
 	}
 
 
-	printf("\n{txt}MSEs for %s:\n",reqn[1])
 	printf("{txt}{space 16}")
 	if (DZeq01text~="") {
 		printf("{txt}%2s ", DZeq01text)
