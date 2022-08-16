@@ -60,10 +60,11 @@ program define _ddml_reg, eclass
 		mat `b' = e(b)
 		mat `V' = e(V)
 		local N = e(N)
-		if "`vce'"=="robust" | "`vce'"=="hc2" | "`vce'"=="hc3" {
-			local vce		robust
-			local vctype	Robust
-		}
+
+		local vce		`e(vce)'
+		local vcetype	`e(vcetype)'
+		local clustvar	`e(clustvar)'
+		local N_clust	=e(N_clust)
 		if `ivhdflag' {
 			local d		`dvtnames'
 			add_suffix	`dvtnames', suffix("_`rep'")
@@ -88,8 +89,16 @@ program define _ddml_reg, eclass
 		mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("`V'"))'))
 		
 		// store locals
-		foreach obj in title y y_m d d_m dh dh_m z z_m yname dnames vce vcetype {
+		local list_local title y y_m d d_m dh dh_m z z_m yname dnames vce vcetype
+		if "`clustvar'"~=""		local list_local `list_local' clustvar
+		foreach obj in `list_local' {
 			mata: `A'.put(("`obj'","local"),"``obj''")
+		}
+		// store scalars
+		local list_scalar
+		if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+		foreach obj in `list_scalar' {
+			mata: `A'.put(("`obj'","scalar"),``obj'')
 		}
 		
 		// additional estimation results
@@ -102,11 +111,6 @@ program define _ddml_reg, eclass
 		mata: `A'.put(("`y'_mse","scalar"),return_result_item(`eqn',"`y'","MSE","`rep'"))
 		// MSE folds
 		mata: `A'.put(("`y'_mse_folds","matrix"),return_result_item(`eqn',"`y'","MSE_folds","`rep'"))
-		// pystacked weightss - don't use, mean across folds doesn't mean anything
-		// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`y'","cmd")=="pystacked"))
-		// if `pyswflag' {
-		//	mata: `A'.put(("`y'_pysw","matrix"), mean(return_result_item(`eqn',"`y'","stack_weights","`rep'")'))
-		// }
 		// ss weights
 		mata: st_local("shortstack_vname", `eqn'.shortstack)
 		if "`shortstack_vname'"!="" {
@@ -126,11 +130,6 @@ program define _ddml_reg, eclass
 			mata: `A'.put(("`vtilde'_mse","scalar"),return_result_item(`eqn',"`vtilde'","MSE","`rep'"))
 			// MSE folds
 			mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
-			// pystacked weights - don't use, mean across folds doesn't mean anything
-			// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde'","cmd")=="pystacked"))
-			// if `pyswflag' {
-			//	mata: `A'.put(("`vtilde'_pysw","matrix"), mean(return_result_item(`eqn',"`vtilde'","stack_weights","`rep'")'))
-			// }
 			// ss weights
 			mata: st_local("shortstack_vname", `eqn'.shortstack)
 			if "`shortstack_vname'"!="" {
@@ -141,11 +140,6 @@ program define _ddml_reg, eclass
 				mata: `A'.put(("`vtilde_h'_mse","scalar"),return_result_item(`eqn',"`vtilde_h'","MSE_h","`rep'"))
 				// MSE folds
 				mata: `A'.put(("`vtilde_h'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde_h'","MSE_h_folds","`rep'"))
-				// pystacked weightss - don't use, mean across folds doesn't mean anything
-				// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde_h'","cmd")=="pystacked"))
-				// if `pyswflag' {
-				//	mata: `A'.put(("`vtilde_h'_pysw","matrix"), mean(return_result_item(`eqn',"`vtilde_h'","stack_weights","`rep'")'))
-				// }
 				// ss weights
 				mata: st_local("shortstack_vname", `eqn'.shortstack)
 				if "`shortstack_vname'"!="" {
@@ -164,11 +158,6 @@ program define _ddml_reg, eclass
 				mata: `A'.put(("`vtilde'_mse","scalar"),return_result_item(`eqn',"`vtilde'","MSE","`rep'"))
 				// MSE folds
 				mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
-				// pystacked weightss - don't use, mean across folds doesn't mean anything
-				// mata: st_local("pyswflag",strofreal(return_learner_item(`eqn',"`vtilde'","cmd")=="pystacked"))
-				// if `pyswflag' {
-				//	mata: `A'.put(("`vtilde'_pysw","matrix"), mean(return_result_item(`eqn',"`vtilde'","stack_weights","`rep'")'))
-				// }
 				// ss weights
 				mata: st_local("shortstack_vname", `eqn'.shortstack)
 				if "`shortstack_vname'"!="" {
@@ -210,9 +199,16 @@ program define _ddml_reg, eclass
 			// row/colnames etc. - need to do this only once
 			if `m'==1 {
 				mata: st_local("depvar",`B'.get(("depvar","post")))
-				// retrieve locals
-				foreach obj in y d dh z yname dnames vce vcetype {
+				// retrieve locals; if empty, will be ""
+				local list_local y d dh z yname dnames vce vcetype clustvar
+				foreach obj in `list_local' {
 					mata: st_local("`obj'",`B'.get(("`obj'","local")))
+				}
+				// retrieve scalars (as locals)
+				local list_scalar
+				if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+				foreach obj in `list_scalar' {
+					mata: st_local("`obj'",strofreal(`B'.get(("`obj'","scalar"))))
 				}
 			}
 			// possible that different estimation samples have different #obs
@@ -302,17 +298,26 @@ program define _ddml_reg, eclass
 		mata: `A'.put(("b","post"),`bagg')
 		mata: `A'.put(("V","post"),`Vagg')
 		mata: `A'.put(("depvar","post"),"`depvar'")
-		mata: `A'.put(("b_resamples","matrix"),`bvec')
 		
 		// store locals
-		foreach obj in title y d dh z yname dnames vce vcetype {
+		local list_local title y d dh z yname dnames vce vcetype
+		if "`clustvar'"~=""		local list_local `list_local' clustvar
+		foreach obj in `list_local' {
 			mata: `A'.put(("`obj'","local"),"``obj''")
+		}
+		// store scalars
+		local list_scalar
+		if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+		foreach obj in `list_scalar' {
+			mata: `A'.put(("`obj'","scalar"),``obj'')
 		}
 		// special case - "_m" subscript doesn't apply to mean/median over resamplings
 		// so store without resample subscript
 		foreach obj in y d dh z {
 			mata: `A'.put(("`obj'_m","local"),"``obj''")
 		}
+		// special case - vector of betas available only for mean/median
+		mata: `A'.put(("b_resamples","matrix"),`bvec')
 		
 		// store AA with median/mean results
 		mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
@@ -364,7 +369,7 @@ program define _ddml_reg, eclass
 		ereturn local model `model'
 		ereturn local rep `rep'
 		ereturn local spec `spec'
-		ereturn local mname `mname'
+		ereturn local tmname `mname'	// temporary mname
 		
 		// extract and post scalars, locals, matrices
 		forvalues i=1/`nentries' {
@@ -384,8 +389,8 @@ program define _ddml_reg, eclass
 		forvalues i=1/`nentries' {
 			mata: st_local("topost",strofreal(`ismatrix'[`i']))
 			if `topost' {
-				mata: st_local("mname",substr(`keys'[`i',1],1,32))
-				mata: st_matrix("e(`mname')",`B'.get(`keys'[`i',.]))
+				mata: st_local("tmname",substr(`keys'[`i',1],1,32))
+				mata: st_matrix("e(`tmname')",`B'.get(`keys'[`i',.]))
 			}
 		}
 		
@@ -412,6 +417,18 @@ program define _ddml_reg, eclass
 			di as text "Orthogonalised D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
 		}
 		ereturn display
+		
+		// report warning if clustered SEs requested but doesn't match clustered crossfitting
+		mata: st_local("clustvar_crossfit",`mname'.clustvar)
+		if "`e(clustvar)'"~="" {
+			if "`clustvar_crossfit'"=="" {
+				di as err "warning: crossfit folds do not respect cluster structure used for VCE"
+			}
+			else if "`clustvar_crossfit'"~="`e(clustvar)'" {
+				di as res "warning: cluster variable for VCE does not match cluster variable for crossfit folds"
+			}
+		}
+
 	}
 
 end

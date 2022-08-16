@@ -4,20 +4,21 @@
 
 program _ddml_estimate_ate_late, eclass sortpreserve
 
-	syntax namelist(name=mname) [if] [in] ,		/// 
-								[				///
-								ATET 			///
-								ROBust			///
-								vce(string)		///
-								ALLest			/// show all regression outputs
-								NOTable			/// suppress summary table
-								clear			/// deletes all tilde-variables (to be implemented)
-								spec(string)	/// specification to post/display
-								REP(string)		/// resampling iteration to post/display
-								replay			/// model has been estimated, just display results
-								avplot			///
-								trim(real 0.01)	///
-								debug			///
+	syntax namelist(name=mname) [if] [in] ,			/// 
+								[					///
+								ATET 				///
+								ROBust				/// has no effect - vcv always robust or cluster-robust
+								CLUster(varname)	///
+								vce(string)			///
+								ALLest				/// show all regression outputs
+								NOTable				/// suppress summary table
+								clear				/// deletes all tilde-variables (to be implemented)
+								spec(string)		/// specification to post/display
+								REP(string)			/// resampling iteration to post/display
+								replay				/// model has been estimated, just display results
+								avplot				///
+								trim(real 0.01)		///
+								debug				///
 								* ]
 	
 	marksample touse
@@ -34,6 +35,12 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	local tableflag = "`notable'"==""
 	// display all regression outpus
 	local allflag = "`allest'"~=""
+	
+	** standard errors
+	// local vce is the argument to the Stata option vce(.)
+	// SEs are always either robust or cluster-robust
+	if "`cluster'"~=""	local vce cluster `cluster'
+	else				local vce robust
 	
 	if ~`crossfitted' {
 		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
@@ -561,7 +568,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	_ddml_ate_late, mname(`mname') spec(`spec') rep(`rep') replay
 	di
 	
-	if `nreps' > 1 {
+	if `nreps' > 1 & ("`rep'"=="mn" | "`rep'"=="md") {
 		tempvar bhat
 		svmat e(b_resamples), names(`bhat')
 		// variables in Stata will look like _000000A1, _000000A2, etc. and will disappear as temps after exit

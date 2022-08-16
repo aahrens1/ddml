@@ -34,6 +34,10 @@ program define _ddml_describe
 	// basic info about equations and learners - always displayed
 	di
 	di as text "Model:" _col(25) as res "`model', crossfit folds k=" `kfolds' ", resamples r=" `nreps'
+	mata: st_local("clustvar",`mname'.clustvar)
+	if "`clustvar'"~="" {
+		di as res _col(25) "Folds respect clustering by `clustvar'"
+	}
 	di as text "Dependent variable (Y):" _col(25) as res "`nameY'"
 	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
@@ -63,6 +67,10 @@ program define _ddml_describe
 		di as text "Full sample indic.:" _col(25) as res "`mname'_sample" _c
 		qui count if `mname'_sample
 		di as res " (N=`r(N)')"
+		if "`clustvar'"~="" {
+			qui tab `clustvar' if `mname'_sample
+			di as text "Cluster variable:" _col(25) as res "`clustvar' (N_clust=`r(r)')"
+		}
 		// di as text "Number of resamples =" _col(25) as res %3.0f `nreps'
 		// di as text "Number of folds     =" _col(25) as res %3.0f `kfolds'
 		di as text "Fold ID:" _col(25) as res _c

@@ -1,17 +1,21 @@
 *** ddml estimation: linear models
 program _ddml_estimate_linear, eclass sortpreserve
 
-	syntax namelist(name=mname) [if] [in] ,		/// 
-								[				///
-								ROBust			///
-								vce(string)		///
-								ALLest			/// show all regression outputs
-								NOTable			/// suppress summary table
-								clear			/// deletes all tilde-variables (to be implemented)
-								spec(string)	/// specification to post/display
-								REP(string)		/// resampling iteration to post/display or mean/median
-								replay			/// model has been estimated, just display results
+	syntax namelist(name=mname) [if] [in] ,			/// 
+								[					///
+								ROBust				///
+								CLUster(varname)	///
+								vce(string)			///
+								ALLest				/// show all regression outputs
+								NOTable				/// suppress summary table
+								clear				/// deletes all tilde-variables (to be implemented)
+								spec(string)		/// specification to post/display
+								REP(string)			/// resampling iteration to post/display or mean/median
+								replay				/// model has been estimated, just display results
+								debug				///
 								* ]
+	
+	if "`debug'"==""	local qui qui
 	
 	marksample touse
 	
@@ -26,8 +30,11 @@ program _ddml_estimate_linear, eclass sortpreserve
 	local allflag = "`allest'"~=""
 
 	** standard errors
-	if "`robust'"!="" local vce robust
-	if "`vce'"=="" local ols
+	// local vce is the argument to the Stata option vce(.)
+	if "`robust'"!=""	local vce robust
+	if "`cluster'"~=""	local vce cluster `cluster'
+	// delete
+	// if "`vce'"=="" local ols
 	
 	if ~`crossfitted' {
 		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
@@ -257,7 +264,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					local z `zlist'
 					local norep norep
 				}
-				qui _ddml_reg if `mname'_sample_`m' & `touse',					///
+				`qui' _ddml_reg if `mname'_sample_`m' & `touse',					///
 						nocons vce(`vce')										///
 						y(`y') yname(`nameY')									///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames')		 		///
@@ -294,7 +301,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					local z `Zss'
 				}
 				local title "Shortstack DDML model`stext'"
-				qui _ddml_reg if `mname'_sample_`m' & `touse',					///
+				`qui' _ddml_reg if `mname'_sample_`m' & `touse',					///
 						nocons vce(`vce')										///
 						y(`Yss') yname(`nameY')									///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames') 			///
@@ -315,21 +322,21 @@ program _ddml_estimate_linear, eclass sortpreserve
 		
 		// aggregate across resamplings
 		if `nreps' > 1 {
- 			qui _ddml_reg, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") // min-mse specification
- 			qui _ddml_reg, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") // min-mse specification
+ 			`qui' _ddml_reg, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") // min-mse specification
+ 			`qui' _ddml_reg, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") // min-mse specification
 			// numbered specifications
 			forvalues i = 1/`ncombos' {
 				local title "DDML model, specification `i' (mean)"
-				qui _ddml_reg, mname(`mname') spec(`i') medmean(mn) title(`title')
+				`qui' _ddml_reg, mname(`mname') spec(`i') medmean(mn) title(`title')
 				local title "DDML model, specification `i' (median)"
-				qui _ddml_reg, mname(`mname') spec(`i') medmean(md) title(`title')
+				`qui' _ddml_reg, mname(`mname') spec(`i') medmean(md) title(`title')
 			}
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean)"
-				qui _ddml_reg, mname(`mname') spec(ss) medmean(mn) title(`title')
+				`qui' _ddml_reg, mname(`mname') spec(ss) medmean(mn) title(`title')
 				local title "Shortstack DDML model (median)"
-				qui _ddml_reg, mname(`mname') spec(ss) medmean(md) title(`title')
+				`qui' _ddml_reg, mname(`mname') spec(ss) medmean(md) title(`title')
 			}
 		}
 		
@@ -438,7 +445,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 				di
 			}
 			if `ssflag' {
-				qui _ddml_reg, mname(`mname') spec(ss) rep(`m') replay
+				`qui' _ddml_reg, mname(`mname') spec(ss) rep(`m') replay
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
@@ -485,7 +492,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 		di
 		foreach medmean in mn md {
 			** mean and median over mse
-			qui _ddml_reg, mname(`mname') spec(mse) rep(`medmean') replay
+			`qui' _ddml_reg, mname(`mname') spec(mse) rep(`medmean') replay
 			tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 			mat `btemp' = e(b)
 			mat `Vtemp' = e(V)
@@ -511,7 +518,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 			}
 			di
 			if `ssflag' {
-				qui _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay
+				`qui' _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
@@ -544,7 +551,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 	_ddml_reg, mname(`mname') spec(`spec') rep(`rep') replay  
 	di
 	
-	if `nreps' > 1 {
+	if `nreps' > 1 & ("`rep'"=="mn" | "`rep'"=="md") {
 		tempvar bhat
 		svmat e(b_resamples), names(`bhat')
 		// variables in Stata will look like _000000A1, _000000A2, etc. and will disappear as temps after exit

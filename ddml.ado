@@ -36,6 +36,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 					 , [						///
 						mname(name)				///
 						newmname(name)			///
+						cluster(varname)		///
 						Learner(name)			///
 						predopt(string asis)	///
 						vname(name)				///
@@ -138,9 +139,15 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			mata: `mname'.id			= st_data(., "`mname'_id")
 			// create and store sample indicator; initialized so all obs are used
 			cap drop `mname'_sample
-			qui gen byte `mname'_sample = 1
+			// in case total sample limited by if or in:
+			marksample touse
+			qui gen byte `mname'_sample = `touse'
+			// cluster variable; can be real (missing=.) or string (missing="")
+			cap replace `mname'_sample = 0 if `cluster'==.		// real
+			cap replace `mname'_sample = 0 if `cluster'==""		// string
 			// fill by hand
 			mata: `mname'.model			= "`model'"
+			mata: `mname'.clustvar		= "`cluster'"
 			// initialize with default fold var, kfolds, number of resamplings
 			_ddml_sample `if' `in' , mname(`mname') `options'
 		}
@@ -298,21 +305,21 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		if "`subcmd'" =="estimate" {
 			
 			mata: st_global("r(model)",`mname'.model)
-	
+			// cluster(varname) syntax allowed for both ddml define and ddml estimate
 			if ("`r(model)'"=="partial") {
-				_ddml_estimate_linear `mname' `if' `in', `options'
+				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
 			}
 			if ("`r(model)'"=="iv") {
-				_ddml_estimate_linear `mname' `if' `in', `options'
+				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
 			}
 			if ("`r(model)'"=="interactive") {
-				_ddml_estimate_ate_late `mname' `if' `in', `options'
+				_ddml_estimate_ate_late `mname' `if' `in', `options' cluster(`cluster')
 			}
 			if ("`r(model)'"=="late") {
-				_ddml_estimate_ate_late `mname' `if' `in', `options'
+				_ddml_estimate_ate_late `mname' `if' `in', `options' cluster(`cluster')
 			}
 			if ("`r(model)'"=="ivhd") {
-				_ddml_estimate_linear `mname' `if' `in', `options'
+				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
 			}
 			
 		}
@@ -360,6 +367,31 @@ program define add_eqn_to_model, rclass
 							NOIsily					///
 							cmdname(name)			///
 							]
+
+	// syntax checks
+	mata: st_local("model",`mname'.model)
+	// ATE + multiple D variables not supported
+	if "`subcmd'"=="deq" & "`model'"=="interactive" {
+		mata: st_local("nameD",invtokens(`mname'.nameD))
+		local nlist `nameD' `vname'
+		local nlist : list uniq nlist
+		local nlist : list sizeof nlist
+		if `nlist' > 1 {
+			di as err "error - multiple D variables not supported (`nameD' `vname')"
+			exit 198
+		}
+	}
+	// LATE + multiple Z variables not supported
+	if "`subcmd'"=="zeq" & "`model'"=="late" {
+		mata: st_local("nameZ",invtokens(`mname'.nameZ))
+		local nlist `nameZ' `vname'
+		local nlist : list uniq nlist
+		local nlist : list sizeof nlist
+		if `nlist' > 1 {
+			di as err "error - multiple Z variables not supported (`nameZ' `vname')"
+			exit 198
+		}
+	}
 	
 	// used for temporary Mata object
 	tempname t
@@ -370,7 +402,6 @@ program define add_eqn_to_model, rclass
 	
 	if `posof'==0 {
 		// vname new to model so need a new eqn struct for it
-		// mata: `eqn' = init_eStruct()
 		mata: `eqn'.vname = "`vname'"
 	}
 	else {
@@ -387,7 +418,7 @@ program define add_eqn_to_model, rclass
 	else if `posof_vt'==0 & "`subcmd'"!="dheq" {
 		local vtlist `vtlist' `vtilde'
 		local vtlist : list uniq vtlist		// should be unnecessary
-		// in two steps, to accommodate singleton lists (which are otherwise string scalars and not matrices
+		// in two steps, to accommodate singleton lists (which are otherwise string scalars and not matrices)
 		mata: `t' = tokens("`vtlist'")
 		mata: `eqn'.vtlist	= `t'
 	}
@@ -424,7 +455,6 @@ program define add_eqn_to_model, rclass
 		// update nlearners - counts deq and dheq as a single learner
 		mata: `eqn'.nlearners = cols(`eqn'.vtlist)
 		mata: `eqn'.lieflag = 0
-		mata: st_local("model",`mname'.model)
 		if "`model'"=="interactive" & "`subcmd'"=="yeq" {
 			mata: `eqn'.ateflag = 1
 		}

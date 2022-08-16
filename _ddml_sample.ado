@@ -2,7 +2,7 @@
 * overall sample indicator <mname>_sample already exists; will reseet with sreset option
 * nb: should probably create sample indicator and main id indicator here instead of in ddml.ado
 
-program _ddml_sample
+program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that respect clustering
 	version 13
 
 	syntax [if] [in] , mname(name) [				///
@@ -16,6 +16,16 @@ program _ddml_sample
 							]
 	
 	marksample touse
+	
+	mata: st_local("clustvar", `mname'.clustvar)
+	tempvar clustid
+	// clustid is either defined using clustvar or is equal to _n.
+	if "`clustvar'"=="" {
+		qui gen double `clustid'=_n
+	}
+	else {
+		qui egen double `clustid' = group(`clustvar')
+	}
 	
 	// clear any preexisting equation results from the model struct
 	mata: clear_model_results(`mname')
@@ -50,18 +60,28 @@ program _ddml_sample
 		}
 		forvalues m=1/`reps' {
 			*** gen folds
-			tempvar uni cuni
+			tempvar uni cuni tag
+			// tag one ob per cluster; if no clustering, all obs are tagged
+			qui egen `tag' = tag(`clustid') if `mname'_sample
 			if `m'==1 & "`norandom'"~="" {
-				qui gen `uni' = _n
+				qui gen `uni' = _n if `mname'_sample & `tag'
 				local labtext "(original order)"
 			}
 			else {
-				qui gen double `uni' = runiform() if `mname'_sample
+				qui gen double `uni' = runiform() if `mname'_sample & `tag'
 				local labtext "(randomly generated)"
 			}
 			qui cumul `uni' if `mname'_sample, gen(`cuni')
+			// old no-cluster code here - to delete
 			// epsfloat() used below so that if cuni is on boundary it goes to the lower group
-			qui gen int `mname'_fid_`m' = ceil(`kfolds'*(`cuni'-epsfloat())) if `mname'_sample
+			// qui gen int `mname'_fid_`m' = ceil(`kfolds'*(`cuni'-epsfloat())) if `mname'_sample
+			// missing cluster IDs will go at the end; within cluster IDs, tagged obs go at the end
+			sort `clustid' `tag'
+			// propagate random uniforms (last ob in cluster) within clusters
+			qui by `clustid': replace `uni'=`uni'[_N] if `mname'_sample
+			// create equal-sized folds
+			qui egen `mname'_fid_`m' = cut(`uni'), group(`kfolds')
+			qui replace `mname'_fid_`m' = `mname'_fid_`m' + 1
 			label var `mname'_fid_`m' "`labtext'"
 		}
 	}

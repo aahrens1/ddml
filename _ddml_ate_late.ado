@@ -1,3 +1,4 @@
+* code currently supports only a single treatment variable, but coded for multiple variables in places
 
 program _ddml_ate_late, eclass
 
@@ -53,14 +54,25 @@ program _ddml_ate_late, eclass
 
 		local vce1: word 1 of `vce'
 		if "`vce1'"=="cluster" {
-			local clustervar : word 2 of `vce'
+			local clustvar : word 2 of `vce'
 		}
 		
 		if "`model'"=="interactive" {
-			mata: ATE("`atet'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustervar'",`trim')
+			mata: ATE("`atet'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustvar'",`trim')
 		}
 		else {
-			mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'","`clustervar'",`trim')
+			mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'","`clustvar'",`trim')
+		}
+		if "`clustvar'"=="" {
+			// e(.) for basic robust
+			local vce		robust
+			local vcetype	Robust
+		}
+		else {
+			// e(.) for cluster-robust; clustvar already defined
+			local vce		cluster
+			local vcetype	Robust
+			local N_clust	=r(N_clust)
 		}
 		
 		// store post objects
@@ -75,14 +87,18 @@ program _ddml_ate_late, eclass
 		mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("r(V)"))'))
 		
 		// store locals
-		foreach obj in title y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar {
+		local list_local title y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar vce vcetype
+		if "`clustvar'"~=""		local list_local `list_local' clustvar
+		foreach obj in `list_local' {
 			mata: `A'.put(("`obj'","local"),"``obj''")
 		}
 		// store scalars
 		mata: `A'.put(("lltrim","scalar"),`r(lltrim)')
 		mata: `A'.put(("ultrim","scalar"),`r(ultrim)')
 		mata: `A'.put(("trim","scalar"),`trim')
-		
+		if "`clustvar'"~="" {
+			mata: `A'.put(("N_clust","scalar"),`N_clust')
+		}
 		// additional estimation results
 		tempname eqn
 		mata: `eqn' = init_eStruct()
@@ -151,10 +167,17 @@ program _ddml_ate_late, eclass
 			// row/colnames etc. - need to do this only once
 			if `m'==1 {
 				mata: st_local("depvar",`B'.get(("depvar","post")))
-				// retrieve locals
-				foreach obj in y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar {
+				// retrieve locals; if empty, will be ""
+				local list_local y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar vce vcetype clustvar
+				foreach obj in `list_local' {
 					mata: st_local("`obj'",`B'.get(("`obj'","local")))
-					}
+				}
+				// retrieve scalars (as locals)
+				local list_scalar
+				if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+				foreach obj in `list_scalar' {
+					mata: st_local("`obj'",strofreal(`B'.get(("`obj'","scalar"))))
+				}
 			}
 			// possible that different estimation samples have different #obs
 			qui count if `mname'_sample_`m'==1
@@ -260,7 +283,9 @@ program _ddml_ate_late, eclass
 		mata: `A'.put(("b_resamples","matrix"),`bvec')
 		
 		// store locals
-		foreach obj in title y0 y1 d d0 d1 z yvar dvar {
+		local list_local title y0 y1 d d0 d1 z yvar dvar vce vcetype
+		if "`clustvar'"~=""		local list_local `list_local' clustvar
+		foreach obj in `list_local' {
 			mata: `A'.put(("`obj'","local"),"``obj''")
 		}
 		// special case - "_m" subscript doesn't apply to mean/median over resamplings
@@ -270,9 +295,12 @@ program _ddml_ate_late, eclass
 		}
 		
 		// store scalars
-		mata: `A'.put(("nlltrim","scalar"),`nlltrim')
-		mata: `A'.put(("nultrim","scalar"),`nultrim')
-		mata: `A'.put(("trim","scalar"),`trimval')
+		local trim `trimval'	// hack, to fix
+		local list_scalar nlltrim nultrim trim
+		if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+		foreach obj in `list_scalar' {
+			mata: `A'.put(("`obj'","scalar"),``obj'')
+		}
 		
 		// store AA with median/mean results
 		mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
@@ -324,7 +352,7 @@ program _ddml_ate_late, eclass
 		ereturn local model `model'
 		ereturn local rep `rep'
 		ereturn local spec `spec'
-		ereturn local mname `mname'
+		ereturn local tmname `mname'
 		
 		// extract and post scalars, locals, matrices
 		forvalues i=1/`nentries' {
@@ -344,8 +372,8 @@ program _ddml_ate_late, eclass
 		forvalues i=1/`nentries' {
 			mata: st_local("topost",strofreal(`ismatrix'[`i']))
 			if `topost' {
-				mata: st_local("mname",substr(`keys'[`i',1],1,32))
-				mata: st_matrix("e(`mname')",`B'.get(`keys'[`i',.]))
+				mata: st_local("tmname",substr(`keys'[`i',1],1,32))
+				mata: st_matrix("e(`tmname')",`B'.get(`keys'[`i',.]))
 			}
 		}
 		
@@ -368,6 +396,17 @@ program _ddml_ate_late, eclass
 			di as text "Z-E[Z|X]" _col(14)  "= " as res "`e(z_m)'"
 		}
 		ereturn display
+		
+		// report warning if clustered SEs requested but doesn't match clustered crossfitting
+		mata: st_local("clustvar_crossfit",`mname'.clustvar)
+		if "`e(clustvar)'"~="" {
+			if "`clustvar_crossfit'"=="" {
+				di as err "warning: crossfit folds do not respect cluster structure used for VCE"
+			}
+			else if "`clustvar_crossfit'"~="`e(clustvar)'" {
+				di as res "warning: cluster variable for VCE does not match cluster variable for crossfit folds"
+			}
+		}
 	}
 	
 	// warn if any values trimmed
@@ -408,7 +447,7 @@ void ATE(
 			string scalar sample,     // sample
 			string scalar outate,     // output: name of matrix to store b
 			string scalar outatese,   // output: name of matrix to store V
-			string scalar clustervar,
+			string scalar clustvar,
 			real scalar trim          // trim the propensity score
 			)
 {
@@ -418,10 +457,10 @@ void ATE(
 	st_view(y,.,yvar,sample)
 	// copy since we may trim it
 	md_x=st_data(.,dtilde,sample)
-	if (clustervar!="") {
-		st_view(clustid,.,clustervar,sample)
-		clusterid_uni=uniqrows(clustid)
-		nclust = rows(clusterid_uni)
+	if (clustvar!="") {
+		st_view(clustid,.,clustvar,sample)
+		clustid_uni=uniqrows(clustid)
+		nclust = rows(clustid_uni)
 	}
 
 	n = rows(y)
@@ -436,7 +475,6 @@ void ATE(
 	lltrim = sum(lltrim)
 	ultrim = sum(ultrim)
 
-
 	// psi = psi_b + psi_a*theta, e.g. equation 5.62
 	if (atet=="") {
 		psi_b  = (d :* (y :- my_d1x) :/ md_x) :-  ((1 :- d) :* (y :- my_d0x) :/ (1 :- md_x)) :+ my_d1x :- my_d0x 
@@ -450,19 +488,20 @@ void ATE(
 	theta = -mean(psi_b) / mean(psi_a)
 	psi = psi_a :* theta :+ psi_b
 
-	if (clustervar=="") {
+	if (clustvar=="") {
 		V =  mean(psi:^2) / (mean(psi_a):^2) / n
 	}
 	else {
 		gamma = 0
 		jhat = 0
 		for (i=1;i<=nclust;i++) {
-			psi_c = select(psi,clustid:==clusterid_uni[i,1])
-			psi_a_c = select(psi_a,clustid:==clusterid_uni[i,1])
+			psi_c = select(psi,clustid:==clustid_uni[i,1])
+			psi_a_c = select(psi_a,clustid:==clustid_uni[i,1])
 			gamma = gamma :+ 1/nclust :* sum(psi_c*psi_c')
 			jhat = jhat :+  1/nclust :* sum(psi_a_c)
 		}
-		V = gamma / jhat:^2 / nclust 
+		V = gamma / jhat:^2 / nclust
+		st_numscalar("r(N_clust)",nclust)
 	}
 
 	st_numscalar("r(N)",n)
@@ -483,7 +522,7 @@ void LATE(  string scalar yvar,      // Y
             string scalar sample,    // sample
             string scalar outlate,   // output: name of matrix to store b
             string scalar outlatese,  // output: name of matrix to store V
-            string scalar clustervar,
+            string scalar clustvar,
  			real scalar trim          // trim the propensity score
            )
 {
@@ -496,10 +535,10 @@ void LATE(  string scalar yvar,      // Y
     st_view(z,.,zvar,sample)
 	// copy since we may trim it
     mz_x=st_data(.,ztilde,sample)
-    if (clustervar!="") {
-		st_view(clustid,.,clustervar,sample)
-		clusterid_uni=uniqrows(clustid)
-		nclust = rows(clusterid_uni)
+    if (clustvar!="") {
+		st_view(clustid,.,clustvar,sample)
+		clustid_uni=uniqrows(clustid)
+		nclust = rows(clustid_uni)
 	}
 
     n = rows(y)
@@ -520,19 +559,20 @@ void LATE(  string scalar yvar,      // Y
 	theta = -mean(psi_b) / mean(psi_a)
 	psi = psi_a :* theta :+ psi_b
 
-	if (clustervar=="") {
+	if (clustvar=="") {
 		V =  mean(psi:^2) :/ mean(psi_a):^2 :/ n
 	}
 	else {
 		gamma = 0
 		jhat = 0
 		for (i=1;i<=nclust;i++) {
-			psi_c = select(psi,clustid:==clusterid_uni[i,1])
-			psi_a_c = select(psi_a,clustid:==clusterid_uni[i,1])
+			psi_c = select(psi,clustid:==clustid_uni[i,1])
+			psi_a_c = select(psi_a,clustid:==clustid_uni[i,1])
 			gamma = gamma :+ 1/nclust :* sum(psi_c*psi_c')
 			jhat = jhat :+  1/nclust :* sum(psi_a_c)
 		}
 		V = gamma / jhat:^2 / nclust
+		st_numscalar("r(N_clust)",nclust)
 	}
 
     st_numscalar("r(N)",n)
