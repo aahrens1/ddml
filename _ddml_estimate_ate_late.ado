@@ -475,32 +475,33 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 						di as res %14s "`zt'" _c
 					}
 					di
+
+					if `ssflag' & (`rowcount' <= `tnumrows') {
+						local ++rowcount
+						qui _ddml_ate_late, mname(`mname') spec(ss) rep(`m') replay
+						tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+						mat `btemp' = e(b)
+						mat `Vtemp' = e(V)
+						local specrep `: di "ss" %3.0f `m''
+						// pad out to 6 spaces
+						local specrep = "  " + "`specrep'"
+						local rcmd stata ddml estimate `mname', spec(ss) rep(`m') replay notable
+						di %6s "{`rcmd':`specrep'}" _c
+						di as res %14s "[shortstack]" _c
+						di as res %14s "[ss]" _c
+						di as res %14s "[ss]" _c
+						if ~`ateflag' {
+							di as res %14s "[ss]" _c
+						}
+						di as res %10.3f el(`btemp',1,1) _c
+						local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
+						di as res %10s "`pse'" _c
+						if ~`ateflag' {
+							di as res %14s "[ss]" _c
+						}
+						di
+					}
 				}
-			}
-	
-			if `ssflag' {
-				qui _ddml_ate_late, mname(`mname') spec(ss) rep(`m') replay
-				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
-				mat `btemp' = e(b)
-				mat `Vtemp' = e(V)
-				local specrep `: di "ss" %3.0f `m''
-				// pad out to 6 spaces
-				local specrep = "  " + "`specrep'"
-				local rcmd stata ddml estimate `mname', spec(ss) rep(`m') replay notable
-				di %6s "{`rcmd':`specrep'}" _c
-				di as res %14s "[shortstack]" _c
-				di as res %14s "[ss]" _c
-				di as res %14s "[ss]" _c
-				if ~`ateflag' {
-					di as res %14s "[ss]" _c
-				}
-				di as res %10.3f el(`btemp',1,1) _c
-				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-				di as res %10s "`pse'" _c
-				if ~`ateflag' {
-					di as res %14s "[ss]" _c
-				}
-				di
 			}
 		}
 		if `rowcount' > `tnumrows' {

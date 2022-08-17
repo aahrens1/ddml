@@ -453,7 +453,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 					}
 					di
 				
-					if `ssflag' {
+					if `ssflag' & (`rowcount' <= `tnumrows') {
+						local ++rowcount
 						`qui' _ddml_reg, mname(`mname') spec(ss) rep(`m') replay
 						tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 						mat `btemp' = e(b)
