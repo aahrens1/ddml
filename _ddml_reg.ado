@@ -422,10 +422,10 @@ program define _ddml_reg, eclass
 		mata: st_local("clustvar_crossfit",`mname'.clustvar)
 		if "`e(clustvar)'"~="" {
 			if "`clustvar_crossfit'"=="" {
-				di as err "warning: crossfit folds do not respect cluster structure used for VCE"
+				di as res "Warning" as text ": crossfit folds do not respect cluster structure used for VCE."
 			}
 			else if "`clustvar_crossfit'"~="`e(clustvar)'" {
-				di as res "warning: cluster variable for VCE does not match cluster variable for crossfit folds"
+				di as res "Warning" as text ": cluster variable for VCE does not match cluster variable for crossfit folds."
 			}
 		}
 

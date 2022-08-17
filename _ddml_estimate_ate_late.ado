@@ -12,6 +12,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								vce(string)			///
 								ALLest				/// show all regression outputs
 								NOTable				/// suppress summary table
+								FULLtable			/// show full summary table
 								clear				/// deletes all tilde-variables (to be implemented)
 								spec(string)		/// specification to post/display
 								REP(string)			/// resampling iteration to post/display
@@ -19,15 +20,19 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								avplot				///
 								trim(real 0.01)		///
 								debug				///
+								tnumrows(int 10)	/// for debugging use only
 								* ]
+	
+	if "`fulltable'"~="" {
+		// display all rows
+		local tnumrows	=.
+	}
+	if "`debug'"==""	local qui qui
 	
 	marksample touse
 	
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
-
-	local qui qui
-	if "`debug'"!="" local qui 
 	
 	// model needs to be estimated
 	local estflag = "`replay'"==""
@@ -411,7 +416,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	}
 	
 	*** Results ***
-	
+	// counter for number of rows in summary table
+	local rowcount 0
 	// optional table of all results
 	if `tableflag' {
 		di
@@ -432,41 +438,44 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		di
 		forvalues m=1/`nreps' {
 			forvalues i=1/`ncombos' {
-				mata: st_local("yt0",abbrev(`nmat'[`i',1],13))
-				mata: st_local("yt1",abbrev(`nmat'[`i',2],13))
-				if "`optspec`m''"=="`i'" {
-					di "*" _c
+				local ++rowcount
+				if `rowcount' <= `tnumrows' {
+					mata: st_local("yt0",abbrev(`nmat'[`i',1],13))
+					mata: st_local("yt1",abbrev(`nmat'[`i',2],13))
+					if "`optspec`m''"=="`i'" {
+						di "*" _c
+					}
+					else {
+						di " " _c
+					}
+					local specrep `: di %3.0f `i' %3.0f `m''
+					// pad out to 6 spaces
+					local specrep = (6-length("`specrep'"))*" " + "`specrep'"
+					local rcmd stata ddml estimate `mname', spec(`i') rep(`m') replay notable
+					di %6s "{`rcmd':`specrep'}" _c
+					di as res %14s "`yt0'" _c
+					di as res %14s "`yt1'" _c
+					if `ateflag' {
+						mata: st_local("dt",`nmat'[`i',3])
+						di as res %14s "`dt'" _c
+					}
+					else {
+						mata: st_local("dt0",abbrev(`nmat'[`i',3],13))
+						mata: st_local("dt1",abbrev(`nmat'[`i',4],13))
+						di as res %14s "`dt0'" _c
+						di as res %14s "`dt1'" _c
+					}
+					mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
+					mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
+					di as res %10.3f `b' _c
+					local pse (`: di %6.3f `se'')
+					di as res %10s "`pse'" _c
+					if ~`ateflag' {
+						mata: st_local("zt",abbrev(`nmat'[`i',5],13))
+						di as res %14s "`zt'" _c
+					}
+					di
 				}
-				else {
-					di " " _c
-				}
-				local specrep `: di %3.0f `i' %3.0f `m''
-				// pad out to 6 spaces
-				local specrep = (6-length("`specrep'"))*" " + "`specrep'"
-				local rcmd stata ddml estimate `mname', spec(`i') rep(`m') replay notable
-				di %6s "{`rcmd':`specrep'}" _c
-				di as res %14s "`yt0'" _c
-				di as res %14s "`yt1'" _c
-				if `ateflag' {
-					mata: st_local("dt",`nmat'[`i',3])
-					di as res %14s "`dt'" _c
-				}
-				else {
-					mata: st_local("dt0",abbrev(`nmat'[`i',3],13))
-					mata: st_local("dt1",abbrev(`nmat'[`i',4],13))
-					di as res %14s "`dt0'" _c
-					di as res %14s "`dt1'" _c
-				}
-				mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
-				mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
-				di as res %10.3f `b' _c
-				local pse (`: di %6.3f `se'')
-				di as res %10s "`pse'" _c
-				if ~`ateflag' {
-					mata: st_local("zt",abbrev(`nmat'[`i',5],13))
-					di as res %14s "`zt'" _c
-				}
-				di
 			}
 	
 			if `ssflag' {
@@ -494,7 +503,12 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				di
 			}
 		}
-	di as res "*" as text " = minimum MSE specification for that resample."
+		if `rowcount' > `tnumrows' {
+			local rcmd stata ddml estimate `mname', replay fulltable
+			di %6s "{`rcmd':   ...  }" _c
+			di as text "<-click or type " as res "ddml estimate, replay full" as text " to display full summary"
+		}
+		di as res "*" as text " = minimum MSE specification for that resample."
 	}
 		
 	if `nreps' > 1 {

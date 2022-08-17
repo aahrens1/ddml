@@ -8,13 +8,19 @@ program _ddml_estimate_linear, eclass sortpreserve
 								vce(string)			///
 								ALLest				/// show all regression outputs
 								NOTable				/// suppress summary table
+								FULLtable			/// show full summary table
 								clear				/// deletes all tilde-variables (to be implemented)
 								spec(string)		/// specification to post/display
 								REP(string)			/// resampling iteration to post/display or mean/median
 								replay				/// model has been estimated, just display results
 								debug				///
+								tnumrows(int 10)	/// for debugging use only
 								* ]
 	
+	if "`fulltable'"~="" {
+		// display all rows
+		local tnumrows	=.
+	}
 	if "`debug'"==""	local qui qui
 	
 	marksample touse
@@ -385,7 +391,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 	}
 	
 	*** Results ***
-	
+	// counter for number of rows in summary table
+	local rowcount 0
 	// optional table of all results
 	if `tableflag' {
 		di
@@ -405,74 +412,83 @@ program _ddml_estimate_linear, eclass sortpreserve
 		di
 		forvalues m=1/`nreps' {
 			forvalues i=1/`ncombos' {
-				mata: st_local("yt",abbrev(`nmat'[`i',1],13))
-				mata: st_local("dtlist",invtokens(abbrev(tokens(`nmat'[`i',2]),13)))
-				mata: st_local("ztlist",`nmat'[`i',3])
-				if "`ztlist'"~="" {
-					mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),13)))
-				}
-				if "`optspec`m''"=="`i'" {
-					di "*" _c
-				}
-				else {
-					di " " _c
-				}
-				local specrep `: di %3.0f `i' %3.0f `m''
-				// pad out to 6 spaces
-				local specrep = (6-length("`specrep'"))*" " + "`specrep'"
-				local rcmd stata ddml estimate `mname', spec(`i') rep(`m') replay notable
-				di %6s "{`rcmd':`specrep'}" _c
-				di as res %14s "`yt'" _c
-				forvalues j=1/`numeqnD' {
-					local vt : word `j' of `dtlist'
-					mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
-					mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
-					di as res %14s "`vt'" _c
-					di as res %10.3f `b' _c
-					local pse (`: di %6.3f `se'')
-					di as res %10s "`pse'" _c
-				}
-				forvalues j=1/`numeqnZ' {
-					local vt : word `j' of `ztlist'
-					di as res %14s "`vt'" _c
-				}
-				if "`model'"=="ivhd" {
+				local ++rowcount
+				if `rowcount' <= `tnumrows' {
+					mata: st_local("yt",abbrev(`nmat'[`i',1],13))
+					mata: st_local("dtlist",invtokens(abbrev(tokens(`nmat'[`i',2]),13)))
+					mata: st_local("ztlist",`nmat'[`i',3])
+					if "`ztlist'"~="" {
+						mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),13)))
+					}
+					if "`optspec`m''"=="`i'" {
+						di "*" _c
+					}
+					else {
+						di " " _c
+					}
+					local specrep `: di %3.0f `i' %3.0f `m''
+					// pad out to 6 spaces
+					local specrep = (6-length("`specrep'"))*" " + "`specrep'"
+					local rcmd stata ddml estimate `mname', spec(`i') rep(`m') replay notable
+					di %6s "{`rcmd':`specrep'}" _c
+					di as res %14s "`yt'" _c
 					forvalues j=1/`numeqnD' {
+						local vt : word `j' of `dtlist'
+						mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
+						mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
+						di as res %14s "`vt'" _c
+						di as res %10.3f `b' _c
+						local pse (`: di %6.3f `se'')
+						di as res %10s "`pse'" _c
+					}
+					forvalues j=1/`numeqnZ' {
 						local vt : word `j' of `ztlist'
 						di as res %14s "`vt'" _c
 					}
-				}
-				di
-			}
-			if `ssflag' {
-				`qui' _ddml_reg, mname(`mname') spec(ss) rep(`m') replay
-				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
-				mat `btemp' = e(b)
-				mat `Vtemp' = e(V)
-				local specrep `: di "ss" %3.0f `m''
-				// pad out to 6 spaces
-				local specrep = "  " + "`specrep'"
-				local rcmd stata ddml estimate `mname', spec(ss) rep(`m') replay notable
-				di %6s "{`rcmd':`specrep'}" _c
-				di as res %14s "[shortstack]" _c
-				forvalues j=1/`numeqnD' {
-					di as res %14s "[ss]" _c
-					di as res %10.3f el(`btemp',1,`j') _c
-					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-					di as res %10s "`pse'" _c
-				}
-				if "`model'"=="ivhd" {
-					forvalues j=1/`numeqnD' {
-						di as res %14s "[ss]" _c
+					if "`model'"=="ivhd" {
+						forvalues j=1/`numeqnD' {
+							local vt : word `j' of `ztlist'
+							di as res %14s "`vt'" _c
+						}
+					}
+					di
+				
+					if `ssflag' {
+						`qui' _ddml_reg, mname(`mname') spec(ss) rep(`m') replay
+						tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+						mat `btemp' = e(b)
+						mat `Vtemp' = e(V)
+						local specrep `: di "ss" %3.0f `m''
+						// pad out to 6 spaces
+						local specrep = "  " + "`specrep'"
+						local rcmd stata ddml estimate `mname', spec(ss) rep(`m') replay notable
+						di %6s "{`rcmd':`specrep'}" _c
+						di as res %14s "[shortstack]" _c
+						forvalues j=1/`numeqnD' {
+							di as res %14s "[ss]" _c
+							di as res %10.3f el(`btemp',1,`j') _c
+							local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
+							di as res %10s "`pse'" _c
+						}
+						if "`model'"=="ivhd" {
+							forvalues j=1/`numeqnD' {
+								di as res %14s "[ss]" _c
+							}
+						}
+						forvalues j=1/`numeqnZ' {
+							di as res %14s "[ss]" _c
+						}
+						di
 					}
 				}
-				forvalues j=1/`numeqnZ' {
-					di as res %14s "[ss]" _c
-				}
-				di
 			}
 		}
-	di as res "*" as text " = minimum MSE specification for that resample."
+		if `rowcount' > `tnumrows' {
+			local rcmd stata ddml estimate `mname', replay fulltable
+			di %6s "{`rcmd':   ...  }" _c
+			di as text "<-click or type " as res "ddml estimate, replay full" as text " to display full summary"
+		}
+		di as res "*" as text " = minimum MSE specification for that resample."
 	}
 
 	if `nreps' > 1 {
