@@ -9,23 +9,29 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		mname(name)								///
 		kfolds(integer 5)						///
 		TABFold									///
+								ROBust				///
+								CLUster(varname)	///
+								vce(string)			///
 		debug 									///
 		seed(int 0)								///
 		cmd(name)								///
 		YCMDOPTtions(string asis)				///
-		DCMDOPTtions(string asis)				///
 		DHCMDOPTions(string asis)				///
 		ZCMDOPTions(string asis)				///
 		YCMD(string asis)						///	
 		DCMD(string asis)						///
-		DHCMD(string asis)						///
 		ZCMD(string asis)						///
+		ypredopt(string asis)					///
+		dpredopt(string asis)					///
+		zpredopt(string asis)					///
+		yvtype(string)							///  "double", "float" etc
+		dvtype(string)							///  "double", "float" etc
+		zvtype(string)							///  "double", "float" etc
 		CMDOPTions(string asis)					///
-		NOLie									///
 		NOIsily 								///
 		REPs(integer 1)							///
 		shortstack 								///
-		* ]
+		]
 
 	mata: s_ivparse("`anything'")
 
@@ -48,11 +54,13 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		local pystacked_avail = 0
 	}
 
+	if "`robust'"!=""	local vce robust
+	if "`cluster'"~=""	local vce cluster `cluster'
+
 	if "`vverbose'"=="" local qui qui
 	if "`cmd'"=="" local cmd pystacked
 	if "`ycmd'"=="" local ycmd `cmd'
 	if "`dcmd'"=="" local dcmd `cmd'
-	if "`dhcmd'"=="" local dhcmd `cmd'
 	if "`zcmd'"=="" local zcmd `cmd'
 	local ycmdoptions `ycmdoptions' `cmdoptions'
 	local dcmdoptions `dcmdoptions' `cmdoptions'
@@ -119,56 +127,56 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if "`mname'"=="" local mname m0		
 
 	*** estimation
-	`qui' ddml init `model', `nolie' `shortstack' kfolds(`kfolds') reps(`reps') `tabfold'
+	`qui' ddml init `model', kfolds(`kfolds') reps(`reps') cluster(`cluster') `tabfold'
 
 	*** IV-HD
 	if ("`model'"=="ivhd") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
-		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd'): `dhcmd' {D} `xctrl', `dhcmdoptions' 
+		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
+		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
+		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' {D} `xctrl', `dhcmdoptions' 
 	} 
 
 	*** IV 
 	else if ("`model'"=="iv") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		local j = 1
 		foreach d of varlist `dendog' {
-			`qui' ddml E[D|X], mname(`mname') vname(`d'): `dcmd' `d' `xctrl', `dcmdoptions' 
+			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `d' `xctrl', `dcmdoptions' 
 			local j = `j' + 1
 		}
 		local j = 1
 		foreach z of varlist `exexog' {
-			`qui' ddml E[Z|X], mname(`mname') vname(`z'): `zcmd' `z' `xctrl', `zcmdoptions' 
+			`qui' ddml E[Z|X], mname(`mname') vname(`z') predopt(`zpredopt') vtype(`zvtype'): `zcmd' `z' `xctrl', `zcmdoptions' 
 			local j = `j' + 1
 		}
 	}
 
 	*** late / interactive IV
 	else if ("`model'"=="late") {
-		`qui' ddml E[Y|Z,X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
-		`qui' ddml E[D|Z,X], mname(`mname') vname(`dendog'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
-		`qui' ddml E[Z|X], mname(`mname') vname(`exexog'): `zcmd' `exexog' `xctrl', `zcmdoptions' 
+		`qui' ddml E[Y|Z,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml E[D|Z,X], mname(`mname') vname(`dendog') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
+		`qui' ddml E[Z|X], mname(`mname') vname(`exexog') predopt(`zpredopt') vtype(`zvtype'): `zcmd' `exexog' `xctrl', `zcmdoptions' 
 	}
 
 	*** partial linear model
 	else if ("`model'"=="partial") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		local j = 1
 		foreach d of varlist `dexog' {
-			`qui' ddml E[D|X], mname(`mname') vname(`d'): `dcmd' `d' `xctrl', `dcmdoptions' 
+			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `d' `xctrl', `dcmdoptions' 
 			local j = `j' + 1
 		}
 	}
 
 	*** interactive model
 	else if ("`model'"=="interactive") {
-		`qui' ddml E[Y|D,X], mname(`mname') vname(`depvar'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dexog'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
+		`qui' ddml E[Y|D,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml E[D|X], mname(`mname') vname(`dexog') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
 	}	
 		
-	`qui' ddml crossfit, `noisily' 
+	`qui' ddml crossfit, `noisily' `shortstack'
 	if "`verbose'"!="" ddml desc
-	ddml estimate
+	ddml estimate, vce(`vce') 
 
 end 
 
