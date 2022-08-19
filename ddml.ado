@@ -1,4 +1,4 @@
-*! apr 28, 2022
+*! 19 aug 2022
 *! ddml v0.4
 
 * notes:
@@ -36,7 +36,8 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 					 , [						///
 						mname(name)				///
 						newmname(name)			///
-						cluster(varname)		///
+						fcluster(varname)		/// cluster by fold (ddml define)
+						cluster(varname)		/// cluster-robust VCV (ddml estimate)
 						Learner(name)			///
 						predopt(string asis)	///
 						vname(name)				///
@@ -142,12 +143,14 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			// in case total sample limited by if or in:
 			marksample touse
 			qui gen byte `mname'_sample = `touse'
-			// cluster variable; can be real (missing=.) or string (missing="")
-			cap replace `mname'_sample = 0 if `cluster'==.		// real
-			cap replace `mname'_sample = 0 if `cluster'==""		// string
+			if "`fcluster'"~="" {
+				// fold cluster variable; can be real (missing=.) or string (missing="")
+				cap replace `mname'_sample = 0 if `fcluster'==.			// real
+				cap replace `mname'_sample = 0 if `fcluster'==""		// string
+			}
 			// fill by hand
 			mata: `mname'.model			= "`model'"
-			mata: `mname'.clustvar		= "`cluster'"
+			mata: `mname'.fclustvar		= "`fcluster'"
 			// initialize with default fold var, kfolds, number of resamplings
 			_ddml_sample `if' `in' , mname(`mname') `options'
 		}
@@ -305,7 +308,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		if "`subcmd'" =="estimate" {
 			
 			mata: st_global("r(model)",`mname'.model)
-			// cluster(varname) syntax allowed for both ddml define and ddml estimate
+			// cluster(varname) syntax is for ddml estimate; fcluster(varname) is for ddml define
 			if ("`r(model)'"=="partial") {
 				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
 			}

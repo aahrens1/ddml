@@ -17,14 +17,14 @@ program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that
 	
 	marksample touse
 	
-	mata: st_local("clustvar", `mname'.clustvar)
-	tempvar clustid
-	// clustid is either defined using clustvar or is equal to _n.
-	if "`clustvar'"=="" {
-		qui gen double `clustid'=_n
+	mata: st_local("fclustvar", `mname'.fclustvar)
+	tempvar fclustid
+	// fclustid is either defined using fclustvar or is equal to _n.
+	if "`fclustvar'"=="" {
+		qui gen double `fclustid'=_n
 	}
 	else {
-		qui egen double `clustid' = group(`clustvar')
+		qui egen double `fclustid' = group(`fclustvar')
 	}
 	
 	// clear any preexisting equation results from the model struct
@@ -61,8 +61,8 @@ program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that
 		forvalues m=1/`reps' {
 			*** gen folds
 			tempvar uni cuni tag
-			// tag one ob per cluster; if no clustering, all obs are tagged
-			qui egen `tag' = tag(`clustid') if `mname'_sample
+			// tag one ob per fold cluster; if no clustering, all obs are tagged
+			qui egen `tag' = tag(`fclustid') if `mname'_sample
 			if `m'==1 & "`norandom'"~="" {
 				qui gen `uni' = _n if `mname'_sample & `tag'
 				local labtext "(original order)"
@@ -72,13 +72,9 @@ program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that
 				local labtext "(randomly generated)"
 			}
 			qui cumul `uni' if `mname'_sample, gen(`cuni')
-			// old no-cluster code here - to delete
-			// epsfloat() used below so that if cuni is on boundary it goes to the lower group
-			// qui gen int `mname'_fid_`m' = ceil(`kfolds'*(`cuni'-epsfloat())) if `mname'_sample
-			// missing cluster IDs will go at the end; within cluster IDs, tagged obs go at the end
-			sort `clustid' `tag'
-			// propagate random uniforms (last ob in cluster) within clusters
-			qui by `clustid': replace `uni'=`uni'[_N] if `mname'_sample
+			sort `fclustid' `tag'
+			// propagate random uniforms (last ob in fcluster) within fclusters
+			qui by `fclustid': replace `uni'=`uni'[_N] if `mname'_sample
 			// create equal-sized folds
 			qui egen `mname'_fid_`m' = cut(`uni'), group(`kfolds')
 			qui replace `mname'_fid_`m' = `mname'_fid_`m' + 1

@@ -39,8 +39,6 @@ program _ddml_estimate_linear, eclass sortpreserve
 	// local vce is the argument to the Stata option vce(.)
 	if "`robust'"!=""	local vce robust
 	if "`cluster'"~=""	local vce cluster `cluster'
-	// delete
-	// if "`vce'"=="" local ols
 	
 	if ~`crossfitted' {
 		di as err "ddml model not cross-fitted; call `ddml crossfit` first"

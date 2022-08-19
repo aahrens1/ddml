@@ -75,7 +75,7 @@ struct mStruct {
 	string scalar					nameY			// dependent variable 
 	string colvector				nameD			// treatment variable(s)
 	string colvector				nameZ			// instrument(s)
-	string scalar					clustvar		// name of cluster variable (="" if none)
+	string scalar					fclustvar		// name of fold cluster variable (="" if none)
 	real scalar						ssflag			// flag for shortstacking
 	string scalar					strDatavars		// string with expanded names of Stata variables
 	real matrix						matDatavars		// matrix with values of Stata variables
@@ -96,7 +96,7 @@ struct mStruct init_mStruct()
 	d.nameD			= J(1,0,"")
 	d.nameZ			= J(1,0,"")
 	d.ssflag		= 0
-	d.clustvar		= ""
+	d.fclustvar		= ""
 	d.strDatavars	= ""
 	d.matDatavars	= J(0,0,.)
 	d.crossfitted	= 0

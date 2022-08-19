@@ -398,12 +398,12 @@ program _ddml_ate_late, eclass
 		ereturn display
 		
 		// report warning if clustered SEs requested but doesn't match clustered crossfitting
-		mata: st_local("clustvar_crossfit",`mname'.clustvar)
+		mata: st_local("fclustvar",`mname'.fclustvar)
 		if "`e(clustvar)'"~="" {
-			if "`clustvar_crossfit'"=="" {
+			if "`fclustvar'"=="" {
 				di as res "Warning" as text ": crossfit folds do not respect cluster structure used for VCE."
 			}
-			else if "`clustvar_crossfit'"~="`e(clustvar)'" {
+			else if "`fclustvar'"~="`e(clustvar)'" {
 				di as res "Warning" as text ": cluster variable for VCE does not match cluster variable for crossfit folds."
 			}
 		}
