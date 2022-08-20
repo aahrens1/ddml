@@ -554,7 +554,7 @@ void LATE(  string scalar yvar,      // Y
 	ultrim = sum(ultrim)
 	
     psi_b =  z :* (y :- my_z1x) :/ mz_x :-  ((1 :- z) :* (y :- my_z0x) :/ (1 :- mz_x)) :+ my_z1x :- my_z0x 
-    psi_a =  z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x 
+    psi_a =  -(z :* (d :- md_z1x) :/ mz_x :-  ((1 :- z) :* (d :- md_z0x) :/ (1 :- mz_x)) :+ md_z1x :- md_z0x)
 
 	theta = -mean(psi_b) / mean(psi_a)
 	psi = psi_a :* theta :+ psi_b
