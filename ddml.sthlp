@@ -126,10 +126,8 @@ models simultaneously. Defaults to {it:m0}.
 {synopt:{opt kfolds(integer)}}
 number of cross-fitting folds. The default is 5.
 {p_end}
-{synopt:{opt cluster(varname)}}
+{synopt:{opt fcluster(varname)}}
 cluster identifiers for cluster randomization of random folds.
-Note that cluster-robust standard errors have to be specified
-separately in the estimation stage (see {cmd:ddml estimate}). 
 {p_end}
 {synopt:{opt foldvar(varname)}}
 integer variable with user-specified cross-fitting folds.
@@ -207,7 +205,7 @@ presence of arbitrary heteroskedasticity.
 {synopt:{opt vce(type)}}
 select variance-covariance estimator, see {helpb regress##vcetype:here}
 {p_end}
-{synopt:{opt clustervar(varname)}}
+{synopt:{opt cluster(varname)}}
 select cluster-robust variance-covariance estimator.
 {p_end}
 {synoptline}

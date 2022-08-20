@@ -70,9 +70,8 @@ models simultaneously. Defaults to {it:m0}.
 {synopt:{opt kfolds(integer)}}
 number of cross-fitting folds. The default is 5.
 {p_end}
-{synopt:{opt cluster(varname)}}
+{synopt:{opt fcluster(varname)}}
 cluster identifiers for cluster randomization of random folds.
-This also selects cluster-robust variance-covariance estimator.
 {p_end}
 {synopt:{opt foldvar(varname)}}
 integer variable with user-specified cross-fitting folds.
@@ -93,8 +92,8 @@ presence of arbitrary heteroskedasticity.
 {synopt:{opt vce(type)}}
 select variance-covariance estimator, see {helpb regress##vcetype:here}
 {p_end}
-{synopt:{opt clustervar(varname)}}
-
+{synopt:{opt cluster(varname)}}
+select cluster-robust variance-covariance estimator.
 {p_end}
 
 {synoptset 20}{...}
@@ -149,7 +148,6 @@ Replace {cmd:*} with either {cmd:y}, {cmd:d} or {cmd:z} to pass
 option to learner of conditional expectations of {it:Y}, 
 {it:D} or {it:Z}.
 {p_end}
-
 
 {synoptset 20}{...}
 {synopthdr:Output}
