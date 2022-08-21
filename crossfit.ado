@@ -28,6 +28,7 @@ program define crossfit, rclass sortpreserve
 							predopt(string asis)	///
 							vtype(string)			///  "double", "float" etc
 							NOIsily					///
+							allowallzero				/// in the LATE model: allow D
 							]
 
 	// renaming for clarity
@@ -347,26 +348,38 @@ program define crossfit, rclass sortpreserve
 					qui replace `vres1`i'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
 		
 					// for treatvar = 0
-					// estimate excluding kth fold
-					`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options'
-		
-					// save pystacked weights
-					if ("`cmd'"=="pystacked") {
-						if (`k'==1) {
-							mat `pysw0_`i'' = e(weights)
-						}
-						else {
-							mat `pysw0_temp_`i'' = e(weights)
-							mat `pysw0_`i'' = (`pysw0_`i'',`pysw0_temp_`i'')
-						}
-					}
 
-					// get fitted values for kth fold	
-					tempvar vhat_k
-					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
+					// first, we need to account for D always = 0 if Z=0
+					// check if dvar is always 0
+					`qui' count if `treatvar'==0 & `vname'!=0 & `fid'==`k' & `touse' 
+
+					if (`r(N)'==0 & "`allowallzero'"!="") {
+						// get fitted values for kth fold	
+						tempvar vhat_k	
+						`qui' gen `vhat_k'=10e-12  if `fid'==`k' & `touse' 	
+					} 
+					else {
+						// estimate excluding kth fold
+						`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options'
+			
+						// save pystacked weights
+						if ("`cmd'"=="pystacked") {
+							if (`k'==1) {
+								mat `pysw0_`i'' = e(weights)
+							}
+							else {
+								mat `pysw0_temp_`i'' = e(weights)
+								mat `pysw0_`i'' = (`pysw0_`i'',`pysw0_temp_`i'')
+							}
+						}
+
+						// get fitted values for kth fold	
+						tempvar vhat_k
+						qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'					
+
+					}
 					qui replace `vhat0`i'' = `vhat_k' if `fid'==`k' & `touse'
 					qui replace `vres0`i'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
-	
 				}
 		
 				else if `lieflag' { // case 3

@@ -10,12 +10,14 @@ rm(list=ls())
 
 all_results <- as.data.frame(NULL)
 
+setwd("/Users/kahrens/MyProjects/ddml/cert")
+
 ##################################################################
 ###################### cattaneo2 data. 
 ##################################################################
 
 
-dta<-read_dta("http://www.stata-press.com/data/r13/cattaneo2.dta") %>%
+dta<-read_dta("cattaneo2.dta") %>%
   zap_label() %>% zap_labels()
 
 smpl <- list(list(train_ids = list(1:2321,2322:4642),
@@ -87,7 +89,7 @@ all_results <- rbind(all_results,
 ###################### jtpa. 
 ##################################################################
 
-dta<-read_dta("http://fmwww.bc.edu/repec/bocode/j/jtpa.dta") %>%
+dta<-read_dta("jtpa.dta") %>%
   zap_label() %>% zap_labels()
  
 smpl <- list(list(train_ids = list(1:5602,5603:11204),
@@ -117,10 +119,30 @@ DML_obj$coef
 DML_obj$se
 all_results <- rbind(all_results,
                      data.frame(application="jtpa",
-                                model="late",
+                                model="interactive IV",
                                 coef = as.numeric(DML_obj$coef),
                                 se = as.numeric(DML_obj$se)
                                 ))
+
+### partial IV
+DML_obj <- NULL
+DML_obj <- DoubleMLPLIV$new(dml_plr_obj,
+            ml_l=lrn("regr.lm"),
+            ml_m=lrn("regr.lm"),
+            ml_r=lrn("regr.lm")
+            )
+DML_obj$set_sample_splitting(smpl)
+DML_obj$fit()
+DML_obj$summary()
+DML_obj$coef
+DML_obj$se
+all_results <- rbind(all_results,
+                     data.frame(application="jtpa",
+                                model="partial IV",
+                                coef = as.numeric(DML_obj$coef),
+                                se = as.numeric(DML_obj$se)
+                                ))
+
 
 ### interactive
 dml_plr_obj <- NULL
@@ -166,11 +188,41 @@ all_results <- rbind(all_results,
                                 se = as.numeric(DML_obj$se)
                                 ))
 
+
+
+### partial
+dml_plr_obj <- NULL
+dml_plr_obj = double_ml_data_from_data_frame(
+                    df=as.data.table(dta),
+                    x_cols=c("sex","age","married","black","hispanic"),
+                    y_col="earnings",
+                    d_cols="assignmt"
+                    )
+
+DML_obj <- NULL
+DML_obj <- DoubleMLPLR$new(dml_plr_obj,
+            ml_l=lrn("regr.lm"),
+            ml_m=lrn("regr.lm")
+            )
+DML_obj$set_sample_splitting(smpl)
+DML_obj$fit()
+DML_obj$summary()
+DML_obj$coef
+DML_obj$se
+all_results <- rbind(all_results,
+                     data.frame(application="jtpa",
+                                model="partial",
+                                coef = as.numeric(DML_obj$coef),
+                                se = as.numeric(DML_obj$se)
+                                ))
+
+
+
 ##################################################################
 ###################### 401k 
 ##################################################################
 
-dta <- read_dta("https://github.com/VC2015/DMLonGitHub/raw/master/sipp1991.dta")
+dta <- read_dta("sipp1991.dta")
 
 id <- (1:9915 %% 3)+1
 f1 <- which(id==1)
@@ -310,5 +362,5 @@ all_results <- rbind(all_results,
  
 all_results
 library(readr)
-write_csv(all_results,"/Users/kahrens/MyProjects/ddml/cert/DoubleML_results.csv")
+write_csv(all_results,"DoubleML_results.csv")
  

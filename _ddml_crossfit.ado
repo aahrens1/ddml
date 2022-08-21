@@ -137,6 +137,7 @@ program _ddml_crossfit, eclass sortpreserve
 		if `numeqnD' {
 			if ("`model'"=="late") {
 				local treatvar	`nameZ'
+				local allowallzero allowallzero // for the case where D is always zero when Z=0
 			}
 			else {
 				// clear local
@@ -164,7 +165,7 @@ program _ddml_crossfit, eclass sortpreserve
 					foldvar(`fidlist')						///
 					shortstack(`ssname')					///
 					treatvar(`treatvar')					///
-					`resid' `noisily'
+					`resid' `noisily' `allowallzero'
 				mata: (`mname'.eqnAA).put("`var'",`eqn')
 			}
 		}

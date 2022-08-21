@@ -208,6 +208,9 @@ select variance-covariance estimator, see {helpb regress##vcetype:here}
 {synopt:{opt cluster(varname)}}
 select cluster-robust variance-covariance estimator.
 {p_end}
+{synopt:{opt trim(real)}}
+trimming of propensity scores. Default is 0.01.
+{p_end}
 {synoptline}
 {p2colreset}{...}
 {pstd}

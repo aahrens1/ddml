@@ -23,7 +23,7 @@ program _ddml_ate_late, eclass
 							medmean(string)		///
 							vce(string) 		///
 							ATET 				///
-							trim(real 0)		/// value should be provided by calling program
+							trim(real 0)	    /// value should be provided by calling program
 						]
 		
 	mata: st_local("model",`mname'.model)

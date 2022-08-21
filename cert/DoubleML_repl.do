@@ -6,6 +6,19 @@ if ("`c(username)'"=="kahrens") {
 	cd "/Users/kahrens/MyProjects/ddml/cert"
 }
 
+//webuse cattaneo2, clear
+local cattaneo2 cattaneo2.dta
+//save `cattaneo2'
+
+//use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
+local jtpa jtpa.dta
+//save `jtpa'
+
+//use "https://github.com/VC2015/DMLonGitHub/raw/master/sipp1991.dta"
+local sipp1991 sipp1991.dta
+//save `sipp1991'
+
+
 frame create Rresults
 frame change Rresults
 insheet using DoubleML_results.csv, comma  
@@ -26,7 +39,7 @@ local i = 0
 *** catteneo2 data: interactive model										 ***
 ********************************************************************************
 
-webuse cattaneo2, clear
+use `cattaneo2', clear
  
 global Y bweight
 global D mbsmoke
@@ -39,7 +52,7 @@ ddml E[Y|X,D], gen(regy): reg $Y $X
 ddml E[D|X], gen(regd): logit $D $X
 ddml crossfit
 
-ddml estimate m0   
+ddml estimate  ,  trim(0)  
 
 local b = _b[mbsmoke]
 local se = _se[mbsmoke] 
@@ -49,7 +62,7 @@ replace Scoef = `b' if application == "cattaneo2" & model =="interactive ATE"
 replace Sse = `se' if application == "cattaneo2" & model =="interactive ATE"
 frame change default
 
-ddml estimate m0  , atet
+ddml estimate   , atet trim(0)
 
 local b = _b[mbsmoke]
 local se = _se[mbsmoke] 
@@ -63,7 +76,7 @@ frame change default
 *** catteneo2 data: partial linear model									 ***
 ********************************************************************************
 
-webuse cattaneo2, clear
+use `cattaneo2', clear
  
 global Y bweight
 global D mbsmoke
@@ -90,7 +103,7 @@ frame change default
 *** jtpa: LATE 			 													 ***
 ********************************************************************************
  
-use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
+use `jtpa',clear   
 
 gen fid=_n>5602
 
@@ -104,21 +117,49 @@ ddml E[Y|X,Z]: reg $Y $X
 ddml E[D|X,Z]: logit $D $X
 ddml E[Z|X]: logit $Z $X
 ddml crossfit 
-ddml estimate 
+ddml estimate ,  trim(0)
 
-local b = _b[training]
-local se = _se[training] 
+local b = _b[$D]
+local se = _se[$D] 
  
 frame change Rresults
-replace Scoef = `b' if application == "jtpa" & model =="late"
-replace Sse = `se' if application == "jtpa" & model =="late"
+replace Scoef = `b' if application == "jtpa" & model =="interactive IV"
+replace Sse = `se' if application == "jtpa" & model =="interactive IV"
+frame change default
+
+********************************************************************************
+*** jtpa: partial IV.  	 													 ***
+********************************************************************************
+ 
+use `jtpa',clear   
+
+gen fid=_n>5602
+
+global Y earnings
+global D training
+global Z assignmt 
+global X sex age married black hispanic 
+
+ddml init iv, foldvar(fid)
+ddml E[Y|X]: reg $Y $X 
+ddml E[D|X]: reg $D $X
+ddml E[Z|X]: reg $Z $X
+ddml crossfit 
+ddml estimate , trim(0)
+
+local b = _b[$D]
+local se = _se[$D] 
+ 
+frame change Rresults
+replace Scoef = `b' if application == "jtpa" & model =="partial IV"
+replace Sse = `se' if application == "jtpa" & model =="partial IV"
 frame change default
 
 ********************************************************************************
 *** jtpa: interactive	 													 ***
 ********************************************************************************
  
-use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
+use `jtpa',clear   
 
 gen fid=_n>5602
 
@@ -130,7 +171,7 @@ ddml init interactive, foldvar(fid)
 ddml E[Y|X,D]: reg $Y $X 
 ddml E[D|X]: logit $D $X
 ddml crossfit 
-ddml estimate 
+ddml estimate ,  trim(0)
 
 local b = _b[$D]
 local se = _se[$D] 
@@ -140,7 +181,7 @@ replace Scoef = `b' if application == "jtpa" & model =="interactive ATE"
 replace Sse = `se' if application == "jtpa" & model =="interactive ATE"
 frame change default
 
-ddml estimate , atet
+ddml estimate , atet trim(0)
 
 local b = _b[$D]
 local se = _se[$D] 
@@ -151,11 +192,38 @@ replace Sse = `se' if application == "jtpa" & model =="interactive ATTE"
 frame change default
 
 ********************************************************************************
+*** jtpa: partial		 													 ***
+********************************************************************************
+ 
+use `jtpa',clear   
+
+gen fid=_n>5602
+
+global Y earnings
+global D assignmt 
+global X sex age married black hispanic 
+
+ddml init partial, foldvar(fid)
+ddml E[Y|X]: reg $Y $X 
+ddml E[D|X]: reg $D $X
+ddml crossfit 
+ddml estimate ,  vce(hc3)
+
+local b = _b[$D]
+local se = _se[$D] 
+ 
+frame change Rresults
+replace Scoef = `b' if application == "jtpa" & model =="partial"
+replace Sse = `se' if application == "jtpa" & model =="partial"
+frame change default
+
+
+********************************************************************************
 *** 401k: partial		 													 ***
 ********************************************************************************
  
 clear
-use "https://github.com/VC2015/DMLonGitHub/raw/master/sipp1991.dta"
+use `sipp1991'
 
 global Y net_tfa
 global D e401
@@ -167,7 +235,7 @@ ddml init partial, foldvar(fid)
 ddml E[Y|X]: reg $Y $X 
 ddml E[D|X]: reg $D $X
 ddml crossfit 
-ddml estimate , vce(hc3)
+ddml estimate , vce(hc3) 
 
 local b = _b[$D]
 local se = _se[$D] 
@@ -182,7 +250,7 @@ frame change default
 ********************************************************************************
  
 clear
-use "https://github.com/VC2015/DMLonGitHub/raw/master/sipp1991.dta"
+use `sipp1991'
 
 global Y net_tfa
 global D e401
@@ -194,7 +262,7 @@ ddml init interactive, foldvar(fid)
 ddml E[Y|X,D]: reg $Y $X 
 ddml E[D|X]: logit $D $X
 ddml crossfit 
-ddml estimate 
+ddml estimate  , trim(0)
 
 local b = _b[$D]
 local se = _se[$D] 
@@ -204,7 +272,7 @@ replace Scoef = `b' if application == "401k" & model =="interactive ATE"
 replace Sse = `se' if application == "401k" & model =="interactive ATE"
 frame change default
 
-ddml estimate , atet
+ddml estimate , atet trim(0)
 
 local b = _b[$D]
 local se = _se[$D] 
@@ -219,7 +287,7 @@ frame change default
 ********************************************************************************
  
 clear
-use "https://github.com/VC2015/DMLonGitHub/raw/master/sipp1991.dta"
+use `sipp1991'
 
 global Y net_tfa
 global D p401
@@ -249,35 +317,31 @@ frame change default
 ********************************************************************************
  
 clear
-use "https://github.com/VC2015/DMLonGitHub/raw/master/sipp1991.dta"
+use `sipp1991'
 
 global Y net_tfa
 global D p401
 global Z e401
 global X tw   age   inc fsize  educ    db  marr twoearn  pira  hown
 
-gen fid = mod(_n,5)+1
+gen fid = mod(_n,3)+1
 
 ddml init late, foldvar(fid)  
 ddml E[Y|X,Z]: reg $Y $X 
 ddml E[D|X,Z]: logit $D $X
 ddml E[Z|X]: logit $Z $X
 
-// doesn't run because: 
-count if $Z==0 & $D==1
-
-/*
 ddml crossfit 
-ddml estimate 
+ddml estimate ,  trim(0)
 
 local b = _b[$D]
 local se = _se[$D] 
  
 frame change Rresults
-replace Scoef = `b' if application == "401k" & model =="late"
-replace Sse = `se' if application == "401k" & model =="late"
+replace Scoef = `b' if application == "401k" & model =="interactive IV"
+replace Sse = `se' if application == "401k" & model =="interactive IV"
 frame change default
-*/
+
 
 ********************************************************************************
 *** compare			 													     ***
@@ -291,5 +355,6 @@ list
 
 assert reldif(Rcoef,Scoef) <$tol
 assert  reldif(Rse,Sse) <$tol
+
 
  
