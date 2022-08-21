@@ -58,7 +58,7 @@ program _ddml_ate_late, eclass
 		}
 		
 		if "`model'"=="interactive" {
-			mata: ATE("`atet'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustvar'",`trim')
+			mata: ATE("`atet'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustvar'","`mname'_fid_`rep'",`trim')
 		}
 		else {
 			mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'","`clustvar'",`trim')
@@ -447,7 +447,8 @@ void ATE(
 			string scalar sample,     // sample
 			string scalar outate,     // output: name of matrix to store b
 			string scalar outatese,   // output: name of matrix to store V
-			string scalar clustvar,
+			string scalar clustvar,   //
+			string scalar foldvar, 	  //
 			real scalar trim          // trim the propensity score
 			)
 {
@@ -455,6 +456,7 @@ void ATE(
 	st_view(my_d1x,.,y1tilde,sample)
 	st_view(d,.,dvar,sample)
 	st_view(y,.,yvar,sample)
+	st_view(fid,.,foldvar,sample)
 	// copy since we may trim it
 	md_x=st_data(.,dtilde,sample)
 	if (clustvar!="") {
@@ -481,7 +483,16 @@ void ATE(
 		psi_a  = J(n,1,-1) 
 	}
 	else {
-		p_hat = mean(d)
+		// calculate mean of d by fold
+		fid_uni = uniqrows(fid)
+		folds = rows(fid_uni)
+		p_hat = J(n,1,.)
+		for (j=1;j<=folds;j++) {
+			k=fid_uni[j,1]
+			sel = selectindex(fid:==k)
+			meank = mean(d[sel])
+			p_hat[sel] = J(length(sel), 1, meank)
+		}
 		psi_b = (d :* (y :- my_d0x) :/ p_hat) :-  md_x :* (1 :- d) :* (y :- my_d0x) :/ (p_hat :*(1 :- md_x)) 
 		psi_a = -d :/ p_hat 
 	}

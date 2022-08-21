@@ -181,7 +181,7 @@ replace Scoef = `b' if application == "jtpa" & model =="interactive ATE"
 replace Sse = `se' if application == "jtpa" & model =="interactive ATE"
 frame change default
 
-ddml estimate , atet trim(0)
+ddml estimate , atet trim(0) debug
 
 local b = _b[$D]
 local se = _se[$D] 
