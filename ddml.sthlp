@@ -389,7 +389,7 @@ Beyond these, it is compatible with any Stata program that
 {pstd}{ul:Partially linear model.} 
 
 {pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
-{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/cert/sipp1991.dta, clear"}{p_end}
+{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
 {phang2}. {stata "global Y net_tfa"}{p_end}
 {phang2}. {stata "global D e401"}{p_end}
 {phang2}. {stata "global X tw age inc fsize educ db marr twoearn pira hown"}{p_end}
@@ -495,7 +495,7 @@ This step may take a while.
 {pstd}{ul:High-dimensional IV model.} 
 
 {pstd}We load the data and set globals.{p_end}
-{phang2}. {stata "use use https://github.com/aahrens1/ddml/raw/master/BLP.dta, clear"}{p_end}
+{phang2}. {stata "use use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear"}{p_end}
 {phang2}. {stata "global Y share"}{p_end}
 {phang2}. {stata "global D price"}{p_end}
 {phang2}. {stata "global X hpwt air mpd space"}{p_end}
