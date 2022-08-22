@@ -25,6 +25,10 @@ The package includes the wrapper program {helpb qddml},
 which uses a simplified one-line syntax, 
 but offers less flexibility.
 
+{pstd}
+Please check the examples provided at the end of the help file; 
+see {helpb ddml##examples:here}.
+
 {marker syntax}{...}
 {title:Syntax}
 
@@ -44,7 +48,7 @@ proceeds in four steps.
 
 {pstd}
 where {it:model} is either {it:partial}, 
-{it:iv}, {it:interactive}, {it:ivhd}, {it:late};
+{it:iv}, {it:interactive}, {it:ivhd}, {it:interactiveiv};
 see {helpb ddml##models:model descriptions}.
 
 {pstd}
@@ -209,7 +213,9 @@ select variance-covariance estimator, see {helpb regress##vcetype:here}
 select cluster-robust variance-covariance estimator.
 {p_end}
 {synopt:{opt trim(real)}}
-trimming of propensity scores. Default is 0.01.
+trimming of propensity scores. The default is 0.01
+(that is, values below 0.01 and above 0.99 are set 
+to 0.01 and 0.99, respectively).
 {p_end}
 {synoptline}
 {p2colreset}{...}
@@ -295,7 +301,7 @@ learner.
 . ddml E[Z|X]: reg Z X*
 
 {pstd}
-{ul:Interactive IV model}  [{it:late}]
+{ul:Interactive IV model}  [{it:interactiveiv}]
 
 	Y = g(Z,X) + U
         D = h(Z,X) + V
@@ -339,8 +345,10 @@ the estimate of E[D^|X].
 . ddml E[D|X,Z]: reg D X* Z* {break}
 . ddml E[D|X]: reg {D} X*
 
+{pstd}
 Note: "{D}" is a placeholder that is used because last step (estimation of E[D|X]) 
 uses the fitted values from estimating E[D|X,Z].
+Please see {helpb ddml##examples:example section below}.
 
 {marker compatibility}{...}
 {title:Compatible programs}
@@ -378,8 +386,142 @@ Beyond these, it is compatible with any Stata program that
 {marker examples}{...}
 {title:Examples}
 
-{pstd}
-To be added.
+{pstd}{ul:Partially linear model.} 
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/cert/sipp1991.dta, clear"}{p_end}
+{phang2}. {stata "global Y net_tfa"}{p_end}
+{phang2}. {stata "global D e401"}{p_end}
+{phang2}. {stata "global X tw age inc fsize educ db marr twoearn pira hown"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}We initialize the ddml estimation and select the model. {it:partial} 
+refers to the partially linear model.{p_end}
+{phang2}. {stata "ddml init partial"}{p_end}
+
+{pstd}We add a supervised machine learners for estimating the conditional 
+expectation E[Y|X]. We first add simple linear regression.{p_end}
+{phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
+
+{pstd}We can add more than one learner per reduced form equation. Here, we also 
+add random forest.{p_end}
+{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg) method(rf)"}{p_end}
+
+{pstd}We do the same for the conditional expectation E[D|X].{p_end}
+{phang2}. {stata "ddml E[D|X]: reg $D $X"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D $X, type(reg) method(rf)"}{p_end}
+
+{pstd}Cross-fitting. The learners are iteratively fitted on the training data.
+This step may take a while.
+{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+
+{pstd}Finally, we obtain estimates of the coefficients of interest.{p_end}
+{phang2}. {stata "ddml estimate, robust"}{p_end}
+
+{pstd}{ul:Partially linear IV model.} 
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "use https://statalasso.github.io/dta/AJR.dta, clear"}{p_end}
+{phang2}. {stata "global Y logpgp95"}{p_end}
+{phang2}. {stata "global D avexpr"}{p_end}
+{phang2}. {stata "global Z logem4"}{p_end}
+{phang2}. {stata "global X lat_abst edes1975 avelf temp* humid* steplow-oilres"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "ddml init iv, kfolds(20)"}{p_end}
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
+{phang2}. {stata "ddml E[Y|X], vtype(none): rforest $Y $X, type(reg)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: reg $D $X"}{p_end}
+{phang2}. {stata "ddml E[D|X], vtype(none): rforest $D $X, type(reg)"}{p_end}
+{phang2}. {stata "ddml E[Z|X]: reg $Z $X"}{p_end}
+{phang2}. {stata "ddml E[Z|X], vtype(none): rforest $Z $X, type(reg)"}{p_end}
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+{phang2}. {stata "ddml estimate, robust"}{p_end}
+
+{pstd}{ul:Interactive model--ATE and ATET estimation.} 
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "webuse cattaneo2, clear"}{p_end}
+{phang2}. {stata "global Y bweight"}{p_end}
+{phang2}. {stata "global D mbsmoke"}{p_end}
+{phang2}. {stata "global X mage prenatal1 mmarried fbaby mage medu"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}We initialize the model.{p_end}
+{phang2}. {stata "ddml init interactive"}{p_end}
+
+{pstd}We initialize the model.{p_end}
+{phang2}. {stata "ddml E[Y|X,D], gen(regy): reg $Y $X"}{p_end}
+{phang2}. {stata "ddml E[D|X], gen(regd): logit $D $X"}{p_end}
+
+{pstd}We initialize the model.{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+
+{pstd}We initialize the model.{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
+{phang2}. {stata "ddml estimate, atet trim(0)"}{p_end}
+
+{pstd}{ul:Interactive IV model--LATE estimation.} 
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta,clear"}{p_end}
+{phang2}. {stata "global Y earnings"}{p_end}
+{phang2}. {stata "global D training"}{p_end}
+{phang2}. {stata "global Z assignmt"}{p_end}
+{phang2}. {stata "global X sex age married black hispanic"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}We initialize the model.{p_end}
+{phang2}. {stata "ddml init interactive, kfolds(5)"}{p_end}
+
+{pstd}We load the data and set globals.{p_end}
+{phang2}. {stata "ddml E[Y|X,Z]: reg $Y $X"}{p_end}
+{phang2}. {stata "ddml E[Y|X,Z]: pystacked $Y c.($X)# #c($X), type(reg) m(lassocv)"}{p_end}
+{phang2}. {stata "ddml E[D|X,Z]: logit $D $X"}{p_end}
+{phang2}. {stata "ddml E[D|X,Z]: pystacked $D c.($X)# #c($X), type(class) m(lassocv)"}{p_end}
+{phang2}. {stata "ddml E[Z|X]: logit $Z $X"}{p_end}
+{phang2}. {stata "ddml E[Z|X]: pystacked $Z c.($X)# #c($X), type(class) m(lassocv)"}{p_end}
+
+{pstd}We load the data and set globals.{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
+
+{pstd}{ul:High-dimensional IV model.} 
+
+{pstd}We load the data and set globals.{p_end}
+{phang2}. {stata "use use https://github.com/aahrens1/ddml/raw/master/BLP.dta, clear"}{p_end}
+{phang2}. {stata "global Y share"}{p_end}
+{phang2}. {stata "global D price"}{p_end}
+{phang2}. {stata "global X hpwt air mpd space"}{p_end}
+{phang2}. {stata "global Z sum*"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}We load the data and set globals.{p_end}
+{phang2}. {stata "ddml init ivhd"}{p_end}
+
+{pstd}We load the data and set globals.{p_end}
+{phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
+{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg)"}{p_end}
+
+{pstd}We load the data and set globals.{p_end}
+{phang2}. {stata "ddml E[D|Z,X], learner(Dhat_reg): reg $D $X $Z"}{p_end}
+{phang2}. {stata "ddml E[D|Z,X], learner(Dhat_pystacked): pystacked $D $X $Z, type(reg)"}{p_end} 
+
+{pstd}We load the data and set globals.{p_end}
+{phang2}. {stata "ddml E[D|X], learner(Dhat_reg) vname($D): reg {D} $X $Z"}{p_end}
+{phang2}. {stata "ddml E[D|X], learner(Dhat_pystacked) vname($D): pystacked {D} $X $Z, type(reg)"}{p_end}
+ 
+{pstd}We load the data and set globals.{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+
+{pstd}We load the data and set globals.{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
 
 {marker references}{title:References}
 
@@ -406,15 +548,15 @@ to be installed; {stata "ssc install whichpkg"}).
 {title:Authors}
 
 {pstd}
-Achim Ahrens, Public Policy Group, ETH Zurich, Switzerland
+Achim Ahrens, Public Policy Group, ETH Zurich, Switzerland  {break}
 achim.ahrens@gess.ethz.ch
 
 {pstd}
-Christian B. Hansen, University of Chicago, USA
+Christian B. Hansen, University of Chicago, USA {break}
 Christian.Hansen@chicagobooth.edu
 
 {pstd}
-Mark E Schaffer, Heriot-Watt University, UK
+Mark E Schaffer, Heriot-Watt University, UK {break}
 m.e.schaffer@hw.ac.uk	
 
 {title:Also see (if installed)}

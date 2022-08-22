@@ -354,7 +354,9 @@ gen Dse = reldif(Rse,Sse)
 list
 
 assert reldif(Rcoef,Scoef) <$tol
-assert  reldif(Rse,Sse) <$tol
+// exception due to different standard errors
+assert  reldif(Rse,Sse) <$tol if model != "partial IV"
+assert  reldif(Rse,Sse) <0.03 if model == "partial IV"
 
 
  

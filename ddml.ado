@@ -125,11 +125,13 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		*** initialize new estimation
 		if "`subcmd'"=="init" {
 			local model: word 1 of `restmainargs'
-			local allmodels		partial iv interactive late ivhd
+			local allmodels		partial iv interactive late ivhd interactiveiv
 			if strpos("`allmodels'","`model'")==0 {
 				di as err "no or wrong model specified." 
 				exit 198
 			}
+			// interactiveiv is synonym of late; internally we use "late"
+			if "`model'"=="interactiveiv" local model late
 	
 			// distinct model: no-LIE optimal IV
 			// if "`model'"=="ivhd"&"`nolie'"!="" local model ivhd_nolie
