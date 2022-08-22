@@ -25,7 +25,8 @@ but not limited to {helpb lassopack} and {helpb pystacked}.
 one-line syntax with almost the full flexibility of {cmd:ddml}.
 
 {pstd}
-{opt qddml} uses stacking regression ({helpb pystacked}) as the default machine learning algorithm. 
+{opt qddml} uses stacking regression ({helpb pystacked}) 
+as the default machine learning program. 
 
 {p 8 14 2}
 {cmd:qddml}

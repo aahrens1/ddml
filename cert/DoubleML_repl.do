@@ -6,18 +6,17 @@ if ("`c(username)'"=="kahrens") {
 	cd "/Users/kahrens/MyProjects/ddml/cert"
 }
 
-//webuse cattaneo2, clear
-local cattaneo2 cattaneo2.dta
-//save `cattaneo2'
+webuse cattaneo2, clear
+tempfile cattaneo2
+save `cattaneo2'
 
-//use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
-local jtpa jtpa.dta
-//save `jtpa'
+use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
+tempfile jtpa
+save `jtpa'
 
-//use "https://github.com/VC2015/DMLonGitHub/raw/master/sipp1991.dta"
-local sipp1991 sipp1991.dta
-//save `sipp1991'
-
+use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear
+tempfile sipp1991
+save `sipp1991'
 
 frame create Rresults
 frame change Rresults

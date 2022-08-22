@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 18sep2020}{...}
+{* *! version 22aug2022}{...}
 {hline}
-{cmd:help ddml}{right: v0.1.2}
+{cmd:help ddml}{right: v0.4.3}
 {hline}
 
 {title:Title}
@@ -26,8 +26,7 @@ which uses a simplified one-line syntax,
 but offers less flexibility.
 
 {pstd}
-Please check the examples provided at the end of the help file; 
-see {helpb ddml##examples:here}.
+Please check the {helpb ddml##examples:examples} provided at the end of the help file.
 
 {marker syntax}{...}
 {title:Syntax}
@@ -386,6 +385,11 @@ Beyond these, it is compatible with any Stata program that
 {marker examples}{...}
 {title:Examples}
 
+{pstd}
+Below we demonstrate the use of {cmd:ddml} for each of the 5 models supported. 
+Note that estimation models are chosen for demonstration purposes only and 
+kept simple to allow you to run the code quickly.
+
 {pstd}{ul:Partially linear model.} 
 
 {pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
@@ -396,8 +400,13 @@ Beyond these, it is compatible with any Stata program that
 {phang2}. {stata "set seed 42"}{p_end}
 
 {pstd}We initialize the ddml estimation and select the model. {it:partial} 
-refers to the partially linear model.{p_end}
-{phang2}. {stata "ddml init partial"}{p_end}
+refers to the partially linear model.{p_end} 
+{pstd}Note that we set the number of random folds to 2, so that 
+the model runs quickly. The default is {opt kfolds(5)}. We recommend 
+to consider at least 5-10 folds and even more if your sample size is small.{p_end} 
+{pstd}Note also that we recommend to re-run the model multiple time on 
+different random folds, see options {opt reps(integer)}.{p_end} 
+{phang2}. {stata "ddml init partial, kfolds(2)"}{p_end}
 
 {pstd}We add a supervised machine learners for estimating the conditional 
 expectation E[Y|X]. We first add simple linear regression.{p_end}
@@ -411,13 +420,34 @@ add random forest.{p_end}
 {phang2}. {stata "ddml E[D|X]: reg $D $X"}{p_end}
 {phang2}. {stata "ddml E[D|X]: pystacked $D $X, type(reg) method(rf)"}{p_end}
 
+{pstd}Optionally, you can check if the learners have been added correctly.
+{p_end}
+{phang2}. {stata "ddml desc"}{p_end}
+
 {pstd}Cross-fitting. The learners are iteratively fitted on the training data.
 This step may take a while.
 {p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
 
-{pstd}Finally, we obtain estimates of the coefficients of interest.{p_end}
+{pstd}Finally, we obtain estimates of the coefficients of interest.
+Since we added two learners for each of our two reduced form equations, 
+we get 4 point estimates. The result shown corresponds to the model 
+with the lowest out-of-sample MSPE.
+{p_end}
 {phang2}. {stata "ddml estimate, robust"}{p_end}
+
+{pstd}To retrieve the very first specification shown, you can type:
+{p_end}
+{phang2}. {stata "ddml estimate, robust spec(1)"}{p_end}
+
+{pstd}You could manually retrieve the same point estimate by 
+typing:
+{p_end}
+{phang2}. {stata "reg Y1_reg D1_reg, nocons robust"}{p_end}
+
+{pstd}where {opt Y1_reg} and {opt D1_reg} are the orthogonalized
+versions of {opt net_tfa} and {opt e401}.
+{p_end}
 
 {pstd}{ul:Partially linear IV model.} 
 
@@ -429,10 +459,17 @@ This step may take a while.
 {phang2}. {stata "global X lat_abst edes1975 avelf temp* humid* steplow-oilres"}{p_end}
 {phang2}. {stata "set seed 42"}{p_end}
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
-{phang2}. {stata "ddml init iv, kfolds(20)"}{p_end}
+{pstd}Preparations: we load the data, define global macros and set the seed. Since the
+data set is very small, we consider 30 cross-fitting folds.{p_end}
+{phang2}. {stata "ddml init iv, kfolds(30)"}{p_end}
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}The partially linear IV model has three conditional expectations: 
+E[Y|X], E[D|X] and E[Z|X]. For each reduced form equation, we add
+two learners: {helpb regress} and {helpb rforest}.{p_end}
+
+{pstd}We need to add the option {opt vtype(none)} for {helpb rforest} to 
+work with {cmd:ddml} since {helpb}'s {cmd:predict} command doesn't
+support variable types.{p_end}
 {phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
 {phang2}. {stata "ddml E[Y|X], vtype(none): rforest $Y $X, type(reg)"}{p_end}
 {phang2}. {stata "ddml E[D|X]: reg $D $X"}{p_end}
@@ -440,7 +477,7 @@ This step may take a while.
 {phang2}. {stata "ddml E[Z|X]: reg $Z $X"}{p_end}
 {phang2}. {stata "ddml E[Z|X], vtype(none): rforest $Z $X, type(reg)"}{p_end}
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Cross-fitting and estimation.{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
 {phang2}. {stata "ddml estimate, robust"}{p_end}
 
@@ -453,19 +490,36 @@ This step may take a while.
 {phang2}. {stata "global X mage prenatal1 mmarried fbaby mage medu"}{p_end}
 {phang2}. {stata "set seed 42"}{p_end}
 
-{pstd}We initialize the model.{p_end}
-{phang2}. {stata "ddml init interactive"}{p_end}
+{pstd}We use 5 folds and 5 resamplings; that is, 
+we estimate the model 5 times using randomly chosen folds.{p_end}
+{phang2}. {stata "ddml init interactive, kfolds(5) reps(5)"}{p_end}
 
-{pstd}We initialize the model.{p_end}
-{phang2}. {stata "ddml E[Y|X,D], gen(regy): reg $Y $X"}{p_end}
-{phang2}. {stata "ddml E[D|X], gen(regd): logit $D $X"}{p_end}
+{pstd}We need to estimate the conditional expectations of E[Y|X,D=0], 
+E[Y|X,D=1] and E[D|X]. The first two conditional expectations 
+are added jointly.{p_end} 
+{pstd}We consider two supervised learners: linear regression and gradient boosted
+trees (implemented in {helpb pystacked}).
+Note that we use gradient boosted regression trees for E[Y|X,D], but
+gradient boosted classification trees for E[D|X].
+{p_end} 
+{phang2}. {stata "ddml E[Y|X,D]: reg $Y $X"}{p_end}
+{phang2}. {stata "ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(gradboost)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: logit $D $X"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D $X, type(class) method(gradboost)"}{p_end}
 
-{pstd}We initialize the model.{p_end}
+{pstd}Cross-fitting:{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
 
-{pstd}We initialize the model.{p_end}
+{pstd}In the final estimation step, we can estimate both
+the average treatment effect (the default) or 
+the average treatment effect of the treated ({opt atet}).{p_end}
 {phang2}. {stata "ddml estimate"}{p_end}
 {phang2}. {stata "ddml estimate, atet trim(0)"}{p_end}
+
+{pstd}Recall that we have specified 5 resampling iterations ({opt reps(5)})
+By default, the median over the minimum-MSE specification per resampling iteration is shown.
+At the bottom, a table of summary statistics over resampling iterations is shown. 
+{p_end}
 
 {pstd}{ul:Interactive IV model--LATE estimation.} 
 
@@ -480,7 +534,7 @@ This step may take a while.
 {pstd}We initialize the model.{p_end}
 {phang2}. {stata "ddml init interactive, kfolds(5)"}{p_end}
 
-{pstd}We load the data and set globals.{p_end}
+{pstd}We again add two learners per reduced form equation.{p_end}
 {phang2}. {stata "ddml E[Y|X,Z]: reg $Y $X"}{p_end}
 {phang2}. {stata "ddml E[Y|X,Z]: pystacked $Y c.($X)# #c($X), type(reg) m(lassocv)"}{p_end}
 {phang2}. {stata "ddml E[D|X,Z]: logit $D $X"}{p_end}
@@ -488,7 +542,7 @@ This step may take a while.
 {phang2}. {stata "ddml E[Z|X]: logit $Z $X"}{p_end}
 {phang2}. {stata "ddml E[Z|X]: pystacked $Z c.($X)# #c($X), type(class) m(lassocv)"}{p_end}
 
-{pstd}We load the data and set globals.{p_end}
+{pstd}Cross-fitting and estimation.{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
 {phang2}. {stata "ddml estimate"}{p_end}
 
@@ -502,10 +556,10 @@ This step may take a while.
 {phang2}. {stata "global Z sum*"}{p_end}
 {phang2}. {stata "set seed 42"}{p_end}
 
-{pstd}We load the data and set globals.{p_end}
+{pstd}We initialize the model.{p_end}
 {phang2}. {stata "ddml init ivhd"}{p_end}
 
-{pstd}We load the data and set globals.{p_end}
+{pstd}We add two learners for E[Y|X].{p_end}
 {phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
 {phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg)"}{p_end}
 
@@ -517,10 +571,8 @@ This step may take a while.
 {phang2}. {stata "ddml E[D|X], learner(Dhat_reg) vname($D): reg {D} $X $Z"}{p_end}
 {phang2}. {stata "ddml E[D|X], learner(Dhat_pystacked) vname($D): pystacked {D} $X $Z, type(reg)"}{p_end}
  
-{pstd}We load the data and set globals.{p_end}
+{pstd}Cross-fitting and estimation.{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
-
-{pstd}We load the data and set globals.{p_end}
 {phang2}. {stata "ddml estimate"}{p_end}
 
 {marker references}{title:References}
@@ -558,6 +610,10 @@ Christian.Hansen@chicagobooth.edu
 {pstd}
 Mark E Schaffer, Heriot-Watt University, UK {break}
 m.e.schaffer@hw.ac.uk	
+
+{pstd}
+Thomas Wiemann, University of Chicago, USA {break}
+wiemann@uchicago.edu
 
 {title:Also see (if installed)}
 
