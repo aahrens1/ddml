@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 18sep2020}{...}
+{* *! version 23aug2022}{...}
 {hline}
-{cmd:help ddml}{right: v0.1.2}
+{cmd:help ddml}{right: v0.5}
 {hline}
 
 {title:Title}
@@ -23,6 +23,9 @@ but not limited to {helpb lassopack} and {helpb pystacked}.
 {pstd}
 {opt qddml} is a wrapper program of {cmd:ddml}. It provides a convenient 
 one-line syntax with almost the full flexibility of {cmd:ddml}.
+The main restriction of {cmd:qddml} is that it only allows to be used 
+with one machine learning program at the time, while {cmd:ddml} 
+allow for multiple learners per reduced form equation.
 
 {pstd}
 {opt qddml} uses stacking regression ({helpb pystacked}) 
@@ -53,6 +56,9 @@ and set the appropriate Python path using {cmd:python set exec}.
 If you don't have Stata 16+,
 you can still use {cmd:pystacked} with programs that don't rely on Python, 
 e.g., using the option {opt cmd(rlasso)}.
+
+{pstd}
+Please check the {helpb qddml##examples:examples} provided at the end of the help file.
 
 {marker syntax}{...}
 {title:Options}
@@ -118,36 +124,32 @@ Defaults to {opt cmd(string)}.
 ML program used for estimating conditional expectations of instrumental variable(s) {it:Z}. 
 Defaults to {opt cmd(string)}. 
 {p_end}
-{synopt:{opt cmdopt(string)}}
-options that are passed on to ML program
-{p_end}
-{synopt:{opt ycmdopt(string)}}
-options that are passed on to ML program used for 
-conditional expectations of the outcome {it:Y}. 
-{p_end}
-{synopt:{opt dcmdopt(string)}}
-options that are passed on to ML program used for 
-conditional expectations of the treatment variable(s) {it:D}. 
-{p_end}
-{synopt:{opt zcmdopt(string)}}
-options that are passed on to ML program used for 
-conditional expectations of instrumental variable(s) {it:Z}. 
+{synopt:{opt *cmdopt(string)}}
+options that are passed on to ML program. 
+The asterisk {cmd:*} can be replaced with either nothing 
+(setting the default for all reduced form equations), 
+{cmd:y} (setting the default for the conditional expectation of {it:Y}), 
+{cmd:d} (setting the default for {it:D})
+or {cmd:z} (setting the default for {it:Z}).
 {p_end}
 {synopt:{opt *vtype(string)}}
 variable type of the variable to be created. Defaults to {it:double}. 
 {it:none} can be used to leave the type field blank 
 (this is required when using {cmd:ddml} with {helpb rforest}.)
-Replace {cmd:*} with either {cmd:y}, {cmd:d} or {cmd:z} to pass
-option to learner of conditional expectations of {it:Y}, 
-{it:D} or {it:Z}.
+The asterisk {cmd:*} can be replaced with either nothing 
+(setting the default for all reduced form equations), 
+{cmd:y} (setting the default for the conditional expectation of {it:Y}), 
+{cmd:d} (setting the default for {it:D})
+or {cmd:z} (setting the default for {it:Z}).
 {p_end}
 {synopt:{opt *predopt(string)}}
 {cmd:predict} option to be used to get predicted values. 
 Typical values could be {opt xb} or {opt pr}. Default is 
-blank. 
-Replace {cmd:*} with either {cmd:y}, {cmd:d} or {cmd:z} to pass
-option to learner of conditional expectations of {it:Y}, 
-{it:D} or {it:Z}.
+blank. The asterisk {cmd:*} can be replaced with either nothing 
+(setting the default for all reduced form equations), 
+{cmd:y} (setting the default for the conditional expectation of {it:Y}), 
+{cmd:d} (setting the default for {it:D})
+or {cmd:z} (setting the default for {it:Z}).
 {p_end}
 
 {synoptset 20}{...}
@@ -176,7 +178,99 @@ See {helpb ddml##compatibility:here}.
 {title:Examples}
 
 {pstd}
-To be added.
+Below we demonstrate the use of {cmd:qddml} for each of the 5 models supported. 
+Note that estimation models are chosen for demonstration purposes only and 
+kept simple to allow you to run the code quickly.
+Please also see the examples in the {helpb ddml##examples:ddml help file}
+
+{pstd}{ul:Partially linear model.} 
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
+{phang2}. {stata "global Y net_tfa"}{p_end}
+{phang2}. {stata "global D e401"}{p_end}
+{phang2}. {stata "global X tw age inc fsize educ db marr twoearn pira hown"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}The options {cmd:model(partial)} selects the partially linear model
+and {cmd:kfolds(2)} selects two cross-fitting folds.
+We use the options {cmd:cmd()} and {cmd:cmdopt()} to select
+random forest for estimating the conditional expectations.{p_end}
+
+{pstd}Note that we set the number of random folds to 2, so that 
+the model runs quickly. The default is {opt kfolds(5)}. We recommend 
+to consider at least 5-10 folds and even more if your sample size is small.{p_end}
+
+{pstd}Note also that we recommend to re-run the model multiple time on 
+different random folds, see options {opt reps(integer)}.{p_end}
+
+{phang2}. {stata "qddml $Y $D ($X), kfolds(2) model(partial) cmd(pystacked) cmdopt(type(reg) method(rf))"}{p_end}
+
+{pstd}{ul:Partially linear IV model.} 
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "use https://statalasso.github.io/dta/AJR.dta, clear"}{p_end}
+{phang2}. {stata "global Y logpgp95"}{p_end}
+{phang2}. {stata "global D avexpr"}{p_end}
+{phang2}. {stata "global Z logem4"}{p_end}
+{phang2}. {stata "global X lat_abst edes1975 avelf temp* humid* steplow-oilres"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}Since the
+data set is very small, we consider 30 cross-fitting folds.{p_end} 
+{pstd}We need to add the option {opt vtype(none)} for {helpb rforest} to 
+work with {cmd:ddml} since {helpb rforests}'s {cmd:predict} command doesn't
+support variable types.{p_end}
+
+{phang2}. {stata "qddml $Y ($X) ($D=$Z), kfolds(30) model(iv) cmd(rforest) cmdopt(type(reg)) vtype(none) robust"}{p_end}
+
+{pstd}{ul:Interactive model--ATE and ATET estimation.} 
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "webuse cattaneo2, clear"}{p_end}
+{phang2}. {stata "global Y bweight"}{p_end}
+{phang2}. {stata "global D mbsmoke"}{p_end}
+{phang2}. {stata "global X mage prenatal1 mmarried fbaby mage medu"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}
+Note that we use gradient boosted regression trees for E[Y|X,D] (see {opt ycmdopt()}),
+but gradient boosted classification trees for E[D|X] (see {opt dcmdopt()}).
+{p_end} 
+{phang2}. {stata "qddml $Y $D ($X), kfolds(5) reps(5) model(interactive) cmd(pystacked) ycmdopt(type(reg) method(gradboost)) dcmdopt(type(class) method(gradboost))"}{p_end}
+
+{pstd}{cmd:qddml} reports the ATE effect by default. The option {cmd:atet}
+returns the ATET estimate.{p_end}
+
+{pstd}If we want retrieve the ATET estimate after estimation, 
+we can simply use {ddml estimate}.{p_end}
+{phang2}. {stata "ddml estimate, atet"}{p_end}
+
+{pstd}{ul:Interactive IV model--LATE estimation.} 
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta,clear"}{p_end}
+{phang2}. {stata "global Y earnings"}{p_end}
+{phang2}. {stata "global D training"}{p_end}
+{phang2}. {stata "global Z assignmt"}{p_end}
+{phang2}. {stata "global X sex age married black hispanic"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{phang2}. {stata "qddml $Y (c.($X)# #c($X)) ($D=$Z), kfolds(5) model(interactiveiv) cmd(pystacked) ycmdopt(type(reg) m(lassocv)) dcmdopt(type(class) m(lassocv)) zcmdopt(type(class) m(lassocv))"}{p_end}
+
+{pstd}{ul:High-dimensional IV model.} 
+
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear"}{p_end}
+{phang2}. {stata "global Y share"}{p_end}
+{phang2}. {stata "global D price"}{p_end}
+{phang2}. {stata "global X hpwt air mpd space"}{p_end}
+{phang2}. {stata "global Z sum*"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}The syntax is the same as in the partially linear IV model, 
+but we now allow for high-dimensional instruments.{p_end}
+{phang2}. {stata "qddml $Y ($X) ($D=$Z), model(ivhd)"}{p_end}
 
 {marker references}{title:References}
 
@@ -203,19 +297,23 @@ to be installed; {stata "ssc install whichpkg"}).
 {title:Authors}
 
 {pstd}
-Achim Ahrens, Public Policy Group, ETH Zurich, Switzerland
+Achim Ahrens, Public Policy Group, ETH Zurich, Switzerland  {break}
 achim.ahrens@gess.ethz.ch
 
 {pstd}
-Christian B. Hansen, University of Chicago, USA
+Christian B. Hansen, University of Chicago, USA {break}
 Christian.Hansen@chicagobooth.edu
 
 {pstd}
-Mark E Schaffer, Heriot-Watt University, UK
-m.e.schaffer@hw.ac.uk	
+Mark E Schaffer, Heriot-Watt University, UK {break}
+m.e.schaffer@hw.ac.uk   
+
+{pstd}
+Thomas Wiemann, University of Chicago, USA {break}
+wiemann@uchicago.edu
 
 {title:Also see (if installed)}
 
 {pstd}
 Help: {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
- {helpb pdslasso}, {helpb pylearn}.{p_end}
+ {helpb pdslasso}, {helpb pystacked}.{p_end}

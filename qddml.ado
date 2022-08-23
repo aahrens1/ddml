@@ -1,5 +1,6 @@
-*! dec 19, 2021
-*! ddml v0.3
+*! ddml v0.5
+*! last edited: 23aug2022
+*! authors: aa/ms
 
 program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	syntax [anything] [if] [in] [aw pw],		/// note no "/" after pw
@@ -15,15 +16,17 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		debug 									///
 		seed(int 0)								///
 		cmd(name)								///
-		YCMDOPTtions(string asis)				///
-		DHCMDOPTions(string asis)				///
+		YCMDOPTions(string asis)				///
+		DCMDOPTions(string asis)				///
 		ZCMDOPTions(string asis)				///
 		YCMD(string asis)						///	
 		DCMD(string asis)						///
 		ZCMD(string asis)						///
+		predopt(string asis)					///
 		ypredopt(string asis)					///
 		dpredopt(string asis)					///
 		zpredopt(string asis)					///
+		vtype(string)							///
 		yvtype(string)							///  "double", "float" etc
 		dvtype(string)							///  "double", "float" etc
 		zvtype(string)							///  "double", "float" etc
@@ -31,6 +34,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		NOIsily 								///
 		REPs(integer 1)							///
 		shortstack 								///
+		atet 									///
 		]
 
 	mata: s_ivparse("`anything'")
@@ -56,16 +60,20 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	if "`robust'"!=""	local vce robust
 	if "`cluster'"~=""	local vce cluster `cluster'
-
 	if "`vverbose'"=="" local qui qui
 	if "`cmd'"=="" local cmd pystacked
 	if "`ycmd'"=="" local ycmd `cmd'
 	if "`dcmd'"=="" local dcmd `cmd'
 	if "`zcmd'"=="" local zcmd `cmd'
+	if "`yvtype'"=="" local yvtype `vtype'
+	if "`dvtype'"=="" local dvtype `vtype'
+	if "`zvtype'"=="" local zvtype `vtype'
+	if "`ypredopt'"=="" local ypredopt `predopt'
+	if "`dpredopt'"=="" local dpredopt `predopt'
+	if "`zpredopt'"=="" local zpredopt `predopt'
 	local ycmdoptions `ycmdoptions' `cmdoptions'
 	local dcmdoptions `dcmdoptions' `cmdoptions'
 	local zcmdoptions `zcmdoptions' `cmdoptions'
-	local dhcmdoptions `dhcmdoptions' `cmdoptions'
 
 	**** syntax checks
 	if ("`model'"=="ivhd") {
@@ -133,7 +141,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if ("`model'"=="ivhd") {
 		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
 		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' {D} `xctrl', `dhcmdoptions' 
+		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' {D} `xctrl', `dcmdoptions' 
 	} 
 
 	*** IV 
@@ -152,7 +160,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	}
 
 	*** late / interactive IV
-	else if ("`model'"=="late") {
+	else if ("`model'"=="late"|"`model'"=="interactiveiv") {
 		`qui' ddml E[Y|Z,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		`qui' ddml E[D|Z,X], mname(`mname') vname(`dendog') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
 		`qui' ddml E[Z|X], mname(`mname') vname(`exexog') predopt(`zpredopt') vtype(`zvtype'): `zcmd' `exexog' `xctrl', `zcmdoptions' 
@@ -176,7 +184,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		
 	`qui' ddml crossfit, `noisily' `shortstack'
 	if "`verbose'"!="" ddml desc
-	ddml estimate, vce(`vce') 
+	ddml estimate, vce(`vce') `atet'
 
 end 
 

@@ -1,5 +1,6 @@
-*! 19 aug 2022
-*! ddml v0.4
+*! ddml v0.5
+*! last edited: 23aug2022
+*! authors: aa/ms
 
 * notes:
 * e.command		= tokens(estcmd)[1,1] fails if command string starts with a prefix e.g. capture

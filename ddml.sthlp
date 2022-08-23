@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 22aug2022}{...}
+{* *! version 23aug2022}{...}
 {hline}
-{cmd:help ddml}{right: v0.4.3}
+{cmd:help ddml}{right: v0.5}
 {hline}
 
 {title:Title}
@@ -254,13 +254,6 @@ we estimate the conditional expectations
 E[Y|X] and E[D|X] using a supervised machine learner.
 
 {pstd}
-{it:Stylized example:} 
-
-{pstd}
-. ddml E[Y|X]: reg Y X* {break}
-. ddml E[D|X]: reg D X*
-
-{pstd}
 {ul:Interactive model} [{it:interactive}]
 
 	Y = g(X,D) + U
@@ -273,13 +266,6 @@ We estimate the conditional expectations E[D|X], as well as
 E[Y|X,D=0] and E[Y|X,D=1] (jointly added using {cmd:ddml E[Y|X,D]}).
 
 {pstd}
-{it:Stylized example:} 
-
-{pstd}
-. ddml E[Y|X,D]: reg Y X* {break}
-. ddml E[D|X]: reg D X*
-
-{pstd}
 {ul:Partial linear IV model} [{it:iv}]
 
 	Y = {it:a}.D + g(X) + U
@@ -290,14 +276,6 @@ where the aim is to estimate {it:a}.
 We estimate the conditional expectations E[Y|X], 
 E[D|X] and E[Z|X] using a supervised machine
 learner.
-
-{pstd}
-{it:Stylized example:} 
-
-{pstd}
-. ddml E[Y|X]: reg Y X* {break}
-. ddml E[D|X]: reg D X* {break}
-. ddml E[Z|X]: reg Z X*
 
 {pstd}
 {ul:Interactive IV model}  [{it:interactiveiv}]
@@ -315,14 +293,6 @@ E[D|X,Z=0] and E[D|X,Z=1] (jointly added using {cmd:ddml E[D|X,Z]});
 E[Z|X].
 
 {pstd}
-{it:Stylized example:} 
-
-{pstd}
-. ddml E[Y|X,Z]: reg Y X* {break}
-. ddml E[D|X,Z]: reg D X* {break}
-. ddml E[Z|X]: reg Z X*
-
-{pstd}
 {ul:High-dimensional IV model} [{it:ivhd}]
 
 	Y = {it:a}.D + g(X) + U
@@ -335,14 +305,6 @@ E[Y|X],
 E[D^|X] and D^:=E[D|Z,X] using a supervised machine
 learner. The instrument is then formed as D^-E^[D^|X] where E^[D^|X] denotes
 the estimate of E[D^|X]. 
-
-{pstd}
-{it:Stylized example:} 
-
-{pstd}
-. ddml E[Y|X]: reg Y X* {break}
-. ddml E[D|X,Z]: reg D X* Z* {break}
-. ddml E[D|X]: reg {D} X*
 
 {pstd}
 Note: "{D}" is a placeholder that is used because last step (estimation of E[D|X]) 
@@ -468,7 +430,7 @@ E[Y|X], E[D|X] and E[Z|X]. For each reduced form equation, we add
 two learners: {helpb regress} and {helpb rforest}.{p_end}
 
 {pstd}We need to add the option {opt vtype(none)} for {helpb rforest} to 
-work with {cmd:ddml} since {helpb}'s {cmd:predict} command doesn't
+work with {cmd:ddml} since {helpb rforest}'s {cmd:predict} command doesn't
 support variable types.{p_end}
 {phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
 {phang2}. {stata "ddml E[Y|X], vtype(none): rforest $Y $X, type(reg)"}{p_end}
@@ -480,6 +442,10 @@ support variable types.{p_end}
 {pstd}Cross-fitting and estimation.{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
 {phang2}. {stata "ddml estimate, robust"}{p_end}
+
+{pstd}If you are curious what {cmd:ddml} does in the background:{p_end}
+{phang2}. {stata "ddml estimate m0, spec(8) rep(1)"}{p_end}
+{phang2}. {stata "ivreg Y2_rf (D2_rf = Z2_rf), nocons"}{p_end}
 
 {pstd}{ul:Interactive model--ATE and ATET estimation.} 
 
@@ -532,7 +498,7 @@ At the bottom, a table of summary statistics over resampling iterations is shown
 {phang2}. {stata "set seed 42"}{p_end}
 
 {pstd}We initialize the model.{p_end}
-{phang2}. {stata "ddml init interactive, kfolds(5)"}{p_end}
+{phang2}. {stata "ddml init interactiveiv, kfolds(5)"}{p_end}
 
 {pstd}We again add two learners per reduced form equation.{p_end}
 {phang2}. {stata "ddml E[Y|X,Z]: reg $Y $X"}{p_end}
@@ -548,8 +514,8 @@ At the bottom, a table of summary statistics over resampling iterations is shown
 
 {pstd}{ul:High-dimensional IV model.} 
 
-{pstd}We load the data and set globals.{p_end}
-{phang2}. {stata "use use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear"}{p_end}
+{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear"}{p_end}
 {phang2}. {stata "global Y share"}{p_end}
 {phang2}. {stata "global D price"}{p_end}
 {phang2}. {stata "global X hpwt air mpd space"}{p_end}
@@ -559,21 +525,42 @@ At the bottom, a table of summary statistics over resampling iterations is shown
 {pstd}We initialize the model.{p_end}
 {phang2}. {stata "ddml init ivhd"}{p_end}
 
-{pstd}We add two learners for E[Y|X].{p_end}
+{pstd}We add learners for E[Y|X] in the usual way.{p_end}
 {phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
 {phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg)"}{p_end}
 
-{pstd}We load the data and set globals.{p_end}
-{phang2}. {stata "ddml E[D|Z,X], learner(Dhat_reg): reg $D $X $Z"}{p_end}
-{phang2}. {stata "ddml E[D|Z,X], learner(Dhat_pystacked): pystacked $D $X $Z, type(reg)"}{p_end} 
+{pstd}There are some pecularities that we need to bear in mind
+when adding learners for E[D|Z,X] and E[D|X].
+The reason for this is that the estimation of E[D|X]
+depends on the estimation of E[D|X,Z].
+More precisely, we first obtain the fitted values D^=E[D|X,Z] and 
+fit these against X to estimate E[D^|X].{p_end}
 
-{pstd}We load the data and set globals.{p_end}
-{phang2}. {stata "ddml E[D|X], learner(Dhat_reg) vname($D): reg {D} $X $Z"}{p_end}
-{phang2}. {stata "ddml E[D|X], learner(Dhat_pystacked) vname($D): pystacked {D} $X $Z, type(reg)"}{p_end}
+{pstd}
+When adding learners for E[D|Z,X],
+we need to provide a name
+for each learners using {opt learner(name)}.{p_end}
+{phang2}. {stata "ddml E[D|Z,X], learner(Dhat_reg): reg $D $X $Z"}{p_end}
+{phang2}. {stata "ddml E[D|Z,X], learner(Dhat_pystacked): pystacked $D $X $Z, type(reg)"}{p_end}
+
+{pstd}
+When adding learners for E[D|X], we explicitly refer to the learner from 
+the previous step (e.g., {cmd:learner(Dhat_reg)}) and
+also provide the name of the treatment variable ({cmd:vname($D)}).
+Finally, we use the placeholder {cmd:{D}} in place of the dependent variable. 
+{p_end}
+{phang2}. {stata "ddml E[D|X], learner(Dhat_reg) vname($D): reg {D} $X"}{p_end}
+{phang2}. {stata "ddml E[D|X], learner(Dhat_pystacked) vname($D): pystacked {D} $X, type(reg)"}{p_end}
  
-{pstd}Cross-fitting and estimation.{p_end}
+{pstd}That's it. Now we can move to cross-fitting and estimation.{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
 {phang2}. {stata "ddml estimate"}{p_end}
+
+{pstd}If you are curious what {cmd:ddml} does in the background:{p_end}
+{phang2}. {stata "ddml estimate m0, spec(8) rep(1)"}{p_end}
+{phang2}. {stata "gen Dtilde = $D - Dhat_pystacked_h_1"}{p_end}
+{phang2}. {stata "gen Zopt = Dhat_pystacked_1 - Dhat_pystacked_h_1"}{p_end}
+{phang2}. {stata "ivreg Y2_pystacked_1 (Dtilde=Zopt), nocons"}{p_end}
 
 {marker references}{title:References}
 
