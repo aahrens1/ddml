@@ -15,7 +15,6 @@ program _ddml_crossfit, eclass sortpreserve
 							[						///
 							NOIsily					///
 							debug					/// 
-							Robust					///
 							mname(name)				///
 							shortstack				///
 							Verbose 				///

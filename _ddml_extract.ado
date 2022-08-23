@@ -3,7 +3,7 @@ program define _ddml_extract, rclass
 	syntax [name] , [				///
 				mname(name)			/// ignored if ename(.) provided
 				ename(name)			///
-				vname(name)			///
+				vname(varname)		///
 				show(name)			/// pystacked, mse or n allowed
 				keys				///
 				key1(string)		///

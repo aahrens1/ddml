@@ -39,11 +39,11 @@ proceeds in four steps.
 {ul:Step 1.} Initialise {cmd:ddml} and select model:
 
 {p 8 14}{cmd:ddml init}
-{it:model} 
-[, {opt mname(string)} {opt kfolds(integer)}
-{opt cluster(varname)}
+{it:model} [if] [in]
+[ , {opt mname(name)} {opt kfolds(integer)}
+{opt fcluster(varname)}
 {opt foldvar(varlist)} {opt reps(integer)} 
-{opt tabfold} {opt vars(varlist)}]
+{opt tabfold} {opt vars(varlist)}{bind: ]}
 
 {pstd}
 where {it:model} is either {it:partial}, 
@@ -54,10 +54,10 @@ see {helpb ddml##models:model descriptions}.
 {ul:Step 2.} Add supervised ML programs for estimating conditional expectations:
 
 {p 8 14}{cmd:ddml} {it:eq} 
-[, {opt mname(string)} {opt vname(string)} {opt vtilde(string)}
+[ , {opt mname(name)} {opt vname(string)} {opt vtilde(string)}
 {opt vtype(string)}
-{opt predopt(string)}]:
-{it:command} {it:depvar} {it:vars} [, {it:cmdopt}]
+{opt predopt(string)}{bind: ] :}
+{it:command} {it:depvar} {it:vars} [ , {it:cmdopt}{bind: ]}
 
 {pstd}
 where, depending on model chosen in Step 1,
@@ -69,7 +69,7 @@ See {helpb ddml##compatibility:supported programs}.
 {pstd}
 {ul:Step 3.} Cross-fitting:
 
-{p 8 14}{cmd:ddml crossfit} [, {opt mname(string)} {opt shortstack}] 
+{p 8 14}{cmd:ddml crossfit} [ , {opt mname(name)} {opt shortstack}{bind: ]} 
 
 {pstd}
 This step implements the cross-fitting algorithm. Each learner is fitted iteratively on training folds and out-of-sample predicted values are obtained.
@@ -77,11 +77,16 @@ This step implements the cross-fitting algorithm. Each learner is fitted iterati
 {pstd}
 {ul:Step 4.} Estimate causal effects:
 
-{p 8 14}{cmd:ddml estimate} [, {opt mname(string)} {opt spec(integer)} {opt rep(integer)} {cmdab:r:obust} {opt clustervar(varname)} {opt vce(type)} {opt att}] 
+{p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)} {opt att} {opt trim(real)}{bind: ]} 
 
 {pstd}
 The {cmd:ddml estimate} command returns treatment effect estimates for all combination of learners 
 added in Step 2.
+
+{pstd}
+{ul:Optional.} Report/post selected results:
+
+{p 8 14}{cmd:ddml estimate} [ , {opt replay} {opt mname(name)} {opt spec(integer or string)} {opt rep(integer or string)} {opt full:table} {opt not:able} {opt all:est}{bind: ]} 
 
 {pstd}
 {ul:Auxiliary sub-programs:}
@@ -92,29 +97,25 @@ Download latest {cmd:ddml} from Github:
 {p 8 14}{cmd:ddml update} 
 
 {pstd}
-Print information about {cmd:ddml} model:
+Report information about {cmd:ddml} model:
 
-{p 8 14}{cmd:ddml desc} [, {opt mname()}]
-
-{pstd}
-Save {cmd:ddml} model on disc:
-
-{p 8 14}{cmd:ddml save} [, {opt mname()}]
-
-{pstd}
-Load {cmd:ddml} model from disc:
-
-{p 8 14}{cmd:ddml use} [, {opt mname()}]
+{p 8 14}{cmd:ddml desc} [ , {opt mname(name)} {opt learn:ers} {opt cross:fit} {opt est:imates} {opt sam:ple} {opt all}{bind: ]}
 
 {pstd}
 Export results in csv format:
 
-{p 8 14}{cmd:ddml export} [, {opt mname()}]
+{p 8 14}{cmd:ddml export} [ , {opt mname(name)} {opt fname(name)}{bind: ]}
 
 {pstd}
 Retrieve information from {cmd:ddml}:
 
-{p 8 14}{cmd:ddml extract} [, {opt mname()}]
+{p 8 14}{cmd:ddml extract} [ , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)} {opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)} {opt subkey2(string)}{bind: ]}
+
+{pstd}
+{it:display_item} can be {it:mse}, {it:n} or {it:pystacked}.
+{cmd:ddml} stores many internal results on associative arrays.
+These can be retrieved using the different key options.
+See ... for details.
 
 {marker syntax}{...}
 {title:Options}
@@ -122,7 +123,7 @@ Retrieve information from {cmd:ddml}:
 {synoptset 20}{...}
 {synopthdr:init options}
 {synoptline}
-{synopt:{opt mname(string)}}
+{synopt:{opt mname(name)}}
 name of the DDML model. Allows to run multiple DDML
 models simultaneously. Defaults to {it:m0}.
 {p_end}
@@ -149,7 +150,7 @@ prints a table with frequency of observations by fold.
 {synoptset 20}{...}
 {synopthdr:Equation options}
 {synoptline}
-{synopt:{opt mname(string)}}
+{synopt:{opt mname(name)}}
 name of the DDML model. Defaults to {it:m0}.
 {p_end}
 {synopt:{opt vname(string)}}
@@ -177,7 +178,7 @@ blank.
 {synoptset 20}{...}
 {synopthdr:Cross-fitting}
 {synoptline}
-{synopt:{opt mname(string)}}
+{synopt:{opt mname(name)}}
 name of the DDML model. Defaults to {it:m0}.
 {p_end}
 {synopt:{opt shortstack}} asks for short-stacking to be used.
@@ -192,24 +193,24 @@ of several base learners.
 {synoptset 20}{...}
 {synopthdr:Estimation}
 {synoptline}
-{synopt:{opt mname(string)}}
+{synopt:{opt mname(name)}}
 name of the DDML model. Defaults to {it:m0}.
 {p_end}
-{synopt:{opt spec(integer)}}
+{synopt:{opt spec(integer/string)}}
 select specification
 {p_end}
-{synopt:{opt rep(integer)}}
+{synopt:{opt rep(integer/string)}}
 select resampling iteration
 {p_end}
 {synopt:{cmdab:r:obust}}
 report SEs that are robust to the
 presence of arbitrary heteroskedasticity.
 {p_end}
-{synopt:{opt vce(type)}}
-select variance-covariance estimator, see {helpb regress##vcetype:here}
-{p_end}
 {synopt:{opt cluster(varname)}}
 select cluster-robust variance-covariance estimator.
+{p_end}
+{synopt:{opt vce(type)}}
+select variance-covariance estimator, see {helpb regress##vcetype:here}
 {p_end}
 {synopt:{opt trim(real)}}
 trimming of propensity scores. The default is 0.01
@@ -223,7 +224,7 @@ to 0.01 and 0.99, respectively).
 {synoptset 20}{...}
 {synopthdr:Auxiliary}
 {synoptline}
-{synopt:{opt mname(string)}}
+{synopt:{opt mname(name)}}
 name of the DDML model. Defaults to {it:m0}.
 {p_end}
 {synoptline}

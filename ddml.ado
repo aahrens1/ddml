@@ -57,7 +57,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		
 		// should perhaps make subcmd list all lower case (more forgiving) and replace `subcmd' with strlower("`subcmd'").
 		local alleqntypes E[Y|X] E[Y|X,D] E[Y|D,X] E[Y|X,Z] E[Y|Z,X] E[D|X] E[D|Z,X] E[D|X,Z] E[Z|X] yeq deq zeq dheq
-		local allsubcmds  update describe save export use drop copy sample init reinit yeq deq dheq zeq crossfit estimate extract
+		local allsubcmds  update describe export drop copy sample init reinit yeq deq dheq zeq crossfit estimate extract
 		local allsubcmds `allsubcmds' `alleqntypes'
 		if strpos("`allsubcmds'","`subcmd'")==0 {
 			di as err "error - unknown subcommand `subcmd'"
@@ -82,12 +82,6 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			_ddml_describe `mname', `options'
 		}
 	
-		*** save model
-		if "`subcmd'"=="save" {
-			local fname: word 2 of `mainargs'
-			_ddml_save, mname(`mname') fname(`fname') `replace' `options'
-		}
-		
 		*** export model
 		if "`subcmd'"=="export" {
 			if "`using'"=="" {
@@ -97,12 +91,6 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			_ddml_export, mname(`mname') fname(`using') `replace' `options'
 		}
 		
-		*** use model
-		if "`subcmd'"=="use" {
-			local fname: word 2 of `mainargs'
-			_ddml_use, mname(`mname') fname(`fname') `replace' `options'
-		}
-	
 		*** drop model
 		if "`subcmd'"=="drop" {
 			_ddml_drop, mname(`mname')
@@ -164,8 +152,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			// update fold vars, kfolds, number of resamplings
 			_ddml_sample `if' `in' , mname(`mname') `options'
 		}
-		
-		
+				
 		*** set sample, foldvar, etc.
 		if "`subcmd'"=="sample" {
 			_ddml_sample `if' `in' , mname(`mname') `options'
