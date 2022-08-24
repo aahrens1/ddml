@@ -438,9 +438,10 @@ but it can be used with any model supported by {cmd:ddml}.{p_end}
 {pstd}Preparation: use the data and globals as above.
 Use the name m1 for this new estimation, to distinguish it from the previous example that uses the default name m0.
 This enables having multiple estimations available for comparison.
+Also specify 5 resamplings.
 {p_end}
 {phang2}. {stata "set seed 42"}{p_end}
-{phang2}. {stata "ddml init partial, kfolds(2) mname(m1)"}{p_end}
+{phang2}. {stata "ddml init partial, kfolds(2) reps(5) mname(m1)"}{p_end}
 
 {pstd}Add supervised machine learners for estimating conditional expectations.
 The first learner in the stacked ensemble is OLS, as above.
