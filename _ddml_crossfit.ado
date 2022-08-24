@@ -233,6 +233,7 @@ program create_sample_indicators
 	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
 	
+	local lieflag = 0
 	if `numeqnD' {
 		foreach var of varlist `nameD' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")

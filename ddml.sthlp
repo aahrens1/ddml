@@ -36,7 +36,7 @@ Estimation with {cmd:ddml}
 proceeds in four steps. 
 
 {pstd}
-{ul:Step 1.} Initialise {cmd:ddml} and select model:
+{ul:Step 1.} Initialize {cmd:ddml} and select model:
 
 {p 8 14}{cmd:ddml init}
 {it:model} [if] [in]
@@ -116,6 +116,11 @@ Retrieve information from {cmd:ddml}:
 {cmd:ddml} stores many internal results on associative arrays.
 These can be retrieved using the different key options.
 See ... for details.
+
+{pstd}
+Drop the {cmd:ddml} estimation {it:mname} and all associated variables:
+
+{p 8 14}{cmd:ddml drop} {it:mname}
 
 {marker syntax}{...}
 {title:Options}
@@ -362,13 +367,15 @@ kept simple to allow you to run the code quickly.
 {phang2}. {stata "global X tw age inc fsize educ db marr twoearn pira hown"}{p_end}
 {phang2}. {stata "set seed 42"}{p_end}
 
-{pstd}We initialize the ddml estimation and select the model. {it:partial} 
-refers to the partially linear model.{p_end} 
+{pstd}We next initialize the ddml estimation and select the model.
+{it:partial} refers to the partially linear model.
+The model will be stored on a Mata object with the default name "m0"
+unless otherwise specified using the {opt mname(name)} option.{p_end} 
 {pstd}Note that we set the number of random folds to 2, so that 
 the model runs quickly. The default is {opt kfolds(5)}. We recommend 
 to consider at least 5-10 folds and even more if your sample size is small.{p_end} 
-{pstd}Note also that we recommend to re-run the model multiple time on 
-different random folds, see options {opt reps(integer)}.{p_end} 
+{pstd}Note also that we recommend re-running the model multiple times on 
+different random folds; see options {opt reps(integer)}.{p_end} 
 {phang2}. {stata "ddml init partial, kfolds(2)"}{p_end}
 
 {pstd}We add a supervised machine learners for estimating the conditional 

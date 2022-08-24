@@ -2,27 +2,30 @@
 program _ddml_drop, eclass
 	version 13
 
-	syntax , mname(name)
+	syntax , mname(name)		// will already have verified that mname is a valid ddml mStruct
 
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
 	mata: `eqn' = init_eStruct()
-
+	
 	// locals used below
 	mata: st_local("model",`mname'.model)
 	
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens(`mname'.nameZ))
+	local numeqnY	: word count `nameY'				// can be zero if no variables created yet
 	local numeqnD	: word count `nameD'
 	local numeqnZ	: word count `nameZ'
 
-	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
-	// equation struct naming is the model name + dep variable name
-	local eqnlist `mname'_`nameY'
-	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
-	mata: st_local("ssvname",invtokens(`eqn'.shortstack))
-	local vtlist `vtlistY' `ssvname'
+	if `numeqnY' {
+		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+		// equation struct naming is the model name + dep variable name
+		local eqnlist `mname'_`nameY'
+		mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
+		mata: st_local("ssvname",invtokens(`eqn'.shortstack))
+		local vtlist `vtlistY' `ssvname'
+	}
 	
 	if `numeqnD' {
 		foreach var of varlist `nameD' {

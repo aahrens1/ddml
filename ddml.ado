@@ -69,7 +69,19 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			local mname m0 // sets the default name
 		}
 		if "`subcmd'"~="init" {
+			// exits with error if mname is not an mStruct
 			check_mname "`mname'"
+		}
+		else {
+			// we are initializing mname; warn if this overwrites an existing mStruct
+			cap check_mname "`mname'"
+			if _rc==0 {
+				// did not exit with error, so it's an existing mStruct
+				di as res "warning - model `mname' already exists"
+				di as res "all existing model results and variables have been dropped"
+				di as res "model `mname' has been re-initialized"
+				_ddml_drop, mname(`mname')
+			}
 		}
 	
 		*** get latest version
