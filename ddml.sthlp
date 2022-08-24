@@ -441,8 +441,8 @@ Also use cross-validated lasso, ridge and random forest.
 Note that only one equation with {cmd:pystacked} is needed for each conditional expectation.
 Specify the names of the variables containing the estimated conditional expectations using the {opt learner(varname)} option.
 This avoids overwriting the variables created for the m0 model using default naming.{p_end}
-{phang2}. {stata "ddml E[Y|X], mname(m1) learner(Y_m1): pystacked $Y $X || method(ols) || method(lassocv) || method(ridge) || method(rf), type(reg)"}{p_end}
-{phang2}. {stata "ddml E[D|X], mname(m1) learner(D_m1): pystacked $D $X || method(ols) || method(lassocv) || method(ridge) || method(rf), type(reg)"}{p_end}
+{phang2}. {stata "ddml E[Y|X], mname(m1) learner(Y_m1): pystacked $Y $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf), type(reg)"}{p_end}
+{phang2}. {stata "ddml E[D|X], mname(m1) learner(D_m1): pystacked $D $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf), type(reg)"}{p_end}
 {phang2}. {stata "ddml desc, mname(m1) learners"}{p_end}
 
 {pstd}Cross-fitting and estimation.{p_end}
