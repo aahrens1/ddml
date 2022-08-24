@@ -401,16 +401,25 @@ with the lowest out-of-sample MSPE.
 
 {pstd}To retrieve the very first specification shown, you can type:
 {p_end}
-{phang2}. {stata "ddml estimate, robust spec(1)"}{p_end}
+{phang2}. {stata "ddml estimate, robust spec(1) replay"}{p_end}
 
 {pstd}You could manually retrieve the same point estimate by 
 typing:
 {p_end}
 {phang2}. {stata "reg Y1_reg D1_reg, nocons robust"}{p_end}
+{pstd}or graphically:
+{p_end}
+{phang2}. {stata "twoway (scatter Y1_reg D1_reg) (lfit Y1_reg D1_reg)"}{p_end}
 
 {pstd}where {opt Y1_reg} and {opt D1_reg} are the orthogonalized
 versions of {opt net_tfa} and {opt e401}.
 {p_end}
+
+{pstd}To describe the ddml model setup or results in detail,
+you can use {cmd: ddml describe} with the relevant option ({opt sample}, {opt learners}, {opt crossfit}, {opt estimates}),
+or just describe them all with the {opt all} option:
+{p_end}
+{phang2}. {stata "ddml describe, all"}{p_end}
 
 {pstd}{ul:Partially linear IV model.} 
 

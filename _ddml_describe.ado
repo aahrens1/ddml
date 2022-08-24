@@ -38,11 +38,13 @@ program define _ddml_describe
 	if "`fclustvar'"~="" {
 		di as res _col(25) "Folds respect clustering by `fclustvar'"
 	}
-	di as text "Dependent variable (Y):" _col(25) as res "`nameY'"
-	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
-	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
-	local numlnrY : word count `vtlistY'
-	di as text _col(2) "`nameY' learners:" as text _col(25) as res "`vtlistY'"
+	if "`nameY'"~="" {
+		di as text "Dependent variable (Y):" _col(25) as res "`nameY'"
+		mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
+		mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
+		local numlnrY : word count `vtlistY'
+		di as text _col(2) "`nameY' learners:" as text _col(25) as res "`vtlistY'"
+	}
 	if `numeqnD' {
 		di as text "D equations (`numeqnD'):" _col(25) as res "`nameD'"
 		foreach var of varlist `nameD' {
