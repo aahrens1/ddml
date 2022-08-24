@@ -444,12 +444,14 @@ This enables having multiple estimations available for comparison.
 
 {pstd}Add supervised machine learners for estimating conditional expectations.
 The first learner in the stacked ensemble is OLS, as above.
-Also use cross-validated lasso, ridge and random forest.
+Also use cross-validated lasso, ridge and random forest with two different settings.
 Note that only one equation with {cmd:pystacked} is needed for each conditional expectation.
 Specify the names of the variables containing the estimated conditional expectations using the {opt learner(varname)} option.
 This avoids overwriting the variables created for the m0 model using default naming.{p_end}
-{phang2}. {stata "ddml E[Y|X], mname(m1) learner(Y_m1): pystacked $Y $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf), type(reg)"}{p_end}
-{phang2}. {stata "ddml E[D|X], mname(m1) learner(D_m1): pystacked $D $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf), type(reg)"}{p_end}
+{phang2}. {stata "global rflow max_features(5) min_samples_leaf(1) max_samples(.7)"}{p_end}
+{phang2}. {stata "global rfhigh max_features(5) min_samples_leaf(10) max_samples(.7)"}{p_end}
+{phang2}. {stata "ddml E[Y|X], mname(m1) learner(Y_m1): pystacked $Y $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf) opt($rflow) || method(rf) opt($rfhigh), type(reg)"}{p_end}
+{phang2}. {stata "ddml E[D|X], mname(m1) learner(D_m1): pystacked $D $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf) opt($rflow) || method(rf) opt($rfhigh), type(reg)"}{p_end}
 {phang2}. {stata "ddml desc, mname(m1) learners"}{p_end}
 
 {pstd}Cross-fitting and estimation.{p_end}
