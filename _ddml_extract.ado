@@ -127,8 +127,8 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 			vkeys = sort(vkeys,(1,2,4))
 			vkeys = vkeys[.,(1::3)]
 			// init here, in i loop; will have all weights for all learners for vname i
-			// if ATE/LATE, an additional column is needed
-			if (eqn.ateflag==0) {
+			// if ATE/LATE, an additional column is needed, and similarly for LIE
+			if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
 				rmat_all = J(0,2+d.kfolds,0)
 			}
 			else {
@@ -141,32 +141,46 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 					if (vkeys[j,2]=="stack_weights") {
 						DZeq01 = ""
 						treat = .
+						hflag = 0
+					}
+					else if (vkeys[j,2]=="stack_weights_h") {
+						DZeq01 = ""
+						treat = .
+						hflag = 1
 					}
 					else if (vkeys[j,2]=="stack_weights0") {
 						DZeq01 = "0"
 						treat = 0
+						hflag = .
 					}
 					else if (vkeys[j,2]=="stack_weights1") {
 						DZeq01 = "1"
 						treat = 1
+						hflag = .
 					}
 					rmat = (eqn.resAA).get(vkeys[j,.])
 					base_est = tokens((eqn.lrnAA).get((vkeys[j,1],"stack_base_est")))'
 					rstripe = rstripe \ base_est
-					// col 1 is learner number, col 2 is treatment (if needed), col 3 is rep number (in AA as string)
-					if (eqn.ateflag==0) {
+					// col 1 is learner number, col 2 is treatment/hflag (if needed), col 3 is rep number (in AA as string)
+					if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
 						rmat_j = ( (1::rows(rmat)) , J(rows(rmat),1,strtoreal(vkeys[j,3])) , rmat)
 					}
-					else {
+					else if (eqn.ateflag==1) {
 						rmat_j = ( (1::rows(rmat)) , J(rows(rmat),1,treat), J(rows(rmat),1,strtoreal(vkeys[j,3])) , rmat)
+					}
+					else {
+						rmat_j = ( (1::rows(rmat)) , J(rows(rmat),1,hflag), J(rows(rmat),1,strtoreal(vkeys[j,3])) , rmat)
 					}
 					
 					rmat_all = rmat_all \ rmat_j
 				}
 			}
 			// rmat_all has full set of weights for all learners
-			if (eqn.ateflag==0) {
+			if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
 				cstripe = ("learner" \ "resample")
+			}
+			else if (eqn.lieflag==1) {
+				cstripe = ("learner" \ "h" \ "resample")
 			}
 			else if (d.model=="interactive") {
 				cstripe = ("learner" \ "D=0/1" \ "resample")
@@ -200,8 +214,11 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 				
 				rmat_ll = select(rmat_all,svec)
 				rmat_ll = rmat_ll[.,(2::cols(rmat_ll))]
-				if (eqn.ateflag==0) {
+				if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
 					cstripe = ("resample")
+				}
+				else if (eqn.lieflag==1) {
+					cstripe = ("h=0/1" \ "resample")
 				}
 				else if (d.model=="interactive") {
 					cstripe = ("D=0/1" \ "resample")
@@ -249,7 +266,11 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 					else if (strpos(vkeys[j,2],"1")) {
 						DZeq01 = (DZeq01 \ 1)
 					}
-					rvtilde = (rvtilde \ (vkeys[j,1]))
+					vt = vkeys[j,1]
+					if ((vkeys[j,2]=="MSE_h") | (vkeys[j,2]=="N_h")) {
+						vt = vt + "_h"
+					}
+					rvtilde = (rvtilde \ vt)
 					rsmp = (rsmp \ strtoreal(vkeys[j,3]))
 				}
 				if ((strpos(vkeys[j,2],show)==1) & (strpos(vkeys[j,2],"folds")>0)) {
@@ -433,8 +454,7 @@ void display_mse(												///
 	}
 	printf("\n")
 	for (i=1;i<=rows(rvtilde);i++) {
-		printf("{txt}%13s", rvtilde[i])
-		printf("{txt}{space 3}")
+		printf("{txt}%16s", rvtilde[i])
 		if (DZeq01text~="") {
 			printf("{res}%2.0f ", DZeq01[i])
 		}

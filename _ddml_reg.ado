@@ -411,7 +411,7 @@ program define _ddml_reg, eclass
 			di as text "Z-E[Z|X]" _col(11) "= " as res "`e(z_m)'"
 		}
 		else if "`e(model)'" == "ivhd" {
-			di as text "E[D|X] = " as res "`e(dh_m)'"
+			di as text "E[D|X]" _col(11) "= " as res "`e(dh_m)'"
 		}
 		if "`e(model)'" == "ivhd" {
 			di as text "Orthogonalised D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
