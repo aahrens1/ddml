@@ -78,8 +78,8 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			if _rc==0 {
 				// did not exit with error, so it's an existing mStruct
 				di as res "warning - model `mname' already exists"
-				di as res "all existing model results and variables have been dropped"
-				di as res "model `mname' has been re-initialized"
+				di as res "all existing model results and variables will"
+				di as res "be dropped and model `mname' will be re-initialized"
 				_ddml_drop, mname(`mname')
 			}
 		}

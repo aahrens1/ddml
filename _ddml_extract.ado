@@ -126,116 +126,132 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 			vkeys = (vkeys, repstring)
 			vkeys = sort(vkeys,(1,2,4))
 			vkeys = vkeys[.,(1::3)]
-			// init here, in i loop; will have all weights for all learners for vname i
-			// if ATE/LATE, an additional column is needed, and similarly for LIE
-			if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
-				rmat_all = J(0,2+d.kfolds,0)
-			}
-			else {
-				rmat_all = J(0,3+d.kfolds,0)
-			}
-			rstripe = J(0,1,"")
-			for (j=1;j<=rows(vkeys);j++) {
-				if (strpos(vkeys[j,2],"stack_weights")) {
-					rname=vkeys[j,1]
-					if (vkeys[j,2]=="stack_weights") {
-						DZeq01 = ""
-						treat = .
-						hflag = 0
-					}
-					else if (vkeys[j,2]=="stack_weights_h") {
-						DZeq01 = ""
-						treat = .
-						hflag = 1
-					}
-					else if (vkeys[j,2]=="stack_weights0") {
-						DZeq01 = "0"
-						treat = 0
-						hflag = .
-					}
-					else if (vkeys[j,2]=="stack_weights1") {
-						DZeq01 = "1"
-						treat = 1
-						hflag = .
-					}
-					rmat = (eqn.resAA).get(vkeys[j,.])
-					base_est = tokens((eqn.lrnAA).get((vkeys[j,1],"stack_base_est")))'
-					rstripe = rstripe \ base_est
-					// col 1 is learner number, col 2 is treatment/hflag (if needed), col 3 is rep number (in AA as string)
-					if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
-						rmat_j = ( (1::rows(rmat)) , J(rows(rmat),1,strtoreal(vkeys[j,3])) , rmat)
-					}
-					else if (eqn.ateflag==1) {
-						rmat_j = ( (1::rows(rmat)) , J(rows(rmat),1,treat), J(rows(rmat),1,strtoreal(vkeys[j,3])) , rmat)
-					}
-					else {
-						rmat_j = ( (1::rows(rmat)) , J(rows(rmat),1,hflag), J(rows(rmat),1,strtoreal(vkeys[j,3])) , rmat)
-					}
-					
-					rmat_all = rmat_all \ rmat_j
-				}
-			}
-			// rmat_all has full set of weights for all learners
-			if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
-				cstripe = ("learner" \ "resample")
-			}
-			else if (eqn.lieflag==1) {
-				cstripe = ("learner" \ "h" \ "resample")
-			}
-			else if (d.model=="interactive") {
-				cstripe = ("learner" \ "D=0/1" \ "resample")
-			}
-			else {
-				cstripe = ("learner" \ "Z=0/1" \ "resample")
-			}
-			for (ff=1;ff<=d.kfolds;ff++) {
-				cstripe = cstripe \ ("fold_"+strofreal(ff))
-				}
-			cstripe = (J(rows(cstripe),1,""), cstripe)
-			rstripe = (J(rows(rstripe),1,""), rstripe)
-			rn = rname + "_w"
-			st_matrix("r("+rn+")",rmat_all)
-			st_matrixcolstripe("r("+rn+")",cstripe)
-			st_matrixrowstripe("r("+rn+")",rstripe)
-			rmatlist = (rmatlist, rn)
-			printf("\n{res}pystacked weights for %s (%s)\n",rname,vnames[i])
-			stata("mat list " + "r("+rn+"), noheader noblank")
-			// learner list
-			cstripe = ("" , "learner")
-			rstripe = (J(rows(base_est),1,""), base_est)
-			rn = rname+"_learners"
-			st_matrix("r("+rn+")",(1::rows(base_est)))
-			st_matrixcolstripe("r("+rn+")",cstripe)
-			st_matrixrowstripe("r("+rn+")",rstripe)
-			rmatlist = (rmatlist, rn)
-			// rmat_ll will have weights separately for each learner
-			for (ll=1;ll<=rows(base_est);ll++) {
-				svec = rmat_all[.,1] :== ll
-				
-				rmat_ll = select(rmat_all,svec)
-				rmat_ll = rmat_ll[.,(2::cols(rmat_ll))]
+			
+			for (j=1;j<=cols(eqn.vtlist);j++) {
+			
+				// initialize
+				vkeys_i = select(vkeys,vkeys[.,1]:==(eqn.vtlist)[j])
+				swflag = 0
+				// rmat will have all weights for all learners for vt name j
+				// if ATE/LATE, an additional column is needed, and similarly for LIE
 				if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
-					cstripe = ("resample")
-				}
-				else if (eqn.lieflag==1) {
-					cstripe = ("h=0/1" \ "resample")
-				}
-				else if (d.model=="interactive") {
-					cstripe = ("D=0/1" \ "resample")
+					rmat_all = J(0,2+d.kfolds,0)
 				}
 				else {
-					cstripe = ("Z=0/1" \ "resample")
+					rmat_all = J(0,3+d.kfolds,0)
 				}
-				for (ff=1;ff<=d.kfolds;ff++) {
-					cstripe = cstripe \ ("fold_"+strofreal(ff))
+				rstripe = J(0,1,"")
+				for (k=1;k<=rows(vkeys_i);k++) {
+					if (strpos(vkeys_i[k,2],"stack_weights")) {
+						swflag = 1		// stack weights encountered
+						rname=vkeys_i[k,1]
+						if (vkeys_i[k,2]=="stack_weights") {
+							DZeq01 = ""
+							treat = .
+							hflag = 0
+						}
+						else if (vkeys_i[k,2]=="stack_weights_h") {
+							DZeq01 = ""
+							treat = .
+							hflag = 1
+						}
+						else if (vkeys_i[k,2]=="stack_weights0") {
+							DZeq01 = "0"
+							treat = 0
+							hflag = .
+						}
+						else if (vkeys_i[k,2]=="stack_weights1") {
+							DZeq01 = "1"
+							treat = 1
+							hflag = .
+						}
+						rmat = (eqn.resAA).get(vkeys_i[k,.])
+						if ((hflag==0) | (hflag==.)) {
+							base_est = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_base_est")))'
+							rstripe = rstripe \ base_est
+						}
+						else {
+							base_est_h = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_base_est_h")))'
+							rstripe = rstripe \ base_est_h
+						}
+						// col 1 is learner number, col 2 is treatment/hflag (if needed), col 3 is rep number (in AA as string)
+						if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+							rmat_k = ( (1::rows(rmat)) , J(rows(rmat),1,strtoreal(vkeys_i[k,3])) , rmat)
+						}
+						else if (eqn.ateflag==1) {
+							rmat_k = ( (1::rows(rmat)) , J(rows(rmat),1,treat), J(rows(rmat),1,strtoreal(vkeys_i[k,3])) , rmat)
+						}
+						else {
+							rmat_k = ( (1::rows(rmat)) , J(rows(rmat),1,hflag), J(rows(rmat),1,strtoreal(vkeys_i[k,3])) , rmat)
+						}
+						rmat_all = rmat_all \ rmat_k
 					}
-				cstripe = (J(rows(cstripe),1,""), cstripe)
-				rn = rname+"_L"+strofreal(ll)+"_w"
-				st_matrix("r("+rn+")",rmat_ll)
-				st_matrixcolstripe("r("+rn+")",cstripe)
-				rmatlist = (rmatlist, rn)
-				printf("\n{res}pystacked weights for %s (%s), learner=%g (%s)\n",rname,vnames[i],ll,base_est[ll])
-				stata("mat list " + "r("+rn+"), noheader noblank")
+				}
+				// process if any stacking weights encountered
+				if (rows(rmat_all) > 0) {
+					// rmat_all has full set of weights for all learners
+					if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+						cstripe = ("learner" \ "resample")
+					}
+					else if (eqn.lieflag==1) {
+						cstripe = ("learner" \ "h" \ "resample")
+					}
+					else if (d.model=="interactive") {
+						cstripe = ("learner" \ "D=0/1" \ "resample")
+					}
+					else {
+						cstripe = ("learner" \ "Z=0/1" \ "resample")
+					}
+					for (ff=1;ff<=d.kfolds;ff++) {
+						cstripe = cstripe \ ("fold_"+strofreal(ff))
+						}
+					cstripe = (J(rows(cstripe),1,""), cstripe)
+					rstripe = (J(rows(rstripe),1,""), rstripe)
+					rn = rname + "_w"
+					st_matrix("r("+rn+")",rmat_all)
+					st_matrixcolstripe("r("+rn+")",cstripe)
+					st_matrixrowstripe("r("+rn+")",rstripe)
+					rmatlist = (rmatlist, rn)
+					printf("\n{res}pystacked weights for %s (%s)\n",rname,vnames[i])
+					stata("mat list " + "r("+rn+"), noheader noblank")
+					// learner list
+					cstripe = ("" , "learner")
+					rstripe = (J(rows(base_est),1,""), base_est)
+					rn = rname+"_learners"
+					st_matrix("r("+rn+")",(1::rows(base_est)))
+					st_matrixcolstripe("r("+rn+")",cstripe)
+					st_matrixrowstripe("r("+rn+")",rstripe)
+					rmatlist = (rmatlist, rn)
+					// rmat_ll will have weights separately for each learner
+					for (ll=1;ll<=rows(base_est);ll++) {
+						svec = rmat_all[.,1] :== ll
+						
+						rmat_ll = select(rmat_all,svec)
+						rmat_ll = rmat_ll[.,(2::cols(rmat_ll))]
+						if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+							cstripe = ("resample")
+						}
+						else if (eqn.lieflag==1) {
+							cstripe = ("h=0/1" \ "resample")
+						}
+						else if (d.model=="interactive") {
+							cstripe = ("D=0/1" \ "resample")
+						}
+						else {
+							cstripe = ("Z=0/1" \ "resample")
+						}
+						for (ff=1;ff<=d.kfolds;ff++) {
+							cstripe = cstripe \ ("fold_"+strofreal(ff))
+							}
+						cstripe = (J(rows(cstripe),1,""), cstripe)
+						rn = rname+"_L"+strofreal(ll)+"_w"
+						st_matrix("r("+rn+")",rmat_ll)
+						st_matrixcolstripe("r("+rn+")",cstripe)
+						rmatlist = (rmatlist, rn)
+						printf("\n{res}pystacked weights for %s (%s), learner=%g (%s)\n",rname,vnames[i],ll,base_est[ll])
+						stata("mat list " + "r("+rn+"), noheader noblank")
+					}
+				}
 			}
 		}
 		st_global("r(matlist)",invtokens(sort(rmatlist,1)))

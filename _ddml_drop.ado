@@ -28,7 +28,7 @@ program _ddml_drop, eclass
 	}
 	
 	if `numeqnD' {
-		foreach var of varlist `nameD' {
+		foreach var in `nameD' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			local eqnlist `eqnlist' `mname'_`var'
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
@@ -46,7 +46,7 @@ program _ddml_drop, eclass
 	}
 	
 	if `numeqnZ' {
-		foreach var of varlist `nameZ' {
+		foreach var in `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			local eqnlist `eqnlist' `mname'_`var'
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))

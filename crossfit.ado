@@ -314,7 +314,11 @@ program define crossfit, rclass sortpreserve
 					// get predicted values
 					qui replace `vhat`i'' = `vhat_k' if `fid'==`k' & `touse'
 					qui replace `vres`i'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
-		
+					// pystacked learners
+					if (("`cmd'"=="pystacked") & (`k'==1) & (`m'==1)) {
+							// holds for all reps and folds
+							local base_est_`i' `e(base_est)'
+					}
 				}
 		
 				else if `tvflag' & ~`lieflag' {	// case 2: interactive models
@@ -380,6 +384,12 @@ program define crossfit, rclass sortpreserve
 					}
 					qui replace `vhat0`i'' = `vhat_k' if `fid'==`k' & `touse'
 					qui replace `vres0`i'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
+					
+					// pystacked learners
+					if (("`cmd'"=="pystacked") & (`k'==1) & (`m'==1)) {
+							// holds for all reps and folds
+							local base_est_`i' `e(base_est)'
+					}
 				}
 		
 				else if `lieflag' { // case 3
@@ -398,6 +408,10 @@ program define crossfit, rclass sortpreserve
 		
 					// get pystacked weights
 					if ("`cmd'"=="pystacked") {
+						if ((`k'==1) & (`m'==1)) {
+							// holds for all reps and folds
+							local base_est_`i' `e(base_est)'
+						}
 						if (`k'==1) {
 							mat `pysw_`i'' = e(weights)
 						}
@@ -427,7 +441,12 @@ program define crossfit, rclass sortpreserve
 		
 					// get pystacked weights
 					if ("`cmd_h'"=="pystacked") {
+						if ((`k'==1) & (`m'==1)) {
+							// holds for all reps and folds
+							local base_est_h_`i' `e(base_est)'
+						}
 						if (`k'==1) {
+							// initialize
 							mat `pyswh_`i'' = e(weights)
 						}
 						else {
@@ -447,10 +466,6 @@ program define crossfit, rclass sortpreserve
 				if `k'==1 & `m'==1 {
 					local cmd_list   `cmd_list'   `cmd'
 					local cmd_h_list `cmd_h_list' `cmd_h'
-					// pystacked learners
-					if ("`cmd'"=="pystacked") {
-						local base_est_`i' `e(base_est)'
-					}
 				}
 			}
 		}
@@ -702,11 +717,9 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE",       "`m'", `mse')
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
 				
-				// MS: this line fails if cmd hasn't been stored by ddml init; will happen if crossfit called directly 
-				// mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))
-				// instead use cmd selected from cmd_list above
 				if "`cmd'"=="pystacked" {
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
+					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")
 				}
 				
 				if `i'==1 {
@@ -782,10 +795,8 @@ program define crossfit, rclass sortpreserve
 					mata: add_result_item(`eqn_info',"`vtilde'","MSE`t'_folds", "`m'", st_matrix("`mse`t'_folds'"))
 				}
 				
-				// MS: this line fails if cmd hasn't been stored by ddml init; will happen if crossfit called directly 
-				// mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))				
-				// instead use cmd selected from cmd_list above
 				if "`cmd'"=="pystacked" {
+					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights0","`m'", st_matrix("`pysw0_`i''"))
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1_`i''"))
 				}
@@ -863,9 +874,11 @@ program define crossfit, rclass sortpreserve
 				// instead use cmd selected from cmd_list above
 				if "`cmd'"=="pystacked" {
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
+					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")					
 				}
 				if "`cmd_h'"=="pystacked" {
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights_h","`m'", st_matrix("`pyswh_`i''"))
+					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est_h","`base_est_h_`i''")					
 				}
 				
 				// optimal D and H
@@ -888,11 +901,6 @@ program define crossfit, rclass sortpreserve
 					mata: add_learner_item(`eqn_info',"opt_H","`m'","`vtilde'_h")
 				}
 				
-			}
-			
-			// add pystacked learner info (applies to all folds and resamples)
-			if "`cmd'"=="pystacked" & `m'==1 {
-				mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")
 			}
 
 		}
