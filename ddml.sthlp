@@ -67,6 +67,11 @@ where, depending on model chosen in Step 1,
 See {helpb ddml##compatibility:supported programs}.
 
 {pstd}
+Note: Options before ":" and after the first comma refer to {cmd:ddml}. 
+Options that come after the final comma refer to the estimation command. 
+{p_end}
+
+{pstd}
 {ul:Step 3.} Cross-fitting:
 
 {p 8 14}{cmd:ddml crossfit} [ , {opt mname(name)} {opt shortstack}{bind: ]} 
@@ -358,7 +363,7 @@ Below we demonstrate the use of {cmd:ddml} for each of the 5 models supported.
 Note that estimation models are chosen for demonstration purposes only and 
 kept simple to allow you to run the code quickly.
 
-{pstd}{ul:Partially linear model.} 
+{pstd}{ul:Partially linear model I.} 
 
 {pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
 {phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
@@ -383,7 +388,7 @@ expectation E[Y|X]. We first add simple linear regression.{p_end}
 {phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
 
 {pstd}We can add more than one learner per reduced form equation. Here, we also 
-add random forest.{p_end}
+add a random forest learner (implemented in {helpb pystacked}).{p_end}
 {phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg) method(rf)"}{p_end}
 
 {pstd}We do the same for the conditional expectation E[D|X].{p_end}
@@ -428,15 +433,17 @@ or just describe them all with the {opt all} option:
 {p_end}
 {phang2}. {stata "ddml describe, all"}{p_end}
 
-{pstd}{ul:Partially linear model - ensembles using stacking regression.}
+{pstd}{ul:Partially linear model II. Stacking regression using {helpb pystackde}.}
 
-{pstd}Stacking regression is a simple and power method for combining predictions from multiple learners.
+{pstd}Stacking regression is a simple and powerful method for 
+combining predictions from multiple learners.
 It is available in Stata via the {helpb pystacked} package.
 Below is an example with the partially linear model,
 but it can be used with any model supported by {cmd:ddml}.{p_end}
 
 {pstd}Preparation: use the data and globals as above.
-Use the name m1 for this new estimation, to distinguish it from the previous example that uses the default name m0.
+Use the name {cmd:m1} for this new estimation, 
+to distinguish it from the previous example that uses the default name {cmd:m0}.
 This enables having multiple estimations available for comparison.
 Also specify 5 resamplings.
 {p_end}
@@ -444,15 +451,29 @@ Also specify 5 resamplings.
 {phang2}. {stata "ddml init partial, kfolds(2) reps(5) mname(m1)"}{p_end}
 
 {pstd}Add supervised machine learners for estimating conditional expectations.
-The first learner in the stacked ensemble is OLS, as above.
-Also use cross-validated lasso, ridge and random forest with two different settings.
-Note that only one equation with {cmd:pystacked} is needed for each conditional expectation.
-Specify the names of the variables containing the estimated conditional expectations using the {opt learner(varname)} option.
-This avoids overwriting the variables created for the m0 model using default naming.{p_end}
+The first learner in the stacked ensemble is OLS.
+We also use cross-validated lasso, ridge and two random forests with different settings, 
+which we save in the following macros:{p_end}
 {phang2}. {stata "global rflow max_features(5) min_samples_leaf(1) max_samples(.7)"}{p_end}
 {phang2}. {stata "global rfhigh max_features(5) min_samples_leaf(10) max_samples(.7)"}{p_end}
+
+{pstd}
+In each step, we add the {cmd:mname(m1)} option to ensure that the learners
+are not added to the {cmd:m0} model which is still in memory.
+We also specify the names of the variables containing the estimated conditional
+expectations using the {opt learner(varname)} option.
+This avoids overwriting the variables created for the {cmd:m0} model using default naming.{p_end}
+
 {phang2}. {stata "ddml E[Y|X], mname(m1) learner(Y_m1): pystacked $Y $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf) opt($rflow) || method(rf) opt($rfhigh), type(reg)"}{p_end}
 {phang2}. {stata "ddml E[D|X], mname(m1) learner(D_m1): pystacked $D $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf) opt($rflow) || method(rf) opt($rfhigh), type(reg)"}{p_end}
+
+{pstd}
+Note: Options before ":" and after the first comma refer to {cmd:ddml}. 
+Options that come after the final comma refer to the estimation command. 
+Make sure to not confuse the two types of options.
+{p_end}
+
+{pstd}Check if learners were correctly added:{p_end}
 {phang2}. {stata "ddml desc, mname(m1) learners"}{p_end}
 
 {pstd}Cross-fitting and estimation.{p_end}
@@ -461,6 +482,10 @@ This avoids overwriting the variables created for the m0 model using default nam
 
 {pstd}Examine the learner weights used by {cmd:pystacked}.{p_end}
 {phang2}. {stata "ddml extract, mname(m1) show(pystacked)"}{p_end}
+
+{pstd}We can compare the effects with the first {cmd:ddml} model 
+(if you have run the first example above).{p_end}
+{phang2}. {stata "ddml estimate, mname(m0) replay"}{p_end}
 
 {pstd}{ul:Partially linear IV model.} 
 

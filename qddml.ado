@@ -35,6 +35,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		REPs(integer 1)							///
 		shortstack 								///
 		atet 									///
+		noreg 									///
 		]
 
 	mata: s_ivparse("`anything'")
@@ -57,6 +58,8 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if _rc == 199 {
 		local pystacked_avail = 0
 	}
+
+	local doreg = "`noreg'"==""
 
 	if "`robust'"!=""	local vce robust
 	if "`cluster'"~=""	local vce cluster `cluster'
@@ -139,6 +142,11 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	*** IV-HD
 	if ("`model'"=="ivhd") {
+		**
+		`qui' if (`doreg') ddml E[Y|X], mname(`mname') vname(`depvar') learner(Y0_reg): reg `depvar' `xctrl' 
+		`qui' if (`doreg') ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D0_reg): reg `dendog' `xctrl' `exexog' 
+		`qui' if (`doreg') ddml E[D|X], mname(`mname') vname(`dendog') learner(D0_reg): reg {D} `xctrl' 
+		**
 		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
 		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
 		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' {D} `xctrl', `dcmdoptions' 
@@ -146,14 +154,17 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	*** IV 
 	else if ("`model'"=="iv") {
+		`qui' if (`doreg') ddml E[Y|X], mname(`mname') vname(`depvar'): reg `depvar' `xctrl'  
 		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		local j = 1
 		foreach d of varlist `dendog' {
+			`qui' if (`doreg') ddml E[D|X], mname(`mname') vname(`d'): reg `d' `xctrl'  
 			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `d' `xctrl', `dcmdoptions' 
 			local j = `j' + 1
 		}
 		local j = 1
 		foreach z of varlist `exexog' {
+			`qui' if (`doreg') ddml E[Z|X], mname(`mname') vname(`z'): reg `z' `xctrl' 
 			`qui' ddml E[Z|X], mname(`mname') vname(`z') predopt(`zpredopt') vtype(`zvtype'): `zcmd' `z' `xctrl', `zcmdoptions' 
 			local j = `j' + 1
 		}
@@ -161,6 +172,11 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	*** late / interactive IV
 	else if ("`model'"=="late"|"`model'"=="interactiveiv") {
+		**
+		`qui' if (`doreg') ddml E[Y|Z,X], mname(`mname') vname(`depvar'): reg `depvar' `xctrl' 
+		`qui' if (`doreg') ddml E[D|Z,X], mname(`mname') vname(`dendog'): reg `dendog' `xctrl' 
+		`qui' if (`doreg') ddml E[Z|X], mname(`mname') vname(`exexog'): reg `exexog' `xctrl' 
+		**
 		`qui' ddml E[Y|Z,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		`qui' ddml E[D|Z,X], mname(`mname') vname(`dendog') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
 		`qui' ddml E[Z|X], mname(`mname') vname(`exexog') predopt(`zpredopt') vtype(`zvtype'): `zcmd' `exexog' `xctrl', `zcmdoptions' 
@@ -168,9 +184,11 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	*** partial linear model
 	else if ("`model'"=="partial") {
+		`qui' if (`doreg') ddml E[Y|X], mname(`mname') vname(`depvar'): reg `depvar' `xctrl'  
 		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		local j = 1
 		foreach d of varlist `dexog' {
+			`qui' if (`doreg') ddml E[D|X], mname(`mname') vname(`d'): reg `d' `xctrl'
 			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `d' `xctrl', `dcmdoptions' 
 			local j = `j' + 1
 		}
@@ -178,6 +196,10 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	*** interactive model
 	else if ("`model'"=="interactive") {
+		**
+		`qui' if (`doreg') ddml E[Y|D,X], mname(`mname') vname(`depvar'): reg `depvar' `xctrl' 
+		`qui' if (`doreg') ddml E[D|X], mname(`mname') vname(`dexog'): reg `dexog' `xctrl' 
+		**
 		`qui' ddml E[Y|D,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
 		`qui' ddml E[D|X], mname(`mname') vname(`dexog') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
 	}	
