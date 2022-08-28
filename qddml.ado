@@ -6,13 +6,13 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	syntax [anything] [if] [in] [aw pw],		/// note no "/" after pw
 		Model(name)								///
 		[										///
-		VERBose VVERBOSE						///
+		VERBose VVERBose						///
 		mname(name)								///
 		kfolds(integer 5)						///
 		TABFold									///
-								ROBust				///
-								CLUster(varname)	///
-								vce(string)			///
+		ROBust									///
+		CLUster(varname)						///
+		vce(string)								///
 		debug 									///
 		seed(int 0)								///
 		cmd(name)								///
@@ -77,12 +77,21 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	local ycmdoptions `ycmdoptions' `cmdoptions'
 	local dcmdoptions `dcmdoptions' `cmdoptions'
 	local zcmdoptions `zcmdoptions' `cmdoptions'
+	local dhcmd `dcmd'
+	local dhcmdoptions `dcmdoptions'
 
 	**** syntax checks
 	if ("`model'"=="ivhd") {
 		if "`dexog'"!="" {
 			di as error "no exogenous treatments allowed"
 			exit 198
+		}
+		if "`xctrl'"=="" {
+			local ycmd regress
+			local ycmdoptions 
+			local doreg = 0
+			local dhcmd regress
+			local dhcmdoptions 
 		}
 	} 
 	else if ("`model'"=="iv") {
@@ -149,7 +158,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		**
 		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
 		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' {D} `xctrl', `dcmdoptions' 
+		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dhcmd' {D} `xctrl', `dhcmdoptions' 
 	} 
 
 	*** IV 
