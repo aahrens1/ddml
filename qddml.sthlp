@@ -31,6 +31,10 @@ allow for multiple learners per reduced form equation.
 {opt qddml} uses stacking regression ({helpb pystacked}) 
 as the default machine learning program. 
 
+{pstd}
+{opt qddml} relies on {helpb crossfit}, which can be used as a standalone
+program.
+
 {p 8 14 2}
 {cmd:qddml}
 {it:depvar} {it:regressors} [{cmd:(}{it:hd_controls}{cmd:)}]

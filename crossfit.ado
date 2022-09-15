@@ -26,7 +26,6 @@ program define crossfit, rclass sortpreserve
 							estringh(string asis)	/// est string for E[D^|XZ]		
 													/// 
 							predopt(string asis)	///
-							vtype(string)			///  "double", "float" etc
 							NOIsily					///
 							allowallzero				/// in the LATE model: allow D
 							]

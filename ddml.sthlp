@@ -26,6 +26,10 @@ which uses a simplified one-line syntax,
 but offers less flexibility.
 
 {pstd}
+{opt qddml} relies on {helpb crossfit}, which can be used as a standalone
+program.
+
+{pstd}
 Please check the {helpb ddml##examples:examples} provided at the end of the help file.
 
 {marker syntax}{...}
