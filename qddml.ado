@@ -9,6 +9,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		VERBose VVERBose						///
 		mname(name)								///
 		kfolds(integer 5)						///
+		foldvar(varlist)						///
 		TABFold									///
 		ROBust									///
 		CLUster(varname)						///
@@ -32,10 +33,10 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		zvtype(string)							///  "double", "float" etc
 		CMDOPTions(string asis)					///
 		NOIsily 								///
-		REPs(integer 1)							///
+		REPs(integer 0)							///
 		shortstack 								///
 		atet 									///
-		noreg 									///
+		NOREG 									///
 		]
 
 	mata: s_ivparse("`anything'")
@@ -147,7 +148,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if "`mname'"=="" local mname m0		
 
 	*** estimation
-	`qui' ddml init `model', kfolds(`kfolds') reps(`reps') cluster(`cluster') `tabfold'
+	`qui' ddml init `model', kfolds(`kfolds') reps(`reps') cluster(`cluster') `tabfold' foldvar(`foldvar')
 
 	*** IV-HD
 	if ("`model'"=="ivhd") {
