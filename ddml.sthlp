@@ -118,13 +118,13 @@ Export results in csv format:
 {pstd}
 Retrieve information from {cmd:ddml}:
 
-{p 8 14}{cmd:ddml extract} [ , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)} {opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)} {opt subkey2(string)}{bind: ]}
+{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)} {opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)} {opt subkey2(string)}{bind: ]}
 
 {pstd}
 {it:display_item} can be {it:mse}, {it:n} or {it:pystacked}.
 {cmd:ddml} stores many internal results on associative arrays.
 These can be retrieved using the different key options.
-See ... for details.
+See {helpb ddml extract} for details.
 
 {pstd}
 Drop the {cmd:ddml} estimation {it:mname} and all associated variables:

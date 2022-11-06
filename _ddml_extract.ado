@@ -368,8 +368,7 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 				}
 			}
 		}
-		
-		if (keysflag) {
+		else if (keysflag) {
 			if (vname~="") {
 				vlist = J(1,1,vname)
 			}
