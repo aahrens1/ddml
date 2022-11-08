@@ -5,7 +5,7 @@
 
 program define crossfit, rclass sortpreserve
 
-	syntax [anything] [if] [in] ,					/// 
+	syntax [anything] [if] [in] ,					/// [anything] is renamed to vname below; currently undocumented option
 							[ estring(string asis)	/// estimation string
 													/// need asis option in case it includes strings
 													///
@@ -15,8 +15,9 @@ program define crossfit, rclass sortpreserve
 							kfolds(integer 5)		/// ignored if foldvars provided
 							reps(integer 1)			/// ignored if foldvars provided
 							NORANDOM				/// first fold ID uses obs in existing order
-							resid					///
+							resid					/// return residuals (prediction errors); default is predicted values
 							vtilde(namelist)		/// name(s) of fitted variable(s)
+							Generate(namelist)		/// synonym for vtilde
 							vtype(string)			/// datatype of fitted variable; default=double
 							treatvar(varname)		/// 1 or 0 RHS variable; relevant for interactive model only
 													/// if omitted then default is additive model
@@ -25,16 +26,17 @@ program define crossfit, rclass sortpreserve
 													/// options specific to LIE/DDML-IV
 							estringh(string asis)	/// est string for E[D^|XZ]		
 													/// 
-							predopt(string asis)	///
+							predopt(string asis)	/// undocumented
 							NOIsily					///
-							allowallzero				/// in the LATE model: allow D
+							allowallzero			/// in the LATE model: allow D
 							]
 
 	// renaming for clarity
-	local vtlist `vtilde'
+	local vtlist `vtilde' `generate'
 	local vname `anything'
 	// clear the local macro
 	local vtilde
+	local generate
 
 	** indicator for LIE/optimal-IV model
 	local lieflag	= "`estringh'"~=""
@@ -162,8 +164,17 @@ program define crossfit, rclass sortpreserve
 		local vtype double
 	}
 
+	// stored results; initialize here
+	tempname mse_list N_list mse_folds_list N_folds_list
+	tempname mse_h_list N_h_list mse_h_folds_list N_h_folds_list
+	tempname mse0_list N0_list mse0_folds_list N0_folds_list
+	tempname mse1_list N1_list mse1_folds_list N1_folds_list
+		
 	// loop over resamples (crossfitting, shortstacking, store results)
 	forvalues m=1/`reps' {
+	
+	// create rnames for renaming the rows of saved matrices
+	local rnames `rnames' resample_`m'
 
 	******************************** CROSSFITTING ************************************
 	
@@ -664,11 +675,6 @@ program define crossfit, rclass sortpreserve
 		
 		******************************** STORE RESULTS ************************************
 		
-		tempname mse_list N_list mse_folds_list N_folds_list
-		tempname mse_h_list N_h_list mse_h_folds_list N_h_folds_list
-		tempname mse0_list N0_list mse0_folds_list N0_folds_list
-		tempname mse1_list N1_list mse1_folds_list N1_folds_list
-		
 		forvalues i=1/`nlearners' {
 			
 			local vtilde	: word `i' of `vtlist'
@@ -693,7 +699,7 @@ program define crossfit, rclass sortpreserve
 				// calculate and return mspe and sample size
 				tempvar vres_sq
 				qui gen double `vres_sq' = `vres`i''^2 if `touse'
-			
+
 				// additive-type model
 				qui sum `vres_sq' if `touse', meanonly
 				local mse			= r(mean)
@@ -710,7 +716,7 @@ program define crossfit, rclass sortpreserve
 				mat `N_list'			= (nullmat(`N_list') \ `N')
 				mat `mse_folds_list'	= (nullmat(`mse_folds_list') \ `mse_folds')
 				mat `N_folds_list'		= (nullmat(`N_folds_list')\ `N_folds')
-				
+			
 				mata: add_result_item(`eqn_info',"`vtilde'","N",         "`m'", `N')
 				mata: add_result_item(`eqn_info',"`vtilde'","N_folds",   "`m'", st_matrix("`N_folds'"))
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE",       "`m'", `mse')
@@ -1045,16 +1051,22 @@ program define crossfit, rclass sortpreserve
 
 	if ~`tvflag' {
 		
+		foreach mname in mse_list N_list mse_folds_list N_folds_list {
+			mat rownames ``mname''	= `rnames'
+			return mat `mname'		= ``mname''
+		}
 		return mat mse_folds		= `mse_folds'
 		return mat N_folds			= `N_folds'
 		return scalar mse			= `mse'
-
-		return mat mse_list			= `mse_list'
-		return mat N_list			= `N_list'
-		return mat mse_folds_list	= `mse_folds_list'
-		return mat N_folds_list		= `N_folds_list'
+		
 	}
 	else {
+	
+		foreach mname in mse0_list N0_list mse0_folds_list N0_folds_list mse1_list N1_list mse1_folds_list N1_folds_list {
+			mat rownames ``mname''	= `rnames'
+			return mat `mname'		= ``mname''
+		}
+		
 		return scalar mse0			= `mse0'
 		return scalar N0			= `N0'
 		return scalar mse1			= `mse1'
@@ -1064,28 +1076,19 @@ program define crossfit, rclass sortpreserve
 		return mat N0_folds			= `N0_folds'
 		return mat N1_folds			= `N1_folds'
 	
-		return mat mse0_list		= `mse0_list'
-		return mat N0_list			= `N0_list'
-		return mat mse0_folds_list	= `mse0_folds_list'
-		return mat N0_folds_list	= `N0_folds_list'
-		
-		return mat mse1_list		= `mse1_list'
-		return mat N1_list			= `N1_list'
-		return mat mse1_folds_list	= `mse1_folds_list'
-		return mat N1_folds_list	= `N1_folds_list'
-	
 	}
 	if `lieflag' {
+	
+		foreach mname in mse_h_list N_h_list mse_h_folds_list N_H_folds_list {
+			mat rownames ``mname''	= `rnames'
+			return mat `mname'		= ``mname''
+		}
 		return scalar N_h			= `N_h'
 	
 		return mat mse_h_folds		= `mse_h_folds'
 		return mat N_h_folds		= `N_h_folds'
 		return scalar mse_h			= `mse_h'
 		
-		return mat mse_h_list		= `mse_h_list'
-		return mat N_h_list			= `N_h_list'
-		return mat mse_h_folds_list	= `mse_h_folds_list'
-		return mat N_h_folds_list	= `N_h_folds_list'
 	}
 
 	return scalar N			= `N'
