@@ -18,10 +18,9 @@ for the whole sample.
 {opt estring(string)}
 {opt g:enerate(stubname)}
 [{opt kfolds(integer)}
-{opt foldvar(varname)}
+{opt foldvar(varlist)}
 {opt norandom}
 {opt reps(integer)}
-{opt predopt(string)}
 {opt vtype(string)}]
 
 {pstd}
@@ -113,13 +112,13 @@ See {helpb ddml##compatibility:here}.
 {phang2}. {stata "crossfit, estring(reg earnings $X) gen(yhat) kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "sum earnings yhat*"}{p_end}
 
-{pstd}A simple example of 3-fold crosxs-validation with 5 resamples using {opt crossfit}.
+{pstd}A simple example of 3-fold cross-validation with 5 resamples using {opt crossfit}.
 The example uses {opt lasso2} from {opt lassopack}; click on {stata "ssc install lassopack"} to install.
 We estimate using the following values of the lambda parameter: 2000, 1000, 500, 250.
-Each time we call {opt crossfit} to obtain the residuals.
+Each time we call {opt crossfit} to obtain the residuals (prediction errors).
 These could be used after cross-fitting to calculate the MSPE (mean squared prediction error),
 but the MSPE is one of the returned results of {opt crossfit} so we just report that.
-The specification that mnimizes the MSPE for all 5 resamples is lambda=250.
+The specification that minimizes the MSPE for all 5 resamples is lambda=250.
 {p_end}
 {phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(2000)) gen(ehat2000) resid kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "mat list r(mse_list)"}{p_end}
