@@ -248,8 +248,8 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 						st_matrix("r("+rn+")",rmat_ll)
 						st_matrixcolstripe("r("+rn+")",cstripe)
 						rmatlist = (rmatlist, rn)
-						printf("\n{res}pystacked weights for %s (%s), learner=%g (%s)\n",rname,vnames[i],ll,base_est[ll])
-						stata("mat list " + "r("+rn+"), noheader noblank")
+						//printf("\n{res}pystacked weights for %s (%s), learner=%g (%s)\n",rname,vnames[i],ll,base_est[ll])
+						//stata("mat list " + "r("+rn+"), noheader noblank")
 					}
 				}
 			}
