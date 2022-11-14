@@ -147,8 +147,13 @@ number of cross-fitting folds. The default is 5.
 {synopt:{opt fcluster(varname)}}
 cluster identifiers for cluster randomization of random folds.
 {p_end}
-{synopt:{opt foldvar(varname)}}
-integer variable with user-specified cross-fitting folds.
+{synopt:{opt foldvar(varlist)}}
+integer variable with user-specified cross-fitting folds (one per resample).
+{p_end}
+{synopt:{opt norandom}}
+use observations in existing order instead of randomizing before splitting into folds;
+if multiple resamples, applies to first resample only;
+ignored if user-defined fold variables are provided in {opt foldvar(varlist)}.
 {p_end}
 {synopt:{opt reps(integer)}}
 number of re-sampling iterations, i.e., how often the cross-fitting procedure is
@@ -211,10 +216,10 @@ of several base learners.
 name of the DDML model. Defaults to {it:m0}.
 {p_end}
 {synopt:{opt spec(integer/string)}}
-select specification
+select specification (specification number, "mse" or "ss")
 {p_end}
 {synopt:{opt rep(integer/string)}}
-select resampling iteration
+select resampling iteration (resample number, "mn" or "md")
 {p_end}
 {synopt:{cmdab:r:obust}}
 report SEs that are robust to the

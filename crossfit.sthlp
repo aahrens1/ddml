@@ -48,17 +48,21 @@ Note that if the variable (including the resample number) already exists, it is 
 Create residuals (prediction errors); default is predicted values of outcome variable.
 {p_end}
 {synopt:{opt kfolds(integer)}}
-Number of randomly drawn folds (ignored if {opt foldvar(varname)} is specified).
+Number of randomly drawn folds; ignored if {opt foldvar(varlist)} is specified; default=5.
 {p_end}
-{synopt:{opt foldvar(varname)}}
-Integer variable with user-specified cross-fitting folds.
+{synopt:{opt foldvar(varlist)}}
+Integer variable(s) with user-specified cross-fitting folds; one foldvar per resample.
 {p_end}
 {synopt:{opt norandom}}
-Use observations in existing order instead of randomizing before splitting into folds.
+Use observations in existing order instead of randomizing before splitting into folds;
+if multiple resamples, applies to first resample only;
+ignored if user-defined fold variables are provided in {opt foldvar(varlist)}.
 {p_end}
 {synopt:{opt reps(integer)}}
-Number of re-sampling iterations, i.e., how often the cross-fitting procedure is
-repeated on randomly generated folds (ignored if {opt foldvar(varname)} is specified).
+Number of resampling iterations, i.e., how often the cross-fitting procedure is
+repeated on randomly generated folds;
+ignored if {opt foldvar(varlist)} is specified;
+default=1.
 {p_end}
 {synopt:{opt vtype(string)}}
 Variable type of the variable to be created. Defaults to {it:double}. 
@@ -81,6 +85,21 @@ that supports standard postestimation prediction.
 {p_end}
 
 {pstd}
+{opt crossfit}'s default is to generate a single random split into folds.
+This can be overridden by specifying user-defined fold variables,
+or by the {opt norandom} option (indicating that the split use the data in the existing order).
+{p_end}
+
+{pstd}
+{opt crossfit} allows multiple resampling,
+meaning that the procedure is applied repeatedly
+using multiple fold variables that indicate different fold splits.
+This can be done via the {opt reps} option,
+or by providing multiple user-defined fold variables.
+The resample number is appended to the generated predictions/residuals.
+{p_end}
+
+{pstd}
 The output of {opt crossfit} can be seen as the intermediate step
 of standard K-fold cross-validation.
 In a typical cross-validation exercise, a search is conducted across a range of specifications (e.g. values for a tuning parameter).
@@ -94,7 +113,7 @@ A simple example of how to use {opt crossfit} to do this is below.
 {title:Compatible programs}
 
 {pstd} 
-See {helpb ddml##compatibility:here}.
+See {help ddml##compatibility:here}.
 
 
 {marker examples}{...}
