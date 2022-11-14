@@ -1079,7 +1079,7 @@ program define crossfit, rclass sortpreserve
 	}
 	if `lieflag' {
 	
-		foreach mname in mse_h_list N_h_list mse_h_folds_list N_H_folds_list {
+		foreach mname in mse_h_list N_h_list mse_h_folds_list N_h_folds_list {
 			mat rownames ``mname''	= `rnames'
 			return mat `mname'		= ``mname''
 		}
