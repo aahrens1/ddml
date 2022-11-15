@@ -47,7 +47,7 @@ proceeds in four steps.
 [ , {opt mname(name)} {opt kfolds(integer)}
 {opt fcluster(varname)}
 {opt foldvar(varlist)} {opt reps(integer)} 
-{opt tabfold} {opt vars(varlist)}{bind: ]}
+{opt norandom} {opt tabfold} {opt vars(varlist)}{bind: ]}
 
 {pstd}
 where {it:model} is either {it:partial}, 
