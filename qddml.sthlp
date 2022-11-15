@@ -45,6 +45,7 @@ program.
 {opt cmd(string)}
 {opt cmdopt(string)}
 {opt mname(string)}
+{opt noreg}
 {opt ...} ]}
 
 {pstd}
@@ -105,6 +106,9 @@ select variance-covariance estimator, see {helpb regress##vcetype:here}
 {p_end}
 {synopt:{opt cluster(varname)}}
 select cluster-robust variance-covariance estimator.
+{p_end}
+{synopt:{opt noreg}}
+do not add {helpb regress} as an additional learner. 
 {p_end}
 
 {synoptset 20}{...}
