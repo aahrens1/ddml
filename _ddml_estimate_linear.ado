@@ -450,36 +450,35 @@ program _ddml_estimate_linear, eclass sortpreserve
 						}
 					}
 					di
-				
-					if `ssflag' & (`rowcount' <= `tnumrows') {
-						local ++rowcount
-						`qui' _ddml_reg, mname(`mname') spec(ss) rep(`m') replay
-						tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
-						mat `btemp' = e(b)
-						mat `Vtemp' = e(V)
-						local specrep `: di "ss" %3.0f `m''
-						// pad out to 6 spaces
-						local specrep = "  " + "`specrep'"
-						local rcmd stata ddml estimate `mname', spec(ss) rep(`m') replay notable
-						di %6s "{`rcmd':`specrep'}" _c
-						di as res %14s "[shortstack]" _c
-						forvalues j=1/`numeqnD' {
-							di as res %14s "[ss]" _c
-							di as res %10.3f el(`btemp',1,`j') _c
-							local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-							di as res %10s "`pse'" _c
-						}
-						if "`model'"=="ivhd" {
-							forvalues j=1/`numeqnD' {
-								di as res %14s "[ss]" _c
-							}
-						}
-						forvalues j=1/`numeqnZ' {
-							di as res %14s "[ss]" _c
-						}
-						di
+				}
+			}
+			if `ssflag' & (`rowcount' <= `tnumrows') {
+				local ++rowcount
+				`qui' _ddml_reg, mname(`mname') spec(ss) rep(`m') replay
+				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+				mat `btemp' = e(b)
+				mat `Vtemp' = e(V)
+				local specrep `: di "ss" %3.0f `m''
+				// pad out to 6 spaces
+				local specrep = "  " + "`specrep'"
+				local rcmd stata ddml estimate `mname', spec(ss) rep(`m') replay notable
+				di %6s "{`rcmd':`specrep'}" _c
+				di as res %14s "[shortstack]" _c
+				forvalues j=1/`numeqnD' {
+					di as res %14s "[ss]" _c
+					di as res %10.3f el(`btemp',1,`j') _c
+					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
+					di as res %10s "`pse'" _c
+				}
+				if "`model'"=="ivhd" {
+					forvalues j=1/`numeqnD' {
+						di as res %14s "[ss]" _c
 					}
 				}
+				forvalues j=1/`numeqnZ' {
+					di as res %14s "[ss]" _c
+				}
+				di
 			}
 		}
 		if `rowcount' > `tnumrows' {
