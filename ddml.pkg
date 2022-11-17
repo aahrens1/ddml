@@ -7,7 +7,7 @@ f ddml.sthlp
 f crossfit.ado
 f stacking.ado
 f stacking_p.ado
-f lddml.do
+f lddml.mlib
 f _ddml_allcombos.ado
 f _ddml_ate_late.ado
 f _ddml_combine.ado
