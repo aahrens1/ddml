@@ -1,4 +1,14 @@
+* add check that depvar matches dep vars of learners
+* report name of eqn object in mata (eStruct)
+
 program define stacking, eclass
+	
+	// check that ddml is installed
+	cap ddml, version
+	if _rc>0 {
+		di as err "error - stacking requires ddml package to be installed"
+		exit 199
+	}
 	
 	if ~replay() {
 		_stacking `0'
@@ -92,130 +102,126 @@ program define _stacking, eclass
 							[						///
 							foldvar(varlist)		/// one fold var per resample
 							kfolds(integer 5)		/// ignored if foldvars provided
+							NORANDOM				/// first fold ID uses obs in existing order
 							estring(string asis)	/// estimation string
-							vtilde(namelist)		/// name(s) of fitted variable(s)
-							stack(name)				/// varname for stacking predictions (optional)
-							eqn(name)				///
+							cvoos					///
+							replace					///
 							NOIsily					///
+							*						///
 							]
+	// for clarity
+	local depvar	`varlist'
+	local cvoosflag	=("`cvoos'"~="")
 
-	// renaming for clarity
-	local vtlist `vtilde'
-	// clear the local macro
-	local vtilde
-	
 	if "`noisily'"=="" {
 		local qui quietly
 	}
 	
 	marksample touse
 	// if dep var is missing, automatically not in estimation sample
-	markout `touse' `vname'
-	
-	if "`stack'"=="" {
-		// name for in-sample stacking predictions not provided, so drop when done
-		local stack __stacking
-		local dropstack 1
-	}
-	else {
-		local dropstack 0
-	}
+	markout `touse' `depvar'
 
-	// blank eqn - declare this way so that it's a struct and not transmorphic
-	if "`eqn'" == "" {
-		local eqn stacking_eqn
-	}
-	mata: `eqn' = init_eStruct()
-	
-	tempname mname
-	ddml init partial, mname(`mname')
-	_ddml_sample if `touse' , mname(`mname')
-	// sample, id, fid not needed
-	cap drop `mname'*
-	
+	// parse estring
 	local doparse = 1
-	local vnum = 1
-	local hasvtlist = "`vtlist'"~=""
+	local vnum = 0
+	// copy of estring
+	local testring `estring'
+	// vtlist is the list of learners, each prefixed by Y1_, Y2_, ...
+	// tvtlist is the list of temp names that will have the CV OOS predictions
 	while `doparse' {
-		tokenize `"`estring'"', parse("||")
+		local ++vnum
+		tokenize `"`testring'"', parse("||")
 		
 		// catch special case - a single | appears inside the estimation string
 		if "`2'"=="|" & "`3'"~="|" {
 			local firstpart `1' `2' `3'
 			mac shift 2
-			local estring `*'
-			tokenize `"`estring'"', parse("||")
+			local testring `*'
+			tokenize `"`testring'"', parse("||")
 			local 1 `firstpart'
 		}
-		
-		if `hasvtlist' {
-			local vtilde : word `vnum' of `vtlist'
-		}
-		else {
-			local vtilde : word 1 of `1'
-			local vtilde Y`vnum'_`vtilde'
-			local vtlist `vtlist' `vtilde'
-		}
-		
-		// put in a yeq
-		`qui' ddml yeq, learner(`vtilde') mname(`mname') vname(`varlist') : `1'
-	
+		local vtilde : word 1 of `1'
+		local vtilde Y`vnum'_`vtilde'
+		local vtlist `vtlist' `vtilde'
+		tempname vt
+		local tvtlist `tvtlist' `vt'
+		// save estimation string in a local
+		local estring_`vnum' `1'
 		if "`2'"~="|" & "`3'"~="|" {
 			// done parsing
 			local doparse = 0
 		}
 
 		mac shift 3
-		
-		local estring `*'
-		
-		local ++vnum
+		local testring `*'
 	}
 	
-	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
-	mata: `eqn'.shortstack = "`stack'"
-	// model struct no longer needed
-	mata: mata drop `mname'
+	// vnum is the number of learners
+	local nlearners `vnum'
 	
 	`qui' crossfit if `touse',		///
-		ename(`eqn') noreplace		///
+		estring(`estring')			///
+		kfolds(`kfolds')			///
+		`norandom'					///
+		generate(`tvtlist')			///
 		`noisily'
 	
-	mata: st_local("nlearners", strofreal(`eqn'.nlearners))
-	
-	// stacking weights
-	tempname ss_weights
-	mata: st_matrix("`ss_weights'",return_result_item(`eqn',"`stack'","ss_weights", "1"))
+	// crossfit appends the resample number (here, _1) so remove it
+	foreach vn in `tvtlist' {
+		rename `vn'_1 `vn'
+	}
 
-	foreach var of varlist `vtilde' {
-		qui replace `touse' = 0 if `var'==.
-	}
-	qui count if `touse'
-	local N = r(N)
+	tempname N_folds mse_folds N_folds_list mse_folds_list N_list mse_list
+	local N					=r(N)
+	mat `N_folds'			=r(N_folds)
+	mat `mse_folds'			=r(mse_folds)
+	mat `N_folds_list'		=r(N_folds_list)
+	mat `mse_folds_list'	=r(mse_folds_list)
+	mat `N_list'			=r(N_list)
+	mat `mse_list'			=r(mse_list)
+
+	`qui' di
+	`qui' di as text "Stacking NNLS (additive model):"
+	`qui' _ddml_nnls `depvar' `tvtlist'
+	tempname s_weights
+	mat `s_weights' = e(b)
+	mat `s_weights' = `s_weights''
+	mat rownames `s_weights' = `vtlist'
 	
-	// housekeeping
-	// drop created predicted values
-	foreach vtilde in `vtlist' {
-		cap drop `vtilde'_1
+	// save cross-validated OOS predictions
+	if `cvoosflag' {
+		forvalues i=1/`nlearners' {
+			local vn	: word `i' of `vtlist'
+			local tvn	: word `i' of `tvtlist'
+			cap gen double `vn' = `tvn'
+			if _rc>0 & "`replace'"=="" {
+				di as err "error - variable `vn' already exists; use replace option"
+				exit 110
+			}
+			else if _rc>0 {
+				drop `vn'
+				qui gen double `vn' = `tvn'
+			}
+		}
 	}
-	if `dropstack' {
-		drop `stack'_1
-	}
-	else {
-		rename `stack'_1 `stack'
-		label var `stack' "Stacking out-of-sample (fold) predictions"
-	}
-	
+
 	ereturn clear
 	ereturn post, depname(`varlist') obs(`N') esample(`touse')
-	ereturn local cmd stacking
-	ereturn local stack `stack'
-	ereturn local predict stacking_p
-	ereturn local eqn `eqn'
-	ereturn local base_est `vtlist'
-	ereturn scalar mcount = `nlearners'
-	mat `ss_weights' = `ss_weights''
-	ereturn matrix weights = `ss_weights'
+	ereturn local cmd				stacking
+	ereturn local predict			stacking_p
+	ereturn local base_est			`vtlist'
+	ereturn scalar mcount			=`nlearners'
+	ereturn matrix weights			=`s_weights'
+	ereturn matrix N_folds			=`N_folds'
+	ereturn matrix mse_folds		=`mse_folds'
+	ereturn matrix N_folds_list		=`N_folds_list'
+	ereturn matrix mse_folds_list	=`mse_folds_list'
+	ereturn matrix N_list			=`N_list'
+	ereturn matrix mse_list			=`mse_list'
+	ereturn scalar cvoos			=`cvoos'
+	forvalues i=1/`nlearners' {
+		ereturn local estring_`i'	`estring_`i''
+	}
 
 end
 
@@ -235,7 +241,7 @@ program define stacking_graph_table, rclass
 				]
 
 	// any graph options implies graph
-	local graphflag = `"`graph1'`histogram'`goptions'`lgoptions'"'~=""
+	local graphflag = `"`graph1'`goptions'`lgoptions'"'~=""
 	
 	if "`holdout'`holdout1'"=="" {
 		local title In-sample

@@ -27,11 +27,11 @@ program define stacking_p
 	// get var type & name
 	tokenize `namelist'
 	if "`2'"=="" {						//  only new varname provided
-		local varlist `1'
+		local varname `1'
 	}
 	else {								//  datatype also provided
 		local vtype `1'
-		local varlist `2'
+		local varname `2'
 	}
 
 	local command=e(cmd)
@@ -42,16 +42,16 @@ program define stacking_p
 	local depvar `e(depvar)'
 	local eqn `e(eqn)'
 	
-	mata: st_local("nlearners", strofreal(`eqn'.nlearners))
-	mata: st_local("vtlist", invtokens(`eqn'.vtlist))
+	local nlearners		`e(mcount)'
+	local vtlist		`e(base_est)'
 	
 	// predicted values
 	tempvar xbstacked
-	`qui' gen double `xbstacked' = 0 if `touse'
+	qui gen `vtype' `xbstacked' = 0 if `touse'
 	
 	// stacking weights
-	tempname ss_weights
-	mata: st_matrix("`ss_weights'",return_result_item(`eqn',"`e(stack)'","ss_weights", "1"))
+	tempname s_weights
+	mat `s_weights'		=e(weights)
 	
 	// learners will reset e(.) macros, so store them
 	tempname ehold
@@ -59,28 +59,36 @@ program define stacking_p
 	
 	forvalues i=1/`nlearners' {
 		local vtilde : word `i' of `vtlist'
-		mata: st_local("est_main", return_learner_item(`eqn',"`vtilde'","est_main"))
-		mata: st_local("est_options", return_learner_item(`eqn',"`vtilde'","est_options"))
+		_estimates unhold `ehold'
+		local 0 `e(estring_`i')'
+		_estimates hold `ehold', copy
+		syntax [anything] [if] [in] , [*]
+		local est_main `anything'
+		local est_options `options'
 		// estimate using estimation sample
 		`qui' `est_main' if `esample', `est_options'
 		tempvar xbv
 		// use all observations
-		`qui' predict double `xbv'
+		qui predict `vtype' `xbv'
 		if "`transform'"=="" {
-			`qui' replace `xbstacked' = `xbstacked' + `xbv'*`ss_weights'[1,`i']
+			qui replace `xbstacked' = `xbstacked' + `xbv'*`s_weights'[`i',1]
 		}
 		else if "`xb'" != "" {
-			`qui' replace `xbv' = . if ~`touse'
-			`qui' rename `xbv' `varlist'`i'
-			label var `varlist'`i' "Prediction `vtilde'"
-			`qui' count if `varlist'`i'==.
-			di as text "(`r(N)' missing values generated)"
+			qui replace `xbv' = . if ~`touse'
+			qui rename `xbv' `varname'`i'
+			label var `varname'`i' "Prediction `vtilde'"
+			qui count if `varname'`i'==.
+			if r(N)>0 {
+				di as text "(`r(N)' missing values generated)"
+			}
 		}
 		else {
-			`qui' generate `typlist' `varlist'`i' = `depvar' - `xbv' if `touse'
-			label var `varlist'`i' "Residuals `vtilde'"
-			`qui' count if `varlist'`i'==.
-			di as text "(`r(N)' missing values generated)"
+			qui generate `vtype' `varname'`i' = `depvar' - `xbv' if `touse'
+			label var `varname'`i' "Residuals `vtilde'"
+			qui count if `varname'`i'==.
+			if r(N)>0 {
+				di as text "(`r(N)' missing values generated)"
+			}
 		}
 	}
 	
@@ -89,15 +97,17 @@ program define stacking_p
 	
 	if "`transform'"=="" {
 		if "`xb'" != "" {
-			qui rename `xbstacked' `varlist'
-			label var `varlist' "Prediction stacking"
+			qui rename `xbstacked' `varname'
+			label var `varname' "Prediction stacking"
 		}
 		else {
-			qui generate `typlist' `varlist' = `depvar' - `xbstacked' if `touse'
-			label var `varlist' "Residuals stacking"
+			qui generate `vtype' `varname' = `depvar' - `xbstacked' if `touse'
+			label var `varname' "Residuals stacking"
 		}
-		`qui' count if `varlist'==.
-		di as text "(`r(N)' missing values generated)"
+		qui count if `varname'==.
+		if r(N)>0 {
+			di as text "(`r(N)' missing values generated)"
+		}
 	}
 	
 
