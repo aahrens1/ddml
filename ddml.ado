@@ -12,11 +12,19 @@
 
 program ddml	// no class - some subcommands are eclass, some are rclass
 
-	version 13
+	version 14
+	local lversion 0.5
 	
 	if replay() {
-		// recursive
-		ddml estimate `e(mname)', rep(`e(rep)') spec(`e(spec)') notable replay	
+		syntax [, VERsion * ]
+		 if "`version'"~="" & "`options'"=="" {
+		 	// report version and exit
+		 	_ddml_version, version(`lversion')
+		 }
+		 else {
+			// recursive
+			ddml estimate `e(mname)', rep(`e(rep)') spec(`e(spec)') notable replay
+		}
 	}
 	else {
 	
@@ -68,11 +76,11 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
-		if "`subcmd'"~="init" {
+		if ("`subcmd'"~="init" & "`subcmd'"~="extract") {
 			// exits with error if mname is not an mStruct
 			check_mname "`mname'"
 		}
-		else {
+		else if "`subcmd'"=="init"  {
 			// we are initializing mname; warn if this overwrites an existing mStruct
 			cap check_mname "`mname'"
 			if _rc==0 {
@@ -82,6 +90,9 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 				di as res "be dropped and model `mname' will be re-initialized"
 				_ddml_drop, mname(`mname')
 			}
+		}
+		else {
+			// ddml extract; do nothing
 		}
 	
 		*** get latest version
@@ -498,3 +509,13 @@ program define add_eqn_to_model, rclass
 	cap mata: mata drop `eqn'
 
 end
+
+program define _ddml_version, eclass
+	syntax , version(string)
+	
+	di as text "`version'"
+	ereturn clear
+	ereturn local version `version'
+	
+end
+	
