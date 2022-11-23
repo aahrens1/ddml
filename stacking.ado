@@ -1,14 +1,7 @@
 * add check that depvar matches dep vars of learners
-* report name of eqn object in mata (eStruct)
 
 program define stacking, eclass
-	
-	// check that ddml is installed
-	cap ddml, version
-	if _rc>0 {
-		di as err "error - stacking requires ddml package to be installed"
-		exit 199
-	}
+	version 14
 	
 	if ~replay() {
 		_stacking `0'
@@ -53,6 +46,7 @@ program define stacking, eclass
 					TABle								/// 
 					HOLDOUT1							/// vanilla option, abbreviates to "holdout"
 					holdout(varname)					///
+					cvoos								///
 					*									///
 				]
 	
@@ -60,6 +54,7 @@ program define stacking, eclass
 	if `"`graph'`graph1'`lgraph'`histogram'`table'"' ~= "" {
 		stacking_graph_table,							///
 			`holdout1' holdout(`holdout')				///
+			`cvoos'										///
 			`graph1'									///
 			`histogram'									///
 			goptions(`graph') lgoptions(`lgraph')		///
@@ -72,23 +67,23 @@ program define stacking, eclass
 		mat `m' = r(m)
 			
 		di
-		di as text "MSPE: In-Sample and Out-of-Sample"
-		di as text "{hline 17}{c TT}{hline 35}"
+		di as text "MSPE: In-Sample, CV-OOS, Out-of-Sample"
+		di as text "{hline 17}{c TT}{hline 47}"
 		di as text "  Method" _c
-		di as text _col(18) "{c |} Weight   In-Sample   Out-of-Sample"
-		di as text "{hline 17}{c +}{hline 35}"
+		di as text _col(18) "{c |} Weight   In-Sample      CV-OOS   Out-of-Sample"
+		di as text "{hline 17}{c +}{hline 47}"
 		
 		di as text "  STACKING" _c
 		di as text _col(18) "{c |}" _c
 		di as text "    .  " _c
-		di as res  _col(30) %7.3f el(`m',1,1) _col(44) %7.3f el(`m',1,2)
+		di as res  _col(30) %7.3f el(`m',1,1) _col(43) %7.3f el(`m',1,2) _col(56) %7.3f el(`m',1,3)
 		
 		forvalues j=1/`nlearners' {
 			local b : word `j' of `base_est'
 			di as text "  `b'" _c
 			di as text _col(18) "{c |}" _c
 			di as res _col(20) %5.3f el(`weights_mat',`j',1) _c
-			di as res _col(30) %7.3f el(`m',`j'+1,1) _col(44) %7.3f el(`m',`j'+1,2)
+			di as res _col(30) %7.3f el(`m',`j'+1,1) _col(43) %7.3f el(`m',`j'+1,2) _col(56) %7.3f el(`m',`j'+1,3)
 		}
 
 		// add to estimation macros
@@ -107,11 +102,29 @@ program define _stacking, eclass
 							cvoos					///
 							replace					///
 							NOIsily					///
+							NOPREFIX				/// no prefix appended
+							prefix(name)			///
 							*						///
 							]
+
+	// check that ddml is installed
+	cap ddml, version
+	if _rc>0 {
+		di as err "error - stacking requires ddml package to be installed"
+		exit 199
+	}
+	
 	// for clarity
 	local depvar	`varlist'
 	local cvoosflag	=("`cvoos'"~="")
+	
+	// default prefix; overrides prefix option
+	if "`noprefix'"~="" {
+		local prefix
+	}
+	else if "`prefix'"=="" {
+		local prefix _stack_
+	}
 
 	if "`noisily'"=="" {
 		local qui quietly
@@ -126,8 +139,10 @@ program define _stacking, eclass
 	local vnum = 0
 	// copy of estring
 	local testring `estring'
-	// vtlist is the list of learners, each prefixed by Y1_, Y2_, ...
-	// tvtlist is the list of temp names that will have the CV OOS predictions
+	// vt_list is the list of learners, each prefixed by Y1_, Y2_, ...
+	// yhat_list is the same with optional prefix `prefix' and with suffix _yhat
+	// cvoos_list is the same with optional prefix and with the suffix _cvoos
+	// tvt_list is the list of temp names that will have the CV OOS predictions
 	while `doparse' {
 		local ++vnum
 		tokenize `"`testring'"', parse("||")
@@ -140,11 +155,15 @@ program define _stacking, eclass
 			tokenize `"`testring'"', parse("||")
 			local 1 `firstpart'
 		}
-		local vtilde : word 1 of `1'
-		local vtilde Y`vnum'_`vtilde'
-		local vtlist `vtlist' `vtilde'
-		tempname vt
-		local tvtlist `tvtlist' `vt'
+		local vtilde		: word 1 of `1'
+		local vtilde		Y`vnum'_`vtilde'
+		local vt_list		`vt_list' `vtilde'
+		local yhat_list		`yhat_list' `prefix'`vtilde'_yhat
+		local cvoos_list	 `cvoos_list' `prefix'`vtilde'_cvoos
+		// tvt is tempname for cvoos predictions; tvh is for full-sample learner predictions
+		tempvar tvt tvh
+		local tvt_list `tvt_list' `tvt'
+		local tvh_list `tvh_list' `tvh'
 		// save estimation string in a local
 		local estring_`vnum' `1'
 		if "`2'"~="|" & "`3'"~="|" {
@@ -163,36 +182,37 @@ program define _stacking, eclass
 		estring(`estring')			///
 		kfolds(`kfolds')			///
 		`norandom'					///
-		generate(`tvtlist')			///
+		generate(`tvt_list')		///
 		`noisily'
 	
 	// crossfit appends the resample number (here, _1) so remove it
-	foreach vn in `tvtlist' {
+	foreach vn in `tvt_list' {
 		rename `vn'_1 `vn'
 	}
 
+	// get saved results from crossfit and store for later posting
 	tempname N_folds mse_folds N_folds_list mse_folds_list N_list mse_list
 	local N					=r(N)
-	mat `N_folds'			=r(N_folds)
-	mat `mse_folds'			=r(mse_folds)
-	mat `N_folds_list'		=r(N_folds_list)
-	mat `mse_folds_list'	=r(mse_folds_list)
-	mat `N_list'			=r(N_list)
-	mat `mse_list'			=r(mse_list)
-
+	foreach m in N_folds mse_folds N_folds_list mse_folds_list N_list mse_list {
+		mat ``m''	=r(`m')
+	}
+	foreach m in N_folds_list mse_folds_list N_list mse_list {
+		mat rownames ``m'' = `vt_list'
+	}
+	
 	`qui' di
 	`qui' di as text "Stacking NNLS (additive model):"
-	`qui' _ddml_nnls `depvar' `tvtlist'
+	`qui' _ddml_nnls `depvar' `tvt_list'
 	tempname s_weights
 	mat `s_weights' = e(b)
 	mat `s_weights' = `s_weights''
-	mat rownames `s_weights' = `vtlist'
+	mat rownames `s_weights' = `vt_list'
 	
 	// save cross-validated OOS predictions
 	if `cvoosflag' {
 		forvalues i=1/`nlearners' {
-			local vn	: word `i' of `vtlist'
-			local tvn	: word `i' of `tvtlist'
+			local vn	: word `i' of `cvoos_list'
+			local tvn	: word `i' of `tvt_list'
 			cap gen double `vn' = `tvn'
 			if _rc>0 & "`replace'"=="" {
 				di as err "error - variable `vn' already exists; use replace option"
@@ -204,35 +224,57 @@ program define _stacking, eclass
 			}
 		}
 	}
-
+	
+	// estimate individual base learners and obtain predicted values
+	forvalues i=1/`nlearners' {
+		local vn	: word `i' of `yhat_list'
+		local tvh	: word `i' of `tvh_list'
+		local 0 `estring_`i''
+		syntax [anything] [if] [in] , [*]
+		local est_main `anything'
+		local est_options `options'
+		// estimate using estimation sample
+		`qui' `est_main' if `touse', `est_options'
+		// use all observations
+		cap predict double `vn'
+		if _rc>0 {
+			if `i'==1 {
+				di as text "warning - overwriting existing variables with base learner predictions"
+			}
+			drop `vn'
+			qui predict double `vn'
+		}
+	}
+	
 	ereturn clear
-	ereturn post, depname(`varlist') obs(`N') esample(`touse')
+	ereturn post, depname(`depvar') obs(`N') esample(`touse')
 	ereturn local cmd				stacking
 	ereturn local predict			stacking_p
-	ereturn local base_est			`vtlist'
+	ereturn local base_yhat			`yhat_list'
+	ereturn local base_cvoos		`cvoos_list'
+	ereturn local base_est			`vt_list'
 	ereturn scalar mcount			=`nlearners'
 	ereturn matrix weights			=`s_weights'
-	ereturn matrix N_folds			=`N_folds'
-	ereturn matrix mse_folds		=`mse_folds'
-	ereturn matrix N_folds_list		=`N_folds_list'
-	ereturn matrix mse_folds_list	=`mse_folds_list'
-	ereturn matrix N_list			=`N_list'
-	ereturn matrix mse_list			=`mse_list'
-	ereturn scalar cvoos			=`cvoos'
-	forvalues i=1/`nlearners' {
+	foreach m in N_folds mse_folds N_folds_list mse_folds_list N_list mse_list {
+		ereturn matrix `m'			=``m''
+	}
+	ereturn scalar cvoos			=`cvoosflag'
+	forvalues i=`nlearners'(-1)1 {
 		ereturn local estring_`i'	`estring_`i''
 	}
+	ereturn local estring			`estring'
 
 end
 
 
 // graph and/or table
 program define stacking_graph_table, rclass
-	version 16.0
+	version 14
 	syntax ,								///
 				[							///
 					HOLDOUT1				/// vanilla option, abbreviates to "holdout"
 					holdout(varname)		///
+					cvoos					/// cross-validated OOS
 					GRAPH1					/// vanilla option, abbreviates to "graph"
 					HISTogram				/// report histogram instead of default ROC
 					goptions(string asis)	///
@@ -243,8 +285,15 @@ program define stacking_graph_table, rclass
 	// any graph options implies graph
 	local graphflag = `"`graph1'`goptions'`lgoptions'"'~=""
 	
-	if "`holdout'`holdout1'"=="" {
+	local cvoosflag	=("`cvoos'"~="")
+
+	if "`holdout'`holdout1'"=="" & `cvoosflag'==0 {
 		local title In-sample
+		tempvar touse
+		qui gen `touse' = e(sample)
+	}
+	else if "`holdout'`holdout1'"=="" {
+		local title CV-OOS
 		tempvar touse
 		qui gen `touse' = e(sample)
 	}
@@ -292,10 +341,15 @@ program define stacking_graph_table, rclass
 	// complete graph title
 	local title `title' Predictions
 		
-	tempvar stacking_p stacking_r
+	tempvar stacking_p stacking_r cvoos_p cvoos_r
+	// stacked
 	qui predict double `stacking_p'
 	label var `stacking_p' "Prediction: Stacking Regressor"
 	qui gen double `stacking_r' = `y' - `stacking_p'
+	qui predict double `cvoos_p', cvoos
+	label var `cvoos_p' "Prediction (CV-OOS): Stacking Regressor"
+	qui gen double `cvoos_r' = `y' - `cvoos_p'
+	// base learners
 	qui predict double `stacking_p', transform
 	forvalues i=1/`nlearners' {
 		local lname : word `i' of `learners'
@@ -303,10 +357,24 @@ program define stacking_graph_table, rclass
 		tempvar stacking_r`i'
 		qui gen double `stacking_r`i'' = `y' - `stacking_p'`i'
 	}
+	qui predict double `cvoos_p', transform cvoos
+	forvalues i=1/`nlearners' {
+		local lname : word `i' of `learners'
+		label var `cvoos_p'`i' "Prediction (CV-OOS): `lname'"
+		tempvar cvoos_r`i'
+		qui gen double `cvoos_r`i'' = `y' - `cvoos_p'`i'
+	}
 
+	// graph variables
+	if `cvoosflag'==0 {
+		local xvar stacking_p
+	}
+	else {
+		local xvar cvoos_p
+	}
 	tempname g0
 	if `graphflag' {
-		twoway (scatter `stacking_p' `y') (line `y' `y') if `touse'		///
+		twoway (scatter ``xvar'' `y') (line `y' `y') if `touse'		///
 			,															///
 			legend(off)													///
 			title("STACKING")											///
@@ -318,7 +386,7 @@ program define stacking_graph_table, rclass
 			tempname g`i'
 			local lname : word `i' of `learners'
 			local w : di %5.3f el(`weights',`i',1)
-			twoway (scatter `stacking_p'`i' `y') (line `y' `y') if `touse'	///
+			twoway (scatter ``xvar''`i' `y') (line `y' `y') if `touse'	///
 				,															///
 				legend(off)													///
 				title("Learner: `lname'")									///
@@ -338,14 +406,21 @@ program define stacking_graph_table, rclass
 	if "`table'"~="" {
 		
 		// save in matrix
-		tempname m m_in m_out
-		
+		tempname m m_in m_cvoos m_out
 		// column for in-sample MSPE
 		qui sum `stacking_r' if e(sample)
 		mat `m_in' = r(sd) * sqrt( (r(N)-1)/r(N) )
 		forvalues i=1/`nlearners' {
 			qui sum `stacking_r`i'' if e(sample)
 			mat `m_in' = `m_in' \ (r(sd) * sqrt( (r(N)-1)/r(N) ))
+		}
+		
+		// column for CV OOS MSPE
+		qui sum `cvoos_r' if e(sample)
+		mat `m_cvoos' = r(sd) * sqrt( (r(N)-1)/r(N) )
+		forvalues i=1/`nlearners' {
+			qui sum `cvoos_r`i'' if e(sample)
+			mat `m_cvoos' = `m_cvoos' \ (r(sd) * sqrt( (r(N)-1)/r(N) ))
 		}
 		
 		// column for OOS MSPE
@@ -362,8 +437,8 @@ program define stacking_graph_table, rclass
 			mat `m_out' = J(`nlearners'+1,1,.)
 		}
 		
-		mat `m' = `m_in' , `m_out'
-		mat colnames `m' = MSPE_in MSPE_out
+		mat `m' = `m_in' , `m_cvoos', `m_out'
+		mat colnames `m' = MSPE_in MSPE_cvoos MSPE_out
 		mat rownames `m' = STACKING `learners'
 		
 		return matrix m = `m'

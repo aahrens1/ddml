@@ -2,10 +2,17 @@
 program define stacking_p
 	version 14
 	
-	syntax namelist(min=1 max=2) [if] [in] , [ xb Residuals NOIsily TRANSForm]
- 
+	syntax namelist(min=1 max=2) [if] [in] , [ xb Residuals NOIsily cvoos TRANSForm]
+
 	if "`noisily'"=="" {
 		local qui quietly
+	}
+	
+	local cvoosflag	=("`cvoos'"~="")
+	// check
+	if `cvoosflag' & e(cvoos)==0 {
+		di as err "error - cross-validated OOS predictions not available; re-estimate using cvoos option"
+		exit 198
 	}
 	
 	// prediction sample
@@ -43,48 +50,47 @@ program define stacking_p
 	local eqn `e(eqn)'
 	
 	local nlearners		`e(mcount)'
-	local vtlist		`e(base_est)'
-	
-	// predicted values
-	tempvar xbstacked
-	qui gen `vtype' `xbstacked' = 0 if `touse'
+	local base_est		`e(base_est)'
+	local yhat_list		`e(base_yhat)'
+	local cvoos_list	`e(base_cvoos)'
 	
 	// stacking weights
 	tempname s_weights
 	mat `s_weights'		=e(weights)
 	
-	// learners will reset e(.) macros, so store them
-	tempname ehold
-	_estimates hold `ehold', copy
-	
+	// predicted values
+	if "`transform'"=="" {
+		// initialize stacked predictions; will accumulate by looping through learners
+		qui gen `vtype' `varname' = 0
+	}
 	forvalues i=1/`nlearners' {
-		local vtilde : word `i' of `vtlist'
-		_estimates unhold `ehold'
-		local 0 `e(estring_`i')'
-		_estimates hold `ehold', copy
-		syntax [anything] [if] [in] , [*]
-		local est_main `anything'
-		local est_options `options'
-		// estimate using estimation sample
-		`qui' `est_main' if `esample', `est_options'
-		tempvar xbv
-		// use all observations
-		qui predict `vtype' `xbv'
-		if "`transform'"=="" {
-			qui replace `xbstacked' = `xbstacked' + `xbv'*`s_weights'[`i',1]
+		local yhat			: word `i' of `yhat_list'
+		local yhat_cvoos	: word `i' of `cvoos_list'
+		local vtilde		: word `i' of `base_est'
+		if "`transform'"=="" & `cvoosflag'==0 {
+			// stacked predictions
+			qui replace `varname' = `varname' + `yhat'*`s_weights'[`i',1]
 		}
-		else if "`xb'" != "" {
-			qui replace `xbv' = . if ~`touse'
-			qui rename `xbv' `varname'`i'
-			label var `varname'`i' "Prediction `vtilde'"
-			qui count if `varname'`i'==.
-			if r(N)>0 {
-				di as text "(`r(N)' missing values generated)"
-			}
+		else if "`transform'"=="" {
+			// stacked CV OOS predictions
+			qui replace `varname' = `varname' + `yhat_cvoos'*`s_weights'[`i',1]
 		}
 		else {
-			qui generate `vtype' `varname'`i' = `depvar' - `xbv' if `touse'
-			label var `varname'`i' "Residuals `vtilde'"
+			// base learner predictions
+			if `cvoosflag' {
+				qui gen `vtype' `varname'`i' = `yhat_cvoos'
+			}
+			else {
+				qui gen `vtype' `varname'`i' = `yhat'
+			}
+			if "`residuals'"~="" {
+				qui replace `varname'`i' = `depvar' - `varname'`i'
+				label var `varname'`i' "Residuals `vtilde'"
+			}
+			else {
+				label var `varname'`i' "Prediction `vtilde'"
+			}
+			qui replace `varname'`i' = . if ~`touse'
 			qui count if `varname'`i'==.
 			if r(N)>0 {
 				di as text "(`r(N)' missing values generated)"
@@ -92,16 +98,13 @@ program define stacking_p
 		}
 	}
 	
-	// restore e(.) macros
-	_estimates unhold `ehold'
-	
+	// stacked predictions - finish up
 	if "`transform'"=="" {
 		if "`xb'" != "" {
-			qui rename `xbstacked' `varname'
 			label var `varname' "Prediction stacking"
 		}
 		else {
-			qui generate `vtype' `varname' = `depvar' - `xbstacked' if `touse'
+			qui replace `varname' = `depvar' - `varname'
 			label var `varname' "Residuals stacking"
 		}
 		qui count if `varname'==.
