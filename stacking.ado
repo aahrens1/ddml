@@ -232,17 +232,20 @@ program define _stacking, eclass
 		syntax [anything] [if] [in] , [*]
 		local est_main `anything'
 		local est_options `options'
-		// estimate using estimation sample
-		`qui' `est_main' if `touse', `est_options'
-		// use all observations
-		cap predict double `vn'
-		if _rc>0 {
+		// before estimating, check whether variable already exists and drop if it does
+		// because of possible varname abbreviations, do this using replace
+		cap replace `vn' = .
+		if _rc==0 {
+			// variable exists
 			if `i'==1 {
 				di as text "warning - overwriting existing variables with base learner predictions"
 			}
 			drop `vn'
-			qui predict double `vn'
 		}
+		// estimate using estimation sample
+		`qui' `est_main' if `touse', `est_options'
+		// use all observations
+		qui predict double `vn'
 	}
 	
 	ereturn clear
