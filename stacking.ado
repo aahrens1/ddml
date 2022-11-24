@@ -46,7 +46,7 @@ program define stacking, eclass
 					TABle								/// 
 					HOLDOUT1							/// vanilla option, abbreviates to "holdout"
 					holdout(varname)					///
-					cvoos								///
+					CValid								///
 					*									///
 				]
 	
@@ -54,23 +54,23 @@ program define stacking, eclass
 	if `"`graph'`graph1'`lgraph'`histogram'`table'"' ~= "" {
 		stacking_graph_table,							///
 			`holdout1' holdout(`holdout')				///
-			`cvoos'										///
+			`cvalid'									///
 			`graph1'									///
 			`histogram'									///
 			goptions(`graph') lgoptions(`lgraph')		///
 			`table'
 	}
 	
-	// print MSPE table
+	// print RMSPE table
 	if "`table'" ~= "" {
 		tempname m w
 		mat `m' = r(m)
 			
 		di
-		di as text "MSPE: In-Sample, CV-OOS, Out-of-Sample"
+		di as text "RMSPE: In-Sample, CV, Holdout"
 		di as text "{hline 17}{c TT}{hline 47}"
 		di as text "  Method" _c
-		di as text _col(18) "{c |} Weight   In-Sample      CV-OOS   Out-of-Sample"
+		di as text _col(18) "{c |} Weight   In-Sample        CV         Holdout"
 		di as text "{hline 17}{c +}{hline 47}"
 		
 		di as text "  STACKING" _c
@@ -87,7 +87,7 @@ program define stacking, eclass
 		}
 
 		// add to estimation macros
-		ereturn mat mspe = `m'
+		ereturn mat rmspe = `m'
 	}
 	
 end
@@ -99,7 +99,7 @@ program define _stacking, eclass
 							kfolds(integer 5)		/// ignored if foldvars provided
 							NORANDOM				/// first fold ID uses obs in existing order
 							estring(string asis)	/// estimation string
-							cvoos					///
+							CValid					///
 							replace					///
 							NOIsily					///
 							NOPREFIX				/// no prefix appended
@@ -116,7 +116,7 @@ program define _stacking, eclass
 	
 	// for clarity
 	local depvar	`varlist'
-	local cvoosflag	=("`cvoos'"~="")
+	local cvalidflag	=("`cvalid'"~="")
 	
 	// default prefix; overrides prefix option
 	if "`noprefix'"~="" {
@@ -141,8 +141,8 @@ program define _stacking, eclass
 	local testring `estring'
 	// vt_list is the list of learners, each prefixed by Y1_, Y2_, ...
 	// yhat_list is the same with optional prefix `prefix' and with suffix _yhat
-	// cvoos_list is the same with optional prefix and with the suffix _cvoos
-	// tvt_list is the list of temp names that will have the CV OOS predictions
+	// cvalid_list is the same with optional prefix and with the suffix _cv
+	// tvt_list is the list of temp names that will have the CV predictions
 	while `doparse' {
 		local ++vnum
 		tokenize `"`testring'"', parse("||")
@@ -159,8 +159,8 @@ program define _stacking, eclass
 		local vtilde		Y`vnum'_`vtilde'
 		local vt_list		`vt_list' `vtilde'
 		local yhat_list		`yhat_list' `prefix'`vtilde'_yhat
-		local cvoos_list	 `cvoos_list' `prefix'`vtilde'_cvoos
-		// tvt is tempname for cvoos predictions; tvh is for full-sample learner predictions
+		local cvalid_list	 `cvalid_list' `prefix'`vtilde'_cv
+		// tvt is tempname for cvalid predictions; tvh is for full-sample learner predictions
 		tempvar tvt tvh
 		local tvt_list `tvt_list' `tvt'
 		local tvh_list `tvh_list' `tvh'
@@ -191,12 +191,11 @@ program define _stacking, eclass
 	}
 
 	// get saved results from crossfit and store for later posting
-	tempname N_folds mse_folds N_folds_list mse_folds_list N_list mse_list
+	// returned but not re-saved: N_folds mse_folds 
+	tempname N_folds_list mse_folds_list N_list mse_list
 	local N					=r(N)
-	foreach m in N_folds mse_folds N_folds_list mse_folds_list N_list mse_list {
-		mat ``m''	=r(`m')
-	}
 	foreach m in N_folds_list mse_folds_list N_list mse_list {
+		mat ``m''	=r(`m')
 		mat rownames ``m'' = `vt_list'
 	}
 	
@@ -208,10 +207,10 @@ program define _stacking, eclass
 	mat `s_weights' = `s_weights''
 	mat rownames `s_weights' = `vt_list'
 	
-	// save cross-validated OOS predictions
-	if `cvoosflag' {
+	// save cross-validated predictions
+	if `cvalidflag' {
 		forvalues i=1/`nlearners' {
-			local vn	: word `i' of `cvoos_list'
+			local vn	: word `i' of `cvalid_list'
 			local tvn	: word `i' of `tvt_list'
 			cap gen double `vn' = `tvn'
 			if _rc>0 & "`replace'"=="" {
@@ -251,14 +250,14 @@ program define _stacking, eclass
 	ereturn local cmd				stacking
 	ereturn local predict			stacking_p
 	ereturn local base_yhat			`yhat_list'
-	ereturn local base_cvoos		`cvoos_list'
+	ereturn local base_cv			`cvalid_list'
 	ereturn local base_est			`vt_list'
 	ereturn scalar mcount			=`nlearners'
-	ereturn matrix weights			=`s_weights'
-	foreach m in N_folds mse_folds N_folds_list mse_folds_list N_list mse_list {
+	foreach m in N_folds_list N_list mse_folds_list mse_list {
 		ereturn matrix `m'			=``m''
 	}
-	ereturn scalar cvoos			=`cvoosflag'
+	ereturn matrix weights			=`s_weights'
+	ereturn scalar cvalid			=`cvalidflag'
 	forvalues i=`nlearners'(-1)1 {
 		ereturn local estring_`i'	`estring_`i''
 	}
@@ -274,7 +273,7 @@ program define stacking_graph_table, rclass
 				[							///
 					HOLDOUT1				/// vanilla option, abbreviates to "holdout"
 					holdout(varname)		///
-					cvoos					/// cross-validated OOS
+					CValid					/// cross-validated
 					GRAPH1					/// vanilla option, abbreviates to "graph"
 					HISTogram				/// report histogram instead of default ROC
 					goptions(string asis)	///
@@ -285,26 +284,26 @@ program define stacking_graph_table, rclass
 	// any graph options implies graph
 	local graphflag = `"`graph1'`goptions'`lgoptions'"'~=""
 	
-	local cvoosflag	=("`cvoos'"~="")
+	local cvalidflag	=("`cvalid'"~="")
 
-	if "`holdout'`holdout1'"=="" & `cvoosflag'==0 {
+	if "`holdout'`holdout1'"=="" & `cvalidflag'==0 {
 		local title In-sample
 		tempvar touse
 		qui gen `touse' = e(sample)
 	}
 	else if "`holdout'`holdout1'"=="" {
-		local title CV-OOS
+		local title CV
 		tempvar touse
 		qui gen `touse' = e(sample)
 	}
 	else {
-		local title Out-of-sample
+		local title Holdout
 		// holdout variable provided, or default = not-in-sample?
 		if "`holdout'"=="" {
 			// default
 			tempvar touse
 			qui gen `touse' = 1-e(sample)
-			// check number of OOS obs
+			// check number of holdout obs
 			qui count if `touse'
 			if r(N)==0 {
 				di as err "error - no observations in holdout sample"
@@ -341,14 +340,19 @@ program define stacking_graph_table, rclass
 	// complete graph title
 	local title `title' Predictions
 		
-	tempvar stacking_p stacking_r cvoos_p cvoos_r
+	tempvar stacking_p stacking_r cvalid_p cvalid_r
 	// stacked
 	qui predict double `stacking_p'
 	label var `stacking_p' "Prediction: Stacking Regressor"
 	qui gen double `stacking_r' = `y' - `stacking_p'
-	qui predict double `cvoos_p', cvoos
-	label var `cvoos_p' "Prediction (CV-OOS): Stacking Regressor"
-	qui gen double `cvoos_r' = `y' - `cvoos_p'
+	if e(cvalid) {
+		qui predict double `cvalid_p', cvalid
+	}
+	else {
+		qui gen `cvalid_p' = .
+	}
+	label var `cvalid_p' "Prediction (CV): Stacking Regressor"
+	qui gen double `cvalid_r' = `y' - `cvalid_p'
 	// base learners
 	qui predict double `stacking_p', transform
 	forvalues i=1/`nlearners' {
@@ -357,20 +361,27 @@ program define stacking_graph_table, rclass
 		tempvar stacking_r`i'
 		qui gen double `stacking_r`i'' = `y' - `stacking_p'`i'
 	}
-	qui predict double `cvoos_p', transform cvoos
+	if e(cvalid) {
+		qui predict double `cvalid_p', transform cvalid
+	}
+	else {
+		forvalues i=1/`nlearners' {
+			qui gen `cvalid_p'`i'=.
+		}
+	}
 	forvalues i=1/`nlearners' {
 		local lname : word `i' of `learners'
-		label var `cvoos_p'`i' "Prediction (CV-OOS): `lname'"
-		tempvar cvoos_r`i'
-		qui gen double `cvoos_r`i'' = `y' - `cvoos_p'`i'
+		label var `cvalid_p'`i' "Prediction (CV): `lname'"
+		tempvar cvalid_r`i'
+		qui gen double `cvalid_r`i'' = `y' - `cvalid_p'`i'
 	}
 
 	// graph variables
-	if `cvoosflag'==0 {
+	if `cvalidflag'==0 {
 		local xvar stacking_p
 	}
 	else {
-		local xvar cvoos_p
+		local xvar cvalid_p
 	}
 	tempname g0
 	if `graphflag' {
@@ -406,8 +417,8 @@ program define stacking_graph_table, rclass
 	if "`table'"~="" {
 		
 		// save in matrix
-		tempname m m_in m_cvoos m_out
-		// column for in-sample MSPE
+		tempname m m_in m_cv m_out
+		// column for in-sample RMSPE
 		qui sum `stacking_r' if e(sample)
 		mat `m_in' = r(sd) * sqrt( (r(N)-1)/r(N) )
 		forvalues i=1/`nlearners' {
@@ -415,15 +426,15 @@ program define stacking_graph_table, rclass
 			mat `m_in' = `m_in' \ (r(sd) * sqrt( (r(N)-1)/r(N) ))
 		}
 		
-		// column for CV OOS MSPE
-		qui sum `cvoos_r' if e(sample)
-		mat `m_cvoos' = r(sd) * sqrt( (r(N)-1)/r(N) )
+		// column for CV RMSPE
+		qui sum `cvalid_r' if e(sample)
+		mat `m_cv' = r(sd) * sqrt( (r(N)-1)/r(N) )
 		forvalues i=1/`nlearners' {
-			qui sum `cvoos_r`i'' if e(sample)
-			mat `m_cvoos' = `m_cvoos' \ (r(sd) * sqrt( (r(N)-1)/r(N) ))
+			qui sum `cvalid_r`i'' if e(sample)
+			mat `m_cv' = `m_cv' \ (r(sd) * sqrt( (r(N)-1)/r(N) ))
 		}
 		
-		// column for OOS MSPE
+		// column for holdout RMSPE
 		if "`holdout'`holdout1'"~="" {
 			// touse is the holdout indicator
 			qui sum `stacking_r' if `touse'
@@ -437,8 +448,8 @@ program define stacking_graph_table, rclass
 			mat `m_out' = J(`nlearners'+1,1,.)
 		}
 		
-		mat `m' = `m_in' , `m_cvoos', `m_out'
-		mat colnames `m' = MSPE_in MSPE_cvoos MSPE_out
+		mat `m' = `m_in' , `m_cv', `m_out'
+		mat colnames `m' = RMSPE_in RMSPE_cv RMSPE_out
 		mat rownames `m' = STACKING `learners'
 		
 		return matrix m = `m'

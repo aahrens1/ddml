@@ -23,7 +23,7 @@ Full syntax:
 [{opt kfolds(integer)}
 {opt foldvar(varname)}
 {opt norandom}
-{opt cvoos}
+{opt cv:alid}
 {opt replace}
 {opt noprefix}
 {opt prefix(name)}
@@ -66,7 +66,7 @@ Integer variable with user-specified cross-fitting folds.
 {synopt:{opt norandom}}
 Use observations in existing order instead of randomizing before splitting into folds.
 {p_end}
-{synopt:{opt cvoos}}
+{synopt:{opt cv:alid}}
 Save cross-validated out-of-sample predictions of each learner as Stata variables.
 {p_end}
 {synopt:{opt replace}}
@@ -109,7 +109,7 @@ To get predicted values or residuals:
 {bind:[{cmd:,}}
 {opt xb}
 {opt resid}
-{opt cvoos}
+{opt cv:alid}
 ]
 
 {pstd}
@@ -121,7 +121,7 @@ To get fitted values or residuals for each base learner:
 [{cmd:if} {it:exp}] [{cmd:in} {it:range}]
 {bind:[{cmd:,}}
 {opt transf:orm}
-{opt cvoos}
+{opt cv:alid}
 ]
 
 {synoptset 20}{...}
@@ -137,7 +137,7 @@ Residuals.
 Predicted values or residuals for each base learner.
 The variable names are the {it:stub} with the number of the base learner appended.
 {p_end}
-{synopt:{opt cvoos}}
+{synopt:{opt cv:alid}}
 Use cross-validated OOS predictions (default = use base learners re-fitted on full estimation sample).
 {p_end}
 {synoptline}
@@ -145,13 +145,14 @@ Use cross-validated OOS predictions (default = use base learners re-fitted on fu
 {pstd}
 {it:Note:} Predicted values (in- and out-of-sample)
 are calculated using the base learners re-fit on the full estimation sample.
-To obtain cross-validated OOS predictions, use the {opt cvoos} option with {opt stacking}.
+To obtain cross-validated OOS predictions, use the {opt cvalid} option with {opt stacking}.
 
 {pstd}
 {it:Note:} Predicted values of re-fitted base learners are automatically created by {opt stacking}
 and their names are saved in the macro {opt e(base_yhat)}.
 Postestimation support for (re-)creating these predicted values
 is to support standard Stata {opt predict} syntax.
+
 
 {marker summary}{...}
 {title:Summary}
@@ -216,56 +217,103 @@ Because graphs are produced using Stata's {helpb twoway} command,
 the user can control either the combined graph ({opt graph(options)})
 or the individual learner graphs ({opt lgraph(options)}) appear by passing options to these commands.
 
+{pstd}
+{helpb pystacked} is a program by the same authors as {opt stacking}
+that supports stacking regression via Python and
+{browse "https://scikit-learn.org/stable/index.html":scikit-learn}'s 
+{browse "https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.StackingRegressor.html":sklearn.ensemble.StackingRegressor} and 
+{browse "https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.StackingClassifier.html":sklearn.ensemble.StackingClassifier}. 
+The main differences are that {opt stacking} will support any Stata estimator with standard syntax
+({helpb pystacked} is limited to Python learners supported by sklearn)
+but {helpb pystacked} is typically faster.
+
+{pstd}
+{helpb pystacked} is useful here because it can be used as a front-end for any single learner supported by sklearn.
+This means {opt stacking} can be used to stack sklearn learners with learners from other packages,
+as long as they conform to standard Stata syntax.
+An example is provided below.
+
 
 {marker examples}{...}
 {title:Examples}
 
-{phang2}. {stata "use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta, clear"}{p_end}
-{phang2}. {stata "global X sex age married black hispanic"}{p_end}
-{phang2}. {stata "set seed 42"}{p_end}
+{pstd}Load housing data.{p_end}
+{phang2}. {stata "insheet using https://statalasso.github.io/dta/housing.csv, clear"}
 
-{pstd}Note that the variable created is called yhat_1 because the number of resamples defaults to 1.{p_end}
-{phang2}. {stata "crossfit, estring(reg earnings $X) gen(yhat) kfolds(3)"}{p_end}
-{phang2}. {stata "sum earnings yhat_1"}{p_end}
-
-{pstd}As above but using 5 resamples.{p_end}
-{phang2}. {stata "crossfit, estring(reg earnings $X) gen(yhat) kfolds(3) reps(5)"}{p_end}
-{phang2}. {stata "sum earnings yhat*"}{p_end}
-
-{pstd}A simple example of 3-fold cross-validation with 5 resamples using {opt crossfit}.
-The example uses {opt lasso2} from {opt lassopack}; click on {stata "ssc install lassopack"} to install.
-We estimate using the following values of the lambda parameter: 2000, 1000, 500, 250.
-Each time we call {opt crossfit} to obtain the residuals (prediction errors).
-These could be used after cross-fitting to calculate the MSPE (mean squared prediction error),
-but the MSPE is one of the returned results of {opt crossfit} so we just report that.
-The specification that minimizes the MSPE for all 5 resamples is lambda=250.
+{pstd}
+Stacking regression with regress and the "rigorous" (plug-in) lasso
+available from the package {helpb lassopack}.
+Default is 5-fold cross-validation.
+Request cross-validated predictions with the {opt cvalid} option;
+use {opt replace} if they already exist in memory.
 {p_end}
-{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(2000)) gen(ehat2000) resid kfolds(3) reps(5)"}{p_end}
-{phang2}. {stata "mat list r(mse_list)"}{p_end}
-{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(1000)) gen(ehat1000) resid kfolds(3) reps(5)"}{p_end}
-{phang2}. {stata "mat list r(mse_list)"}{p_end}
-{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(500)) gen(ehat500) resid kfolds(3) reps(5)"}{p_end}
-{phang2}. {stata "mat list r(mse_list)"}{p_end}
-{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(250)) gen(ehat250) resid kfolds(3) reps(5)"}{p_end}
-{phang2}. {stata "mat list r(mse_list)"}{p_end}
+{phang2}. {stata "stacking medv, estring(regress medv crim-lstat || rlasso medv crim-lstat) cv replace"}{p_end}
+
+{pstd}
+The weights determine how much each base learner contributes
+to the final stacking prediction.{p_end}
+
+{pstd}
+Request the MSPE table:{p_end}
+{phang2}. {stata "stacking, table"}{p_end}
+
+{pstd}
+Re-estimate using the first 400 observations, and request the MSPE table.
+MSPEs for in-sample, cross-validated and the default holdout sample (all unused observations) are reported.
+Use the {opt norandom} to force a split based on the existing order of observations:{p_end}
+{phang2}. {stata "stacking medv if _n<=400, estring(regress medv crim-lstat || rlasso medv crim-lstat) cv replace norandom"}{p_end}
+{phang2}. {stata "stacking, table holdout"}{p_end}
+
+{pstd}
+Graph predicted vs actual for the holdout sample:{p_end}
+{phang2}. {stata "stacking, graph holdout"}{p_end}
+
+{pstd}
+Storing the predicted values:{p_end}
+{phang2}. {stata "predict double yhat, xb"}{p_end}
+
+{pstd}
+We can also save the predicted values of each base learner:{p_end}
+{phang2}. {stata "predict double yhat, transform"}{p_end}
+
+{pstd}
+{opt stacking} vs {opt pystacked}.
+The first example uses {opt pystacked} to do both base learner estimation and stacking.
+The second example uses separate calls to {opt pystacked} to estimate the base learners,
+and {opt pystacked} does the stacking.
+The stacking weights are essentially the same.
+
+{phang2}. {stata "pystacked medv zn-rad if _n<=200, type(regress) methods(ols lassoic) folds(2)"}{p_end}
+
+{phang2}. {stata "stacking medv if _n<=200, estring(pystacked medv zn-rad, type(regress) methods(ols) || pystacked medv zn-rad, type(regress) methods(lassoic)) kfolds(2) norandom"}{p_end}
 
 
 {marker results}{title:Saved results}
 
-{p}{opt crossfit} saves the following results in {cmd:r()}:
+{p}{opt stacking} saves the following results in {cmd:e()}:
 
 Scalars
-{col 4}{opt r(N)}{col 25}Number of observations.
-{col 4}{opt r(mse)}{col 25}Mean squared prediction error in the last resample.
+{col 4}{opt e(N)}{col 25}Number of observations.
+{col 4}{opt e(mcount)}{col 25}Number of base learners.
+{col 4}{opt e(cvalid)}{col 25}=1 if cross-validated predictions were created, =0 if not.
 
 Macros
-{col 4}{opt r(cmd_list)}{col 25}Estimation command
+{col 4}{opt e(estring)}{col 25}Estimation string with base learner estimation commands.
+{col 4}{opt e(estring_1)}{col 25}Estimation string for base learner 1.
+{col 4}{opt e(estring_2)}{col 25}Estimation string for base learner 2.
+{col 4}...
+{col 4}{opt e(base_est)}{col 25}List of base learners, prefixed by Y1_, Y2_, ....
+{col 4}{opt e(base_cv)}{col 25}Varlist of cross-validated predictions of base learners.
+{col 4}{opt e(base_yhat)}{col 25}Varlist of re-estimated (full sample) predictions of base learners.
+{col 4}{opt e(depvar)}{col 25}Dependent (outcome) variable.
 
 Matrices
-{col 4}{opt r(N_list)}{col 25}Sample size; rows are resamples.
-{col 4}{opt r(mse_list)}{col 25}MSPE; rows are resamples.
-{col 4}{opt r(N_folds_list)}{col 25}Sample size by fold; rows are resamples.
-{col 4}{opt r(mse_folds_list)}{col 25}MSPE by fold; rows are resamples.
+{col 4}{opt e(weights)}{col 25}Stacking weights by base learner.
+{col 4}{opt e(rmspe)}{col 25}Root MSPEs by base learner - in-sample, CV and holdout (created by {opt table} option).
+{col 4}{opt e(N_list)}{col 25}Sample size by base learner.
+{col 4}{opt e(N_folds_list)}{col 25}Sample size by base learner and fold.
+{col 4}{opt e(mse_list)}{col 25}Cross-validated MSPEs by base learner.
+{col 4}{opt e(mse_folds_list)}{col 25}Cross-validated MSPEs by base learner and fold.
 
 
 {marker references}{title:References}
@@ -278,11 +326,9 @@ lassopack: model selection and prediction with regularized regression in Stata.
 Working paper version: {browse "https://arxiv.org/abs/1901.05397"}.{p_end}
 
 {phang}
-Chernozhukov, V., Chetverikov, D., Demirer, M., 
-Duflo, E., Hansen, C., Newey, W. and Robins, J. (2018), 
-Double/debiased machine learning for 
-treatment and structural parameters. 
-{it:The Econometrics Journal}, 21: C1-C68. {browse "https://doi.org/10.1111/ectj.12097"}
+Ahrens, A., Hansen, C.B. and M.E. Schaffer. 2022.
+Stacking generalization and machine learning in Stata.
+Working paper version: {browse "https://arxiv.org/abs/2208.10896"}.{p_end}
 
 {marker Wolpert1992}{...}
 {pstd}

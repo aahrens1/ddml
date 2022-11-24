@@ -2,16 +2,16 @@
 program define stacking_p
 	version 14
 	
-	syntax namelist(min=1 max=2) [if] [in] , [ xb Residuals NOIsily cvoos TRANSForm]
+	syntax namelist(min=1 max=2) [if] [in] , [ xb Residuals NOIsily CValid TRANSForm]
 
 	if "`noisily'"=="" {
 		local qui quietly
 	}
 	
-	local cvoosflag	=("`cvoos'"~="")
+	local cvalidflag	=("`cvalid'"~="")
 	// check
-	if `cvoosflag' & e(cvoos)==0 {
-		di as err "error - cross-validated OOS predictions not available; re-estimate using cvoos option"
+	if `cvalidflag' & e(cvalid)==0 {
+		di as err "error - cross-validated OOS predictions not available; re-estimate using cvalid option"
 		exit 198
 	}
 	
@@ -52,7 +52,7 @@ program define stacking_p
 	local nlearners		`e(mcount)'
 	local base_est		`e(base_est)'
 	local yhat_list		`e(base_yhat)'
-	local cvoos_list	`e(base_cvoos)'
+	local cvalid_list	`e(base_cv)'
 	
 	// stacking weights
 	tempname s_weights
@@ -65,20 +65,20 @@ program define stacking_p
 	}
 	forvalues i=1/`nlearners' {
 		local yhat			: word `i' of `yhat_list'
-		local yhat_cvoos	: word `i' of `cvoos_list'
+		local yhat_cv	: word `i' of `cvalid_list'
 		local vtilde		: word `i' of `base_est'
-		if "`transform'"=="" & `cvoosflag'==0 {
+		if "`transform'"=="" & `cvalidflag'==0 {
 			// stacked predictions
 			qui replace `varname' = `varname' + `yhat'*`s_weights'[`i',1]
 		}
 		else if "`transform'"=="" {
 			// stacked CV OOS predictions
-			qui replace `varname' = `varname' + `yhat_cvoos'*`s_weights'[`i',1]
+			qui replace `varname' = `varname' + `yhat_cv'*`s_weights'[`i',1]
 		}
 		else {
 			// base learner predictions
-			if `cvoosflag' {
-				qui gen `vtype' `varname'`i' = `yhat_cvoos'
+			if `cvalidflag' {
+				qui gen `vtype' `varname'`i' = `yhat_cv'
 			}
 			else {
 				qui gen `vtype' `varname'`i' = `yhat'
