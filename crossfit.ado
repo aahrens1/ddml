@@ -1,10 +1,11 @@
-* notes
-* vtype was used for predicting values by fold, now applies to vtilde as well
-* eqntype replaced by resid option (default=fitted)
-* default is additive-type crossfitting; treatvar option triggers interactive-type crossfitting
+*! crossfit v0.5
+*! last edited: 24nov2022
+*! authors: aa/ms
+* need to accommodate weights in parsing of estimation strings
 
 program define crossfit, rclass sortpreserve
-
+	// minimum Stata is version 14, with support for associative arrays
+	version 14
 	syntax [anything] [if] [in] ,					/// [anything] is renamed to vname below; currently undocumented option
 							[ estring(string asis)	/// estimation string
 													/// need asis option in case it includes strings
