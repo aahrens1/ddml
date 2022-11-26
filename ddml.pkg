@@ -5,8 +5,6 @@ f qddml.ado
 f qddml.sthlp
 f ddml.sthlp
 f crossfit.ado
-f stacking.ado
-f stacking_p.ado
 f lddml.mlib
 f _ddml_allcombos.ado
 f _ddml_ate_late.ado
