@@ -1,10 +1,16 @@
+*! ddml v0.5
+*! last edited: 30nov2022
+*! authors: aa/ms
+
 program define _ddml_extract, rclass
+    version 16.0
 
 	syntax [name] , [				///
 				mname(name)			/// ignored if ename(.) provided
 				ename(name)			///
 				vname(varname)		///
 				show(name)			/// pystacked, mse or n allowed
+				detail				///
 				keys				///
 				key1(string)		///
 				key2(string)		///
@@ -35,7 +41,8 @@ program define _ddml_extract, rclass
 		}
 	}
 	
-	local keysflag = ("`keys'"~="")
+	local keysflag		= ("`keys'"~="")
+	local detailflag	= ("`detail'"~="")
 	
 	// "return clear" clears return(.) but not r(.); use this instead
 	mata : st_rclear()
@@ -44,11 +51,11 @@ program define _ddml_extract, rclass
 
 	if "`mname'"=="" {
 		mata: `mtemp' = init_mStruct()
-		mata: `obj' = m_ddml_extract("",`mtemp',"`ename'",`ename',`keysflag',"`show'","`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
+		mata: `obj' = m_ddml_extract("",`mtemp',"`ename'",`ename',`keysflag',"`show'",`detailflag',"`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
 	}
 	else if "`ename'"=="" {
 		mata: `etemp' = init_eStruct()
-		mata: `obj' = m_ddml_extract("`mname'",`mname',"",`etemp',`keysflag',"`show'","`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
+		mata: `obj' = m_ddml_extract("`mname'",`mname',"",`etemp',`keysflag',"`show'",`detailflag',"`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
 	}
 	
 	if "`namelist'"=="" {
@@ -94,6 +101,7 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 									struct eStruct e,			///
 									real scalar keysflag,		///
 									string scalar show,			///
+									real scalar detailflag,		///
 									string scalar vname,		///
 									string scalar key1,			///
 									string scalar key2,			///
@@ -212,8 +220,62 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 					st_matrixcolstripe("r("+rn+")",cstripe)
 					st_matrixrowstripe("r("+rn+")",rstripe)
 					rmatlist = (rmatlist, rn)
-					printf("\n{res}pystacked weights for %s (%s)\n",rname,vnames[i])
-					stata("mat list " + "r("+rn+"), noheader noblank")
+					if (detailflag) {
+						printf("\n{res}pystacked weights for %s (%s)\n",rname,vnames[i])
+						stata("mat list " + "r("+rn+"), noheader noblank")
+					}
+				
+					// learner means across resamples
+					if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+						// one mean per learner
+						rmean_all = J(rows(base_est),2,.)
+						for (ll=1;ll<=rows(base_est);ll++) {
+							rmean_all[ll,1] = ll
+							rlearner = select(rmat_all,rmat_all[.,1]:==ll)
+							rmean_all[ll,2] = mean(mean(rlearner[.,(3,cols(rlearner))]')')
+						}
+						cstripe = (("" , "learner") \ ("" , "mean_weight"))
+						rstripe = (J(rows(base_est),1,""), base_est)
+						rn = rname+"_w_mn"
+						st_matrix("r("+rn+")",rmean_all)
+						st_matrixcolstripe("r("+rn+")",cstripe)
+						st_matrixrowstripe("r("+rn+")",rstripe)
+						printf("\n{res}mean pystacked weights across folds/resamples for %s (%s)\n",rname,vnames[i])
+						stata("mat list " + "r("+rn+"), noheader noblank")
+					}
+					else {
+						// two means per learner (ATE, LATE, LIE)
+						rmean_all = J(2*rows(base_est),3,.)
+						rstripe = J(0,2,"")
+						for (ll=1;ll<=rows(base_est);ll++) {
+							rmean_all[2*ll-1,1]		= ll
+							rmean_all[2*ll,1]		= ll
+							rmean_all[2*ll-1,2]		= 0
+							rmean_all[2*ll,2]		= 1
+							rlearner = select(rmat_all,rmat_all[.,1]:==ll)
+							rlearner_0 = select(rlearner,rlearner[.,2]:==0)
+							rlearner_1 = select(rlearner,rlearner[.,2]:==1)
+							rmean_all[2*ll-1,3]		= mean(mean(rlearner_0[.,(4,cols(rlearner_0))]')')
+							rmean_all[2*ll,3]		= mean(mean(rlearner_1[.,(4,cols(rlearner_1))]')')
+							rstripe = rstripe \ ("",base_est[ll]) \ ("",base_est[ll])
+						}
+						if (eqn.lieflag==1) {
+							cstripe = (("" , "learner") \ ("" , "h=0/1") \ ("" , "mean_weight"))
+						}
+						else if (d.model=="interactive") {
+							cstripe = (("" , "learner") \ ("" , "D=0/1") \ ("" , "mean_weight"))
+						}
+						else {
+							cstripe = (("" , "learner") \ ("" , "H=0/1") \ ("" , "mean_weight"))
+						}
+						rn = rname+"_w_mn"
+						st_matrix("r("+rn+")",rmean_all)
+						st_matrixcolstripe("r("+rn+")",cstripe)
+						st_matrixrowstripe("r("+rn+")",rstripe)
+						printf("\n{res}mean pystacked weights across folds/resamples for %s (%s)\n",rname,vnames[i])
+						stata("mat list " + "r("+rn+"), noheader noblank")
+					}
+
 					// learner list
 					cstripe = ("" , "learner")
 					rstripe = (J(rows(base_est),1,""), base_est)
