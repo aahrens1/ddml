@@ -52,6 +52,14 @@ program _ddml_ate_late, eclass
 		local d1_m		`d1tilde'1_`rep'
 		local z_m		`ztilde'_`rep'
 
+		// estimation samples may differ across conditional expectations
+		if "`model'"=="interactive" {
+			markout `touse' `y0_m' `y1_m' `d_m'
+		}
+		else {
+			markout `touse' `y0_m' `y1_m' `d0_m' `d1_m' `z_m'
+		}
+		
 		local vce1: word 1 of `vce'
 		if "`vce1'"=="cluster" {
 			local clustvar : word 2 of `vce'
