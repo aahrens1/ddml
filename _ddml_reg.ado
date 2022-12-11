@@ -15,7 +15,7 @@ program define _ddml_reg, eclass
 				]
 
 	mata: st_local("model",`mname'.model)
-	local ivhdflag	= "`model'"=="ivhd"
+	local fivflag	= "`model'"=="fiv"
 	
 	if "`replay'"=="" & "`medmean'"=="" {	// estimate from scratch
 		
@@ -65,7 +65,7 @@ program define _ddml_reg, eclass
 		local vcetype	`e(vcetype)'
 		local clustvar	`e(clustvar)'
 		local N_clust	=e(N_clust)
-		if `ivhdflag' {
+		if `fivflag' {
 			local d		`dvtnames'
 			add_suffix	`dvtnames', suffix("_`rep'")
 			local d_m	`s(vnames)'
@@ -135,7 +135,7 @@ program define _ddml_reg, eclass
 			if "`shortstack_vname'"!="" {
 				mata: `A'.put(("`d'_ssw","matrix"), return_result_item(`eqn',"`shortstack_vname'","ss_weights","`rep'"))
 			}
-			if `ivhdflag' {
+			if `fivflag' {
 				// MSE
 				mata: `A'.put(("`vtilde_h'_mse","scalar"),return_result_item(`eqn',"`vtilde_h'","MSE_h","`rep'"))
 				// MSE folds
@@ -147,8 +147,8 @@ program define _ddml_reg, eclass
 				}
 			}
 		}
-		if `ivhdflag'==0 {
-			// Z eqn results; ivhd won't enter
+		if `fivflag'==0 {
+			// Z eqn results; fiv won't enter
 			local numeqnZ	: word count `znames'
 			forvalues i=1/`numeqnZ' {
 				local zname : word `i' of `znames'
@@ -403,17 +403,17 @@ program define _ddml_reg, eclass
 		di as text "`e(title)'"
 		di as text "y-E[y|X]" _col(11) "= " as res "`e(y_m)'" _c
 		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
-		if "`e(model)'"~="ivhd" {
+		if "`e(model)'"~="fiv" {
 			di as text "D-" _c
 		}
 		di as text "E[D|X,Z]" _col(11)  "= " as res "`e(d_m)'"
 		if "`e(model)'" == "iv" {
 			di as text "Z-E[Z|X]" _col(11) "= " as res "`e(z_m)'"
 		}
-		else if "`e(model)'" == "ivhd" {
+		else if "`e(model)'" == "fiv" {
 			di as text "E[D|X]" _col(11) "= " as res "`e(dh_m)'"
 		}
-		if "`e(model)'" == "ivhd" {
+		if "`e(model)'" == "fiv" {
 			di as text "Orthogonalised D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
 		}
 		ereturn display

@@ -73,7 +73,7 @@ Please check the {helpb qddml##examples:examples} provided at the end of the hel
 {synoptline}
 {synopt:{opt model(name)}}
 the model to be estimated; allows for {it:partial}, {it:interactive},
-{it:iv}, {it:ivhd}, {it:late}. See {helpb ddml##models:here} for an overview.
+{it:iv}, {it:fiv}, {it:late}. See {helpb ddml##models:here} for an overview.
 {p_end}
 {synopt:{opt mname(string)}}
 name of the DDML model. Allows to run multiple DDML
@@ -266,7 +266,7 @@ we can simply use {ddml estimate}.{p_end}
 
 {phang2}. {stata "qddml $Y (c.($X)# #c($X)) ($D=$Z), kfolds(5) model(interactiveiv) cmd(pystacked) ycmdopt(type(reg) m(lassocv)) dcmdopt(type(class) m(lassocv)) zcmdopt(type(class) m(lassocv))"}{p_end}
 
-{pstd}{ul:High-dimensional IV model.} 
+{pstd}{ul:Flexible Partially Linear IV model.} 
 
 {pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
 {phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear"}{p_end}
@@ -276,9 +276,9 @@ we can simply use {ddml estimate}.{p_end}
 {phang2}. {stata "global Z sum*"}{p_end}
 {phang2}. {stata "set seed 42"}{p_end}
 
-{pstd}The syntax is the same as in the partially linear IV model, 
-but we now allow for high-dimensional instruments.{p_end}
-{phang2}. {stata "qddml $Y ($X) ($D=$Z), model(ivhd)"}{p_end}
+{pstd}The syntax is the same as in the Partially Linear IV model, 
+but we now estimate the optimal instrument flexibly.{p_end}
+{phang2}. {stata "qddml $Y ($X) ($D=$Z), model(fiv)"}{p_end}
 
 {marker references}{title:References}
 

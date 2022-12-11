@@ -79,7 +79,7 @@ program define _ddml_make_varlists, rclass
 		return scalar zpos_start = `numeqnD' +2
 		return scalar zpos_end = `numeqnD' + `numeqnZ' + 1
 	}
-	else if ("`model'"=="ivhd") {		
+	else if ("`model'"=="fiv") {		
 		return scalar zpos_start = `numeqnD' +2
 		// return scalar zpos_end = `numeqnD' + `numeqnDH' + 1
 		// not sure this will work

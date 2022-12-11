@@ -119,7 +119,7 @@ global X hpwt air mpd space
 global Z sum*
 set seed 42
 
-ddml init ivhd
+ddml init fiv
 
 ddml E[Y|X]: reg $Y $X
 ddml E[Y|X]: pystacked $Y $X, type(reg)

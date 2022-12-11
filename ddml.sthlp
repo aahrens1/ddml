@@ -51,7 +51,7 @@ proceeds in four steps.
 
 {pstd}
 where {it:model} is either {it:partial}, 
-{it:iv}, {it:interactive}, {it:ivhd}, {it:interactiveiv};
+{it:iv}, {it:interactive}, {it:fiv}, {it:interactiveiv};
 see {helpb ddml##models:model descriptions}.
 
 {pstd}
@@ -148,7 +148,7 @@ number of cross-fitting folds. The default is 5.
 cluster identifiers for cluster randomization of random folds.
 {p_end}
 {synopt:{opt foldvar(varlist)}}
-integer variable with user-specified cross-fitting folds (one per resample).
+integer variable with user-specified cross-fitting folds (one per cross-fitting repetition).
 {p_end}
 {synopt:{opt norandom}}
 use observations in existing order instead of randomizing before splitting into folds;
@@ -175,7 +175,7 @@ name of the DDML model. Defaults to {it:m0}.
 {synopt:{opt vname(varname)}}
 name of the dependent variable in the reduced form estimation. 
 This is usually inferred from the command line but is mandatory
-for the {it:ivhd} model.
+for the {it:fiv} model.
 {p_end}
 {synopt:{opt l:earner(varname)}}
 name of the variable to be created. 
@@ -313,7 +313,7 @@ E[D|X,Z=0] and E[D|X,Z=1] (jointly added using {cmd:ddml E[D|X,Z]});
 E[Z|X].
 
 {pstd}
-{ul:High-dimensional IV model} [{it:ivhd}]
+{ul:Flexible Partially Liner IV model} [{it:fiv}]
 
 	Y = {it:a}.D + g(X) + U
         D = m(Z) + g(X) + V 
@@ -442,7 +442,7 @@ or just describe them all with the {opt all} option:
 {p_end}
 {phang2}. {stata "ddml describe, all"}{p_end}
 
-{pstd}{ul:Partially linear model II. Stacking regression using {helpb pystackde}.}
+{pstd}{ul:Partially linear model II. Stacking regression using {helpb pystacked}.}
 
 {pstd}Stacking regression is a simple and powerful method for 
 combining predictions from multiple learners.
@@ -597,7 +597,7 @@ At the bottom, a table of summary statistics over resampling iterations is shown
 {phang2}. {stata "ddml crossfit"}{p_end}
 {phang2}. {stata "ddml estimate"}{p_end}
 
-{pstd}{ul:High-dimensional IV model.} 
+{pstd}{ul:Flexible Partially Linear IV model.} 
 
 {pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
 {phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear"}{p_end}
@@ -608,7 +608,7 @@ At the bottom, a table of summary statistics over resampling iterations is shown
 {phang2}. {stata "set seed 42"}{p_end}
 
 {pstd}We initialize the model.{p_end}
-{phang2}. {stata "ddml init ivhd"}{p_end}
+{phang2}. {stata "ddml init fiv"}{p_end}
 
 {pstd}We add learners for E[Y|X] in the usual way.{p_end}
 {phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}

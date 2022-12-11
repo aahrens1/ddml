@@ -214,12 +214,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 				mata: st_local("oneDopt",return_learner_item(`eqn',"opt","`m'"))
 				local Dopt `Dopt' `oneDopt'
 				// DHopt is stored in list Zopt
-				if "`model'"=="ivhd" {
+				if "`model'"=="fiv" {
 					mata: st_local("oneDHopt",return_learner_item(`eqn',"opt_h","`m'"))
 					local Zopt `Zopt' `oneDHopt'
 				}
 			}
-			// nameZ is empty for ivhd model
+			// nameZ is empty for fiv model
 			foreach var in `nameZ' {
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
 				mata: st_local("oneZopt",return_learner_item(`eqn',"opt","`m'"))
@@ -248,7 +248,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					// save in AA
 					mata: (`mname'.estAA).put(("optspec","`m'"),"`i'")
 				}
-				if "`model'"=="ivhd" {
+				if "`model'"=="fiv" {
 					local dlist
 					local zlist
 					forvalues j = 1/`numeqnD' {
@@ -280,7 +280,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 			}
 			
 			if `ssflag' {
-				if "`model'"=="ivhd" {
+				if "`model'"=="fiv" {
 					local dlist
 					local zlist
 					forvalues j = 1/`numeqnD' {
@@ -399,7 +399,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 		forvalues j=1/`numeqnD' {
 			di as text %14s "D learner" %10s "b" %10s "SE" _c
 		}
-		if "`model'"=="ivhd" {
+		if "`model'"=="fiv" {
 			forvalues j=1/`numeqnD' {
 				di as text %14s "DH learner" _c
 			}
@@ -443,7 +443,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 						local vt : word `j' of `ztlist'
 						di as res %14s "`vt'" _c
 					}
-					if "`model'"=="ivhd" {
+					if "`model'"=="fiv" {
 						forvalues j=1/`numeqnD' {
 							local vt : word `j' of `ztlist'
 							di as res %14s "`vt'" _c
@@ -470,7 +470,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
 					di as res %10s "`pse'" _c
 				}
-				if "`model'"=="ivhd" {
+				if "`model'"=="fiv" {
 					forvalues j=1/`numeqnD' {
 						di as res %14s "[ss]" _c
 					}
@@ -495,7 +495,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 		forvalues j=1/`numeqnD' {
 			di as text %14s "D learner" %10s "b" %10s "SE" _c
 		}
-		if "`model'"=="ivhd" {
+		if "`model'"=="fiv" {
 			forvalues j=1/`numeqnD' {
 				di as text %14s "DH learner" _c
 			}
@@ -522,7 +522,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
 				di as res %10s "`pse'" _c
 			}
-			if "`model'"=="ivhd" {
+			if "`model'"=="fiv" {
 				forvalues j=1/`numeqnD' {
 					di as res %14s "[mse]" _c
 				}
@@ -548,7 +548,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
 					di as res %10s "`pse'" _c
 				}
-				if "`model'"=="ivhd" {
+				if "`model'"=="fiv" {
 					forvalues j=1/`numeqnD' {
 						di as res %14s "[ss]" _c
 					}

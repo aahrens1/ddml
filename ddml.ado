@@ -137,17 +137,14 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		*** initialize new estimation
 		if "`subcmd'"=="init" {
 			local model: word 1 of `restmainargs'
-			local allmodels		partial iv interactive late ivhd interactiveiv
+			local allmodels		partial iv interactive late fiv interactiveiv
 			if strpos("`allmodels'","`model'")==0 {
 				di as err "no or wrong model specified." 
 				exit 198
 			}
 			// interactiveiv is synonym of late; internally we use "late"
 			if "`model'"=="interactiveiv" local model late
-	
-			// distinct model: no-LIE optimal IV
-			// if "`model'"=="ivhd"&"`nolie'"!="" local model ivhd_nolie
-			
+				
 			mata: `mname'=init_mStruct()
 			cap drop `mname'_id
 			qui gen double `mname'_id	= _n
@@ -210,7 +207,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
-			if ("`model'"=="ivhd"&strpos("E[D|Z,X] E[D|X,Z] E[Y|X] E[D|X] yeq deq dheq","`subcmd'")==0) {
+			if ("`model'"=="fiv"&strpos("E[D|Z,X] E[D|X,Z] E[Y|X] E[D|X] yeq deq dheq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
@@ -219,8 +216,8 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			if "`subcmd'"=="E[Y|X]" local subcmd yeq
 			if "`subcmd'"=="E[Y|X,D]"|"`subcmd'"=="E[Y|D,X]" local subcmd yeq
 			if "`subcmd'"=="E[Y|X,Z]"|"`subcmd'"=="E[Y|Z,X]" local subcmd yeq
-			if "`subcmd'"=="E[D|X]"&"`model'"!="ivhd" local subcmd deq
-			if "`subcmd'"=="E[D|X]"&"`model'"=="ivhd" local subcmd dheq
+			if "`subcmd'"=="E[D|X]"&"`model'"!="fiv" local subcmd deq
+			if "`subcmd'"=="E[D|X]"&"`model'"=="fiv" local subcmd dheq
 			if "`subcmd'"=="E[Z|X]" local subcmd zeq
 			if "`subcmd'"=="E[D|X,Z]"|"`subcmd'"=="E[D|Z,X]" local subcmd deq
 
@@ -334,7 +331,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			if ("`r(model)'"=="late") {
 				_ddml_estimate_ate_late `mname' `if' `in', `options' cluster(`cluster')
 			}
-			if ("`r(model)'"=="ivhd") {
+			if ("`r(model)'"=="fiv") {
 				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
 			}
 			

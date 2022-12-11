@@ -574,7 +574,7 @@ void display_pystacked_weights(									///
 			condit = "X,Z="+DZeq01
 		}
 	}
-	else if (d.model=="ivhd") {
+	else if (d.model=="fiv") {
 		condit = "X,Z"
 	}
 	else {

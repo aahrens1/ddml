@@ -182,7 +182,7 @@ prog define desc_learners
 	if ("`etype'"=="deq") & ("`model'"=="late") {
 		local pairs	= 1
 	}
-	if ("`etype'"=="deq") & ("`model'"=="ivhd") {
+	if ("`etype'"=="deq") & ("`model'"=="fiv") {
 		// includes both deq and dheq
 		local heqn	= 1
 	}

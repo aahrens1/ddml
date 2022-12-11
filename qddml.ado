@@ -82,7 +82,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	local dhcmdoptions `dcmdoptions'
 
 	**** syntax checks
-	if ("`model'"=="ivhd") {
+	if ("`model'"=="fiv") {
 		if "`dexog'"!="" {
 			di as error "no exogenous treatments allowed"
 			exit 198
@@ -151,7 +151,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	`qui' ddml init `model', kfolds(`kfolds') reps(`reps') cluster(`cluster') `tabfold' foldvar(`foldvar')
 
 	*** IV-HD
-	if ("`model'"=="ivhd") {
+	if ("`model'"=="fiv") {
 		**
 		`qui' if (`doreg') ddml E[Y|X], mname(`mname') vname(`depvar') learner(Y0_reg): reg `depvar' `xctrl' 
 		`qui' if (`doreg') ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D0_reg): reg `dendog' `xctrl' `exexog' 

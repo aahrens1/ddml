@@ -118,7 +118,7 @@ global X hpwt air mpd space
 global Z sum*
 
 set seed 42
-ddml init ivhd
+ddml init fiv
 ddml E[Y|X]: pystacked $Y $X, type(reg)
 ddml E[D|Z,X], learner(Dhat_pystacked): pystacked $D $X $Z, type(reg)
 ddml E[D|X], learner(Dhat_pystacked) vname($D): pystacked {D} $X, type(reg)
@@ -127,7 +127,7 @@ ddml estimate
 local b1 = _b[$D]
 
 set seed 42
-qddml $Y ($X) ($D=$Z), model(ivhd) cmd(pystacked) cmdopt(type(reg)) 
+qddml $Y ($X) ($D=$Z), model(fiv) cmd(pystacked) cmdopt(type(reg)) 
 local b2 = _b[$D]
 
 assert reldif(`b1',`b2')<$tol
