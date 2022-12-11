@@ -392,16 +392,16 @@ program _ddml_ate_late, eclass
 		
 		// display results
 		di as text "`e(title)'"
-		di as text "y-E[y|X,D=0]" _col(14) "= " as res "`e(y0_m)'" _c
+		di as text "E[y|X,D=0]" _col(14) "= " as res "`e(y0_m)'" _c
 		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
-		di as text "y-E[y|X,D=1]" _col(14) "= " as res "`e(y1_m)'"
+		di as text "E[y|X,D=1]" _col(14) "= " as res "`e(y1_m)'"
 		if "`e(model)'"=="interactive" {
 			di as text "D-E[D|X]" _col(14)  "= " as res "`e(d_m)'"
 		}
 		else {
-			di as text "D-E[D|X,Z=0]" _col(14)  "= " as res "`e(d0_m)'"
-			di as text "D-E[D|X,Z=1]" _col(14)  "= " as res "`e(d1_m)'"
-			di as text "Z-E[Z|X]" _col(14)  "= " as res "`e(z_m)'"
+			di as text "E[D|X,Z=0]" _col(14)  "= " as res "`e(d0_m)'"
+			di as text "E[D|X,Z=1]" _col(14)  "= " as res "`e(d1_m)'"
+			di as text "E[Z|X]" _col(14)  "= " as res "`e(z_m)'"
 		}
 		ereturn display
 		
