@@ -62,6 +62,11 @@ program define _ddml_extract, rclass
 		mata: `obj'
 		mata: mata drop `obj'
 	}
+	else if "`namelist'"=="`mname'" {
+		// stop silly mistake of overwriting the model struct
+		di as err "error - cannot save Mata object `mname'; `mname' contains the ddml model"
+		exit 198
+	}
 	else if "`stata'"=="" {
 		cap mata: mata drop `namelist'
 		mata: mata rename `obj' `namelist'
