@@ -118,7 +118,9 @@ Export results in csv format:
 {pstd}
 Retrieve information from {cmd:ddml}:
 
-{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)} {opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)} {opt subkey2(string)}{bind: ]}
+{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)}
+{opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)}
+{opt subkey2(string)}{bind: ]}
 
 {pstd}
 {it:display_item} can be {it:mse}, {it:n} or {it:pystacked}.
@@ -130,6 +132,17 @@ See {helpb ddml extract} for details.
 Drop the {cmd:ddml} estimation {it:mname} and all associated variables:
 
 {p 8 14}{cmd:ddml drop} {it:mname}
+
+{pstd}
+Report overlap plots ({it:interactive} and {it:interactiveiv} models only):
+
+{p 8 14}{cmd:ddml overlap} [ {opt mname(name)} {opt replist(numlist)} {opt pslist(namelist)} {opt n(integer)} {opt kernel(name)}
+{opt name(name [, replace])} {opt title(string)} {opt subtitle(string)} {opt lopt0(string)}
+{opt lopt1(string)}{bind: ]}
+
+{pstd}One overlap (line) plot of propensity scores is reported for each treatment variable learner;
+by default, propensity scores for all crossfit samples are plotted.
+Overlap plots for the treatment variables are combined using {helpb graph combine}.
 
 {marker syntax}{...}
 {title:Options}
@@ -229,7 +242,7 @@ presence of arbitrary heteroskedasticity.
 select cluster-robust variance-covariance estimator.
 {p_end}
 {synopt:{opt vce(type)}}
-select variance-covariance estimator, see {helpb regress##vcetype:here}
+select variance-covariance estimator, see {helpb regress##vcetype:here}.
 {p_end}
 {synopt:{opt trim(real)}}
 trimming of propensity scores. The default is 0.01
@@ -246,7 +259,35 @@ to 0.01 and 0.99, respectively).
 {synopt:{opt mname(name)}}
 name of the DDML model. Defaults to {it:m0}.
 {p_end}
+{synopt:{opt replist(numlist)}}
+(overlap plots) list of crossfitting resamples to plot. Defaults to all.
+{p_end}
+{synopt:{opt pslist(namelist)}}
+(overlap plots) varnames of propensity scores to plot (excluding the resample number). Defaults to all.
+{p_end}
+{synopt:{opt n(integer)}}
+(overlap plots) see {helpb teffects overlap}.
+{p_end}
+{synopt:{opt kernel(name)}}
+(overlap plots) see {helpb teffects overlap}.
+{p_end}
+{synopt:{opt name(name)}}
+(overlap plots) see {helpb graph combine}.
+{p_end}
+{synopt:{opt title(string)}}
+(overlap plots) see {helpb graph combine}.
+{p_end}
+{synopt:{opt subtitle(string)}}
+(overlap plots) see {helpb graph combine}.
+{p_end}
+{synopt:{opt lopt0(string)}}
+(overlap plots) options for line plot of untreated; default is solid/navy; see {helpb line}.
+{p_end}
+{synopt:{opt lopt0(string)}}
+(overlap plots) options for line plot of treated; default is short dash/dark orange; see {helpb line}.
+{p_end}
 {synoptline}
+
 {p2colreset}{...}
 {pstd}
 
