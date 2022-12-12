@@ -65,7 +65,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		
 		// should perhaps make subcmd list all lower case (more forgiving) and replace `subcmd' with strlower("`subcmd'").
 		local alleqntypes E[Y|X] E[Y|X,D] E[Y|D,X] E[Y|X,Z] E[Y|Z,X] E[D|X] E[D|Z,X] E[D|X,Z] E[Z|X] yeq deq zeq dheq
-		local allsubcmds  update describe export drop copy sample init reinit yeq deq dheq zeq crossfit estimate extract
+		local allsubcmds  update describe export drop copy sample init reinit yeq deq dheq zeq crossfit estimate extract overlap
 		local allsubcmds `allsubcmds' `alleqntypes'
 		if strpos("`allsubcmds'","`subcmd'")==0 {
 			di as err "error - unknown subcommand `subcmd'"
@@ -336,6 +336,14 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			}
 			
 		}
+		
+		*** overlap (treatment effects only)
+		if "`subcmd'" == "overlap" {
+		
+			_ddml_overlap, mname(`mname') `options'
+		
+		}
+		
 	}
 
 end
