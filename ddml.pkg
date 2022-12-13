@@ -1,14 +1,6 @@
 v 3
 d ddml: Package for Double Debiased Machine Learning
-f ddml.ado
-f qddml.ado
-f qddml.sthlp
-f ddml.sthlp
-f crossfit.ado
-f lddml.mlib
 f _ddml_allcombos.ado
-f _ddml_ate_late.ado
-f _ddml_combine.ado
 f _ddml_copy.ado
 f _ddml_crossfit.ado
 f _ddml_describe.ado
@@ -17,10 +9,18 @@ f _ddml_estimate_ate_late.ado
 f _ddml_estimate_linear.ado
 f _ddml_export.ado
 f _ddml_extract.ado
-f _ddml_make_varlists.ado
 f _ddml_nnls.ado
 f _ddml_nnls_p.ado
-f _ddml_reg.ado
+f _ddml_overlap.ado
 f _ddml_sample.ado
 f _ddml_save.ado
 f _ddml_use.ado
+f crossfit.ado
+f crossfit.sthlp
+f ddml.ado
+f ddml.sthlp
+f ddml_extract.sthlp
+f lddml.mlib
+f qddml.ado
+f qddml.sthlp
+
