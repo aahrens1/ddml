@@ -63,6 +63,7 @@ program define _ddml_overlap
 		else {
 			mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
 		}
+		mata: st_local("pslist",invtokens(`eqn'.vtlist))
 	}
 	// labels for propensity scores
 	if "`model'"=="interactive" {
