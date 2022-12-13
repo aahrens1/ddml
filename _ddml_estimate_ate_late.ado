@@ -7,6 +7,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
 								ATET 				///
+								ATEU				///
 								ROBust				/// has no effect - vcv always robust or cluster-robust
 								CLUster(varname)	///
 								vce(string)			///
@@ -130,7 +131,31 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	}
 	
 	local ateflag=("`model'"=="interactive")
-
+	// teffect is either ATE, ATET, ATEU or LATE
+	local check_opt : word count `atet' `ateu'
+	if `check_opt' > 1 {
+		di as err "error - may request only one of atet or ateu"
+		exit 198
+	}
+	else if `check_opt'==1 & ~`ateflag' {
+		di as err "error - `atet'`ateu' not available with LATE (interactiveiv)"
+		exit 198
+	}
+	if ~`ateflag' {
+		// it's LATE
+		local teffect LATE
+	}
+	else if "`atet'`ateu'"=="" {
+		// default
+		local teffect ATE
+	}
+	else if "`atet'"~="" {
+		local teffect ATET
+	}
+	else {
+		local teffect ATEU
+	}
+	
 	// should only ever be 1 D or 1 Z eqn
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
@@ -298,7 +323,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				local isD0opt	: list D0opt == d0
 				local isD1opt	: list D1opt == d1
 				local isZopt	: list Zopt == z
-				local title "DDML model, specification `i'`stext'"
+				local title "DDML model, specification `i'`stext' (`teffect')"
 				if `isY0opt' & `isY1opt' & `isDopt' & `isD0opt' & `isD1opt' & `isZopt' {
 					local optspec`m' = `i'
 					local isopt *
@@ -316,7 +341,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					mname(`mname')										///
 					title(`title')										///
 					trim(`trim')										///
-					vce(`vce') `atet'
+					vce(`vce')											///
+					te(`teffect')
 				
 				mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
 				mata: `semat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(semat)")
@@ -326,7 +352,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			if `ssflag' {
 				
 				// code works for both ATE and LATE
-				local title "Shortstack DDML model`stext'"
+				local title "Shortstack DDML model`stext' (`teffect')"
 				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
 					yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
 					y0tilde(`Y0ss') y1tilde(`Y1ss')						///
@@ -336,7 +362,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					mname(`mname')										///
 					title(`title')										///
 					trim(`trim')										///
-					vce(`vce') `atet'
+					vce(`vce')											///
+					te(`teffect')
 			
 			}
 		}
@@ -352,21 +379,21 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		
 		// aggregate across resamplings
 		if `nreps' > 1 {
- 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") vce(`vce') `atet' // min-mse specification
- 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") vce(`vce') `atet' // min-mse specification
+ 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications (`teffect')") vce(`vce') te(`teffect') // min-mse specification
+ 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications (`teffect')") vce(`vce') te(`teffect') // min-mse specification
 			// numbered specifications
 			forvalues i = 1/`ncombos' {
-				local title "DDML model, specification `i' (mean)"
-				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(mn) title(`title') vce(`vce') `atet'
-				local title "DDML model, specification `i' (median)"
-				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(md) title(`title') vce(`vce') `atet'
+				local title "DDML model, specification `i' (mean) (`teffect')"
+				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(mn) title(`title') vce(`vce') te(`teffect')
+				local title "DDML model, specification `i' (median) (`teffect')"
+				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(md) title(`title') vce(`vce') te(`teffect')
 			}
 			// shortstack
 			if `ssflag' {
-				local title "Shortstack DDML model (mean)"
-				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title') vce(`vce') `atet'
-				local title "Shortstack DDML model (median)"
-				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title') vce(`vce') `atet'
+				local title "Shortstack DDML model (mean) (`teffect')"
+				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				local title "Shortstack DDML model (median) (`teffect')"
+				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title') vce(`vce') te(`teffect')
 			}
 		}
 		
@@ -421,7 +448,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	// optional table of all results
 	if `tableflag' {
 		di
-		di as text "DDML estimation results:"
+		di as text "DDML estimation results (`teffect'):"
 		di as text "spec  r" %14s "Y0 learner" _c
 		di as text           %14s "Y1 learner" _c
 		if `ateflag' {
@@ -649,7 +676,7 @@ program _ddml_ate_late, eclass
 							title(string)		///
 							medmean(string)		///
 							vce(string) 		///
-							ATET 				///
+							TEffect(name)		/// either ATE, ATET or ATEU
 							trim(real 0)	    /// value should be provided by calling program
 						]
 		
@@ -693,7 +720,7 @@ program _ddml_ate_late, eclass
 		}
 		
 		if "`model'"=="interactive" {
-			mata: ATE("`atet'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustvar'","`mname'_fid_`rep'",`trim')
+			mata: ATE("`teffect'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustvar'","`mname'_fid_`rep'",`trim')
 		}
 		else {
 			mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'","`clustvar'",`trim')
@@ -722,7 +749,7 @@ program _ddml_ate_late, eclass
 		mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("r(V)"))'))
 		
 		// store locals
-		local list_local title y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar vce vcetype
+		local list_local title y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar vce vcetype teffect
 		if "`clustvar'"~=""		local list_local `list_local' clustvar
 		foreach obj in `list_local' {
 			mata: `A'.put(("`obj'","local"),"``obj''")
@@ -918,7 +945,7 @@ program _ddml_ate_late, eclass
 		mata: `A'.put(("b_resamples","matrix"),`bvec')
 		
 		// store locals
-		local list_local title y0 y1 d d0 d1 z yvar dvar vce vcetype
+		local list_local title y0 y1 d d0 d1 z yvar dvar vce vcetype teffect
 		if "`clustvar'"~=""		local list_local `list_local' clustvar
 		foreach obj in `list_local' {
 			mata: `A'.put(("`obj'","local"),"``obj''")
@@ -988,6 +1015,7 @@ program _ddml_ate_late, eclass
 		ereturn local rep `rep'
 		ereturn local spec `spec'
 		ereturn local tmname `mname'
+		ereturn local teffect `teffect'
 		
 		// extract and post scalars, locals, matrices
 		forvalues i=1/`nentries' {
@@ -1073,7 +1101,7 @@ end
 mata:
 
 void ATE(   
-			string scalar atet,
+			string scalar teffect,    // ATE, ATET or ATEU
 			string scalar yvar,       // Y
 			string scalar dvar,       // D
 			string scalar y0tilde,    // E[Y|X,D=0]
@@ -1113,11 +1141,12 @@ void ATE(
 	ultrim = sum(ultrim)
 
 	// psi = psi_b + psi_a*theta, e.g. equation 5.62
-	if (atet=="") {
+	if (teffect=="ATE") {
 		psi_b  = (d :* (y :- my_d1x) :/ md_x) :-  ((1 :- d) :* (y :- my_d0x) :/ (1 :- md_x)) :+ my_d1x :- my_d0x 
 		psi_a  = J(n,1,-1) 
 	}
 	else {
+		// ATET and ATEU
 		// calculate mean of d by fold
 		fid_uni = uniqrows(fid)
 		folds = rows(fid_uni)
@@ -1128,8 +1157,18 @@ void ATE(
 			meank = mean(d[sel])
 			p_hat[sel] = J(length(sel), 1, meank)
 		}
-		psi_b = (d :* (y :- my_d0x) :/ p_hat) :-  md_x :* (1 :- d) :* (y :- my_d0x) :/ (p_hat :*(1 :- md_x)) 
-		psi_a = -d :/ p_hat 
+		if (teffect=="ATET") {
+			psi_b = (d :* (y :- my_d0x) :/ p_hat) :-  md_x :* (1 :- d) :* (y :- my_d0x) :/ (p_hat :*(1 :- md_x)) 
+			psi_a = -d :/ p_hat
+		}
+		else if (teffect=="ATEU") {
+			psi_b = ((1:-d) :* (y :- my_d1x) :/ (1:-p_hat)) :- (1:-md_x) :* d :* (y :- my_d1x) :/ ((1:-p_hat) :* md_x) 
+			psi_a = (1:-d) :/ (1:-p_hat)
+		}
+		else {
+			errprintf("internal ddml error - teffect estimator %s not defined\n",teffect)
+			exit(499)
+		}
 	}
 	theta = -mean(psi_b) / mean(psi_a)
 	psi = psi_a :* theta :+ psi_b

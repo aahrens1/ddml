@@ -86,7 +86,7 @@ This step implements the cross-fitting algorithm. Each learner is fitted iterati
 {pstd}
 {ul:Step 4.} Estimate causal effects:
 
-{p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)} {opt att} {opt trim(real)}{bind: ]} 
+{p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)} {opt atet} {opt ateu} {opt trim(real)}{bind: ]} 
 
 {pstd}
 The {cmd:ddml estimate} command returns treatment effect estimates for all combination of learners 
@@ -243,6 +243,12 @@ select cluster-robust variance-covariance estimator.
 {p_end}
 {synopt:{opt vce(type)}}
 select variance-covariance estimator, see {helpb regress##vcetype:here}.
+{p_end}
+{synopt:{opt atet}}
+report average treatment effect of the treated (default is ATE).
+{p_end}
+{synopt:{opt ateu}}
+report average treatment effect of the untreated (default is ATE).
 {p_end}
 {synopt:{opt trim(real)}}
 trimming of propensity scores. The default is 0.01
@@ -602,9 +608,10 @@ gradient boosted classification trees for E[D|X].
 {pstd}Cross-fitting:{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
 
-{pstd}In the final estimation step, we can estimate both
-the average treatment effect (the default) or 
-the average treatment effect of the treated ({opt atet}).{p_end}
+{pstd}In the final estimation step, we can estimate
+the average treatment effect (the default),
+the average treatment effect of the treated ({opt atet}),
+or the average treatment effect of the untreated ({opt ateu}).{p_end}
 {phang2}. {stata "ddml estimate"}{p_end}
 {phang2}. {stata "ddml estimate, atet trim(0)"}{p_end}
 
@@ -616,7 +623,7 @@ At the bottom, a table of summary statistics over resampling iterations is shown
 {pstd}{ul:Interactive IV model--LATE estimation.} 
 
 {pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
-{phang2}. {stata "use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta,clear"}{p_end}
+{phang2}. {stata "use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta, clear"}{p_end}
 {phang2}. {stata "global Y earnings"}{p_end}
 {phang2}. {stata "global D training"}{p_end}
 {phang2}. {stata "global Z assignmt"}{p_end}
