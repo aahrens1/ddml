@@ -1,6 +1,6 @@
-* creates fold indicators <mname>_fid_<rep number>; will be copies of foldvar(.) if provided
-* overall sample indicator <mname>_sample already exists; will reseet with sreset option
-* nb: should probably create sample indicator and main id indicator here instead of in ddml.ado
+*! ddml v1.0
+*! last edited: 13 dec 2022
+*! authors: aa/ms
 
 program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that respect clustering
 	version 13

@@ -1,6 +1,6 @@
-
-// https://www.stata.com/support/faqs/statistics/linear-regression-with-interval-constraints/#ex6
-// https://www.stata.com/support/faqs/statistics/regression-with-interval-constraints/
+*! ddml v1.0
+*! last edited: 13 dec 2022
+*! authors: aa/ms
 
 *** ddml cross-fitting for the interactive model & LATE
 program _ddml_nnls, eclass sortpreserve

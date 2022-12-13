@@ -1,14 +1,8 @@
+*! ddml v1.0
+*! last edited: 13 dec 2022
+*! authors: aa/ms
+
 *** ddml cross-fitting
-
-* notes:
-* why is vtype field needed?
-* crossfitting code in separate program
-* reporting code in separate subroutine below
-* debug reporting in separate subroutine below
-* number of resamples set here in reps(.) option
-* in eqn struct, (*p).idVtilde is a problem ... but is it needed? currently commented out.
-* add noisily option
-
 program _ddml_crossfit, eclass sortpreserve
 
 	syntax [anything] ,								/// 

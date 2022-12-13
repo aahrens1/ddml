@@ -1,6 +1,6 @@
-// notes:
-// this can fail if the dataset in Stata memory doesn't match the dataset used in the model
-// will want to match on id if the sort order has changed
+*! ddml v1.0
+*! last edited: 13 dec 2022
+*! authors: aa/ms
 
 program _ddml_use
 	version 13

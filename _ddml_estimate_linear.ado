@@ -1,4 +1,7 @@
-*** ddml estimation: linear models
+*! ddml v1.0
+*! last edited: 13 dec 2022
+*! authors: aa/ms
+
 program _ddml_estimate_linear, eclass sortpreserve
 
 	syntax namelist(name=mname) [if] [in] ,			/// 

@@ -1,6 +1,6 @@
-*** ddml estimation: interactive model
-* notes:
-* add check somewhere that only a single D is allowed.
+*! ddml v1.0
+*! last edited: 13 dec 2022
+*! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
 

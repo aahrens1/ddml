@@ -1,3 +1,7 @@
+*! ddml v1.0
+*! last edited: 13 dec 2022
+*! authors: aa/ms
+
 program define _ddml_overlap
 
 	syntax 		, [									///
