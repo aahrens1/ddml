@@ -214,7 +214,7 @@ blank.
 name of the DDML model. Defaults to {it:m0}.
 {p_end}
 {synopt:{opt shortstack}} asks for short-stacking to be used.
-Short-stacking runs contrained non-negative least squares on the
+Short-stacking runs constrained non-negative least squares on the
 cross-fitted predicted values to obtain a weighted average
 of several base learners.
 {p_end}
@@ -421,7 +421,7 @@ kept simple to allow you to run the code quickly.
 
 {pstd}{ul:Partially linear model I.} 
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Preparation: we load the data, define global macros and set the seed.{p_end}
 {phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
 {phang2}. {stata "global Y net_tfa"}{p_end}
 {phang2}. {stata "global D e401"}{p_end}
@@ -443,8 +443,10 @@ different random folds; see options {opt reps(integer)}.{p_end}
 expectation E[Y|X]. We first add simple linear regression.{p_end}
 {phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
 
-{pstd}We can add more than one learner per reduced form equation. Here, we also 
-add a random forest learner (implemented in {helpb pystacked}).{p_end}
+{pstd}We can add more than one learner per reduced form equation. Here, we 
+add a random forest learner. We do this using {helpb pystacked};
+in the next example we show how to use {helpb pystacked} to stack multiple learners,
+but here we use it to implement a single learner.{p_end}
 {phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg) method(rf)"}{p_end}
 
 {pstd}We do the same for the conditional expectation E[D|X].{p_end}
@@ -545,7 +547,7 @@ Make sure to not confuse the two types of options.
 
 {pstd}{ul:Partially linear IV model.} 
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Preparation: we load the data, define global macros and set the seed.{p_end}
 {phang2}. {stata "use https://statalasso.github.io/dta/AJR.dta, clear"}{p_end}
 {phang2}. {stata "global Y logpgp95"}{p_end}
 {phang2}. {stata "global D avexpr"}{p_end}
@@ -553,7 +555,7 @@ Make sure to not confuse the two types of options.
 {phang2}. {stata "global X lat_abst edes1975 avelf temp* humid* steplow-oilres"}{p_end}
 {phang2}. {stata "set seed 42"}{p_end}
 
-{pstd}Preparations: we load the data, define global macros and set the seed. Since the
+{pstd}Preparation: we load the data, define global macros and set the seed. Since the
 data set is very small, we consider 30 cross-fitting folds.{p_end}
 {phang2}. {stata "ddml init iv, kfolds(30)"}{p_end}
 
@@ -571,17 +573,20 @@ support variable types.{p_end}
 {phang2}. {stata "ddml E[Z|X]: reg $Z $X"}{p_end}
 {phang2}. {stata "ddml E[Z|X], vtype(none): rforest $Z $X, type(reg)"}{p_end}
 
-{pstd}Cross-fitting and estimation.{p_end}
-{phang2}. {stata "ddml crossfit"}{p_end}
+{pstd}Cross-fitting and estimation. We use the {opt shortstack} option
+to combine the base learners. Short-stacking is a computationally cheaper alternative
+to stacking. Whereas stacking relies on cross-validated predicted values to obtain
+the relative weights for the base learners, short-stacking uses the cross-fitted predicted values.{p_end}
+{phang2}. {stata "ddml crossfit, shortstack"}{p_end}
 {phang2}. {stata "ddml estimate, robust"}{p_end}
 
-{pstd}If you are curious what {cmd:ddml} does in the background:{p_end}
+{pstd}If you are curious about what {cmd:ddml} does in the background:{p_end}
 {phang2}. {stata "ddml estimate m0, spec(8) rep(1)"}{p_end}
 {phang2}. {stata "ivreg Y2_rf (D2_rf = Z2_rf), nocons"}{p_end}
 
 {pstd}{ul:Interactive model--ATE and ATET estimation.} 
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Preparation: we load the data, define global macros and set the seed.{p_end}
 {phang2}. {stata "webuse cattaneo2, clear"}{p_end}
 {phang2}. {stata "global Y bweight"}{p_end}
 {phang2}. {stata "global D mbsmoke"}{p_end}
@@ -596,14 +601,12 @@ we estimate the model 5 times using randomly chosen folds.{p_end}
 E[Y|X,D=1] and E[D|X]. The first two conditional expectations 
 are added jointly.{p_end} 
 {pstd}We consider two supervised learners: linear regression and gradient boosted
-trees (implemented in {helpb pystacked}).
+trees, stacked using {helpb pystacked}.
 Note that we use gradient boosted regression trees for E[Y|X,D], but
 gradient boosted classification trees for E[D|X].
 {p_end} 
-{phang2}. {stata "ddml E[Y|X,D]: reg $Y $X"}{p_end}
-{phang2}. {stata "ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(gradboost)"}{p_end}
-{phang2}. {stata "ddml E[D|X]: logit $D $X"}{p_end}
-{phang2}. {stata "ddml E[D|X]: pystacked $D $X, type(class) method(gradboost)"}{p_end}
+{phang2}. {stata "ddml E[Y|X,D]: pystacked $Y $X, type(reg) methods(ols gradboost)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D $X, type(class) methods(logit gradboost)"}{p_end}
 
 {pstd}Cross-fitting:{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
@@ -613,16 +616,28 @@ the average treatment effect (the default),
 the average treatment effect of the treated ({opt atet}),
 or the average treatment effect of the untreated ({opt ateu}).{p_end}
 {phang2}. {stata "ddml estimate"}{p_end}
-{phang2}. {stata "ddml estimate, atet trim(0)"}{p_end}
+{phang2}. {stata "ddml estimate, atet"}{p_end}
 
 {pstd}Recall that we have specified 5 resampling iterations ({opt reps(5)})
 By default, the median over the minimum-MSE specification per resampling iteration is shown.
 At the bottom, a table of summary statistics over resampling iterations is shown. 
 {p_end}
 
+{pstd}To estimate using the same two base learners but with short-stacking instead of stacking,
+we would enter the learners separately and use the {opt shortstack} option:{p_end}
+
+{phang2}. {stata "set seed 42"}{p_end}
+{phang2}. {stata "ddml init interactive, kfolds(5) reps(5)"}{p_end}
+{phang2}. {stata "ddml E[Y|X,D]: reg $Y $X"}{p_end}
+{phang2}. {stata "ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(gradboost)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: logit $D $X"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D $X, type(class) method(gradboost)"}{p_end}
+{phang2}. {stata "ddml crossfit, shortstack"}{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
+
 {pstd}{ul:Interactive IV model--LATE estimation.} 
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Preparation: we load the data, define global macros and set the seed.{p_end}
 {phang2}. {stata "use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta, clear"}{p_end}
 {phang2}. {stata "global Y earnings"}{p_end}
 {phang2}. {stata "global D training"}{p_end}
@@ -633,7 +648,18 @@ At the bottom, a table of summary statistics over resampling iterations is shown
 {pstd}We initialize the model.{p_end}
 {phang2}. {stata "ddml init interactiveiv, kfolds(5)"}{p_end}
 
-{pstd}We again add two learners per reduced form equation.{p_end}
+{pstd}We again use two learners per reduced form equation and stack using {helpb pystacked}.{p_end}
+{phang2}. {stata "ddml E[Y|X,Z]: pystacked $Y c.($X)# #c($X), type(reg) m(ols lassocv)"}{p_end}
+{phang2}. {stata "ddml E[D|X,Z]: pystacked $D c.($X)# #c($X), type(class) m(logit lassocv)"}{p_end}
+{phang2}. {stata "ddml E[Z|X]: pystacked $Z c.($X)# #c($X), type(class) m(logit lassocv)"}{p_end}
+
+{pstd}Cross-fitting and estimation.{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
+
+{pstd}To short-stack instead of stack:{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+{phang2}. {stata "ddml init interactiveiv, kfolds(5)"}{p_end}
 {phang2}. {stata "ddml E[Y|X,Z]: reg $Y $X"}{p_end}
 {phang2}. {stata "ddml E[Y|X,Z]: pystacked $Y c.($X)# #c($X), type(reg) m(lassocv)"}{p_end}
 {phang2}. {stata "ddml E[D|X,Z]: logit $D $X"}{p_end}
@@ -642,12 +668,12 @@ At the bottom, a table of summary statistics over resampling iterations is shown
 {phang2}. {stata "ddml E[Z|X]: pystacked $Z c.($X)# #c($X), type(class) m(lassocv)"}{p_end}
 
 {pstd}Cross-fitting and estimation.{p_end}
-{phang2}. {stata "ddml crossfit"}{p_end}
+{phang2}. {stata "ddml crossfit, shortstack"}{p_end}
 {phang2}. {stata "ddml estimate"}{p_end}
 
 {pstd}{ul:Flexible Partially Linear IV model.} 
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Preparation: we load the data, define global macros and set the seed.{p_end}
 {phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear"}{p_end}
 {phang2}. {stata "global Y share"}{p_end}
 {phang2}. {stata "global D price"}{p_end}
@@ -689,7 +715,7 @@ Finally, we use the placeholder {cmd:{D}} in place of the dependent variable.
 {phang2}. {stata "ddml crossfit"}{p_end}
 {phang2}. {stata "ddml estimate"}{p_end}
 
-{pstd}If you are curious what {cmd:ddml} does in the background:{p_end}
+{pstd}If you are curious about what {cmd:ddml} does in the background:{p_end}
 {phang2}. {stata "ddml estimate m0, spec(8) rep(1)"}{p_end}
 {phang2}. {stata "gen Dtilde = $D - Dhat_pystacked_h_1"}{p_end}
 {phang2}. {stata "gen Zopt = Dhat_pystacked_1 - Dhat_pystacked_h_1"}{p_end}
