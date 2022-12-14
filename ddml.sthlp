@@ -585,7 +585,7 @@ support variable types.{p_end}
 {phang2}. {stata "webuse cattaneo2, clear"}{p_end}
 {phang2}. {stata "global Y bweight"}{p_end}
 {phang2}. {stata "global D mbsmoke"}{p_end}
-{phang2}. {stata "global X mage prenatal1 mmarried fbaby mage medu"}{p_end}
+{phang2}. {stata "global X prenatal1 mmarried fbaby mage medu"}{p_end}
 {phang2}. {stata "set seed 42"}{p_end}
 
 {pstd}We use 5 folds and 5 resamplings; that is, 
