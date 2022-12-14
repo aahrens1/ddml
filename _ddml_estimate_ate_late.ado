@@ -749,7 +749,13 @@ program _ddml_ate_late, eclass
 		mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("r(V)"))'))
 		
 		// store locals
-		local list_local title y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar vce vcetype teffect
+		local list_local title yvar dvar y0 y0_m y1 y1_m vce vcetype teffect
+		if "`model'"=="interactive" {
+			local list_local `list_local' d d_m
+		}
+		else {
+			local list_local `list_local' d0 d0_m d1 d1_m z z_m
+		}
 		if "`clustvar'"~=""		local list_local `list_local' clustvar
 		foreach obj in `list_local' {
 			mata: `A'.put(("`obj'","local"),"``obj''")
@@ -766,33 +772,57 @@ program _ddml_ate_late, eclass
 		mata: `eqn' = init_eStruct()
 		// Y eqn results
 		mata: `eqn' = (`mname'.eqnAA).get("`yvar'")
+		mata: st_local("shortstack",`eqn'.shortstack)
 		// MSE
 		mata: `A'.put(("`y0tilde'_mse","scalar"),return_result_item(`eqn',"`y0tilde'","MSE0","`rep'"))
 		mata: `A'.put(("`y1tilde'_mse","scalar"),return_result_item(`eqn',"`y1tilde'","MSE1","`rep'"))
 		// MSE folds
 		mata: `A'.put(("`y0tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y0tilde'","MSE0_folds","`rep'"))
 		mata: `A'.put(("`y1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y1tilde'","MSE1_folds","`rep'"))
+		// shortstack weights
+		if "`spec'"=="ss" {
+			mata: `A'.put(("`yvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights0","`rep'"))
+			mata: `A'.put(("`yvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights1","`rep'"))
+		}
 		if "`model'"=="interactive" {
 			// D eqn results
 			mata: `eqn' = (`mname'.eqnAA).get("`dvar'")
+			mata: st_local("shortstack",`eqn'.shortstack)
 			// MSE
 			mata: `A'.put(("`dtilde'_mse","scalar"),return_result_item(`eqn',"`dtilde'","MSE","`rep'"))
 			// MSE folds
 			mata: `A'.put(("`dtilde'_mse_folds","matrix"),return_result_item(`eqn',"`dtilde'","MSE_folds","`rep'"))
+			// shortstack weights
+			if "`spec'"=="ss" {
+				mata: `A'.put(("`dvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights","`rep'"))
+			}
 		}
 		else {
+			// D
 			mata: `eqn' = (`mname'.eqnAA).get("`dvar'")
+			mata: st_local("shortstack",`eqn'.shortstack)
 			// MSE, D
 			mata: `A'.put(("`d0tilde'_mse","scalar"),return_result_item(`eqn',"`d0tilde'","MSE0","`rep'"))
 			mata: `A'.put(("`d1tilde'_mse","scalar"),return_result_item(`eqn',"`d1tilde'","MSE1","`rep'"))
 			// MSE folds, D
 			mata: `A'.put(("`d0tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d0tilde'","MSE0_folds","`rep'"))
 			mata: `A'.put(("`d1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d1tilde'","MSE1_folds","`rep'"))
+			// shortstack weights, D
+			if "`spec'"=="ss" {
+				mata: `A'.put(("`dvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights0","`rep'"))
+				mata: `A'.put(("`dvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights1","`rep'"))
+			}
+			// Z
 			mata: `eqn' = (`mname'.eqnAA).get("`zvar'")
+			mata: st_local("shortstack",`eqn'.shortstack)
 			// MSE, Z
 			mata: `A'.put(("`ztilde'_mse","scalar"),return_result_item(`eqn',"`ztilde'","MSE","`rep'"))
 			// MSE folds, Z
 			mata: `A'.put(("`ztilde'_mse_folds","matrix"),return_result_item(`eqn',"`ztilde'","MSE_folds","`rep'"))
+			// shortstack weights, Z
+			if "`spec'"=="ss" {
+				mata: `A'.put(("`zvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights","`rep'"))
+			}
 		}
 	
 		mata: (`mname'.estAA).put(("`spec'","`rep'"),`A')
@@ -945,7 +975,13 @@ program _ddml_ate_late, eclass
 		mata: `A'.put(("b_resamples","matrix"),`bvec')
 		
 		// store locals
-		local list_local title y0 y1 d d0 d1 z yvar dvar vce vcetype teffect
+		local list_local title yvar dvar y0 y1 vce vcetype teffect
+		if "`model'"=="interactive" {
+			local list_local `list_local' d
+		}
+		else {
+			local list_local `list_local' d0 d1 z
+		}
 		if "`clustvar'"~=""		local list_local `list_local' clustvar
 		foreach obj in `list_local' {
 			mata: `A'.put(("`obj'","local"),"``obj''")
