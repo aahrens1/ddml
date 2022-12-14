@@ -76,7 +76,7 @@ program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that
 			// propagate random uniforms (last ob in fcluster) within fclusters
 			qui by `fclustid': replace `uni'=`uni'[_N] if `mname'_sample
 			// create equal-sized folds
-			qui egen `mname'_fid_`m' = cut(`uni'), group(`kfolds')
+			qui egen long `mname'_fid_`m' = cut(`uni'), group(`kfolds')
 			qui replace `mname'_fid_`m' = `mname'_fid_`m' + 1
 			label var `mname'_fid_`m' "`labtext'"
 		}
@@ -99,7 +99,7 @@ program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that
 				di as res "these observations will be excluded from the estimation sample"
 				qui replace `touse' = 0 if `vname'==.
 			}
-			qui egen `mname'_fid_`m' = group(`vname')
+			qui egen long `mname'_fid_`m' = group(`vname')
 			label var `mname'_fid_`m' "(based on `vname')"
 			// enforce that the number of folds is the same for all fold vars
 			qui tab `mname'_fid_`m'
