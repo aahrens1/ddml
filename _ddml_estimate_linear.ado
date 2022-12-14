@@ -639,7 +639,7 @@ program define _ddml_reg, eclass
 				]
 
 	mata: st_local("model",`mname'.model)
-	local ivhdflag	= "`model'"=="ivhd"
+	local fivflag	= "`model'"=="fiv"
 	
 	if "`replay'"=="" & "`medmean'"=="" {	// estimate from scratch
 		
@@ -689,7 +689,7 @@ program define _ddml_reg, eclass
 		local vcetype	`e(vcetype)'
 		local clustvar	`e(clustvar)'
 		local N_clust	=e(N_clust)
-		if `ivhdflag' {
+		if `fivflag' {
 			local d		`dvtnames'
 			add_suffix	`dvtnames', suffix("_`rep'")
 			local d_m	`s(vnames)'
@@ -713,7 +713,13 @@ program define _ddml_reg, eclass
 		mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("`V'"))'))
 		
 		// store locals
-		local list_local title y y_m d d_m dh dh_m z z_m yname dnames vce vcetype
+		local list_local title y y_m d d_m yname dnames vce vcetype
+		if "`model'"=="iv" {
+			local list_local `list_local' z z_m
+		}
+		else if "`model'"=="fiv" {
+			local list_local `list_local' z z_m dh dh_m
+		}
 		if "`clustvar'"~=""		local list_local `list_local' clustvar
 		foreach obj in `list_local' {
 			mata: `A'.put(("`obj'","local"),"``obj''")
@@ -736,9 +742,9 @@ program define _ddml_reg, eclass
 		// MSE folds
 		mata: `A'.put(("`y'_mse_folds","matrix"),return_result_item(`eqn',"`y'","MSE_folds","`rep'"))
 		// ss weights
-		mata: st_local("shortstack_vname", `eqn'.shortstack)
-		if "`shortstack_vname'"!="" {
-			mata: `A'.put(("`y'_ssw","matrix"), return_result_item(`eqn',"`shortstack_vname'","ss_weights","`rep'"))
+		if "`spec'"=="ss" {
+			mata: st_local("shortstack", `eqn'.shortstack)
+			mata: `A'.put(("`yname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'","ss_weights","`rep'"))
 		}
 
 		// D eqn results - uses vtnames
@@ -755,23 +761,23 @@ program define _ddml_reg, eclass
 			// MSE folds
 			mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
 			// ss weights
-			mata: st_local("shortstack_vname", `eqn'.shortstack)
-			if "`shortstack_vname'"!="" {
-				mata: `A'.put(("`d'_ssw","matrix"), return_result_item(`eqn',"`shortstack_vname'","ss_weights","`rep'"))
+			if "`spec'"=="ss" {
+				mata: st_local("shortstack", `eqn'.shortstack)
+				mata: `A'.put(("`dname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'","ss_weights","`rep'"))
 			}
-			if `ivhdflag' {
+			if `fivflag' {
 				// MSE
 				mata: `A'.put(("`vtilde_h'_mse","scalar"),return_result_item(`eqn',"`vtilde_h'","MSE_h","`rep'"))
 				// MSE folds
 				mata: `A'.put(("`vtilde_h'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde_h'","MSE_h_folds","`rep'"))
 				// ss weights
-				mata: st_local("shortstack_vname", `eqn'.shortstack)
-				if "`shortstack_vname'"!="" {
-						mata: `A'.put(("`y'_ssw","matrix"), return_result_item(`eqn',"`shortstack_vname'","ss_weights_h","`rep'"))
+				if "`spec'"=="ss" {
+						mata: st_local("shortstack", `eqn'.shortstack)
+						mata: `A'.put(("`dname'_h_ssw","matrix"), return_result_item(`eqn',"`shortstack'","ss_weights_h","`rep'"))
 				}
 			}
 		}
-		if `ivhdflag'==0 {
+		if `fivflag'==0 {
 			// Z eqn results; ivhd won't enter
 			local numeqnZ	: word count `znames'
 			forvalues i=1/`numeqnZ' {
@@ -783,9 +789,9 @@ program define _ddml_reg, eclass
 				// MSE folds
 				mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
 				// ss weights
-				mata: st_local("shortstack_vname", `eqn'.shortstack)
-				if "`shortstack_vname'"!="" {
-					mata: `A'.put(("`z'_ssw","matrix"), return_result_item(`eqn',"`shortstack_vname'","ss_weights","`rep'"))
+				if "`spec'"=="ss" {
+					mata: st_local("shortstack", `eqn'.shortstack)
+					mata: `A'.put(("`zname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'","ss_weights","`rep'"))
 				}
 			}
 		}
@@ -924,7 +930,13 @@ program define _ddml_reg, eclass
 		mata: `A'.put(("depvar","post"),"`depvar'")
 		
 		// store locals
-		local list_local title y d dh z yname dnames vce vcetype
+		local list_local title y d yname dnames vce vcetype
+		if "`model'"=="iv" {
+			local list_local `list_local' z
+		}
+		else if "`model'"=="fiv" {
+			local list_local `list_local' z dh
+		}
 		if "`clustvar'"~=""		local list_local `list_local' clustvar
 		foreach obj in `list_local' {
 			mata: `A'.put(("`obj'","local"),"``obj''")
