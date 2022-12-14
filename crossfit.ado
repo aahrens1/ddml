@@ -174,16 +174,16 @@ program define crossfit, rclass sortpreserve
 	// loop over resamples (crossfitting, shortstacking, store results)
 	forvalues m=1/`reps' {
 	
-	// create rnames for renaming the rows of saved matrices
-	local rnames `rnames' resample_`m'
-
-	******************************** CROSSFITTING ************************************
+		// create rnames for renaming the rows of saved matrices
+		local rnames `rnames' resample_`m'
 	
-	// cross-fitting fundamentally depends on three cases 
-	// case 1: `tvflag'==0 & `lieflag'==0
-	// case 2: `tvflag'==1 & `lieflag'==0
-	// case 3: `lieflag'==1
-	// nb: `tvflag'==1 & `lieflag'==1 is impossible
+		******************************** CROSSFITTING ************************************
+		
+		// cross-fitting fundamentally depends on three cases 
+		// case 1: `tvflag'==0 & `lieflag'==0
+		// case 2: `tvflag'==1 & `lieflag'==0
+		// case 3: `lieflag'==1
+		// nb: `tvflag'==1 & `lieflag'==1 is impossible
 	
 		if `reps'>1 {
 			di as text "Resample `m'..."
@@ -688,12 +688,12 @@ program define crossfit, rclass sortpreserve
 				cap drop `vtilde'_`m'
 				if "`resid'"=="" {
 					// vtilde is predicted values
-					qui gen `vtilde'_`m' = `vhat`i''
+					qui gen `vtype' `vtilde'_`m' = `vhat`i''
 					qui label var `vtilde'_`m' "Predicted values cond. exp. of `vname' using `cmd'"
 				}
 				else {
 					// vtilde is residuals
-					qui gen `vtilde'_`m' = `vres`i''
+					qui gen `vtype' `vtilde'_`m' = `vres`i''
 					qui label var `vtilde'_`m' "Residuals cond. exp. of `vname' using `cmd'"
 				}
 		
@@ -745,15 +745,15 @@ program define crossfit, rclass sortpreserve
 				cap drop `vtilde'1_`m'
 				if "`resid'"=="" {
 					// vtilde is predicted values
-					qui gen `vtilde'0_`m' = `vhat0`i''
-					qui gen `vtilde'1_`m' = `vhat1`i''
+					qui gen `vtype' `vtilde'0_`m' = `vhat0`i''
+					qui gen `vtype' `vtilde'1_`m' = `vhat1`i''
 					qui label var `vtilde'0_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using `cmd'"
 					qui label var `vtilde'1_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using `cmd'"
 				}
 				else {
 					// vtilde is residuals
-					qui gen `vtilde'0_`m' = `vres0`i''
-					qui gen `vtilde'1_`m' = `vres1`i''
+					qui gen `vtype' `vtilde'0_`m' = `vres0`i''
+					qui gen `vtype' `vtilde'1_`m' = `vres1`i''
 					qui label var `vtilde'0_`m' "Residuals cond. exp. of `vname' given `treatvar'==0 using `cmd'"
 					qui label var `vtilde'1_`m' "Residuals cond. exp. of `vname' given `treatvar'==1 using `cmd'"
 				}
@@ -824,9 +824,9 @@ program define crossfit, rclass sortpreserve
 				cap drop `vtilde'_`m'
 				cap drop `vtilde'_h_`m'
 				
-				qui gen `vtilde'_`m' = `dhat`i''
+				qui gen `vtype' `vtilde'_`m' = `dhat`i''
 				qui label var `vtilde'_`m' "Predicted values E[`vname'|X,Z]"
-				qui gen `vtilde'_h_`m' = `hhat`i''
+				qui gen `vtype' `vtilde'_h_`m' = `hhat`i''
 				qui label var `vtilde'_h_`m' "Predicted values E[`vtilde'_`m'|X]"
 
 				// calculate and return mspe and sample size
