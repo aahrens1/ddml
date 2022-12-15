@@ -16,7 +16,8 @@ Please check the {helpb ddml extract##examples:examples} provided at the end of 
 {marker syntax}{...}
 {title:Syntax}
 
-{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)} {opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)} {opt subkey2(string)}{bind: ]}
+{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)}
+{opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)} {opt subkey2(string)}{bind: ]}
 
 {pstd}
 {it:display_item} can be {it:mse}, {it:n} or {it:pystacked}.
@@ -51,6 +52,9 @@ Saves extracted objects as Stata r(.) macros (default is to leave as Mata object
 {synoptline}
 {synopt:{opt show(pystacked)}}
 Extracts {opt pystacked} weights.
+{p_end}
+{synopt:{opt show(shortstack)}}
+Extracts {opt shortstack} weights.
 {p_end}
 {synopt:{opt show(mse)}}
 Extracts OOS MSEs by crossfitting fold.
