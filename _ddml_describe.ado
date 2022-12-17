@@ -51,6 +51,8 @@ program define _ddml_describe
 		foreach var of varlist `nameD' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
+			local numlnrD : word count `vtlistD'
+			local comboD `comboD' * `numlnrD'
 			di as text _col(2) "`var' learners:" _col(25) as res "`vtlistD'"
 		}
 	}
@@ -59,8 +61,27 @@ program define _ddml_describe
 		foreach var of varlist `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
+			local numlnrZ : word count `vtlistZ'
+			local comboZ `comboZ' * `numlnrZ'
 			di as text _col(2) "`var' learners:" _col(25) as res "`vtlistZ'"
 		}
+	}
+	// report number of specifications
+	if "`model'"=="interactive" | "`model'"=="late" {
+		local comboY `numlnrY' * `numlnrY'
+	}
+	else {
+		local comboY `numlnrY'
+	}
+	if "`model'"=="late" | "`model'"=="fiv" {
+		local comboD `comboD' `comboD'
+	}
+	di as text "Specifications:" _col(25) as res `comboY' `comboD' `comboZ' " possible specs" _c
+	if `nreps' > 1 {
+		di as res " * " `nreps' " crossfit splits = " `comboY' `comboD' `comboZ' * `nreps'
+	}
+	else {
+		di
 	}
 	
 	// sample and folds in detail
