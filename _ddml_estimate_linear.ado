@@ -778,7 +778,7 @@ program define _ddml_reg, eclass
 			}
 		}
 		if `fivflag'==0 {
-			// Z eqn results; ivhd won't enter
+			// Z eqn results; fiv won't enter
 			local numeqnZ	: word count `znames'
 			forvalues i=1/`numeqnZ' {
 				local zname : word `i' of `znames'
@@ -1039,17 +1039,17 @@ program define _ddml_reg, eclass
 		di as text "`e(title)'"
 		di as text "y-E[y|X]" _col(11) "= " as res "`e(y_m)'" _c
 		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
-		if "`e(model)'"~="ivhd" {
+		if "`e(model)'"~="fiv" {
 			di as text "D-" _c
 		}
 		di as text "E[D|X,Z]" _col(11)  "= " as res "`e(d_m)'"
 		if "`e(model)'" == "iv" {
 			di as text "Z-E[Z|X]" _col(11) "= " as res "`e(z_m)'"
 		}
-		else if "`e(model)'" == "ivhd" {
+		else if "`e(model)'" == "fiv" {
 			di as text "E[D|X]" _col(11) "= " as res "`e(dh_m)'"
 		}
-		if "`e(model)'" == "ivhd" {
+		if "`e(model)'" == "fiv" {
 			di as text "Orthogonalised D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
 		}
 		ereturn display
