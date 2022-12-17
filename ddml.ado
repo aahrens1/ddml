@@ -391,25 +391,25 @@ program define add_eqn_to_model, rclass
 
 	// syntax checks
 	mata: st_local("model",`mname'.model)
-	// ATE + multiple D variables not supported
-	if "`subcmd'"=="deq" & "`model'"=="interactive" {
+	// ATE or LIE with multiple D variables not supported
+	if "`subcmd'"=="deq" & ("`model'"=="interactive" | "`model'"=="fiv") {
 		mata: st_local("nameD",invtokens(`mname'.nameD))
 		local nlist `nameD' `vname'
 		local nlist : list uniq nlist
 		local nlist : list sizeof nlist
 		if `nlist' > 1 {
-			di as err "error - multiple D variables not supported (`nameD' `vname')"
+			di as err "error - multiple D variables not supported with `model' (`nameD' `vname')"
 			exit 198
 		}
 	}
-	// LATE + multiple Z variables not supported
+	// LATE with multiple Z variables not supported
 	if "`subcmd'"=="zeq" & "`model'"=="late" {
 		mata: st_local("nameZ",invtokens(`mname'.nameZ))
 		local nlist `nameZ' `vname'
 		local nlist : list uniq nlist
 		local nlist : list sizeof nlist
 		if `nlist' > 1 {
-			di as err "error - multiple Z variables not supported (`nameZ' `vname')"
+			di as err "error - multiple Z variables not supported with LATE (`nameZ' `vname')"
 			exit 198
 		}
 	}
