@@ -478,7 +478,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					local specrep `: di %3.0f `i' %3.0f `m''
 					// pad out to 6 spaces
 					local specrep = (6-length("`specrep'"))*" " + "`specrep'"
-					local rcmd stata ddml estimate `mname', spec(`i') rep(`m') replay notable
+					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') replay notable
 					di %6s "{`rcmd':`specrep'}" _c
 					di as res %14s "`yt0'" _c
 					di as res %14s "`yt1'" _c
@@ -514,7 +514,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				local specrep `: di "ss" %3.0f `m''
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
-				local rcmd stata ddml estimate `mname', spec(ss) rep(`m') replay notable
+				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`m') replay notable
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
 				di as res %14s "[ss]" _c
@@ -532,7 +532,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			}
 		}
 		if `rowcount' > `tnumrows' {
-			local rcmd stata ddml estimate `mname', replay fulltable
+			local rcmd stata ddml estimate, mname(`mname') replay fulltable
 			di %6s "{`rcmd':   ...  }" _c
 			di as text "<-click or type " as res "ddml estimate, replay full" as text " to display full summary"
 		}
@@ -563,7 +563,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			local specrep `: di "mse" %3s "`medmean'"' //'
 			// pad out to 6 spaces
 			local specrep = " " + "`specrep'"
-			local rcmd stata ddml estimate `mname', spec(mse) rep(`medmean') replay notable
+			local rcmd stata ddml estimate, mname(`mname') spec(mse) rep(`medmean') replay notable
 			di %6s "{`rcmd':`specrep'}" _c
 			di as res %14s "[min-mse]" _c
 			di as res %14s "[mse]" _c
@@ -586,7 +586,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				local specrep `: di "ss" %3s "`medmean'"' //'
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
-				local rcmd stata ddml estimate `mname', spec(ss) rep(`medmean') replay notable
+				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`medmean') replay notable
 				di as res %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
 				di as res %14s "[ss]" _c
