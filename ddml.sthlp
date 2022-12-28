@@ -113,7 +113,7 @@ Report information about {cmd:ddml} model:
 {pstd}
 Export results in csv format:
 
-{p 8 14}{cmd:ddml export} [ filename , {opt mname(name)}{bind: ]}
+{p 8 14}{cmd:ddml export} [ using filename , {opt mname(name)}{bind: ]}
 
 {pstd}
 Retrieve information from {cmd:ddml}:
