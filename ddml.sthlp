@@ -113,7 +113,7 @@ Report information about {cmd:ddml} model:
 {pstd}
 Export results in csv format:
 
-{p 8 14}{cmd:ddml export} [ , {opt mname(name)} {opt fname(name)}{bind: ]}
+{p 8 14}{cmd:ddml export} [ {opt fname(filename)} , {opt mname(name)}{bind: ]}
 
 {pstd}
 Retrieve information from {cmd:ddml}:
@@ -264,6 +264,9 @@ to 0.01 and 0.99, respectively).
 {synoptline}
 {synopt:{opt mname(name)}}
 name of the DDML model. Defaults to {it:m0}.
+{p_end}
+{synopt:{opt fname(filename)}}
+name of file for export of results (estimated conditional expectations) in CSV format.
 {p_end}
 {synopt:{opt replist(numlist)}}
 (overlap plots) list of crossfitting resamples to plot. Defaults to all.
