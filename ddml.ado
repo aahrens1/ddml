@@ -1,5 +1,5 @@
-*! ddml v1.0
-*! last edited: 13 dec 2022
+*! ddml v1.1
+*! last edited: 28 dec 2022
 *! authors: aa/ms
 
 * notes:
@@ -76,7 +76,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		if "`mname'"=="" {
 			local mname m0 // sets the default name
 		}
-		if ("`subcmd'"~="init" & "`subcmd'"~="extract") {
+		if ("`subcmd'"~="init" & "`subcmd'"~="extract" & "`subcmd'"~="update") {
 			// exits with error if mname is not an mStruct
 			check_mname "`mname'"
 		}
@@ -92,7 +92,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			}
 		}
 		else {
-			// ddml extract; do nothing
+			// ddml extract or update; do nothing
 		}
 	
 		*** get latest version

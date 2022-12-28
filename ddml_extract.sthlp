@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 13dec2022}{...}
+{* *! version 28dec2022}{...}
 {hline}
-{cmd:help ddml extract}{right: v1.0}
+{cmd:help ddml extract}{right: v1.1}
 {hline}
 
 {title:Title}

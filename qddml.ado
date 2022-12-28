@@ -1,5 +1,5 @@
-*! ddml v1.0
-*! last edited: 13 dec 2022
+*! ddml v1.1
+*! last edited: 18 dec 2022
 *! authors: aa/ms
 
 program define qddml, eclass					//  sortpreserve handled in _ivlasso
