@@ -16,7 +16,7 @@ local stata_version `c(stata_version)'
 local born_date `c(born_date)'
 local current_date `c(current_date)'
 
-version 13
+version 14
 mata:
 mata clear
 
@@ -93,6 +93,7 @@ struct mStruct {
 	string scalar					strDatavars		// string with expanded names of Stata variables
 	real matrix						matDatavars		// matrix with values of Stata variables
 	real scalar						crossfitted   	// =1 if crossvalidation has been done; 0 if not
+	real scalar						estimated		// =1 if estimation has been done; 0 if not
 }
 
 struct mStruct init_mStruct()
@@ -113,6 +114,7 @@ struct mStruct init_mStruct()
 	d.strDatavars	= ""
 	d.matDatavars	= J(0,0,.)
 	d.crossfitted	= 0
+	d.estimated		= 0
 	
 	(d.eqnAA).reinit("string",1)
 	(d.eqnAA).notfound(NULL)

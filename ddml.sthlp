@@ -95,7 +95,7 @@ added in Step 2.
 {pstd}
 {ul:Optional.} Report/post selected results:
 
-{p 8 14}{cmd:ddml estimate} [ , {opt replay} {opt mname(name)} {opt spec(integer or string)} {opt rep(integer or string)} {opt full:table} {opt not:able} {opt all:est}{bind: ]} 
+{p 8 14}{cmd:ddml estimate} [ , {opt replay} {opt mname(name)} {opt spec(integer or string)} {opt rep(integer or string)} {opt allcombos} {opt not:able} {bind: ]} 
 
 {pstd}
 {ul:Auxiliary sub-programs:}
