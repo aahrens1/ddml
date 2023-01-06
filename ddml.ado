@@ -65,7 +65,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		
 		// should perhaps make subcmd list all lower case (more forgiving) and replace `subcmd' with strlower("`subcmd'").
 		local alleqntypes E[Y|X] E[Y|X,D] E[Y|D,X] E[Y|X,Z] E[Y|Z,X] E[D|X] E[D|Z,X] E[D|X,Z] E[Z|X] yeq deq zeq dheq
-		local allsubcmds  update describe export drop copy sample init reinit yeq deq dheq zeq crossfit estimate extract overlap
+		local allsubcmds  update describe export drop copy sample init reinit yeq deq dheq zeq crossfit estimate extract overlap which
 		local allsubcmds `allsubcmds' `alleqntypes'
 		if strpos("`allsubcmds'","`subcmd'")==0 {
 			di as err "error - unknown subcommand `subcmd'"
@@ -341,6 +341,36 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		if "`subcmd'" == "overlap" {
 		
 			_ddml_overlap, mname(`mname') `options'
+		
+		}
+		
+		if "`subcmd'" == "which" {
+		
+			foreach ado in 						///
+				ddml.ado						///
+				qddml.ado						///
+				crossfit.ado					///
+				_ddml_allcombos.ado				///
+				_ddml_copy.ado					///
+				_ddml_crossfit.ado				///
+				_ddml_describe.ado				///
+				_ddml_drop.ado					///
+				_ddml_estimate_ate_late.ado		///
+				_ddml_estimate_linear.ado		///
+				_ddml_export.ado				///
+				_ddml_extract.ado				///
+				_ddml_nnls.ado					///
+				_ddml_nnls_p.ado				///
+				_ddml_overlap.ado				///
+				_ddml_sample.ado				///
+				_ddml_save.ado					///
+				_ddml_use.ado					{
+				
+				which `ado', all
+			}
+			di
+			di as text "mata: whichddmml()" _c
+			mata: whichddml()
 		
 		}
 		
