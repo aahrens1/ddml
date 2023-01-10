@@ -65,7 +65,7 @@ program _ddml_crossfit, eclass sortpreserve
 		}
 	}
 	if `numeqnZ' {
-		di as text "Z equations (`numeqnZ'): `nameZ'"
+		// di as text "Z equations (`numeqnZ'): `nameZ'"
 		foreach var of varlist `nameZ' {
 			// di as text _col(5) "Z equation `var':"
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
@@ -112,10 +112,10 @@ program _ddml_crossfit, eclass sortpreserve
 			local ssname		
 			mata: `eqn'.shortstack = ""
 		}
-		if ("`model'"=="partial") di as text "Cross-fitting E[Y|X] equation: `nameY'"
-		if ("`model'"=="fiv"|"`model'"=="late") di as text "Cross-fitting E[Y|X,Z] equation: `nameY'"
-		if ("`model'"=="interactive") di as text "Cross-fitting E[Y|X,D] equation: `nameY'"
-		if ("`model'"=="iv") di as text "Cross-fitting E[Y|X] equation: `nameY'"
+		if ("`model'"=="partial") di as text "Cross-fitting E[y|X] equation: `nameY'"
+		if ("`model'"=="fiv"|"`model'"=="late") di as text "Cross-fitting E[y|X,Z] equation: `nameY'"
+		if ("`model'"=="interactive") di as text "Cross-fitting E[y|X,D] equation: `nameY'"
+		if ("`model'"=="iv") di as text "Cross-fitting E[y|X] equation: `nameY'"
 
 		crossfit if `touse',						///
 			ename(`eqn') noreplace					///
@@ -152,6 +152,7 @@ program _ddml_crossfit, eclass sortpreserve
 				if ("`model'"=="late") di as text "Cross-fitting E[D|X,Z] equation: `var'"
 				if ("`model'"=="fiv") di as text "Cross-fitting E[D|X,Z] and E[D|X] equation: `var'"
 				if ("`model'"=="interactive"|"`model'"=="iv") di as text "Cross-fitting E[D|X] equation: `var'"
+
 				// All learners for each D eqn
 				crossfit if `touse',						///
 					ename(`eqn') noreplace					///

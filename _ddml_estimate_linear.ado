@@ -122,7 +122,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 			}
 		}
 		if `ssflag' == 0 {
-			di as err "warning - shortstack not available for all equations; option ignored"
+			di as err "error - shortstack not available for all equations"
+			exit 198
 		}
 	}
 
@@ -248,9 +249,9 @@ program _ddml_estimate_linear, eclass sortpreserve
 			`qui' _ddml_reg, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") // min-mse specification
 			// shortstack
 			if `ssflag' {
-				local title "Shortstack DDML model (mean)"
+				local title "Shortstack DDML model (mean over `nreps' resamples)"
 				`qui' _ddml_reg, mname(`mname') spec(ss) medmean(mn) title(`title')
-				local title "Shortstack DDML model (median)"
+				local title "Shortstack DDML model (median over `nreps' resamples)"
 				`qui' _ddml_reg, mname(`mname') spec(ss) medmean(md) title(`title')
 			}
 		}
