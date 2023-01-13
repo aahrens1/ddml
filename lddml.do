@@ -94,6 +94,9 @@ struct mStruct {
 	real matrix						matDatavars		// matrix with values of Stata variables
 	real scalar						crossfitted   	// =1 if crossvalidation has been done; 0 if not
 	real scalar						estimated		// =1 if estimation has been done; 0 if not
+	real scalar						ycounter		// counter for default y learners
+	real scalar						dcounter		// counter for default d learners
+	real scalar						zcounter		// counter for default z learners
 }
 
 struct mStruct init_mStruct()
@@ -123,9 +126,9 @@ struct mStruct init_mStruct()
 	(d.estAA).notfound(NULL)
 	
 	// initialize counters used for default learner names
-	(d.estAA).put(("ycounter","all"),1)
-	(d.estAA).put(("dcounter","all"),1)
-	(d.estAA).put(("zcounter","all"),1)
+	d.ycounter		= 1
+	d.dcounter		= 1
+	d.zcounter		= 1
 	
 	return(d)
 }
@@ -152,6 +155,15 @@ void clear_model_results(struct mStruct d)
 		(d.estAA).reinit("string",2)
 		(d.estAA).notfound(NULL)
 	}
+}
+
+// clear only estimation results in mStruct
+void clear_model_estimation(struct mStruct d)
+{
+    d.estimated		= 0
+	d.ncombos		= 0
+	(d.estAA).reinit("string",2)
+	(d.estAA).notfound(NULL)
 }
 
 // add item about learner to eStruct
