@@ -224,18 +224,18 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			** vtilde: use 2nd and 1st words of eq (estimator) as the default
 			if "`learner'"=="" {
 				if "`subcmd'"=="yeq" {
-					mata: st_local("counter",strofreal((`mname'.estAA).get(("ycounter","all"))))
-					mata: (`mname'.estAA).put(("ycounter","all"),`counter'+1)
+					mata: st_local("counter",strofreal(`mname'.ycounter))
+					mata: `mname'.ycounter = `counter'+1
 					local prefix Y`counter'
 				}
 				else if "`subcmd'"=="deq" {
-					mata: st_local("counter",strofreal((`mname'.estAA).get(("dcounter","all"))))
-					mata: (`mname'.estAA).put(("dcounter","all"),`counter'+1)
+					mata: st_local("counter",strofreal(`mname'.dcounter))
+					mata: `mname'.dcounter = `counter'+1
 					local prefix D`counter'
 				}
 				else if "`subcmd'"=="zeq" {
-					mata: st_local("counter",strofreal((`mname'.estAA).get(("zcounter","all"))))
-					mata: (`mname'.estAA).put(("zcounter","all"),`counter'+1)
+					mata: st_local("counter",strofreal(`mname'.zcounter))
+					mata: `mname'.zcounter = `counter'+1
 					local prefix Z`counter'
 				}
 				else if "`subcmd'"=="dheq" {

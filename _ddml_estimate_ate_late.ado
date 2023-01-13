@@ -26,7 +26,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	marksample touse
 	
 	// replay existing results
-	local replayflag = "`replay'"==""
+	local replayflag = "`replay'"~=""
 	// display summary table
 	local tableflag = "`notable'"==""
 	// request estimation/reporting of all combinations
@@ -39,6 +39,24 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 	
+	// reestimation necessary unless replay specified
+	if `replayflag' {
+		// estimated macro =0/1 indicating estimation results exist
+		mata: st_local("estimated", strofreal(`mname'.estimated))
+		// initial ncombos; will be 0 if all combos not (yet) estimated
+		mata: st_local("ncombos", strofreal(`mname'.ncombos))
+		// error check
+		if `estimated'==0 {
+			di as err "error - replay specified but model not yet estimated"
+			exit 198
+		}
+	}
+	else {
+		mata: clear_model_estimation(`mname')
+		local estimated = 0
+		local ncombos = 0
+	}
+		
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
 	mata: `eqn' = init_eStruct()

@@ -50,8 +50,7 @@ proceeds in four steps.
 {opt norandom} {opt tabfold} {opt vars(varlist)}{bind: ]}
 
 {pstd}
-where {it:model} is either {it:partial}, 
-{it:iv}, {it:interactive}, {it:fiv}, {it:interactiveiv};
+where {it:model} is either {it:partial}, {it:iv}, {it:interactive}, {it:fiv}, {it:interactiveiv};
 see {helpb ddml##models:model descriptions}.
 
 {pstd}
@@ -229,10 +228,10 @@ of several base learners.
 name of the DDML model. Defaults to {it:m0}.
 {p_end}
 {synopt:{opt spec(integer/string)}}
-select specification (specification number, "mse" or "ss")
+select specification (specification number, "mse" or "ss").
 {p_end}
 {synopt:{opt rep(integer/string)}}
-select resampling iteration (resample number, "mn" or "md")
+select resampling iteration (resample number, "mn" or "md").
 {p_end}
 {synopt:{cmdab:r:obust}}
 report SEs that are robust to the
@@ -243,6 +242,9 @@ select cluster-robust variance-covariance estimator.
 {p_end}
 {synopt:{opt vce(type)}}
 select variance-covariance estimator, see {helpb regress##vcetype:here}.
+{p_end}
+{synopt:{cmdab:noc:ons}}
+suppress constant term ({it:partial}, {it:iv}, {it:fiv} models only).
 {p_end}
 {synopt:{opt atet}}
 report average treatment effect of the treated (default is ATE).
