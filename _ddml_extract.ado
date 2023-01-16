@@ -127,7 +127,10 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 			rmatlist = (rmatlist, pystacked_extract(d,eqn,vnames[i],"weights",detailflag))
 			rmatlist = (rmatlist, pystacked_extract(d,eqn,vnames[i],"MSEs",detailflag))
 		}
-		st_global("r(matlist)",invtokens(sort(rmatlist,1)))
+		// rmatlist can be empty if pystacked called with a single learner
+		if (cols(rmatlist)>0) {
+			st_global("r(matlist)",invtokens(sort(rmatlist,1)))
+		}
 	}
 	else if (show=="SHORTSTACK") {
 		vnames =(d.eqnAA).keys()
@@ -447,7 +450,7 @@ function pystacked_extract(									///
 	vkeys = vkeys[.,(1::3)]
 	
 	for (j=1;j<=cols(eqn.vtlist);j++) {
-	
+
 		// initialize
 		vkeys_i = select(vkeys,vkeys[.,1]:==(eqn.vtlist)[j])
 		swflag = 0
@@ -494,20 +497,22 @@ function pystacked_extract(									///
 					base_est_h = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_base_est_h")))'
 					rstripe = rstripe \ base_est_h
 				}
-				// col 1 is learner number, col 2 is treatment/hflag (if needed), col 3 is rep number (in AA as string)
-				if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
-					rmat_k = ( (1::rows(rmat)) , J(rows(rmat),1,strtoreal(vkeys_i[k,3])) , rmat)
+				if (rmat~=J(0,0,.)) {
+					// col 1 is learner number, col 2 is treatment/hflag (if needed), col 3 is rep number (in AA as string)
+					if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+						rmat_k = ( (1::rows(rmat)) , J(rows(rmat),1,strtoreal(vkeys_i[k,3])) , rmat)
+					}
+					else if (eqn.ateflag==1) {
+						rmat_k = ( (1::rows(rmat)) , J(rows(rmat),1,treat), J(rows(rmat),1,strtoreal(vkeys_i[k,3])) , rmat)
+					}
+					else {
+						rmat_k = ( (1::rows(rmat)) , J(rows(rmat),1,hflag), J(rows(rmat),1,strtoreal(vkeys_i[k,3])) , rmat)
+					}
+					rmat_all = rmat_all \ rmat_k
 				}
-				else if (eqn.ateflag==1) {
-					rmat_k = ( (1::rows(rmat)) , J(rows(rmat),1,treat), J(rows(rmat),1,strtoreal(vkeys_i[k,3])) , rmat)
-				}
-				else {
-					rmat_k = ( (1::rows(rmat)) , J(rows(rmat),1,hflag), J(rows(rmat),1,strtoreal(vkeys_i[k,3])) , rmat)
-				}
-				rmat_all = rmat_all \ rmat_k
 			}
 		}
-		
+			
 		// process if any stacking weights encountered
 		if (rows(rmat_all) > 0) {
 			// rmat_all has full set of weights for all learners

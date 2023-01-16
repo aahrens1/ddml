@@ -310,8 +310,8 @@ program define crossfit, rclass sortpreserve
 						local cmd : word 1 of `est_main'
 					}
 					
-					// save pystacked weights and MSEs
-					if ("`cmd'"=="pystacked") {
+					// save pystacked weights and MSEs if #learners>1
+					if ("`cmd'"=="pystacked") & e(mcount)>1 & e(mcount)<. {
 						qui pystacked, table(rmspe)		// create rmspe matrix
 						if (`k'==1) {
 							mat `pysw_`i'' = e(weights)
@@ -355,8 +355,8 @@ program define crossfit, rclass sortpreserve
 						local cmd : word 1 of `est_main'
 					}
 		
-					// save pystacked weights and MSEs
-					if ("`cmd'"=="pystacked") {
+					// save pystacked weights and MSEs if #learners>1
+					if ("`cmd'"=="pystacked") & e(mcount)>1 & e(mcount)<. {
 						qui pystacked, table(rmspe)		// create rmspe matrix
 						if (`k'==1) {
 							mat `pysw1_`i'' = e(weights)
@@ -395,8 +395,8 @@ program define crossfit, rclass sortpreserve
 						// estimate excluding kth fold
 						`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options'
 			
-						// save pystacked weights and MSEs
-						if ("`cmd'"=="pystacked") {
+						// save pystacked weights and MSEs if #learners>1
+						if ("`cmd'"=="pystacked") & e(mcount)>1 & e(mcount)<. {
 							qui pystacked, table(rmspe)		// create rmspe matrix
 							if (`k'==1) {
 								mat `pysw0_`i'' = e(weights)
@@ -443,8 +443,8 @@ program define crossfit, rclass sortpreserve
 						local cmd : word 1 of `est_main'
 					}
 		
-					// get pystacked weights
-					if ("`cmd'"=="pystacked") {
+					// get pystacked weights and MSEs if #learners>1
+					if ("`cmd'"=="pystacked") & e(mcount)>1 & e(mcount)<. {
 						qui pystacked, table(rmspe)		// create rmspe matrix
 						if ((`k'==1) & (`m'==1)) {
 							// holds for all reps and folds
@@ -484,8 +484,8 @@ program define crossfit, rclass sortpreserve
 					`qui' `est_main_h_k' if `fid'!=`k' & `touse', `est_options_h'
 					local cmd_h `e(cmd)'
 		
-					// get pystacked weights
-					if ("`cmd_h'"=="pystacked") {
+					// get pystacked weights/MSEs if #learners>1
+					if ("`cmd_h'"=="pystacked") & e(mcount)>1 & e(mcount)<. {
 						qui pystacked, table(rmspe)		// create rmspe matrix
 						if ((`k'==1) & (`m'==1)) {
 							// holds for all reps and folds
@@ -766,6 +766,7 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
 				
 				if "`cmd'"=="pystacked" {
+					// weights and MSEs will be missing values if #learners=1
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_MSEs","`m'", st_matrix("`pysm_`i''"))
 					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")
@@ -845,6 +846,7 @@ program define crossfit, rclass sortpreserve
 				}
 				
 				if "`cmd'"=="pystacked" {
+					// weights and MSEs will be missing values if #learners=1
 					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights0","`m'", st_matrix("`pysw0_`i''"))
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1_`i''"))
@@ -921,11 +923,13 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h_folds", "`m'", st_matrix("`mse_h_folds'"))
 				
 				if "`cmd'"=="pystacked" {
+					// weights and MSEs will be missing values if #learners=1
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
 					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")					
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_MSEs","`m'", st_matrix("`pysm_`i''"))
 				}
 				if "`cmd_h'"=="pystacked" {
+					// weights and MSEs will be missing values if #learners=1
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights_h","`m'", st_matrix("`pyswh_`i''"))
 					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est_h","`base_est_h_`i''")					
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_MSEs_h","`m'", st_matrix("`pysmh_`i''"))
