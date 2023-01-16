@@ -540,7 +540,7 @@ Make sure to not confuse the two types of options.
 {phang2}. {stata "ddml crossfit, mname(m1)"}{p_end}
 {phang2}. {stata "ddml estimate, mname(m1) robust"}{p_end}
 
-{pstd}Examine the learner weights used by {cmd:pystacked}.{p_end}
+{pstd}Examine the learner weights and MSEs reported by {cmd:pystacked}.{p_end}
 {phang2}. {stata "ddml extract, mname(m1) show(pystacked)"}{p_end}
 
 {pstd}We can compare the effects with the first {cmd:ddml} model 

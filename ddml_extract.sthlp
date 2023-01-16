@@ -51,7 +51,9 @@ Saves extracted objects as Stata r(.) macros (default is to leave as Mata object
 {synopthdr:show options}
 {synoptline}
 {synopt:{opt show(pystacked)}}
-Extracts {opt pystacked} weights.
+Extracts {opt pystacked} weights and learner MSEs.
+The MSEs are cross-validation MSEs and correspond to the predictions used to obtain the stacking weights;
+see {helpb pystacked:help pystacked}.
 {p_end}
 {synopt:{opt show(shortstack)}}
 Extracts {opt shortstack} weights.
@@ -116,7 +118,7 @@ The model name is the default name "m0".
 
 {pstd}{ul:{opt show} option examples}{p_end}
 
-{pstd}{opt show} option examples: examine the learner weights used by {cmd:pystacked}, MSEs by fold, and sample sizes by fold.{p_end}
+{pstd}{opt show} option examples: examine the learner weights and MSEs reported by {cmd:pystacked}, MSEs by fold, and sample sizes by fold.{p_end}
 {phang2}. {stata "ddml extract, show(pystacked)"}{p_end}
 {phang2}. {stata "ddml extract, show(mse)"}{p_end}
 {phang2}. {stata "ddml extract, show(n)"}{p_end}
