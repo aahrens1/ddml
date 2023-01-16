@@ -426,7 +426,7 @@ function pystacked_extract(									///
 	// kstrings = key string, "weights" or "MSEs"
 	// kabbrev = "_w" or "_m"
 	// kstring = key string minus s at the end
-	kabbrev = "_" + substr(kstrings,1,1)
+	kabbrev = "_" + strlower(substr(kstrings,1,1))
 	kstring = substr(kstrings,1,strlen(kstrings)-1)
 	
 	rmatlist = J(1,0,"")
