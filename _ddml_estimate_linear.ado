@@ -8,7 +8,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 								[					///
 								ROBust				///
 								CLUster(varname)	///
-								NOConstant			///
+								NOConstant			/// suppress constant in estimation
+								SHOWConstant		/// display constant in summary table
 								vce(string)			///
 								allcombos			/// estimate and show all combinations (dfn changed below)
 								NOTable				/// suppress summary table
@@ -25,6 +26,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 	
 	// consflag
 	local consflag = ("`noconstant'"=="")
+	local showconsflag = ("`showconstant'"~="" & `consflag')	// ignored if nocons
 	// replay existing results
 	local replayflag = "`replay'"~=""
 	// display summary table
@@ -470,6 +472,9 @@ program _ddml_estimate_linear, eclass sortpreserve
 		forvalues j=1/`numeqnD' {
 			di as text %14s "D learner" %10s "b" %10s "SE" _c
 		}
+		if `showconsflag' {
+			di as text %10s "_cons" %10s "SE" _c
+		}
 		if "`model'"=="fiv" {
 			forvalues j=1/`numeqnD' {
 				di as text %14s "DH learner" _c
@@ -510,6 +515,15 @@ program _ddml_estimate_linear, eclass sortpreserve
 						local pse (`: di %6.3f `se'')
 						di as res %10s "`pse'" _c
 					}
+					if `showconsflag' {
+						// set j by hand; cons is in last column
+						local j = `numeqnD' + 1
+						mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
+						mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
+						di as res %10.3f `b' _c
+						local pse (`: di %6.3f `se'')
+						di as res %10s "`pse'" _c
+					}
 					forvalues j=1/`numeqnZ' {
 						local vt : word `j' of `ztlist'
 						di as res %14s "`vt'" _c
@@ -546,13 +560,22 @@ program _ddml_estimate_linear, eclass sortpreserve
 					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
 					di as res %10s "`pse'" _c
 				}
-				if "`model'"=="fiv" {
-					forvalues j=1/`numeqnD' {
-						di as res %14s "[ss]" _c
-					}
+				if `showconsflag' {
+					// set j by hand; cons is in last column
+					local j = `numeqnD' + 1
+					di as res %10.3f el(`btemp',1,`j') _c
+					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
+					di as res %10s "`pse'" _c
 				}
 				forvalues j=1/`numeqnZ' {
-					di as res %14s "[ss]" _c
+					local vt : word `j' of `ztlist'
+					di as res %14s "`vt'" _c
+				}
+				if "`model'"=="fiv" {
+					forvalues j=1/`numeqnD' {
+						local vt : word `j' of `ztlist'
+						di as res %14s "`vt'" _c
+					}
 				}
 				di
 			}
@@ -569,6 +592,13 @@ program _ddml_estimate_linear, eclass sortpreserve
 				di as res %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
 					di as res %14s "[ss]" _c
+					di as res %10.3f el(`btemp',1,`j') _c
+					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
+					di as res %10s "`pse'" _c
+				}
+				if `showconsflag' {
+					// set j by hand; cons is in last column
+					local j = `numeqnD' + 1
 					di as res %10.3f el(`btemp',1,`j') _c
 					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
 					di as res %10s "`pse'" _c

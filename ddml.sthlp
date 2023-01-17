@@ -241,10 +241,13 @@ presence of arbitrary heteroskedasticity.
 select cluster-robust variance-covariance estimator.
 {p_end}
 {synopt:{opt vce(type)}}
-select variance-covariance estimator, see {helpb regress##vcetype:here}.
+select variance-covariance estimator; see {helpb regress##vcetype:here}.
 {p_end}
-{synopt:{cmdab:noc:ons}}
+{synopt:{cmdab:noc:onstant}}
 suppress constant term ({it:partial}, {it:iv}, {it:fiv} models only).
+{p_end}
+{synopt:{cmdab:showc:onstant}}
+display constant term in summary estimation output table ({it:partial}, {it:iv}, {it:fiv} models only).
 {p_end}
 {synopt:{opt atet}}
 report average treatment effect of the treated (default is ATE).
