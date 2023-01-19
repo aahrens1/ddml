@@ -1,10 +1,14 @@
 clear all
  
 if ("`c(username)'"=="kahrens") {
-	adopath + "/Users/kahrens/MyProjects/ddml"
 	adopath + "/Users/kahrens/MyProjects/pystacked"
 	cd "/Users/kahrens/MyProjects/ddml/cert"
 }
+
+cap log close
+log using "doubleml_cert", replace text
+
+net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/dev/) replace
 
 webuse cattaneo2, clear
 tempfile cattaneo2
@@ -357,5 +361,5 @@ assert reldif(Rcoef,Scoef) <$tol
 assert  reldif(Rse,Sse) <$tol if model != "partial IV"
 assert  reldif(Rse,Sse) <0.03 if model == "partial IV"
 
-
+log close
  

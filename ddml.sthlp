@@ -550,6 +550,33 @@ Make sure to not confuse the two types of options.
 (if you have run the first example above).{p_end}
 {phang2}. {stata "ddml estimate, mname(m0) replay"}{p_end}
 
+{pstd}{ul:Partially linear model III. Multiple treatments.}
+
+{pstd}We can also run the partially linear model with multiple treatments. In this simple example, we estimate the effect of both 401k elligibility {cmd:e401} and education {cmd:educ}. Compared to above, we remove {cmd:educ} from the set of controls.{p_end}
+{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
+{phang2}. {stata "global Y net_tfa"}{p_end}
+{phang2}. {stata "global D1 e401"}{p_end}
+{phang2}. {stata "global D2 educ"}{p_end}
+{phang2}. {stata "global X tw age inc fsize db marr twoearn pira hown"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}Initialize the model.{p_end}
+{phang2}. {stata "ddml init partial, kfolds(2)"}{p_end}
+
+{pstd}Initialize the model.{p_end}
+{phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
+{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg) method(rf)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: reg $D1 $X"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D1 $X, type(reg) method(rf)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: reg $D2 $X"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D2 $X, type(reg) method(rf)"}{p_end}
+
+{pstd}Cross-fitting.{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+
+{pstd}Estimation.{p_end}
+{phang2}. {stata "ddml estimate, robust"}{p_end}
+
 {pstd}{ul:Partially linear IV model.} 
 
 {pstd}Preparation: we load the data, define global macros and set the seed.{p_end}

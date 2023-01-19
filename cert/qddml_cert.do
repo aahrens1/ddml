@@ -1,7 +1,6 @@
 clear all
  
 if ("`c(username)'"=="kahrens") {
-	adopath + "/Users/kahrens/MyProjects/ddml"
 	adopath + "/Users/kahrens/MyProjects/pystacked"
 	cd "/Users/kahrens/MyProjects/ddml/cert"
 }
@@ -25,12 +24,13 @@ ddml init partial, kfolds(2)
 ddml E[Y|X]: pystacked $Y $X, type(reg) method(rf)
 ddml E[D|X]: pystacked $D $X, type(reg) method(rf)
 ddml crossfit
-ddml estimate 
+ddml estimate  
 local b1 = _b[$D]
 
 set seed 42
-qddml $Y $D ($X), kfolds(2) model(partial) cmd(pystacked) cmdopt(type(reg) method(rf))
+qddml $Y $D ($X), kfolds(2) model(partial) cmd(pystacked) cmdopt(type(reg) method(rf)) noreg
 local b2 = _b[$D]
+ddml estimate 
 
 assert reldif(`b1',`b2')<$tol
 
@@ -52,7 +52,7 @@ ddml estimate, robust
 local b1 = _b[$D]
 
 set seed 42
-qddml $Y ($X) ($D=$Z), kfolds(30) model(iv) cmd(rforest) cmdopt(type(reg)) vtype(none) robust
+qddml $Y ($X) ($D=$Z), kfolds(30) model(iv) cmd(rforest) cmdopt(type(reg)) vtype(none) robust noreg
 local b2 = _b[$D]
 
 assert reldif(`b1',`b2')<$tol
@@ -76,7 +76,7 @@ ddml estimate, atet
 local b1_atet=_b[$D]
 
 set seed 42
-qddml $Y $D ($X), kfolds(5) reps(5) model(interactive) cmd(pystacked) ycmdopt(type(reg) method(gradboost)) dcmdopt(type(class) method(gradboost)) 
+qddml $Y $D ($X), kfolds(5) reps(5) model(interactive) cmd(pystacked) ycmdopt(type(reg) method(gradboost)) dcmdopt(type(class) method(gradboost)) noreg
 local b2 = _b[$D]
 
 ddml estimate, atet
@@ -104,12 +104,12 @@ ddml estimate
 local b1 = _b[$D]
 
 set seed 42
-qddml $Y (c.($X)# #c($X)) ($D=$Z), kfolds(5) model(interactiveiv) cmd(pystacked) ycmdopt(type(reg) m(lassocv)) dcmdopt(type(class) m(lassocv)) zcmdopt(type(class) m(lassocv)) 
+qddml $Y (c.($X)# #c($X)) ($D=$Z), kfolds(5) model(interactiveiv) cmd(pystacked) ycmdopt(type(reg) m(lassocv)) dcmdopt(type(class) m(lassocv)) zcmdopt(type(class) m(lassocv)) noreg
 local b2 = _b[$D]
 
 assert reldif(`b1',`b2')<$tol
 
-**** High-dim IV
+**** FIV
 
 use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear
 global Y share
@@ -127,7 +127,7 @@ ddml estimate
 local b1 = _b[$D]
 
 set seed 42
-qddml $Y ($X) ($D=$Z), model(fiv) cmd(pystacked) cmdopt(type(reg)) 
+qddml $Y ($X) ($D=$Z), model(fiv) cmd(pystacked) cmdopt(type(reg)) noreg
 local b2 = _b[$D]
 
 assert reldif(`b1',`b2')<$tol
