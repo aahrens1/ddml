@@ -168,7 +168,7 @@ if multiple resamples, applies to first resample only;
 ignored if user-defined fold variables are provided in {opt foldvar(varlist)}.
 {p_end}
 {synopt:{opt reps(integer)}}
-number of re-sampling iterations, i.e., how often the cross-fitting procedure is
+cross-fitting repetitions, i.e., how often the cross-fitting procedure is
 repeated on randomly generated folds. 
 {p_end}
 {synopt:{opt tabfold}}
@@ -190,12 +190,12 @@ This is usually inferred from the command line but is mandatory
 for the {it:fiv} model.
 {p_end}
 {synopt:{opt l:earner(varname)}}
-name of the variable to be created. 
+optional name of the variable to be created. 
 {p_end}
 {synopt:{opt vtype(string)}}
-variable type of the variable to be created. Defaults to {it:double}. 
+optional variable type of the variable to be created. Defaults to {it:double}. 
 {it:none} can be used to leave the type field blank 
-(this is required when using {cmd:ddml} with {helpb rforest}.)
+(required when using {cmd:ddml} with {helpb rforest}.)
 {p_end}
 {synopt:{opt predopt(string)}}
 {cmd:predict} option to be used to get predicted values. 
@@ -228,17 +228,17 @@ of several base learners.
 name of the DDML model. Defaults to {it:m0}.
 {p_end}
 {synopt:{opt spec(integer/string)}}
-select specification (specification number, "mse" or "ss").
+select specification. This can either be the specification number, {it:mse} for minimum-MSE specification (the default) or {it:ss} for short-stacking. 
 {p_end}
 {synopt:{opt rep(integer/string)}}
-select resampling iteration (resample number, "mn" or "md").
+select resampling iteration. This can either be the cross-fit repetition number, {it:mn} for mean aggregation or {it:md} for median aggregation (the default).
 {p_end}
 {synopt:{cmdab:r:obust}}
 report SEs that are robust to the
 presence of arbitrary heteroskedasticity.
 {p_end}
 {synopt:{opt cluster(varname)}}
-select cluster-robust variance-covariance estimator.
+select cluster-robust variance-covariance estimator, e.g. {cmd:vce(hc3)} or {cmd:vce(cluster id)}.
 {p_end}
 {synopt:{opt vce(type)}}
 select variance-covariance estimator; see {helpb regress##vcetype:here}.
@@ -256,7 +256,7 @@ report average treatment effect of the treated (default is ATE).
 report average treatment effect of the untreated (default is ATE).
 {p_end}
 {synopt:{opt trim(real)}}
-trimming of propensity scores. The default is 0.01
+trimming of propensity scores for the Interactive and Interactive IV models. The default is 0.01
 (that is, values below 0.01 and above 0.99 are set 
 to 0.01 and 0.99, respectively).
 {p_end}
@@ -315,7 +315,7 @@ Throughout we use {it:Y} to denote the outcome variable,
 {it:D} to denote the treatment variable(s) of interest.
 
 {pstd}
-{ul:Partial linear model} [{it:partial}]
+{ul:Partially linear model} [{it:partial}]
 
 	Y = {it:a}.D + g(X) + U
         D = m(X) + V
@@ -338,7 +338,7 @@ We estimate the conditional expectations E[D|X], as well as
 E[Y|X,D=0] and E[Y|X,D=1] (jointly added using {cmd:ddml E[Y|X,D]}).
 
 {pstd}
-{ul:Partial linear IV model} [{it:iv}]
+{ul:Partially linear IV model} [{it:iv}]
 
 	Y = {it:a}.D + g(X) + U
         Z = m(X) + V
