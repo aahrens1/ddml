@@ -43,13 +43,23 @@ program _ddml_estimate_linear, eclass sortpreserve
 		mata: st_local("estimated", strofreal(`mname'.estimated))
 		// initial ncombos; will be 0 if all combos not (yet) estimated
 		mata: st_local("ncombos", strofreal(`mname'.ncombos))
-		// error check
+		// error checks
 		if `estimated'==0 {
 			di as err "error - replay specified but model not yet estimated"
 			exit 198
 		}
+		if `ncombos'==0 & "`spec'"~="" & real("`spec'")<. {
+			di as err "error - spec(`spec') not available; add 'allcombos' to estimate all combinations"
+			di as err "add 'replay' to retrieve one of the available estimations stored in memory"
+			exit 198
+		}
 	}
 	else {
+		// error checks
+		if `doallcombos'==0 & "`spec'"~="" & real("`spec'")<. {
+			di as err "error - spec(`spec') not available; add 'allcombos' to estimate all combinations"
+			exit 198
+		}
 		mata: clear_model_estimation(`mname')
 		local estimated = 0
 		local ncombos = 0
@@ -85,7 +95,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 	else if "`spec'"=="" {
 		local spec "mse"
 	}
-	// allowable forms of spec and rep
+	// allowed forms of spec and rep
 	if "`spec'"=="shortstack"	local spec ss
 	if "`spec'"=="minmse"		local spec mse
 	if "`rep'"=="mean"			local rep mn
@@ -97,6 +107,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 	}
 	else if "`rep'"=="" & `nreps'==1 {
 		local rep 1
+	}
+	
+	// checks
+	if "`spec'"~="ss" & "`spec'"~="mse" & real("`spec'")==. {
+		di as err "error - invalid spec(`spec')"
+		exit 198
 	}
 	if real("`rep'")==. {
 		// rep is an integer or mn/md
@@ -114,7 +130,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 	// check that rep, if integer, isn't larger than nreps
 	if real("`rep'")!=. {
 		if `rep'>`nreps' {
-			di as err "rep() cannot be larger than `nreps'"
+			di as err "rep() cannot be larger than `nreps' in current model specification"
 			exit 198
 		}
 	}
