@@ -218,16 +218,16 @@ program _ddml_estimate_linear, eclass sortpreserve
 				forvalues j = 1/`numeqnD' {
 					tempvar zvar`j' 
 					tempvar dx`j'
-					local dh : word `j' of `z'
-					local dt : word `j' of `d'
+					local dh : word `j' of `Zopt'
+					local dt : word `j' of `Dopt'
 					local dd : word `j' of `nameD'
 					qui gen double `zvar`j'' = `dt'_`m'-`dh'_`m' // E[D|ZX]-E[D|X] = instrument
 					qui gen double `dx`j'' = `dd'-`dh'_`m' // D-E[D|X] = endogenous regressor
 					local dlist `dlist' `dx`j''
 					local zlist `zlist' `zvar`j''
 				}
-				local dvtnames `d'
-				local zvtnames `z'
+				local dvtnames `Dopt'
+				local zvtnames `Zopt'
 				local d `dlist'
 				local z `zlist'
 				local norep norep
@@ -236,8 +236,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 			`qui' _ddml_reg if `mname'_sample_`m' & `touse',					///
 					`noconstant' vce(`vce')										///
 					y(`Yopt') yname(`nameY')									///
-					d(`Dopt') dnames(`nameD') dvtnames(`dvtnames')		 		///
-					z(`Zopt') znames(`nameZ') zvtnames(`zvtnames')				///
+					d(`d') dnames(`nameD') dvtnames(`dvtnames')		 		///
+					z(`z') znames(`nameZ') zvtnames(`zvtnames')				///
 					mname(`mname') spec(mse) rep(`m') title(`title') `norep'
 			
 			// estimate shortstack for this rep
@@ -571,7 +571,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					local dd : word `j' of `nameD'
 					mata: `eqn' = (`mname'.eqnAA).get("`dd'")
 					mata: st_local("vt",return_learner_item(`eqn',"opt","`m'"))
-					di as res %14s "`vt'" _c
+					di as res %14s abbrev("`vt'",13) _c
 					di as res %10.3f el(`btemp',1,`j') _c
 					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
 					di as res %10s "`pse'" _c
@@ -585,12 +585,14 @@ program _ddml_estimate_linear, eclass sortpreserve
 				}
 				forvalues j=1/`numeqnZ' {
 					local vt : word `j' of `ztlist'
-					di as res %14s "`vt'" _c
+					di as res %14s abbrev("`vt'",13) _c
 				}
 				if "`model'"=="fiv" {
 					forvalues j=1/`numeqnD' {
-						local vt : word `j' of `ztlist'
-						di as res %14s "`vt'" _c
+						local dd : word `j' of `nameD'
+						mata: `eqn' = (`mname'.eqnAA).get("`dd'")
+						mata: st_local("vt",return_learner_item(`eqn',"opt_h","`m'"))
+						di as res %14s abbrev("`vt'",13) _c
 					}
 				}
 				di
@@ -782,9 +784,9 @@ end
 // does OLS/IV and reports with substitute yname and dnames
 program define _ddml_reg, eclass
 	syntax [anything] [if] [in] , [								///
-				y(name) yname(name)								///
-				d(namelist) dnames(namelist) dvtnames(namelist)	///
-				z(namelist) znames(namelist) zvtnames(namelist)	///
+				y(name) yname(name)								/// actual residualized var, original var
+				d(namelist) dnames(namelist) dvtnames(namelist)	/// actual var (may be a temp), original var, residualized (tilde) varname
+				z(namelist) znames(namelist) zvtnames(namelist)	/// actual var (may be a temp), original var, residualized (tilde) varname
 				mname(name)										///
 				spec(string) rep(string)						///
 				vce(string)										///

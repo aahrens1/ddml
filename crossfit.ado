@@ -952,7 +952,7 @@ program define crossfit, rclass sortpreserve
 				else if `mse_h' < `mse_h_opt' {
 					// overwrite with new opt
 					local mse_h_opt		= `mse_h'
-					mata: add_learner_item(`eqn_info',"opt_H","`m'","`vtilde'_h")
+					mata: add_learner_item(`eqn_info',"opt_h","`m'","`vtilde'_h")
 				}
 				
 			}
