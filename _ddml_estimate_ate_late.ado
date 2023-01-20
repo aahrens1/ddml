@@ -594,9 +594,9 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				di %6s "{`rcmd':`specrep'}" _c
 				mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 				mata: st_local("yt0",return_learner_item(`eqn',"opt0","`m'"))
-				di as res %14s "`yt0'" _c
+				di as res %14s abbrev("`yt0'",13) _c
 				mata: st_local("yt1",return_learner_item(`eqn',"opt1","`m'"))
-				di as res %14s "`yt1'" _c
+				di as res %14s abbrev("`yt1'",13) _c
 				if `ateflag' {
 					mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
 					mata: st_local("dt",return_learner_item(`eqn',"opt","`m'"))
@@ -605,9 +605,9 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				else {
 					mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
 					mata: st_local("dt0",return_learner_item(`eqn',"opt0","`m'"))
-					di as res %14s "`dt0'" _c
+					di as res %14s abbrev("`dt0'",13) _c
 					mata: st_local("dt1",return_learner_item(`eqn',"opt1","`m'"))
-					di as res %14s "`dt1'" _c
+					di as res %14s abbrev("`dt1'",13) _c
 				
 				}
 				di as res %10.3f el(`btemp',1,1) _c
@@ -616,7 +616,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				if ~`ateflag' {
 					mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
 					mata: st_local("zt",return_learner_item(`eqn',"opt","`m'"))
-					di as res %14s "`zt'" _c
+					di as res %14s abbrev("`zt'",13) _c
 				}
 				di
 			}

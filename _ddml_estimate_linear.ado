@@ -190,6 +190,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 			*** retrieve best model
 			mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 			mata: st_local("Yopt",return_learner_item(`eqn',"opt","`m'"))
+			
 			foreach var in `nameD' {
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
 				mata: st_local("oneDopt",return_learner_item(`eqn',"opt","`m'"))
@@ -200,6 +201,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 					local Zopt `Zopt' `oneDHopt'
 				}
 			}
+			
 			// nameZ is empty for fiv model
 			foreach var in `nameZ' {
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
@@ -232,12 +234,16 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local z `zlist'
 				local norep norep
 			}
+			else {
+				local d `Dopt'
+				local z `Zopt'
+			}
 			local title Min MSE DDML model`stext'
 			`qui' _ddml_reg if `mname'_sample_`m' & `touse',					///
 					`noconstant' vce(`vce')										///
 					y(`Yopt') yname(`nameY')									///
-					d(`d') dnames(`nameD') dvtnames(`dvtnames')		 		///
-					z(`z') znames(`nameZ') zvtnames(`zvtnames')				///
+					d(`d') dnames(`nameD') dvtnames(`dvtnames')			 		///
+					z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
 					mname(`mname') spec(mse) rep(`m') title(`title') `norep'
 			
 			// estimate shortstack for this rep
@@ -566,7 +572,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 				di %6s "{`rcmd':`specrep'}" _c
 				mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 				mata: st_local("yt",return_learner_item(`eqn',"opt","`m'"))
-				di as res %14s "`yt'" _c
+				di as res %14s abbrev("`yt'",13) _c
 				forvalues j=1/`numeqnD' {
 					local dd : word `j' of `nameD'
 					mata: `eqn' = (`mname'.eqnAA).get("`dd'")
@@ -846,7 +852,6 @@ program define _ddml_reg, eclass
 		mat `b' = e(b)
 		mat `V' = e(V)
 		local N = e(N)
-
 		local vce		`e(vce)'
 		local vcetype	`e(vcetype)'
 		local clustvar	`e(clustvar)'
@@ -1147,7 +1152,6 @@ program define _ddml_reg, eclass
 		mata: st_matrix("`V'",`B'.get(("V","post")))
 		mata: st_local("N",strofreal(`B'.get(("N","post"))))
 		mata: st_local("depvar",`B'.get(("depvar","post")))
-		
 		mata: st_local("yname",`B'.get(("yname","local")))
 		mata: st_local("dnames",`B'.get(("dnames","local")))
 		
