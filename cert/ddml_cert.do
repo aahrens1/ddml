@@ -3,7 +3,7 @@ clear all
  
 if ("`c(username)'"=="kahrens") {
 	adopath + "/Users/kahrens/MyProjects/pystacked"
-	*adopath + "/Users/kahrens/MyProjects/ddml"
+	adopath + "/Users/kahrens/MyProjects/ddml"
 	cd "/Users/kahrens/MyProjects/ddml/cert"
 }
 
@@ -296,12 +296,17 @@ ddml E[D|X], learner(Dhat_pystacked) vname($D): pystacked {D} $X, type(reg)
  
 ddml crossfit
 ddml estimate
+local a1 = _b[price]
 
+ddml extract, show(pystacked)
+ddml extract, show(mse)
+ddml extract, show(n)
 
-ddml estimate m0, spec(8) rep(1)
 gen Dtilde = $D - Dhat_pystacked_h_1
 gen Zopt = Dhat_pystacked_1 - Dhat_pystacked_h_1
  
-ivreg Y2_pystacked_1 (Dtilde=Zopt), nocons
+ivreg Y2_pystacked_1 (Dtilde=Zopt) 
+local b1 = _b[Dtil]
+assert reldif(`a1',`b1')<$tol
 
 log close

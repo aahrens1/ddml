@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/cert/doubleml_cert.log
   log type:  text
- opened on:  19 Jan 2023, 15:27:25
+ opened on:  21 Jan 2023, 18:53:43
 
 . 
 . net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/dev/) replace
@@ -16,7 +16,7 @@ all files already exist and are up to date.
 . tempfile cattaneo2
 
 . save `cattaneo2'
-file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_25451.000001 saved as .dta format
+file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_17342.000001 saved as .dta format
 
 . 
 . use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
@@ -24,7 +24,7 @@ file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_25451.000001 saved as .
 . tempfile jtpa
 
 . save `jtpa'
-file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_25451.000002 saved as .dta format
+file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_17342.000002 saved as .dta format
 
 . 
 . use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear
@@ -32,7 +32,7 @@ file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_25451.000002 saved as .
 . tempfile sipp1991
 
 . save `sipp1991'
-file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_25451.000003 saved as .dta format
+file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_17342.000003 saved as .dta format
 
 . 
 . frame create Rresults
@@ -990,5 +990,5 @@ E[Z|X]       = Z1_logit_1
       name:  <unnamed>
        log:  /Users/kahrens/MyProjects/ddml/cert/doubleml_cert.log
   log type:  text
- closed on:  19 Jan 2023, 15:27:44
+ closed on:  21 Jan 2023, 18:53:58
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------

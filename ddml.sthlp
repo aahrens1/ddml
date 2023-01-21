@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 28dec2022}{...}
+{* *! version 21jan2023}{...}
 {hline}
-{cmd:help ddml}{right: v1.1}
+{cmd:help ddml}{right: v1.2}
 {hline}
 
 {title:Title}
@@ -94,7 +94,7 @@ added in Step 2.
 {pstd}
 {ul:Optional.} Report/post selected results:
 
-{p 8 14}{cmd:ddml estimate} [ , {opt replay} {opt mname(name)} {opt spec(integer or string)} {opt rep(integer or string)} {opt allcombos} {opt not:able} {bind: ]} 
+{p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {opt spec(integer or string)} {opt rep(integer or string)} {opt allcombos} {opt not:able} {opt replay} {bind: ]} 
 
 {pstd}
 {ul:Auxiliary sub-programs:}
@@ -244,7 +244,7 @@ select cluster-robust variance-covariance estimator, e.g. {cmd:vce(hc3)} or {cmd
 select variance-covariance estimator; see {helpb regress##vcetype:here}.
 {p_end}
 {synopt:{cmdab:noc:onstant}}
-suppress constant term ({it:partial}, {it:iv}, {it:fiv} models only).
+suppress constant term ({it:partial}, {it:iv}, {it:fiv} models only). Since the residualized outcome and treatment may not be exactly mean-zero in finite samples, {cmd:ddml} includes the constant by default in the estimation stage of partially linear models.
 {p_end}
 {synopt:{cmdab:showc:onstant}}
 display constant term in summary estimation output table ({it:partial}, {it:iv}, {it:fiv} models only).
@@ -259,6 +259,13 @@ report average treatment effect of the untreated (default is ATE).
 trimming of propensity scores for the Interactive and Interactive IV models. The default is 0.01
 (that is, values below 0.01 and above 0.99 are set 
 to 0.01 and 0.99, respectively).
+{p_end}
+{synopt:{opt allcombos}}
+estimates all possible specifications. By default, only the min-MSE (or short-stacking)
+specification is estimated and displayed.
+{p_end}
+{synopt:{opt replay}}
+used in combination with {opt spec()} and {opt rep()} to display and return estimation results.
 {p_end}
 {synoptline}
 {p2colreset}{...}
@@ -449,8 +456,8 @@ expectation E[Y|X]. We first add simple linear regression.{p_end}
 {phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
 
 {pstd}We can add more than one learner per reduced form equation. Here, we 
-add a random forest learner. We do this using {helpb pystacked};
-in the next example we show how to use {helpb pystacked} to stack multiple learners,
+add a random forest learner. We do this using {helpb pystacked}.
+In the next example we show how to use {helpb pystacked} to stack multiple learners,
 but here we use it to implement a single learner.{p_end}
 {phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg) method(rf)"}{p_end}
 
@@ -467,21 +474,28 @@ This step may take a while.
 {p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
 
-{pstd}Finally, we obtain estimates of the coefficients of interest.
+{pstd}Finally, we estimate the coefficients of interest. 
 Since we added two learners for each of our two reduced form equations, 
-we get 4 point estimates. The result shown corresponds to the model 
-with the lowest out-of-sample MSPE.
+there are four possible specifications. 
+By default, the result shown corresponds to the specification 
+with the lowest out-of-sample MSPE:
 {p_end}
 {phang2}. {stata "ddml estimate, robust"}{p_end}
 
-{pstd}To retrieve the very first specification shown, you can type:
+{pstd}To estimate all four specifications, we use the {cmd:allcombos} option:
+{p_end}
+{phang2}. {stata "ddml estimate, robust allcombos"}{p_end}
+
+{pstd}After having estimated all specifications, we can retrieve 
+specific results. Here we use the specification relying on OLS for both
+estimating both E[Y|X] and E[D|X]:
 {p_end}
 {phang2}. {stata "ddml estimate, robust spec(1) replay"}{p_end}
 
 {pstd}You could manually retrieve the same point estimate by 
 typing:
 {p_end}
-{phang2}. {stata "reg Y1_reg D1_reg, nocons robust"}{p_end}
+{phang2}. {stata "reg Y1_reg D1_reg, robust"}{p_end}
 {pstd}or graphically:
 {p_end}
 {phang2}. {stata "twoway (scatter Y1_reg D1_reg) (lfit Y1_reg D1_reg)"}{p_end}
@@ -543,8 +557,9 @@ Make sure to not confuse the two types of options.
 {phang2}. {stata "ddml crossfit, mname(m1)"}{p_end}
 {phang2}. {stata "ddml estimate, mname(m1) robust"}{p_end}
 
-{pstd}Examine the learner weights and MSEs reported by {cmd:pystacked}.{p_end}
+{pstd}Examine the stacking weights and MSEs reported by {cmd:pystacked}.{p_end}
 {phang2}. {stata "ddml extract, mname(m1) show(pystacked)"}{p_end}
+{phang2}. {stata "ddml extract, mname(m1) show(mse)"}{p_end}
 
 {pstd}We can compare the effects with the first {cmd:ddml} model 
 (if you have run the first example above).{p_end}
@@ -552,7 +567,11 @@ Make sure to not confuse the two types of options.
 
 {pstd}{ul:Partially linear model III. Multiple treatments.}
 
-{pstd}We can also run the partially linear model with multiple treatments. In this simple example, we estimate the effect of both 401k elligibility {cmd:e401} and education {cmd:educ}. Compared to above, we remove {cmd:educ} from the set of controls.{p_end}
+{pstd}We can also run the partially linear model with multiple treatments. 
+In this simple example, we estimate the effect of both 401k elligibility 
+{cmd:e401} and education {cmd:educ}. 
+Note that we remove {cmd:educ} 
+from the set of controls.{p_end}
 {phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
 {phang2}. {stata "global Y net_tfa"}{p_end}
 {phang2}. {stata "global D1 e401"}{p_end}
@@ -563,7 +582,8 @@ Make sure to not confuse the two types of options.
 {pstd}Initialize the model.{p_end}
 {phang2}. {stata "ddml init partial, kfolds(2)"}{p_end}
 
-{pstd}Initialize the model.{p_end}
+{pstd}Add learners. Note that we add leaners with both {cmd:$D1} and
+{cmd:$D2} as the dependent variable.{p_end}
 {phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
 {phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg) method(rf)"}{p_end}
 {phang2}. {stata "ddml E[D|X]: reg $D1 $X"}{p_end}
@@ -613,8 +633,8 @@ the relative weights for the base learners, short-stacking uses the cross-fitted
 {phang2}. {stata "ddml estimate, robust"}{p_end}
 
 {pstd}If you are curious about what {cmd:ddml} does in the background:{p_end}
-{phang2}. {stata "ddml estimate m0, spec(8) rep(1)"}{p_end}
-{phang2}. {stata "ivreg Y2_rf (D2_rf = Z2_rf), nocons"}{p_end}
+{phang2}. {stata "ddml estimate, allcombos spec(8) rep(1) robust"}{p_end}
+{phang2}. {stata "ivreg Y2_rf (D2_rf = Z2_rf), robust"}{p_end}
 
 {pstd}{ul:Interactive model--ATE and ATET estimation.} 
 
@@ -701,7 +721,7 @@ we would enter the learners separately and use the {opt shortstack} option:{p_en
 
 {pstd}Cross-fitting and estimation.{p_end}
 {phang2}. {stata "ddml crossfit, shortstack"}{p_end}
-{phang2}. {stata "ddml estimate"}{p_end}
+{phang2}. {stata "ddml estimate, robust"}{p_end}
 
 {pstd}{ul:Flexible Partially Linear IV model.} 
 
@@ -745,13 +765,13 @@ Finally, we use the placeholder {cmd:{D}} in place of the dependent variable.
  
 {pstd}That's it. Now we can move to cross-fitting and estimation.{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
-{phang2}. {stata "ddml estimate"}{p_end}
+{phang2}. {stata "ddml estimate, robust"}{p_end}
 
 {pstd}If you are curious about what {cmd:ddml} does in the background:{p_end}
-{phang2}. {stata "ddml estimate m0, spec(8) rep(1)"}{p_end}
+{phang2}. {stata "ddml estimate, allcombos spec(8) rep(1) robust"}{p_end}
 {phang2}. {stata "gen Dtilde = $D - Dhat_pystacked_h_1"}{p_end}
 {phang2}. {stata "gen Zopt = Dhat_pystacked_1 - Dhat_pystacked_h_1"}{p_end}
-{phang2}. {stata "ivreg Y2_pystacked_1 (Dtilde=Zopt), nocons"}{p_end}
+{phang2}. {stata "ivreg Y2_pystacked_1 (Dtilde=Zopt), robust"}{p_end}
 
 {marker references}{title:References}
 

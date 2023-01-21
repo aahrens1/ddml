@@ -1,7 +1,6 @@
-*! crossfit v0.5
-*! last edited: 24nov2022
+*! ddml v1.2
+*! last edited: 21 jan 2023
 *! authors: aa/ms
-* need to accommodate weights in parsing of estimation strings
 
 program define crossfit, rclass sortpreserve
 	// minimum Stata is version 14, with support for associative arrays
