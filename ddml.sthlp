@@ -244,7 +244,9 @@ select cluster-robust variance-covariance estimator, e.g. {cmd:vce(hc3)} or {cmd
 select variance-covariance estimator; see {helpb regress##vcetype:here}.
 {p_end}
 {synopt:{cmdab:noc:onstant}}
-suppress constant term ({it:partial}, {it:iv}, {it:fiv} models only). Since the residualized outcome and treatment may not be exactly mean-zero in finite samples, {cmd:ddml} includes the constant by default in the estimation stage of partially linear models.
+suppress constant term ({it:partial}, {it:iv}, {it:fiv} models only). Since the residualized outcome 
+and treatment may not be exactly mean-zero in finite samples, {cmd:ddml} includes the constant by 
+default in the estimation stage of partially linear models.
 {p_end}
 {synopt:{cmdab:showc:onstant}}
 display constant term in summary estimation output table ({it:partial}, {it:iv}, {it:fiv} models only).
