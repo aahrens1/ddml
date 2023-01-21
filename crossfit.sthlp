@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 28dec2022}{...}
+{* *! version 21jan2023}{...}
 {hline}
 {cmd:help crossfit}{right: v1.2}
 {hline}

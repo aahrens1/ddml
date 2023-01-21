@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 21jan2022}{...}
+{* *! version 21jan2023}{...}
 {hline}
 {cmd:help ddml extract}{right: v1.2}
 {hline}
