@@ -702,14 +702,15 @@ we would enter the learners separately and use the {opt shortstack} option:{p_en
 {pstd}We initialize the model.{p_end}
 {phang2}. {stata "ddml init interactiveiv, kfolds(5)"}{p_end}
 
-{pstd}We again use two learners per reduced form equation and stack using {helpb pystacked}.{p_end}
+{pstd}We use stacking (implemented in {helpb pystacked}) with two base 
+learners for each reduced form equation.{p_end}
 {phang2}. {stata "ddml E[Y|X,Z]: pystacked $Y c.($X)# #c($X), type(reg) m(ols lassocv)"}{p_end}
 {phang2}. {stata "ddml E[D|X,Z]: pystacked $D c.($X)# #c($X), type(class) m(logit lassocv)"}{p_end}
 {phang2}. {stata "ddml E[Z|X]: pystacked $Z c.($X)# #c($X), type(class) m(logit lassocv)"}{p_end}
 
 {pstd}Cross-fitting and estimation.{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
-{phang2}. {stata "ddml estimate"}{p_end}
+{phang2}. {stata "ddml estimate, robust"}{p_end}
 
 {pstd}To short-stack instead of stack:{p_end}
 {phang2}. {stata "set seed 42"}{p_end}
