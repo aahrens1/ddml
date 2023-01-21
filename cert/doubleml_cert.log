@@ -1,0 +1,994 @@
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /Users/kahrens/MyProjects/ddml/cert/doubleml_cert.log
+  log type:  text
+ opened on:  21 Jan 2023, 18:53:43
+
+. 
+. net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/dev/) replace
+checking ddml consistency and verifying not already installed...
+all files already exist and are up to date.
+
+. 
+. webuse cattaneo2, clear
+(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138–154)
+
+. tempfile cattaneo2
+
+. save `cattaneo2'
+file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_17342.000001 saved as .dta format
+
+. 
+. use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
+
+. tempfile jtpa
+
+. save `jtpa'
+file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_17342.000002 saved as .dta format
+
+. 
+. use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear
+
+. tempfile sipp1991
+
+. save `sipp1991'
+file /var/folders/0w/r8yclchd52bfwbf8l00fkkrr0000gs/T//S_17342.000003 saved as .dta format
+
+. 
+. frame create Rresults
+
+. frame change Rresults
+
+. insheet using DoubleML_results.csv, comma  
+(4 vars, 13 obs)
+
+. list 
+
+     +-----------------------------------------------------+
+     | applica~n              model        coef         se |
+     |-----------------------------------------------------|
+  1. | cattaneo2    interactive ATE   -231.8104   23.48205 |
+  2. | cattaneo2   interactive ATTE   -222.6517   23.53673 |
+  3. | cattaneo2            partial    -222.324    22.5511 |
+  4. |      jtpa     interactive IV    1767.331   513.3541 |
+  5. |      jtpa         partial IV    1737.996   512.0938 |
+     |-----------------------------------------------------|
+  6. |      jtpa    interactive ATE    1108.205   322.3268 |
+  7. |      jtpa   interactive ATTE    1125.474   322.9463 |
+  8. |      jtpa            partial    1090.038   321.6017 |
+  9. |      401k            partial    5210.205   1087.561 |
+ 10. |      401k    interactive ATE     2633.68   2771.162 |
+     |-----------------------------------------------------|
+ 11. |      401k   interactive ATTE    563.3848    6963.07 |
+ 12. |      401k     interactive IV    3829.545   4028.865 |
+ 13. |      401k         partial IV    7515.858   1567.248 |
+     +-----------------------------------------------------+
+
+. rename coef Rcoef
+
+. rename se Rse
+
+. gen Scoef=.
+(13 missing values generated)
+
+. gen Sse=.
+(13 missing values generated)
+
+. frame change default 
+
+. 
+. which ddml
+/Users/kahrens/Library/Application Support/Stata/ado/plus/d/ddml.ado
+*! ddml v1.1
+*! last edited: 28 dec 2022
+*! authors: aa/ms
+
+. 
+. global tol = 10e-4
+
+. 
+. local i = 0
+
+. 
+. ********************************************************************************
+. *** catteneo2 data: interactive model                                                                            ***
+. ********************************************************************************
+. 
+. use `cattaneo2', clear
+(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138–154)
+
+.  
+. global Y bweight
+
+. global D mbsmoke
+
+. global X mage prenatal1 mmarried fbaby mage medu
+
+. 
+. gen fid=_n>2321
+
+. 
+. ddml init interactive, foldvar(fid)
+
+. ddml E[Y|X,D], gen(regy): reg $Y $X
+Learner Y1_reg added successfully.
+
+. ddml E[D|X], gen(regd): logit $D $X
+Learner D1_logit added successfully.
+
+. ddml crossfit
+Cross-fitting E[y|X,D] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. 
+. ddml estimate  ,  trim(0)  
+
+DDML estimation results (ATE):
+spec  r    Y0 learner    Y1 learner     D learner         b        SE
+ opt  1        Y1_reg        Y1_reg      D1_logit  -231.810  (23.482)
+opt = minimum MSE specification for that resample.
+
+
+E[y|X,D=0]   = Y1_reg0_1                           Number of obs   =      4642
+E[y|X,D=1]   = Y1_reg1_1
+E[D|X]       = D1_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -231.8104   23.48205    -9.87   0.000    -277.8344   -185.7864
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[mbsmoke]
+
+. local se = _se[mbsmoke] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "cattaneo2" & model =="interactive ATE"
+(1 real change made)
+
+. replace Sse = `se' if application == "cattaneo2" & model =="interactive ATE"
+(1 real change made)
+
+. frame change default
+
+. 
+. ddml estimate   , atet trim(0)
+
+DDML estimation results (ATET):
+spec  r    Y0 learner    Y1 learner     D learner         b        SE
+ opt  1        Y1_reg        Y1_reg      D1_logit  -222.652  (23.537)
+opt = minimum MSE specification for that resample.
+
+
+E[y|X,D=0]   = Y1_reg0_1                           Number of obs   =      4642
+E[y|X,D=1]   = Y1_reg1_1
+E[D|X]       = D1_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -222.6517   23.53673    -9.46   0.000    -268.7828   -176.5205
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[mbsmoke]
+
+. local se = _se[mbsmoke] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "cattaneo2" & model =="interactive ATTE"
+(1 real change made)
+
+. replace Sse = `se' if application == "cattaneo2" & model =="interactive ATTE"
+(1 real change made)
+
+. frame change default
+
+. 
+. ********************************************************************************
+. *** catteneo2 data: partial linear model                                                                         ***
+. ********************************************************************************
+. 
+. use `cattaneo2', clear
+(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138–154)
+
+.  
+. global Y bweight
+
+. global D mbsmoke
+
+. global X mage prenatal1 mmarried fbaby mage medu
+
+. 
+. gen fid=_n>2321
+
+. 
+. ddml init partial, foldvar(fid)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X], gen(regy): reg $Y $X
+Learner Y1_reg added successfully.
+
+. ddml E[D|X], gen(regd): reg $D $X
+Learner D1_reg added successfully.
+
+. ddml crossfit
+Cross-fitting E[y|X] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. 
+. ddml estimate, vce(hc2)
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE
+ opt  1        Y1_reg        D1_reg  -222.324  (22.562)
+opt = minimum MSE specification for that resample.
+
+Min MSE DDML model
+y-E[y|X]  = Y1_reg_1                               Number of obs   =      4642
+D-E[D|X,Z]= D1_reg_1
+------------------------------------------------------------------------------
+             |             Robust HC2
+     bweight | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -222.3239   22.56211    -9.85   0.000    -266.5448    -178.103
+       _cons |   .4530823    8.25465     0.05   0.956    -15.72573     16.6319
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[mbsmoke]
+
+. local se = _se[mbsmoke] 
+
+. 
+. frame change Rresults
+
+. replace Scoef = `b' if application == "cattaneo2" & model =="partial"
+(1 real change made)
+
+. replace Sse = `se' if application == "cattaneo2" & model =="partial"
+(1 real change made)
+
+. frame change default
+
+. 
+. ********************************************************************************
+. *** jtpa: LATE                                                                                                                           ***
+. ********************************************************************************
+.  
+. use `jtpa',clear   
+
+. 
+. gen fid=_n>5602
+
+. 
+. global Y earnings
+
+. global D training
+
+. global Z assignmt 
+
+. global X sex age married black hispanic 
+
+. 
+. ddml init late, foldvar(fid)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X,Z]: reg $Y $X 
+Learner Y1_reg added successfully.
+
+. ddml E[D|X,Z]: logit $D $X
+Learner D1_logit added successfully.
+
+. ddml E[Z|X]: logit $Z $X
+Learner Z1_logit added successfully.
+
+. ddml crossfit 
+Cross-fitting E[y|X,Z] equation: earnings
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] equation: training
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[Z|X]: assignmt
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate ,  trim(0)
+
+DDML estimation results (LATE):
+spec  r    Y0 learner    Y1 learner    D0 learner    D1 learner         b        SE     Z learner
+ opt  1        Y1_reg        Y1_reg      D1_logit      D1_logit  1767.331 (513.354)      Z1_logit
+opt = minimum MSE specification for that resample.
+
+
+E[y|X,D=0]   = Y1_reg0_1                           Number of obs   =     11204
+E[y|X,D=1]   = Y1_reg1_1
+E[D|X,Z=0]   = D1_logit0_1
+E[D|X,Z=1]   = D1_logit1_1
+E[Z|X]       = Z1_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+    earnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   1767.331   513.3541     3.44   0.001     761.1749    2773.486
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[$D]
+
+. local se = _se[$D] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "jtpa" & model =="interactive IV"
+(1 real change made)
+
+. replace Sse = `se' if application == "jtpa" & model =="interactive IV"
+(1 real change made)
+
+. frame change default
+
+. 
+. ********************************************************************************
+. *** jtpa: partial IV.                                                                                                            ***
+. ********************************************************************************
+.  
+. use `jtpa',clear   
+
+. 
+. gen fid=_n>5602
+
+. 
+. global Y earnings
+
+. global D training
+
+. global Z assignmt 
+
+. global X sex age married black hispanic 
+
+. 
+. ddml init iv, foldvar(fid)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: reg $Y $X 
+Learner Y1_reg added successfully.
+
+. ddml E[D|X]: reg $D $X
+Learner D1_reg added successfully.
+
+. ddml E[Z|X]: reg $Z $X
+Learner Z1_reg added successfully.
+
+. ddml crossfit 
+Cross-fitting E[y|X] equation: earnings
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: training
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[Z|X]: assignmt
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate , trim(0)
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE     Z learner
+ opt  1        Y1_reg        D1_reg  1738.012 (521.270)              
+opt = minimum MSE specification for that resample.
+
+Min MSE DDML model
+y-E[y|X]  = Y1_reg_1                               Number of obs   =     11204
+D-E[D|X,Z]= D1_reg_1
+Z-E[Z|X]  = Z1_reg_1
+------------------------------------------------------------------------------
+    earnings | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   1738.012     521.27     3.33   0.001     716.3412    2759.682
+       _cons |   -13.2664   153.9715    -0.09   0.931     -315.045    288.5122
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[$D]
+
+. local se = _se[$D] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "jtpa" & model =="partial IV"
+(1 real change made)
+
+. replace Sse = `se' if application == "jtpa" & model =="partial IV"
+(1 real change made)
+
+. frame change default
+
+. 
+. ********************************************************************************
+. *** jtpa: interactive                                                                                                            ***
+. ********************************************************************************
+.  
+. use `jtpa',clear   
+
+. 
+. gen fid=_n>5602
+
+. 
+. global Y earnings
+
+. global D assignmt 
+
+. global X sex age married black hispanic 
+
+. 
+. ddml init interactive, foldvar(fid)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X,D]: reg $Y $X 
+Learner Y1_reg added successfully.
+
+. ddml E[D|X]: logit $D $X
+Learner D1_logit added successfully.
+
+. ddml crossfit 
+Cross-fitting E[y|X,D] equation: earnings
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: assignmt
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate ,  trim(0)
+
+DDML estimation results (ATE):
+spec  r    Y0 learner    Y1 learner     D learner         b        SE
+ opt  1        Y1_reg        Y1_reg      D1_logit  1108.205 (322.327)
+opt = minimum MSE specification for that resample.
+
+
+E[y|X,D=0]   = Y1_reg0_1                           Number of obs   =     11204
+E[y|X,D=1]   = Y1_reg1_1
+E[D|X]       = D1_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+    earnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    assignmt |   1108.205   322.3268     3.44   0.001     476.4557    1739.954
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[$D]
+
+. local se = _se[$D] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "jtpa" & model =="interactive ATE"
+(1 real change made)
+
+. replace Sse = `se' if application == "jtpa" & model =="interactive ATE"
+(1 real change made)
+
+. frame change default
+
+. 
+. ddml estimate , atet trim(0) debug
+
+DDML estimation results (ATET):
+spec  r    Y0 learner    Y1 learner     D learner         b        SE
+ opt  1        Y1_reg        Y1_reg      D1_logit  1125.474 (322.946)
+opt = minimum MSE specification for that resample.
+
+
+E[y|X,D=0]   = Y1_reg0_1                           Number of obs   =     11204
+E[y|X,D=1]   = Y1_reg1_1
+E[D|X]       = D1_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+    earnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    assignmt |   1125.474   322.9463     3.49   0.000     492.5109    1758.437
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[$D]
+
+. local se = _se[$D] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "jtpa" & model =="interactive ATTE"
+(1 real change made)
+
+. replace Sse = `se' if application == "jtpa" & model =="interactive ATTE"
+(1 real change made)
+
+. frame change default
+
+. 
+. ********************************************************************************
+. *** jtpa: partial                                                                                                                        ***
+. ********************************************************************************
+.  
+. use `jtpa',clear   
+
+. 
+. gen fid=_n>5602
+
+. 
+. global Y earnings
+
+. global D assignmt 
+
+. global X sex age married black hispanic 
+
+. 
+. ddml init partial, foldvar(fid)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: reg $Y $X 
+Learner Y1_reg added successfully.
+
+. ddml E[D|X]: reg $D $X
+Learner D1_reg added successfully.
+
+. ddml crossfit 
+Cross-fitting E[y|X] equation: earnings
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: assignmt
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate ,  vce(hc3)
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE
+ opt  1        Y1_reg        D1_reg  1090.048 (321.667)
+opt = minimum MSE specification for that resample.
+
+Min MSE DDML model
+y-E[y|X]  = Y1_reg_1                               Number of obs   =     11204
+D-E[D|X,Z]= D1_reg_1
+------------------------------------------------------------------------------
+             |             Robust HC3
+    earnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    assignmt |   1090.048   321.6669     3.39   0.001     459.5921    1720.503
+       _cons |  -12.88319   154.3831    -0.08   0.933    -315.4685    289.7021
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[$D]
+
+. local se = _se[$D] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "jtpa" & model =="partial"
+(1 real change made)
+
+. replace Sse = `se' if application == "jtpa" & model =="partial"
+(1 real change made)
+
+. frame change default
+
+. 
+. 
+. ********************************************************************************
+. *** 401k: partial                                                                                                                        ***
+. ********************************************************************************
+.  
+. clear
+
+. use `sipp1991'
+
+. 
+. global Y net_tfa
+
+. global D e401
+
+. global X tw   age   inc fsize  educ    db  marr twoearn  pira  hown
+
+. 
+. gen fid = mod(_n,3)+1
+
+. 
+. ddml init partial, foldvar(fid)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: reg $Y $X 
+Learner Y1_reg added successfully.
+
+. ddml E[D|X]: reg $D $X
+Learner D1_reg added successfully.
+
+. ddml crossfit 
+Cross-fitting E[y|X] equation: net_tfa
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+Cross-fitting E[D|X] equation: e401
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+
+. ddml estimate , vce(hc3) 
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE
+ opt  1        Y1_reg        D1_reg  5210.197(1088.063)
+opt = minimum MSE specification for that resample.
+
+Min MSE DDML model
+y-E[y|X]  = Y1_reg_1                               Number of obs   =      9915
+D-E[D|X,Z]= D1_reg_1
+------------------------------------------------------------------------------
+             |             Robust HC3
+     net_tfa | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        e401 |   5210.197   1088.063     4.79   0.000     3077.633    7342.761
+       _cons |   22.08951   397.1403     0.06   0.956    -756.2912    800.4702
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[$D]
+
+. local se = _se[$D] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "401k" & model =="partial"
+(1 real change made)
+
+. replace Sse = `se' if application == "401k" & model =="partial"
+(1 real change made)
+
+. frame change default
+
+. 
+. ********************************************************************************
+. *** 401k: interactive                                                                                                            ***
+. ********************************************************************************
+.  
+. clear
+
+. use `sipp1991'
+
+. 
+. global Y net_tfa
+
+. global D e401
+
+. global X tw   age   inc fsize  educ    db  marr twoearn  pira  hown
+
+. 
+. gen fid = mod(_n,3)+1
+
+. 
+. ddml init interactive, foldvar(fid)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X,D]: reg $Y $X 
+Learner Y1_reg added successfully.
+
+. ddml E[D|X]: logit $D $X
+Learner D1_logit added successfully.
+
+. ddml crossfit 
+Cross-fitting E[y|X,D] equation: net_tfa
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+Cross-fitting E[D|X] equation: e401
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+
+. ddml estimate  , trim(0)
+
+DDML estimation results (ATE):
+spec  r    Y0 learner    Y1 learner     D learner         b        SE
+ opt  1        Y1_reg        Y1_reg      D1_logit  2633.680(2771.162)
+opt = minimum MSE specification for that resample.
+
+
+E[y|X,D=0]   = Y1_reg0_1                           Number of obs   =      9915
+E[y|X,D=1]   = Y1_reg1_1
+E[D|X]       = D1_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+     net_tfa | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        e401 |    2633.68   2771.162     0.95   0.342    -2797.697    8065.058
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[$D]
+
+. local se = _se[$D] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "401k" & model =="interactive ATE"
+(1 real change made)
+
+. replace Sse = `se' if application == "401k" & model =="interactive ATE"
+(1 real change made)
+
+. frame change default
+
+. 
+. ddml estimate , atet trim(0)
+
+DDML estimation results (ATET):
+spec  r    Y0 learner    Y1 learner     D learner         b        SE
+ opt  1        Y1_reg        Y1_reg      D1_logit   563.385(6963.070)
+opt = minimum MSE specification for that resample.
+
+
+E[y|X,D=0]   = Y1_reg0_1                           Number of obs   =      9915
+E[y|X,D=1]   = Y1_reg1_1
+E[D|X]       = D1_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+     net_tfa | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        e401 |   563.3848    6963.07     0.08   0.936    -13083.98    14210.75
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[$D]
+
+. local se = _se[$D] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "401k" & model =="interactive ATTE"
+(1 real change made)
+
+. replace Sse = `se' if application == "401k" & model =="interactive ATTE"
+(1 real change made)
+
+. frame change default
+
+. 
+. ********************************************************************************
+. *** 401k: iv                                                                                                                             ***
+. ********************************************************************************
+.  
+. clear
+
+. use `sipp1991'
+
+. 
+. global Y net_tfa
+
+. global D p401
+
+. global Z e401
+
+. global X tw   age   inc fsize  educ    db  marr twoearn  pira  hown
+
+. 
+. gen fid = mod(_n,3)+1
+
+. 
+. ddml init iv, foldvar(fid)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: reg $Y $X 
+Learner Y1_reg added successfully.
+
+. ddml E[Z|X]: reg $Z $X
+Learner Z1_reg added successfully.
+
+. ddml E[D|X]: reg $D $X
+Learner D1_reg added successfully.
+
+. ddml crossfit 
+Cross-fitting E[y|X] equation: net_tfa
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+Cross-fitting E[D|X] equation: p401
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+Cross-fitting E[Z|X]: e401
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+
+. ddml estimate , robust
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE     Z learner
+ opt  1        Y1_reg        D1_reg  7515.847(1567.482)              
+opt = minimum MSE specification for that resample.
+
+Min MSE DDML model
+y-E[y|X]  = Y1_reg_1                               Number of obs   =      9915
+D-E[D|X,Z]= D1_reg_1
+Z-E[Z|X]  = Z1_reg_1
+------------------------------------------------------------------------------
+             |               Robust
+     net_tfa | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        p401 |   7515.847   1567.482     4.79   0.000     4443.638    10588.06
+       _cons |   22.76834     396.09     0.06   0.954    -753.5538    799.0905
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[$D]
+
+. local se = _se[$D] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "401k" & model =="partial IV"
+(1 real change made)
+
+. replace Sse = `se' if application == "401k" & model =="partial IV"
+(1 real change made)
+
+. frame change default
+
+. 
+. 
+. ********************************************************************************
+. *** 401k: late                                                                                                                           ***
+. ********************************************************************************
+.  
+. clear
+
+. use `sipp1991'
+
+. 
+. global Y net_tfa
+
+. global D p401
+
+. global Z e401
+
+. global X tw   age   inc fsize  educ    db  marr twoearn  pira  hown
+
+. 
+. gen fid = mod(_n,3)+1
+
+. 
+. ddml init late, foldvar(fid)  
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X,Z]: reg $Y $X 
+Learner Y1_reg added successfully.
+
+. ddml E[D|X,Z]: logit $D $X
+Learner D1_logit added successfully.
+
+. ddml E[Z|X]: logit $Z $X
+Learner Z1_logit added successfully.
+
+. 
+. ddml crossfit 
+Cross-fitting E[y|X,Z] equation: net_tfa
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+Cross-fitting E[D|X,Z] equation: p401
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+Cross-fitting E[Z|X]: e401
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+
+. ddml estimate ,  trim(0)
+
+DDML estimation results (LATE):
+spec  r    Y0 learner    Y1 learner    D0 learner    D1 learner         b        SE     Z learner
+ opt  1        Y1_reg        Y1_reg      D1_logit      D1_logit  3829.545(4028.866)      Z1_logit
+opt = minimum MSE specification for that resample.
+
+
+E[y|X,D=0]   = Y1_reg0_1                           Number of obs   =      9915
+E[y|X,D=1]   = Y1_reg1_1
+E[D|X,Z=0]   = D1_logit0_1
+E[D|X,Z=1]   = D1_logit1_1
+E[Z|X]       = Z1_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+     net_tfa | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        p401 |   3829.545   4028.866     0.95   0.342    -4066.886    11725.98
+------------------------------------------------------------------------------
+
+
+. 
+. local b = _b[$D]
+
+. local se = _se[$D] 
+
+.  
+. frame change Rresults
+
+. replace Scoef = `b' if application == "401k" & model =="interactive IV"
+(1 real change made)
+
+. replace Sse = `se' if application == "401k" & model =="interactive IV"
+(1 real change made)
+
+. frame change default
+
+. 
+. 
+. ********************************************************************************
+. *** compare                                                                                                                                  ***
+. ********************************************************************************
+.  
+. frame change Rresults
+
+. 
+. gen Dcoef = reldif(Rcoef,Scoef) 
+
+. gen Dse = reldif(Rse,Sse) 
+
+. list
+
+     +--------------------------------------------------------------------------------------------------+
+     | applica~n              model       Rcoef        Rse       Scoef        Sse      Dcoef        Dse |
+     |--------------------------------------------------------------------------------------------------|
+  1. | cattaneo2    interactive ATE   -231.8104   23.48205   -231.8104   23.48205          0          0 |
+  2. | cattaneo2   interactive ATTE   -222.6517   23.53673   -222.6517   23.53673          0          0 |
+  3. | cattaneo2            partial    -222.324    22.5511   -222.3239   22.56211   2.05e-07   .0004675 |
+  4. |      jtpa     interactive IV    1767.331   513.3541    1767.331   513.3541          0          0 |
+  5. |      jtpa         partial IV    1737.996   512.0938    1738.012     521.27   9.06e-06   .0175697 |
+     |--------------------------------------------------------------------------------------------------|
+  6. |      jtpa    interactive ATE    1108.205   322.3268    1108.205   322.3268          0          0 |
+  7. |      jtpa   interactive ATTE    1125.474   322.9463    1125.474   322.9463          0          0 |
+  8. |      jtpa            partial    1090.038   321.6017    1090.048   321.6669   8.84e-06   .0002022 |
+  9. |      401k            partial    5210.205   1087.561    5210.197   1088.063   1.59e-06   .0004609 |
+ 10. |      401k    interactive ATE     2633.68   2771.162     2633.68   2771.162          0          0 |
+     |--------------------------------------------------------------------------------------------------|
+ 11. |      401k   interactive ATTE    563.3848    6963.07    563.3848    6963.07          0          0 |
+ 12. |      401k     interactive IV    3829.545   4028.865    3829.545   4028.865          0          0 |
+ 13. |      401k         partial IV    7515.858   1567.248    7515.847   1567.482   1.56e-06   .0001492 |
+     +--------------------------------------------------------------------------------------------------+
+
+. 
+. assert reldif(Rcoef,Scoef) <$tol
+
+. // exception due to different standard errors
+. assert  reldif(Rse,Sse) <$tol if model != "partial IV"
+
+. assert  reldif(Rse,Sse) <0.03 if model == "partial IV"
+
+. 
+. log close
+      name:  <unnamed>
+       log:  /Users/kahrens/MyProjects/ddml/cert/doubleml_cert.log
+  log type:  text
+ closed on:  21 Jan 2023, 18:53:58
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------

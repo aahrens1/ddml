@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 28dec2022}{...}
 {hline}
-{cmd:help crossfit}{right: v1.1}
+{cmd:help crossfit}{right: v1.2}
 {hline}
 
 

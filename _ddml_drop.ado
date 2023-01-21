@@ -1,5 +1,5 @@
-*! ddml v1.1
-*! last edited: 28 dec 2022
+*! ddml v1.2
+*! last edited: 21 jan 2023
 *! authors: aa/ms
 
 program _ddml_drop, eclass

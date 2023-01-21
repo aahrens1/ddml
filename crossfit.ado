@@ -1,7 +1,6 @@
-*! crossfit v0.5
-*! last edited: 24nov2022
+*! ddml v1.2
+*! last edited: 21 jan 2023
 *! authors: aa/ms
-* need to accommodate weights in parsing of estimation strings
 
 program define crossfit, rclass sortpreserve
 	// minimum Stata is version 14, with support for associative arrays
@@ -269,10 +268,12 @@ program define crossfit, rclass sortpreserve
 			exit 198
 		}
 	
-		// will save pystacked weights
+		// will save pystacked weights and MSEs
 		forvalues i=1/`nlearners' {
 			tempname pysw_`i' pysw0_`i' pysw1_`i' pyswh_`i'
 			tempname pysw_temp_`i' pysw1_temp_`i' pysw0_temp_`i' pyswh_temp_`i'
+			tempname pysm_`i' pysm0_`i' pysm1_`i' pysmh_`i'
+			tempname pysm_temp_`i' pysm1_temp_`i' pysm0_temp_`i' pysmh_temp_`i'
 		}
 	
 		// crossfit
@@ -308,14 +309,22 @@ program define crossfit, rclass sortpreserve
 						local cmd : word 1 of `est_main'
 					}
 					
-					// save pystacked weights
-					if ("`cmd'"=="pystacked") {
+					// save pystacked weights and MSEs if #learners>1
+					if ("`cmd'"=="pystacked") & e(mcount)>1 & e(mcount)<. {
+						qui pystacked, table(rmspe)		// create rmspe matrix
 						if (`k'==1) {
 							mat `pysw_`i'' = e(weights)
+							mat `pysm_temp_`i'' = e(rmspe)
+							mat `pysm_`i'' = `pysm_temp_`i''[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm_`i''",st_matrix("`pysm_`i''"):^2)
 						}
 						else {
 							mat `pysw_temp_`i'' = e(weights)
 							mat `pysw_`i'' = (`pysw_`i'',`pysw_temp_`i'')
+							mat `pysm_temp_`i'' = e(rmspe)
+							mat `pysm_temp_`i'' = `pysm_temp_`i''[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm_temp_`i''",st_matrix("`pysm_temp_`i''"):^2)
+							mat `pysm_`i'' = (`pysm_`i'',`pysm_temp_`i'')
 						}
 					}
 		
@@ -345,14 +354,22 @@ program define crossfit, rclass sortpreserve
 						local cmd : word 1 of `est_main'
 					}
 		
-					// save pystacked weights
-					if ("`cmd'"=="pystacked") {
+					// save pystacked weights and MSEs if #learners>1
+					if ("`cmd'"=="pystacked") & e(mcount)>1 & e(mcount)<. {
+						qui pystacked, table(rmspe)		// create rmspe matrix
 						if (`k'==1) {
 							mat `pysw1_`i'' = e(weights)
+							mat `pysm1_temp_`i'' = e(rmspe)
+							mat `pysm1_`i'' = `pysm1_temp_`i''[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm1_`i''",st_matrix("`pysm1_`i''"):^2)
 						}
 						else {
 							mat `pysw1_temp_`i'' = e(weights)
 							mat `pysw1_`i'' = (`pysw1_`i'',`pysw1_temp_`i'')
+							mat `pysm1_temp_`i'' = e(rmspe)
+							mat `pysm1_temp_`i'' = `pysm1_temp_`i''[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm1_temp_`i''",st_matrix("`pysm1_temp_`i''"):^2)
+							mat `pysm1_`i'' = (`pysm1_`i'',`pysm1_temp_`i'')
 						}
 					}
 		
@@ -377,14 +394,22 @@ program define crossfit, rclass sortpreserve
 						// estimate excluding kth fold
 						`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options'
 			
-						// save pystacked weights
-						if ("`cmd'"=="pystacked") {
+						// save pystacked weights and MSEs if #learners>1
+						if ("`cmd'"=="pystacked") & e(mcount)>1 & e(mcount)<. {
+							qui pystacked, table(rmspe)		// create rmspe matrix
 							if (`k'==1) {
 								mat `pysw0_`i'' = e(weights)
+								mat `pysm0_temp_`i'' = e(rmspe)
+								mat `pysm0_`i'' = `pysm0_temp_`i''[2...,"RMSPE_cv".."RMSPE_cv"]
+								mata: st_replacematrix("`pysm0_`i''",st_matrix("`pysm0_`i''"):^2)
 							}
 							else {
 								mat `pysw0_temp_`i'' = e(weights)
 								mat `pysw0_`i'' = (`pysw0_`i'',`pysw0_temp_`i'')
+								mat `pysm0_temp_`i'' = e(rmspe)
+								mat `pysm0_temp_`i'' = `pysm0_temp_`i''[2...,"RMSPE_cv".."RMSPE_cv"]
+								mata: st_replacematrix("`pysm0_temp_`i''",st_matrix("`pysm0_temp_`i''"):^2)
+								mat `pysm0_`i'' = (`pysm0_`i'',`pysm0_temp_`i'')
 							}
 						}
 
@@ -417,18 +442,26 @@ program define crossfit, rclass sortpreserve
 						local cmd : word 1 of `est_main'
 					}
 		
-					// get pystacked weights
-					if ("`cmd'"=="pystacked") {
+					// get pystacked weights and MSEs if #learners>1
+					if ("`cmd'"=="pystacked") & e(mcount)>1 & e(mcount)<. {
+						qui pystacked, table(rmspe)		// create rmspe matrix
 						if ((`k'==1) & (`m'==1)) {
 							// holds for all reps and folds
 							local base_est_`i' `e(base_est)'
 						}
 						if (`k'==1) {
 							mat `pysw_`i'' = e(weights)
+							mat `pysm_temp_`i'' = e(rmspe)
+							mat `pysm_`i'' = `pysm_temp_`i''[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm_temp_`i''",st_matrix("`pysm_temp_`i''"):^2)
 						}
 						else {
 							mat `pysw_temp_`i'' = e(weights)
 							mat `pysw_`i'' = (`pysw_`i'',`pysw_temp_`i'')
+							mat `pysm_temp_`i'' = e(rmspe)
+							mat `pysm_temp_`i'' = `pysm_temp_`i''[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm_temp_`i''",st_matrix("`pysm_temp_`i''"):^2)
+							mat `pysm_`i'' = (`pysm_`i'',`pysm_temp_`i'')
 						}
 					}
 					
@@ -450,8 +483,9 @@ program define crossfit, rclass sortpreserve
 					`qui' `est_main_h_k' if `fid'!=`k' & `touse', `est_options_h'
 					local cmd_h `e(cmd)'
 		
-					// get pystacked weights
-					if ("`cmd_h'"=="pystacked") {
+					// get pystacked weights/MSEs if #learners>1
+					if ("`cmd_h'"=="pystacked") & e(mcount)>1 & e(mcount)<. {
+						qui pystacked, table(rmspe)		// create rmspe matrix
 						if ((`k'==1) & (`m'==1)) {
 							// holds for all reps and folds
 							local base_est_h_`i' `e(base_est)'
@@ -459,10 +493,17 @@ program define crossfit, rclass sortpreserve
 						if (`k'==1) {
 							// initialize
 							mat `pyswh_`i'' = e(weights)
+							mat `pysmh_temp_`i'' = e(rmspe)
+							mat `pysmh_`i'' = `pysmh_temp_`i''[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysmh_`i''",st_matrix("`pysmh_`i''"):^2)
 						}
 						else {
 							mat `pyswh_temp_`i'' = e(weights)
 							mat `pyswh_`i'' = (`pyswh_`i'',`pyswh_temp_`i'')
+							mat `pysmh_temp_`i'' = e(rmspe)
+							mat `pysmh_temp_`i'' = `pysmh_temp_`i''[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysmh_temp_`i''",st_matrix("`pysmh_temp_`i''"):^2)
+							mat `pysmh_`i'' = (`pysmh_`i'',`pysmh_temp_`i'')
 						}
 					}
 		
@@ -724,7 +765,9 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
 				
 				if "`cmd'"=="pystacked" {
+					// weights and MSEs will be missing values if #learners=1
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_MSEs","`m'", st_matrix("`pysm_`i''"))
 					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")
 				}
 				
@@ -802,9 +845,12 @@ program define crossfit, rclass sortpreserve
 				}
 				
 				if "`cmd'"=="pystacked" {
+					// weights and MSEs will be missing values if #learners=1
 					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights0","`m'", st_matrix("`pysw0_`i''"))
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1_`i''"))
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_MSEs0","`m'", st_matrix("`pysm0_`i''"))
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_MSEs1","`m'", st_matrix("`pysm1_`i''"))
 				}
 				
 				forvalues t=0/1 {
@@ -875,16 +921,17 @@ program define crossfit, rclass sortpreserve
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h",       "`m'", `mse_h')
 				mata: add_result_item(`eqn_info',"`vtilde'","MSE_h_folds", "`m'", st_matrix("`mse_h_folds'"))
 				
-				// MS: this line fails if cmd hasn't been stored by ddml init; will happen if crossfit called directly 
-				// mata: st_local("cmd",return_learner_item(`eqn_info',"`vtilde'","cmd"))							
-				// instead use cmd selected from cmd_list above
 				if "`cmd'"=="pystacked" {
+					// weights and MSEs will be missing values if #learners=1
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights","`m'", st_matrix("`pysw_`i''"))
 					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est","`base_est_`i''")					
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_MSEs","`m'", st_matrix("`pysm_`i''"))
 				}
 				if "`cmd_h'"=="pystacked" {
+					// weights and MSEs will be missing values if #learners=1
 					mata: add_result_item(`eqn_info',"`vtilde'","stack_weights_h","`m'", st_matrix("`pyswh_`i''"))
 					mata: add_learner_item(`eqn_info',"`vtilde'","stack_base_est_h","`base_est_h_`i''")					
+					mata: add_result_item(`eqn_info',"`vtilde'","stack_MSEs_h","`m'", st_matrix("`pysmh_`i''"))
 				}
 				
 				// optimal D and H
@@ -904,7 +951,7 @@ program define crossfit, rclass sortpreserve
 				else if `mse_h' < `mse_h_opt' {
 					// overwrite with new opt
 					local mse_h_opt		= `mse_h'
-					mata: add_learner_item(`eqn_info',"opt_H","`m'","`vtilde'_h")
+					mata: add_learner_item(`eqn_info',"opt_h","`m'","`vtilde'_h")
 				}
 				
 			}

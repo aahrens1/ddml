@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 28dec2022}{...}
+{* *! version 21jan2022}{...}
 {hline}
-{cmd:help ddml extract}{right: v1.1}
+{cmd:help ddml extract}{right: v1.2}
 {hline}
 
 {title:Title}
@@ -16,7 +16,7 @@ Please check the {helpb ddml extract##examples:examples} provided at the end of 
 {marker syntax}{...}
 {title:Syntax}
 
-{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)}
+{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt detail} {opt ename(name)} {opt vname(varname)}
 {opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)} {opt subkey2(string)}{bind: ]}
 
 {pstd}
@@ -51,7 +51,12 @@ Saves extracted objects as Stata r(.) macros (default is to leave as Mata object
 {synopthdr:show options}
 {synoptline}
 {synopt:{opt show(pystacked)}}
-Extracts {opt pystacked} weights.
+Extracts {opt pystacked} weights and learner MSEs.
+The MSEs are cross-validation MSEs and correspond to the predictions used to obtain the stacking weights;
+see {helpb pystacked:help pystacked}.
+{p_end}
+{synopt:{opt detail}}
+({opt show(pystacked)} only) Extract detailed {opt pystacked} weights and learner MSEs by cross-fit fold.
 {p_end}
 {synopt:{opt show(shortstack)}}
 Extracts {opt shortstack} weights.
@@ -112,11 +117,11 @@ The model name is the default name "m0".
 {phang2}. {stata "ddml E[D|X], learner(D_m1): pystacked e401 $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf) opt($rflow) || method(rf) opt($rfhigh), type(reg)"}{p_end}
 {pstd}Cross-fitting and estimation.{p_end}
 {phang2}. {stata "ddml crossfit"}{p_end}
-{phang2}. {stata "ddml estimate robust"}{p_end}
+{phang2}. {stata "ddml estimate, robust"}{p_end}
 
 {pstd}{ul:{opt show} option examples}{p_end}
 
-{pstd}{opt show} option examples: examine the learner weights used by {cmd:pystacked}, MSEs by fold, and sample sizes by fold.{p_end}
+{pstd}{opt show} option examples: examine the learner weights and MSEs reported by {cmd:pystacked}, MSEs by fold, and sample sizes by fold.{p_end}
 {phang2}. {stata "ddml extract, show(pystacked)"}{p_end}
 {phang2}. {stata "ddml extract, show(mse)"}{p_end}
 {phang2}. {stata "ddml extract, show(n)"}{p_end}
@@ -184,7 +189,7 @@ about the estimation results for resamplings 1 and 2.{p_end}
 
 {pstd}Extract the associative AA for the estimation of conditional expectations for variable e401.
 Store it as a Mata object called AA_e401.
-Note: the {cmd:crossfit} returns an equation associative array,
+Note: the {cmd:crossfit} command returns an equation associative array,
 so this step is unnecessary when using this command.{p_end}
 {phang2}. {stata "ddml extract AA_e401, vname(e401)"}{p_end}
 {phang2}. {stata "mata: AA_e401"}{p_end}
