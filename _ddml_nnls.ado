@@ -1,8 +1,7 @@
 *! ddml v1.2
-*! last edited: 21 jan 2023
+*! last edited: 3 feb 2023
 *! authors: aa/ms
 
-*** ddml cross-fitting for the interactive model & LATE
 program _ddml_nnls, eclass sortpreserve
 
 	version 13
@@ -22,10 +21,20 @@ program _ddml_nnls, eclass sortpreserve
 	local yvar : word 1 of `varlist'
 	local xvars : list varlist - yvar
 	local k : word count `xvars'
+	
+	** rescale
+	tempvar yvar_t
+	qui sum `yvar' if `touse'
+	qui gen double `yvar_t' = (`yvar' - r(mean))/r(sd) if `touse'
+	foreach v of varlist `xvars' {
+		tempvar v_t
+		qui gen double `v_t' = (`v' - r(mean))/r(sd) if `touse'
+		local xvars_t `xvars_t' `v_t'
+	}
 
 	** create equation part 1
 	local j = 1
-	foreach var of varlist `xvars' {
+	foreach var of varlist `xvars_t' {
 		local coef b`var'
 		if `j'==1 {
 			local denom 1
@@ -44,7 +53,7 @@ program _ddml_nnls, eclass sortpreserve
 
 	** create equation part 2
 	local j = 1
-	foreach var of varlist `xvars' {
+	foreach var of varlist `xvars_t' {
 		if `j'==1 {
 			local eq (`nom`j''/(`denom'))*`var'
 			local nlcom_coef`j' (`nlcom_nom`j''/(`nlcom_denom'))
@@ -58,16 +67,25 @@ program _ddml_nnls, eclass sortpreserve
 
 	** estimation
 	`qui' di "nl (`yvar' = `eq') if `touse', `options'"
-	`qui' nl (`yvar' = `eq') if `touse', `options'
+	`qui' nl (`yvar_t' = `eq') if `touse', `options'
 	tempname bnl
 	mat `bnl' = e(b)
+	** fix column names to use original rather than temp varnames
+	local cnames : colfullnames `bnl'
+	local j = 1
+	foreach v_t of varlist `xvars_t' {
+		local v : word `j' of `xvars'
+		local cnames : subinstr local cnames "`v_t'" "`v'"
+	}
+	mat coleq `bnl' = `cnames'
+	mat rownames `bnl' = `yvar'
 	local N = e(N)
 
 	** create nlcom eq
 	if "`se'"!="" {
 		local nlcom_eq 
 		local j = 1
-		foreach var of varlist `xvars' {
+		foreach var of varlist `xvars_t' {
 			local nlcom_eq `nlcom_eq' (`var': `nlcom_coef`j'')
 			local j = `j'+1
 		}
@@ -80,7 +98,7 @@ program _ddml_nnls, eclass sortpreserve
 	    matrix `bhat' = r(b)
 	    matrix `vhat' = r(V)
 	    matrix colnames `bhat' = `xvars'
-	    matrix rownames `bhat' = "`yvar'"
+	    matrix rownames `bhat' = `yvar'
 	    matrix colnames `vhat' = `xvars'
 	    matrix rownames `vhat' = `xvars'
 	}
@@ -91,7 +109,7 @@ program _ddml_nnls, eclass sortpreserve
 			mat `bhat'[1,`j'] = `nlcom_coef`j''
 		}
 	    matrix colnames `bhat' = `xvars'
-	    matrix rownames `bhat' = "`yvar'"
+	    matrix rownames `bhat' = `yvar'
 	}
 
     ereturn clear
