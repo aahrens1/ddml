@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 4 feb 2023
+*! last edited: 6 feb 2023
 *! authors: aa/ms
 
 program _ddml_nnls
@@ -81,7 +81,11 @@ python:
 
 from sfi import Data,Matrix,Scalar,SFIToolkit
 from sklearn.linear_model import LinearRegression
+from sklearn.utils import check_X_y
+from sklearn.base import BaseEstimator
 import numpy as np
+from scipy.optimize import minimize 
+from scipy.optimize import nnls 
 
 def py_nnls(yvar,xvars,touse,wvar):
 
@@ -89,14 +93,44 @@ def py_nnls(yvar,xvars,touse,wvar):
     y = Data.get(yvar,selectvar=touse)
     w = Data.get(wvar,selectvar=touse)
     
-    reg_nnls = LinearRegression(positive=True,fit_intercept=False)
+    # standard nnls doesn't impose constraint that coefs sum to 1
+    # reg_nnls = LinearRegression(positive=True,fit_intercept=False)
+    # so use scipy minimize instead
+    reg_nnls = ConstrLS()
     reg_nnls.fit(X, y, w)
     # renormalize:
     b = reg_nnls.coef_ * 1/sum(reg_nnls.coef_)
     Matrix.store("r(b)", b)
 
+# weights currently NOT supported
+class ConstrLS(BaseEstimator):
+    _estimator_type="regressor"
+    def fit(self, X, y, w):
+
+        X,y = check_X_y(X,y, accept_sparse=True)
+        xdim = X.shape[1]
+
+        #Use nnls to get initial guess
+        coef0, rnorm = nnls(X,y)
+
+        #Define minimisation function
+        def fn(coef, X, y):
+            return np.linalg.norm(X.dot(coef) - y)
+        
+        #Constraints and bounds
+        cons = {'type': 'eq', 'fun': lambda coef: np.sum(coef)-1}
+        bounds = [[0.0,1.0] for i in range(xdim)] 
+
+        #Do minimisation
+        fit = minimize(fn,coef0,args=(X, y),method='SLSQP',bounds=bounds,constraints=cons)
+        self.coef_ = fit.x
+        self.is_fitted_ = True
+        self.cvalid=X
+        return self
+
 end
 
+**** end python section
 
 program _ddml_nnls_stata, eclass sortpreserve
 
