@@ -84,8 +84,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.utils import check_X_y
 from sklearn.base import BaseEstimator
 import numpy as np
-from scipy.optimize import minimize 
-from scipy.optimize import nnls 
+from scipy.optimize import minimize
+from scipy.optimize import nnls
 
 def py_nnls(yvar,xvars,touse,wvar):
 
@@ -102,7 +102,6 @@ def py_nnls(yvar,xvars,touse,wvar):
     b = reg_nnls.coef_ * 1/sum(reg_nnls.coef_)
     Matrix.store("r(b)", b)
 
-# weights currently NOT supported
 class ConstrLS(BaseEstimator):
     _estimator_type="regressor"
     def fit(self, X, y, w):
@@ -111,18 +110,28 @@ class ConstrLS(BaseEstimator):
         xdim = X.shape[1]
 
         #Use nnls to get initial guess
-        coef0, rnorm = nnls(X,y)
-
+        #coef0, rnorm = nnls(X,y)
+        #Use LinearRegression to get initial guess
+        initial_est = LinearRegression(positive=True,fit_intercept=False)
+        initial_est.fit(X, y, w)
+        coef0 = initial_est.coef_
+ 
         #Define minimisation function
         def fn(coef, X, y):
             return np.linalg.norm(X.dot(coef) - y)
         
         #Constraints and bounds
         cons = {'type': 'eq', 'fun': lambda coef: np.sum(coef)-1}
-        bounds = [[0.0,1.0] for i in range(xdim)] 
+        bounds = [[0.0,1.0] for i in range(xdim)]
+        
+        #Weights
+        w = np.array(w)
+        w = w[...,None]
+        Xw = X * np.sqrt(w)
+        yw = y * np.sqrt(w)
 
         #Do minimisation
-        fit = minimize(fn,coef0,args=(X, y),method='SLSQP',bounds=bounds,constraints=cons)
+        fit = minimize(fn,coef0,args=(Xw, yw),method='SLSQP',bounds=bounds,constraints=cons)
         self.coef_ = fit.x
         self.is_fitted_ = True
         self.cvalid=X
