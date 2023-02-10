@@ -72,11 +72,11 @@ program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that
 				local labtext "(randomly generated)"
 			}
 			qui cumul `uni' if `mname'_sample, gen(`cuni')
+			// create equal-sized folds (#obs or #cluster)
+			qui egen long `mname'_fid_`m' = cut(`uni'), group(`kfolds')
 			sort `fclustid' `tag'
 			// propagate random uniforms (last ob in fcluster) within fclusters
-			qui by `fclustid': replace `uni'=`uni'[_N] if `mname'_sample
-			// create equal-sized folds
-			qui egen long `mname'_fid_`m' = cut(`uni'), group(`kfolds')
+			qui by `fclustid': replace `mname'_fid_`m'=`mname'_fid_`m'[_N] if `mname'_sample
 			qui replace `mname'_fid_`m' = `mname'_fid_`m' + 1
 			label var `mname'_fid_`m' "`labtext'"
 		}
