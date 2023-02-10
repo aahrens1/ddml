@@ -132,7 +132,7 @@ program define crossfit, rclass sortpreserve
 			qui egen `fid' = group(`fvar')
 			local fidlist `fidlist' `fid'
 		}
-		check_foldvar, fidlist(`fidlist') touse(`touse')
+		check_foldvar, fidlist(`fidlist') touse(`touse') `noisily'
 		local kfolds = r(kfolds)
 		local reps = r(reps)
 	}
@@ -1153,7 +1153,8 @@ program define crossfit, rclass sortpreserve
 end
 
 program define check_foldvar, rclass
-	syntax [anything], fidlist(varlist) touse(varname)
+	syntax [anything], fidlist(varlist) touse(varname) NOIsily
+	if "`noisily'"=="" local qui quietly
 	local reps : word count `fidlist'
 	tokenize `fidlist'
 	forvalues m=1/`reps' {
@@ -1166,7 +1167,7 @@ program define check_foldvar, rclass
 			qui replace `touse' = 0 if `vname'==.
 		}
 		// enforce that the number of folds is the same for all fold vars
-		qui tab `fid'
+		`qui' tab `fid'
 		if `m'==1 {
 			// initialize kfolds in resample 1 for checking vs resamplings 2,3,...
 			local kfolds = r(r)
