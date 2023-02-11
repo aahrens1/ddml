@@ -1153,7 +1153,7 @@ program define crossfit, rclass sortpreserve
 end
 
 program define check_foldvar, rclass
-	syntax [anything], fidlist(varlist) touse(varname) NOIsily
+	syntax [anything], fidlist(varlist) touse(varname) [NOIsily]
 	if "`noisily'"=="" local qui quietly
 	local reps : word count `fidlist'
 	tokenize `fidlist'
