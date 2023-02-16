@@ -164,7 +164,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 
 	** indicator for short-stacking
 	local ssflag	= "`shortstack'"~=""
-	** indicator for pool-stacking
+	** indicator for pooled-stacking
 	local psflag	= "`poolstack'"~=""
 	** indicator for interactive model
 	local tvflag	= "`treatvar'"~=""
@@ -272,24 +272,49 @@ program define _crossfit_pystacked, rclass sortpreserve
 	// `vhat': OOS (crossfit) stacked predicted values, for all folds; filled when looping over folds. tempvar.
 	// `vres': OOS (crossfit) stacked residuals, for all folds; filled when looping over folds. tempvar.
 	// `vtilde'_`m': `vhat' or `vres' using user-provided varname.
-	// `vtilde'_`m'_L`j': OOS (crossfit) predicted values, by learner. m is resample j is base learner number.
-	// not (yet?) implemented - making resid option apply to `vtilde'_`m'_L`j'
+	// `vtilde'_L`j'_`m': OOS (crossfit) predicted values, by learner. m is resample j is base learner number.
+	// `vtilde_list': list of `vtilde'_L`j'_`m' for j=1,2,...; reset for each m loop.
+	// not (yet?) implemented - making resid option apply to `vtilde'_L`j'_`m'
 	// `stacking_p_cv'[1,2,...]: in-sample CV predicted values of base learners; saved in mata for poolstacking.
-	// `stacking_p'[1,2,...]: predicted values of base learners, in-sample and OOS; OOS => `vtilde'_`m'_L`j'.
+	// `stacking_p'[1,2,...]: predicted values of base learners, in-sample and OOS; OOS => `vtilde'_L`j'_`m'.
 	// `shortstack': name for shortstacked fitted variable (predicted value or residual).
 	// `shortstack'_`m': shortstacked fitted variable of D for resample m; not a tempvar.
 	// `shortstack'_h_`m': shortstacked fitted variable of Dhat for resample m; not a tempvar.
 	// `hhat_k': OOS (crossfit) stacked predicted values for Dhat (Step II) for fold K.
 	// `hhat': OOS (crossfit) stacked predicted values for Dhat (Step II), all folds. tempvar.
 	// `vtilde'_h_`m' = `hhat' using user-provided varname.
-	// `vtilde'_h_`m'_L`j': OOS (crossfit) predicted values, by learner. m is resample j is base learner number.
-	
+	// `vtilde'_h_L`j'_`m': OOS (crossfit) predicted values, by learner. m is resample j is base learner number.
+	// `vtilde_h_list': list of `vtilde'_h_L`j'_`m' for j=1,2,...; reset for each m loop.
 	// loop over resamples (crossfitting, shortstacking, store results)
 	forvalues m=1/`reps' {
 	
 		// create rnames for renaming the rows of saved matrices
 		local rnames `rnames' resample_`m'
-	
+		// create list of names of variables created by learners for rep m
+		// need to reset for each m
+		if ~`tvflag' {
+			// PLM and LIE
+			local vtilde_list
+			forvalues j=1/`nlearners' {
+				local vtilde_list `vtilde_list' `vtilde'_L`j'_`m'
+			}
+		}
+		else {
+			// interactive only
+			local vtilde0_list
+			local vtilde1_list
+			forvalues j=1/`nlearners' {
+				local vtilde0_list `vtilde0_list' `vtilde'0_L`j'_`m'
+				local vtilde1_list `vtilde1_list' `vtilde'1_L`j'_`m'
+			}
+		}
+		if `lieflag' {
+			// LIE only
+			local vtilde_h_list
+			forvalues j=1/`nlearners_h' {
+				local vtilde_h_list `vtilde_h_list' `vtilde'_h_L`j'_`m'
+			}
+		}
 		******************************** CROSSFITTING ************************************
 		
 		// cross-fitting fundamentally depends on three cases 
@@ -312,8 +337,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 			// base learner predicted values
 			// not tempvars; name based on `vtilde' macro; used for poolstacking
 			forvalues j=1/`nlearners' {
-				cap drop `vtilde'_`m'_L`j'
-				qui gen `vtype' `vtilde'_`m'_L`j' = .
+				cap drop `vtilde'_L`j'_`m'
+				qui gen `vtype' `vtilde'_L`j'_`m' = .
 			}
 		}  
 		else if `tvflag' & ~`lieflag' { // case 2
@@ -327,11 +352,11 @@ program define _crossfit_pystacked, rclass sortpreserve
 			// not tempvars; name based on `vtilde' macro; used for poolstacking
 			forvalues j=1/`nlearners' {
 				// tv=0
-				cap drop `vtilde'0_`m'_L`j'
-				qui gen `vtype' `vtilde'0_`m'_L`j' = .
+				cap drop `vtilde'0_L`j'_`m'
+				qui gen `vtype' `vtilde'0_L`j'_`m' = .
 				// tv=1
-				cap drop `vtilde'1_`m'_L`j'
-				qui gen `vtype' `vtilde'1_`m'_L`j' = .
+				cap drop `vtilde'1_L`j'_`m'
+				qui gen `vtype' `vtilde'1_L`j'_`m' = .
 			}
 		}
 		else if `lieflag' { // case 3
@@ -344,12 +369,12 @@ program define _crossfit_pystacked, rclass sortpreserve
 			// base learner predicted values
 			// not tempvars; name based on `vtilde' macro; used for poolstacking
 			forvalues j=1/`nlearners' {
-				cap drop `vtilde'_`m'_L`j'
-				qui gen `vtype' `vtilde'_`m'_L`j' = .
+				cap drop `vtilde'_L`j'_`m'
+				qui gen `vtype' `vtilde'_L`j'_`m' = .
 			}
 			forvalues j=1/`nlearners_h' {
-				cap drop `vtilde'_h_`m'_L`j'
-				qui gen `vtype_h' `vtilde'_h_`m'_L`j' = .
+				cap drop `vtilde'_h_L`j'_`m'
+				qui gen `vtype_h' `vtilde'_h_L`j'_`m' = .
 			}
 		}
 		else {
@@ -381,7 +406,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 			if ~`tvflag' & ~`lieflag' { // case 1
 				
 				if (`k'==1) {
-					// initialize mata object to hold dep var and in-sample crossfit CV predictions for pool-stacking
+					// initialize mata object to hold dep var and in-sample crossfit CV predictions for pooled-stacking
 					mata: `y_stacking_cv' = J(0,`nlearners'+1,0)
 				}
 				
@@ -419,7 +444,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
 				// OOS (crossfit) base learner predicted values
 				forvalues j=1/`nlearners' {
-					qui replace `vtilde'_`m'_L`j' = `stacking_p'`j' if `fid'==`k' & `touse'
+					qui replace `vtilde'_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
 				}
 	
 				// get stacked out-of-sample predicted values
@@ -437,7 +462,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 	
 				// pystacked learners
 				if (`k'==1) {
-					// initialize mata object to hold dep var and in-sample crossfit CV predictions for pool-stacking
+					// initialize mata object to hold dep var and in-sample crossfit CV predictions for pooled-stacking
 					mata: `y_stacking_cv0' = J(0,`nlearners'+1,0)
 					mata: `y_stacking_cv1' = J(0,`nlearners'+1,0)
 				}
@@ -479,7 +504,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
 				// OOS (crossfit) base learner predicted values
 				forvalues j=1/`nlearners' {
-					qui replace `vtilde'1_`m'_L`j' = `stacking_p'`j' if `fid'==`k' & `touse'
+					qui replace `vtilde'1_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
 				}
 	
 				// get stacked out-of-sample predicted values
@@ -503,7 +528,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 					`qui' gen `vhat0_k'=10e-12  if `fid'==`k' & `touse' 
 					// OOS (crossfit) base learner predicted values
 					forvalues j=1/`nlearners' {
-						qui replace `vtilde'0_`m'_L`j' = 10e-12 if `fid'==`k' & `touse'
+						qui replace `vtilde'0_L`j'_`m' = 10e-12 if `fid'==`k' & `touse'
 					}
 					// don't need in-sample CV base learner predicted values for poolstacking
 				} 
@@ -541,7 +566,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 					qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
 					// OOS (crossfit) base learner predicted values
 					forvalues j=1/`nlearners' {
-						qui replace `vtilde'0_`m'_L`j' = `stacking_p'`j' if `fid'==`k' & `touse'
+						qui replace `vtilde'0_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
 					}
 				}
 				
@@ -560,7 +585,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 			else if `lieflag' { // case 3
 				
 				if (`k'==1) {
-					// initialize mata object to hold D and in-sample crossfit CV predictions for pool-stacking
+					// initialize mata object to hold D and in-sample crossfit CV predictions for pooled-stacking
 					mata: `d_xz_stack_cv' = J(0,`nlearners'+1,0)
 					// initialize mata object to hold D and in-sample predictions for short-stacking
 					mata: `d_dhat_j_insample' = J(0,`nlearners'+1,0)
@@ -605,7 +630,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				qui predict double `stacking_p' if `touse', basexb
 				// OOS (crossfit) base learner predicted values
 				forvalues j=1/`nlearners' {
-					qui replace `vtilde'_`m'_L`j' = `stacking_p'`j' if `fid'==`k' & `touse'
+					qui replace `vtilde'_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
 				}
 	
 				// vhat = OOS Dhat stacked predicted values
@@ -640,7 +665,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				assert e(mcount)>1 & e(mcount)<.
 	
 				if (`k'==1) {
-					// initialize mata object to hold dep var and in-sample crossfit CV predictions for pool-stacking
+					// initialize mata object to hold dep var and in-sample crossfit CV predictions for pooled-stacking
 					mata: `dhat_x_stack_cv' = J(0,`nlearners_h'+1,0)
 				}
 				
@@ -673,7 +698,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				qui predict double `stacking_p_h' if `touse', basexb
 				// OOS (crossfit) base learner predicted values
 				forvalues j=1/`nlearners_h' {
-					qui replace `vtilde'_h_`m'_L`j' = `stacking_p_h'`j' if `fid'==`k' & `touse'
+					qui replace `vtilde'_h_L`j'_`m' = `stacking_p_h'`j' if `fid'==`k' & `touse'
 				}
 
 				// get stacked out-of-sample predicted values
@@ -705,7 +730,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				// stack dep var against all OOS (cross-fit) learner predicted values
 				`qui' di
 				`qui' di as text as text "Short-stacking NNLS (additive model):"
-				`qui' get_stack_weights `vname' `vtilde'_`m'_L* if `touse', finalest(`finalest') stype(`stype') `noisily'
+				`qui' get_stack_weights `vname' `vtilde_list' if `touse', finalest(`finalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw
 				mat `ssw' = e(b)
@@ -719,7 +744,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 				`qui' di
 				`qui' di as text as text "Stacking NNLS (interactive model, treatvar=1):"
-				`qui' get_stack_weights `vname' `vtilde'1_`m'_L* if `touse' & `treatvar'==1, finalest(`finalest') `noisily'
+				`qui' get_stack_weights `vname' `vtilde1_list' if `touse' & `treatvar'==1, finalest(`finalest') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw1
 				mat `ssw1' = e(b)
@@ -732,7 +757,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				// treatvar == 0
 				`qui' di
 				`qui' di as text as text "Stacking NNLS (interactive model, treatvar=0):"
-				`qui' get_stack_weights `vname' `vtilde'0_`m'_L* if `touse' & `treatvar'==0, finalest(`finalest') stype(`stype') `noisily'
+				`qui' get_stack_weights `vname' `vtilde0_list' if `touse' & `treatvar'==0, finalest(`finalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw0
 				mat `ssw0' = e(b)
@@ -747,7 +772,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				// apply short-stacking to cross-fitted (out-of-sample) predicted values of E[D|XZ]
 				`qui' di
 				`qui' di as text as text "Stacking NNLS (LIE, OOS E[D|XZ]):"
-				`qui' get_stack_weights `vname' `vtilde'_`m'_L* if `touse', finalest(`finalest') stype(`stype') `noisily'
+				`qui' get_stack_weights `vname' `vtilde_list' if `touse', finalest(`finalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw
 				mat `ssw'= e(b)
@@ -755,25 +780,22 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat score `vtype' `shortstack'_`m' = `ssw' if `touse'
 	
 				// apply short-stacking to in-sample predicted values of E[D|XZ]=D^
-				fvexpand `vname' `vtilde'_`m'_L*
-				local tf_vnames `r(varlist)'
 				tempname tframe
 				qui frame pwf
 				local cframe `r(currentframe)'
 				frame create `tframe'
 				frame change `tframe'
-				getmata (`tf_vnames')=`d_dhat_j_insample', force replace
+				getmata (`vname' `vtilde_h_list')=`d_dhat_j_insample', force replace
 				`qui' di
 				`qui' di as text as text "Short-stacking NNLS (LIE, OOS E[D^|X]):"
-				`qui' get_stack_weights `tf_vnames', finalest(`finalest') stype(`stype') `noisily'
+				`qui' get_stack_weights `vname' `vtilde_h_list', finalest(`finalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw_h
 				mata: `ssw_h' = st_matrix("e(b)")
 				frame change `cframe'
 				frame drop `tframe'
 				mata: st_matrix("`ssw_h'",`ssw_h')
-				fvexpand `vtilde'_`m'_L*
-				mat colnames `ssw_h' =  `r(varlist)'
+				mat colnames `ssw_h' =  `vtilde_h_list'
 				cap drop `shortstack'_h_`m'
 				mat score `vtype_h' `shortstack'_h_`m' = `ssw_h' if `touse'
 
@@ -793,25 +815,22 @@ program define _crossfit_pystacked, rclass sortpreserve
 		if `psflag' {
 			// mata object y_stacking_cv has y and predicted yhats of all learners in all crossfits
 			if ~`tvflag' & ~`lieflag' { // case 1
-				fvexpand `vname' `vtilde'_`m'_*
-				local tf_vnames `r(varlist)'
 				tempname tframe
 				qui frame pwf
 				local cframe `r(currentframe)'
 				frame create `tframe'
 				frame change `tframe'
-				getmata (`tf_vnames')=`y_stacking_cv', force replace
+				getmata (`vname' `vtilde_list')=`y_stacking_cv', force replace
 				`qui' di
-				`qui' di as text "Pool-stacking NNLS (additive model):"
-				`qui' get_stack_weights `tf_vnames', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text "Pooled-stacking NNLS (additive model):"
+				`qui' get_stack_weights `vname' `vtilde_list', finalest(`finalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname lsw
 				mata: `lsw' = st_matrix("e(b)")
 				frame change `cframe'
 				frame drop `tframe'
 				mata: st_matrix("`lsw'",`lsw')
-				fvexpand `vtilde'_`m'_*
-				mat colnames `lsw' =  `r(varlist)'
+				mat colnames `lsw' =  `vtilde_list'
 				cap drop `poolstack'_`m'
 				mat score `vtype' `poolstack'_`m' = `lsw' if `touse'
 				if "`resid'"~="" {
@@ -822,25 +841,22 @@ program define _crossfit_pystacked, rclass sortpreserve
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 			
 				// treatvar=1
-				fvexpand `vname' `vtilde'1_`m'_L*
-				local tf_vnames `r(varlist)'
 				tempname tframe
 				qui frame pwf
 				local cframe `r(currentframe)'
 				frame create `tframe'
 				frame change `tframe'
-				getmata (`tf_vnames')=`y_stacking_cv1', force replace
+				getmata (`vname' `vtilde1_list')=`y_stacking_cv1', force replace
 				`qui' di
-				`qui' di as text "Pool-stacking NNLS (additive model):"
-				`qui' get_stack_weights `tf_vnames', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text "Pooled-stacking NNLS (additive model):"
+				`qui' get_stack_weights `vname' `vtilde1_list', finalest(`finalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname lsw1
 				mata: `lsw1' = st_matrix("e(b)")
 				frame change `cframe'
 				frame drop `tframe'
 				mata: st_matrix("`lsw1'",`lsw1')
-				fvexpand `vtilde'1_`m'_L*
-				mat colnames `lsw1' =  `r(varlist)'
+				mat colnames `lsw1' = `vtilde1_list'
 				cap drop `poolstack'1_`m'
 				mat score `vtype' `poolstack'1_`m' = `lsw1' if `touse'
 				if "`resid'"~="" {
@@ -849,25 +865,22 @@ program define _crossfit_pystacked, rclass sortpreserve
 				}
 
 				// treatvar=0
-				fvexpand `vname' `vtilde'0_`m'_L*
-				local tf_vnames `r(varlist)'
 				tempname tframe
 				qui frame pwf
 				local cframe `r(currentframe)'
 				frame create `tframe'
 				frame change `tframe'
-				getmata (`tf_vnames')=`y_stacking_cv0', force replace
+				getmata (`vname' `vtilde0_list')=`y_stacking_cv0', force replace
 				`qui' di
-				`qui' di as text "Pool-stacking NNLS (additive model):"
-				`qui' get_stack_weights `tf_vnames', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text "Pooled-stacking NNLS (additive model):"
+				`qui' get_stack_weights `vname' `vtilde0_list', finalest(`finalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname lsw0
 				mata: `lsw0' = st_matrix("e(b)")
 				frame change `cframe'
 				frame drop `tframe'
 				mata: st_matrix("`lsw0'",`lsw0')
-				fvexpand `vtilde'0_`m'_L*
-				mat colnames `lsw0' =  `r(varlist)'
+				mat colnames `lsw0' =  `vtilde0_list'
 				cap drop `poolstack'0_`m'
 				mat score `vtype' `poolstack'0_`m' = `lsw0' if `touse'
 				if "`resid'"~="" {
@@ -877,25 +890,22 @@ program define _crossfit_pystacked, rclass sortpreserve
 			
 			}
 			else if `lieflag' {
-				fvexpand `vname' `vtilde'_`m'_*
-				local tf_vnames `r(varlist)'
 				tempname tframe
 				qui frame pwf
 				local cframe `r(currentframe)'
 				frame create `tframe'
 				
 				frame change `tframe'
-				getmata (`tf_vnames')=`d_xz_stack_cv', force replace
+				getmata (`vname' `vtilde_list')=`d_xz_stack_cv', force replace
 				`qui' di
-				`qui' di as text "Pool-stacking NNLS (LIE, Step I, D on X,Z):"
-				`qui' get_stack_weights `tf_vnames', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text "Pooled-stacking NNLS (LIE, Step I, D on X,Z):"
+				`qui' get_stack_weights `vname' `vtilde_list', finalest(`finalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname lsw
 				mata: `lsw' = st_matrix("e(b)")
 				frame change `cframe'
 				mata: st_matrix("`lsw'",`lsw')
-				fvexpand `vtilde'_`m'_*
-				mat colnames `lsw' =  `r(varlist)'
+				mat colnames `lsw' =  `vtilde_list'
 				cap drop `poolstack'_`m'
 				mat score `vtype' `poolstack'_`m' = `lsw' if `touse'
 				if "`resid'"~="" {
@@ -906,10 +916,10 @@ program define _crossfit_pystacked, rclass sortpreserve
 				frame change `tframe'
 				// clear Step I data
 				clear
-				getmata (`tf_vnames')=`dhat_x_stack_cv', force replace
+				getmata (`vname' `vtilde_h_list')=`dhat_x_stack_cv', force replace
 				`qui' di
-				`qui' di as text "Pool-stacking NNLS (LIE, Step II, Dhat on X):"
-				`qui' get_stack_weights `tf_vnames', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text "Pooled-stacking NNLS (LIE, Step II, Dhat on X):"
+				`qui' get_stack_weights `vname' `vtilde_h_list', finalest(`finalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname lsw_h
 				mata: `lsw_h' = st_matrix("e(b)")
@@ -941,7 +951,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 		}
 		
 		if `psflag' {
-			di as text "...completed pool-stacking" _c
+			di as text "...completed pooled-stacking" _c
 		}
 
 		***************************** ESTIMATION COMPLETE *********************************
@@ -968,7 +978,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				if `psflag' qui label var `poolstack'_`m' "Residuals cond. exp. of `vname' using poolstacking"
 			}
 			forvalues j=1/`nlearners' {
-				qui label var `vtilde'_`m'_L`j' "Predicted values cond. exp. of `vname' using base learner `j'"
+				qui label var `vtilde'_L`j'_`m' "Predicted values cond. exp. of `vname' using base learner `j'"
 			}
 	
 			// calculate and return mspe and sample size
@@ -1034,8 +1044,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				if `psflag' qui label var `poolstack'1_`m'  "Residuals cond. exp. of `vname' given `treatvar'==1 using poolstacking"
 			}
 			forvalues j=1/`nlearners' {
-				qui label var `vtilde'0_`m'_L`j' "Predicted values cond. exp. of `vname' given `treatvar'==0 using base learner `j'"
-				qui label var `vtilde'1_`m'_L`j' "Predicted values cond. exp. of `vname' given `treatvar'==1 using base learner `j'"
+				qui label var `vtilde'0_L`j'_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using base learner `j'"
+				qui label var `vtilde'1_L`j'_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using base learner `j'"
 			}
 	
 			// calculate and return mspe and sample size
@@ -1107,10 +1117,10 @@ program define _crossfit_pystacked, rclass sortpreserve
 			if `psflag' qui label var `poolstack'_`m'  "Predicted values E[`vname'|X,Z] using poolstacking"
 			if `psflag' qui label var `poolstack'_h_`m'  "Predicted values E[`vtilde'_`m'|X] using poolstacking"
 			forvalues j=1/`nlearners' {
-				qui label var `vtilde'_`m'_L`j' "Predicted values E[`vname'|X,Z] using base learner `j'"
+				qui label var `vtilde'_L`j'_`m' "Predicted values E[`vname'|X,Z] using base learner `j'"
 			}
 			forvalues j=1/`nlearners_h' {
-				qui label var `vtilde'_h_`m'_L`j' "Predicted values Predicted values E[`vtilde'_`m'|X] using base learner `j'"
+				qui label var `vtilde'_h_L`j'_`m' "Predicted values Predicted values E[`vtilde'_`m'|X] using base learner `j'"
 			}
 
 			// calculate and return mspe and sample size
