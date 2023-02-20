@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 6 feb 2023
+*! last edited: 20 feb 2023
 *! authors: aa/ms
 
 program _ddml_nnls
@@ -40,13 +40,13 @@ end
 program _ddml_nnls_python, eclass sortpreserve
 
     version 16
-    syntax varlist(numeric min=2)            ///
-        [if] [in] [aw fw iw] [,              /// 
-                                    VERBose  ///
-                                    *        ///
+    syntax varlist(numeric min=2)                ///
+        [if] [in] [aw fw iw] [,                  /// 
+                                    VERBose      ///
+                                    *            ///
                                     ]
 
-    if "`verbose'"=="" local qui qui
+    if "`verbose'"==""   local qui qui
 
     marksample touse
     qui count if `touse'
@@ -60,7 +60,7 @@ program _ddml_nnls_python, eclass sortpreserve
         qui gen double `wt' `exp'
     }
     else {
-        qui gen byte `wt' = 1
+    	qui gen byte `wt' = 1
     }
 
     `qui' python: py_nnls("`yvar'","`xvars'","`touse'","`wt'")
@@ -97,9 +97,8 @@ def py_nnls(yvar,xvars,touse,wvar):
     # reg_nnls = LinearRegression(positive=True,fit_intercept=False)
     # so use scipy minimize instead
     reg_nnls = ConstrLS()
-    reg_nnls.fit(X, y, w)
-    # renormalize:
-    b = reg_nnls.coef_ * 1/sum(reg_nnls.coef_)
+    reg_nnls.fit(X, y, w)       
+    b = reg_nnls.coef_
     Matrix.store("r(b)", b)
 
 class ConstrLS(BaseEstimator):
@@ -111,11 +110,11 @@ class ConstrLS(BaseEstimator):
 
         #Use nnls to get initial guess
         #coef0, rnorm = nnls(X,y)
-        #Use LinearRegression to get initial guess
+        #Use LinearRegression below to get initial guess, incorporating weights
         initial_est = LinearRegression(positive=True,fit_intercept=False)
         initial_est.fit(X, y, w)
         coef0 = initial_est.coef_
- 
+
         #Define minimisation function
         def fn(coef, X, y):
             return np.linalg.norm(X.dot(coef) - y)
@@ -123,18 +122,21 @@ class ConstrLS(BaseEstimator):
         #Constraints and bounds
         cons = {'type': 'eq', 'fun': lambda coef: np.sum(coef)-1}
         bounds = [[0.0,1.0] for i in range(xdim)]
-        
-        #Weights
-        w = np.array(w)
-        w = w[...,None]
-        Xw = X * np.sqrt(w)
-        yw = y * np.sqrt(w)
 
-        #Do minimisation
-        fit = minimize(fn,coef0,args=(Xw, yw),method='SLSQP',bounds=bounds,constraints=cons)
+        w = np.reshape(np.sqrt(w),(-1,1))
+        #If weights vector=1, no weighting needed
+        if np.all(w==1):
+            #Do minimisation
+            fit = minimize(fn,coef0,args=(X, y),method='SLSQP',bounds=bounds,constraints=cons)
+        else:
+	        #Use additional precision
+    	    Xw = np.multiply(X,w,dtype=np.longdouble)
+            yw = np.multiply(y,w,dtype=np.longdouble)
+            #Do minimisation
+            fit = minimize(fn,coef0,args=(Xw, yw),method='SLSQP',bounds=bounds,constraints=cons)
+ 
         self.coef_ = fit.x
         self.is_fitted_ = True
-        self.cvalid=X
         return self
 
 end

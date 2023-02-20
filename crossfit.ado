@@ -789,7 +789,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 				`qui' di
 				`qui' di as text as text "Stacking NNLS (interactive model, treatvar=1):"
-				`qui' get_stack_weights `vname' `vtilde1_list' if `touse' & `treatvar'==1, finalest(`finalest') `noisily'
+				`qui' get_stack_weights `vname' `vtilde1_list' if `touse' & `treatvar'==1, finalest(`finalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw1
 				mat `ssw1' = e(b)
@@ -2681,13 +2681,13 @@ program get_stack_weights, eclass sortpreserve
 	local yvar : word 1 of `varlist'
 	local xvars : list varlist - yvar
 	
-	tempvar wt
-	if "`weight'"~="" {
-		qui gen double `wt' `exp'
-	}
-	else {
-		qui gen byte `wt' = 1
-	}
+    tempvar wt
+    if "`weight'"~="" {
+        qui gen double `wt' `exp'
+    }
+    else {
+    	qui gen byte `wt' = 1
+    }
 
 	`qui' python: py_get_stack_weights("`yvar'","`xvars'","`touse'","`wt'","`finalest'","`stype'")
 	tempname bhat
@@ -2772,17 +2772,20 @@ class ConstrLS(BaseEstimator):
         cons = {'type': 'eq', 'fun': lambda coef: np.sum(coef)-1}
         bounds = [[0.0,1.0] for i in range(xdim)] 
 
-        #Weights
-        w = np.array(w)
-        w = w[...,None]
-        Xw = X * np.sqrt(w)
-        yw = y * np.sqrt(w)
-
-        #Do minimisation
-        fit = minimize(fn,coef0,args=(Xw, yw),method='SLSQP',bounds=bounds,constraints=cons)
+        w = np.reshape(np.sqrt(w),(-1,1))
+        #If weights vector=1, no weighting needed
+        if np.all(w==1):
+            #Do minimisation
+            fit = minimize(fn,coef0,args=(X, y),method='SLSQP',bounds=bounds,constraints=cons)
+        else:
+	        #Use additional precision
+    	    Xw = np.multiply(X,w,dtype=np.longdouble)
+            yw = np.multiply(y,w,dtype=np.longdouble)
+            #Do minimisation
+            fit = minimize(fn,coef0,args=(Xw, yw),method='SLSQP',bounds=bounds,constraints=cons)
+        
         self.coef_ = fit.x
         self.is_fitted_ = True
-        self.cvalid=X
         return self
         
     def predict(self, X):
