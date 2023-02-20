@@ -1034,7 +1034,7 @@ program _ddml_ate_late, eclass
 			mata: `A'.put(("`ztilde'_mse_folds","matrix"),return_result_item(`eqn',"`ztilde'","MSE_folds","`rep'"))
 			// shortstack weights, Z
 			if "`spec'"=="ss" {
-				mata: `A'.put(("`zvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'_s","ss_weights","`rep'"))
+				mata: `A'.put(("`zvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
 			}
 			// poolstack weights, Z
 			if "`spec'"=="ps" {

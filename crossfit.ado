@@ -227,7 +227,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 	mata: st_local("est_options", return_learner_item(`ename',"`vtilde'","est_options"))
 	mata: st_local("predopt",return_learner_item(`ename',"`vtilde'","predopt"))
 	mata: st_local("vtype",return_learner_item(`ename',"`vtilde'","vtype"))
-	if "`vtype'"=="" local vtype double
 
 	// call pystacked with noestimate option to parse and get basic model specs
 	`qui' di as text "calling pystacked on full sample with noestimate option..."
@@ -245,7 +244,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 		mata: st_local("est_options_h", return_learner_item(`ename',"`vtilde'","est_options_h"))
 		mata: st_local("vtype_h",return_learner_item(`ename',"`vtilde'","vtype_h"))
 		mata: st_local("predopt_h",return_learner_item(`ename',"`vtilde'","predopt_h"))
-		if "`vtype_h'"=="" local vtype_h double
 		local cmd_h : word 1 of `est_main_h'
 		if "`cmd_h'"=="pystacked" {
 			// call pystacked with noestimate option to parse and get basic model specs
@@ -1752,7 +1750,6 @@ program define _crossfit_other, rclass sortpreserve
 				mata: st_local("est_options", return_learner_item(`ename',"`vtilde'","est_options"))
 				mata: st_local("predopt",return_learner_item(`ename',"`vtilde'","predopt"))
 				mata: st_local("vtype",return_learner_item(`ename',"`vtilde'","vtype"))
-				if "`vtype'"=="" local vtype double
 				if `lieflag' {
 					// LIE locals
 					local hhat `vtilde'_h
@@ -1760,7 +1757,6 @@ program define _crossfit_other, rclass sortpreserve
 					mata: st_local("est_options_h", return_learner_item(`ename',"`vtilde'","est_options_h"))
 					mata: st_local("predopt_h",return_learner_item(`ename',"`vtilde'","predopt_h"))
 					mata: st_local("vtype_h",return_learner_item(`ename',"`vtilde'","vtype_h"))			
-					if "`vtype_h'"=="" local vtype_h double
 				}
 				
 				if ~`tvflag' & ~`lieflag' { // case 1
