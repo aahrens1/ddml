@@ -2781,6 +2781,9 @@ class ConstrLS(BaseEstimator):
             fit = minimize(fn,coef0,args=(Xw, yw),method='SLSQP',bounds=bounds,constraints=cons)
         
         self.coef_ = fit.x
+        if abs(sum(self.coef_)-1)>1e-12:
+            #Renormalize if coefs still don't sum to 1
+            self.coef_ = self.coef_ * 1/sum(self.coef_)
         self.is_fitted_ = True
         return self
         
