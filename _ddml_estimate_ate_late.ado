@@ -38,6 +38,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	// remaining flags	
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
+	mata: st_local("psflag",strofreal(`mname'.psflag))
 	
 	// reestimation necessary unless replay specified
 	if `replayflag' {
@@ -101,6 +102,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 
 	// allowed forms of spec and rep
 	if "`spec'"=="shortstack"	local spec ss
+	if "`spec'"=="poolstack"	local spec ps
 	if "`spec'"=="minmse"		local spec mse
 	if "`rep'"=="mean"			local rep mn
 	if "`rep'"=="median"		local rep md
@@ -114,7 +116,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	}
 	
 	// checks
-	if "`spec'"~="ss" & "`spec'"~="mse" & real("`spec'")==. {
+	if "`spec'"~="ss" & "`spec'"~="ps" & "`spec'"~="mse" & real("`spec'")==. {
 		di as err "error - invalid spec(`spec')"
 		exit 198
 	}
@@ -139,33 +141,6 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		}
 	}
 
-	// check whether shortstack is available for all equations
-	if `ssflag' {
-		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
-		mata: st_local("numlnr",strofreal(cols(`eqn'.vtlist)))
-		if `numlnr'==1 {
-			local ssflag = 0
-		}
-		foreach var in `nameD' {
-			mata: `eqn' = (`mname'.eqnAA).get("`var'")
-			mata: st_local("numlnr",strofreal(cols(`eqn'.vtlist)))
-			if `numlnr'==1 {
-				local ssflag = 0
-			}
-		}
-		foreach var in `nameZ' {
-			mata: `eqn' = (`mname'.eqnAA).get("`var'")
-			mata: st_local("numlnr",strofreal(cols(`eqn'.vtlist)))
-			if `numlnr'==1 {
-				local ssflag = 0
-			}
-		}
-		if `ssflag' == 0 {
-			di as err "error - shortstack not available for all equations"
-			exit 198
-		}
-	}
-	
 	local ateflag=("`model'"=="interactive")
 	// teffect is either ATE, ATET, ATEU or LATE
 	local check_opt : word count `atet' `ateu'
@@ -214,6 +189,16 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		local D1ss	`nameD'_ss
 		local Zss	`nameZ'_ss
 	}
+	*** poolstack names
+	if `psflag' {
+		// code works for both ATE and LATE
+		local Y0ps	`nameY'_ps
+		local Y1ps	`nameY'_ps
+		local Dps	`nameD'_ps
+		local D0ps	`nameD'_ps
+		local D1ps	`nameD'_ps
+		local Zps	`nameZ'_ps
+	}
 		
 	************* ESTIMATE ************
 	
@@ -237,7 +222,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
 				mata: st_local("Zopt",return_learner_item(`eqn',"opt","`m'"))
 			}
-			
+
 			// text used in output below
 			if `nreps'>1 {
 				local stext " (sample=`m')"
@@ -257,9 +242,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				te(`teffect')
 			
 			// estimate shortstack for this rep
-			
 			if `ssflag' {
-				
 				// code works for both ATE and LATE
 				local title "Shortstack DDML model`stext' (`teffect')"
 				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
@@ -273,8 +256,25 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					trim(`trim')										///
 					vce(`vce')											///
 					te(`teffect')
-			
 			}
+			
+			// estimate poolstack for this rep
+			if `psflag' {
+				// code works for both ATE and LATE
+				local title "Poolstack DDML model`stext' (`teffect')"
+				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
+					y0tilde(`Y0ps') y1tilde(`Y1ps')						///
+					dtilde(`Dps') d0tilde(`D0ps') d1tilde(`D1ps')		///
+					ztilde(`Zps')										///
+					spec(ps) rep(`m')									///
+					mname(`mname')										///
+					title(`title')										///
+					trim(`trim')										///
+					vce(`vce')											///
+					te(`teffect')
+			}
+
 		}
 
 		// have looped over reps to get each optimal model and shortstack per rep
@@ -288,6 +288,13 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title') vce(`vce') te(`teffect')
 				local title "Shortstack DDML model (median over `nreps' resamples) (`teffect')"
 				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title') vce(`vce') te(`teffect')
+			}
+			// poolstack
+			if `psflag' {
+				local title "Poolstack DDML model (mean over `nreps' resamples) (`teffect')"
+				`qui' _ddml_ate_late, mname(`mname') spec(ps) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				local title "Poolstack DDML model (median over `nreps' resamples) (`teffect')"
+				`qui' _ddml_ate_late, mname(`mname') spec(ps) medmean(md) title(`title') vce(`vce') te(`teffect')
 			}
 		}
 		
@@ -462,7 +469,6 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			}
 			
 			if `ssflag' {
-				
 				// code works for both ATE and LATE
 				local title "Shortstack DDML model`stext' (`teffect')"
 				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
@@ -476,8 +482,24 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 					trim(`trim')										///
 					vce(`vce')											///
 					te(`teffect')
-			
 			}
+			
+			if `psflag' {
+				// code works for both ATE and LATE
+				local title "Poolstack DDML model`stext' (`teffect')"
+				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
+					y0tilde(`Y0ps') y1tilde(`Y1ps')						///
+					dtilde(`Dps') d0tilde(`D0ps') d1tilde(`D1ps')		///
+					ztilde(`Zps')										///
+					spec(ps) rep(`m')									///
+					mname(`mname')										///
+					title(`title')										///
+					trim(`trim')										///
+					vce(`vce')											///
+					te(`teffect')
+			}
+
 		}
 
 		// we make a copy of the MSE-optimal model for each m
@@ -506,6 +528,13 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title') vce(`vce') te(`teffect')
 				local title "Shortstack DDML model (median over `nreps' resamples) (`teffect')"
 				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title') vce(`vce') te(`teffect')
+			}
+			// poolstack
+			if `psflag' {
+				local title "Poolstack DDML model (mean over `nreps' resamples) (`teffect')"
+				`qui' _ddml_ate_late, mname(`mname') spec(ps) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				local title "Poolstack DDML model (median over `nreps' resamples) (`teffect')"
+				`qui' _ddml_ate_late, mname(`mname') spec(ps) medmean(md) title(`title') vce(`vce') te(`teffect')
 			}
 		}
 		
@@ -583,7 +612,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			}
 			else {
 				// only mse/ss specs available/reported
-				qui _ddml_ate_late, mname(`mname') spec(mse) rep(`m') replay
+				`qui' _ddml_ate_late, mname(`mname') spec(mse) rep(`m') replay
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
@@ -622,7 +651,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			}
 
 			if `ssflag' {
-				qui _ddml_ate_late, mname(`mname') spec(ss) rep(`m') replay
+				`qui' _ddml_ate_late, mname(`mname') spec(ss) rep(`m') replay
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
@@ -645,6 +674,32 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				}
 				di
 			}
+
+			if `psflag' {
+				`qui' _ddml_ate_late, mname(`mname') spec(ps) rep(`m') replay
+				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+				mat `btemp' = e(b)
+				mat `Vtemp' = e(V)
+				local specrep `: di "ps" %3.0f `m''
+				// pad out to 6 spaces
+				local specrep = "  " + "`specrep'"
+				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`m') replay notable
+				di %6s "{`rcmd':`specrep'}" _c
+				di as res %14s "[poolstack]" _c
+				di as res %14s "[ps]" _c
+				di as res %14s "[ps]" _c
+				if ~`ateflag' {
+					di as res %14s "[ps]" _c
+				}
+				di as res %10.3f el(`btemp',1,1) _c
+				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
+				di as res %10s "`pse'" _c
+				if ~`ateflag' {
+					di as res %14s "[ps]" _c
+				}
+				di
+			}
+			
 		}
 		if `doallcombos' {
 			di as res "*" _c
@@ -672,7 +727,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		}
 		di
 		foreach medmean in mn md {
-			qui _ddml_ate_late, mname(`mname') spec(mse) rep(`medmean') replay
+			`qui' _ddml_ate_late, mname(`mname') spec(mse) rep(`medmean') replay
 			tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 			mat `btemp' = e(b)
 			mat `Vtemp' = e(V)
@@ -695,7 +750,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			}
 			di
 			if `ssflag' {
-				qui _ddml_ate_late, mname(`mname') spec(ss) rep(`medmean') replay
+				`qui' _ddml_ate_late, mname(`mname') spec(ss) rep(`medmean') replay
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
@@ -715,6 +770,30 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				di as res %10s "`pse'" _c
 				if ~`ateflag' {
 					di as res %14s "[ss]" _c
+				}
+				di
+			}
+			if `psflag' {
+				`qui' _ddml_ate_late, mname(`mname') spec(ps) rep(`medmean') replay
+				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+				mat `btemp' = e(b)
+				mat `Vtemp' = e(V)
+				local specrep `: di "ps" %3s "`medmean'"'
+				// pad out to 6 spaces
+				local specrep = "  " + "`specrep'"
+				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`medmean') replay notable
+				di as res %6s "{`rcmd':`specrep'}" _c
+				di as res %14s "[poolstack]" _c
+				di as res %14s "[ps]" _c
+				di as res %14s "[ps]" _c
+				if ~`ateflag' {
+					di as res %14s "[ps]" _c
+				}
+				di as res %10.3f el(`btemp',1,1) _c
+				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
+				di as res %10s "`pse'" _c
+				if ~`ateflag' {
+					di as res %14s "[ps]" _c
 				}
 				di
 			}
@@ -889,6 +968,7 @@ program _ddml_ate_late, eclass
 		// Y eqn results
 		mata: `eqn' = (`mname'.eqnAA).get("`yvar'")
 		mata: st_local("shortstack",`eqn'.shortstack)
+		mata: st_local("poolstack",`eqn'.poolstack)
 		// MSE
 		mata: `A'.put(("`y0tilde'_mse","scalar"),return_result_item(`eqn',"`y0tilde'","MSE0","`rep'"))
 		mata: `A'.put(("`y1tilde'_mse","scalar"),return_result_item(`eqn',"`y1tilde'","MSE1","`rep'"))
@@ -897,26 +977,37 @@ program _ddml_ate_late, eclass
 		mata: `A'.put(("`y1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y1tilde'","MSE1_folds","`rep'"))
 		// shortstack weights
 		if "`spec'"=="ss" {
-			mata: `A'.put(("`yvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights0","`rep'"))
-			mata: `A'.put(("`yvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights1","`rep'"))
+			mata: `A'.put(("`yvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights0","`rep'"))
+			mata: `A'.put(("`yvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights1","`rep'"))
+		}
+		// poolstack weights
+		if "`spec'"=="ps" {
+			mata: `A'.put(("`yvar'_psw0","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights0","`rep'"))
+			mata: `A'.put(("`yvar'_psw1","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights1","`rep'"))
 		}
 		if "`model'"=="interactive" {
 			// D eqn results
 			mata: `eqn' = (`mname'.eqnAA).get("`dvar'")
 			mata: st_local("shortstack",`eqn'.shortstack)
+			mata: st_local("poolstack",`eqn'.poolstack)
 			// MSE
 			mata: `A'.put(("`dtilde'_mse","scalar"),return_result_item(`eqn',"`dtilde'","MSE","`rep'"))
 			// MSE folds
 			mata: `A'.put(("`dtilde'_mse_folds","matrix"),return_result_item(`eqn',"`dtilde'","MSE_folds","`rep'"))
 			// shortstack weights
 			if "`spec'"=="ss" {
-				mata: `A'.put(("`dvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights","`rep'"))
+				mata: `A'.put(("`dvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
+			}
+			// poolstack weights
+			if "`spec'"=="ps" {
+				mata: `A'.put(("`dvar'_psw","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
 			}
 		}
 		else {
 			// D
 			mata: `eqn' = (`mname'.eqnAA).get("`dvar'")
 			mata: st_local("shortstack",`eqn'.shortstack)
+			mata: st_local("poolstack",`eqn'.poolstack)
 			// MSE, D
 			mata: `A'.put(("`d0tilde'_mse","scalar"),return_result_item(`eqn',"`d0tilde'","MSE0","`rep'"))
 			mata: `A'.put(("`d1tilde'_mse","scalar"),return_result_item(`eqn',"`d1tilde'","MSE1","`rep'"))
@@ -925,19 +1016,29 @@ program _ddml_ate_late, eclass
 			mata: `A'.put(("`d1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d1tilde'","MSE1_folds","`rep'"))
 			// shortstack weights, D
 			if "`spec'"=="ss" {
-				mata: `A'.put(("`dvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights0","`rep'"))
-				mata: `A'.put(("`dvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights1","`rep'"))
+				mata: `A'.put(("`dvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights0","`rep'"))
+				mata: `A'.put(("`dvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights1","`rep'"))
+			}
+			// poolstack weights, D
+			if "`spec'"=="ps" {
+				mata: `A'.put(("`dvar'_psw0","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights0","`rep'"))
+				mata: `A'.put(("`dvar'_psw1","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights1","`rep'"))
 			}
 			// Z
 			mata: `eqn' = (`mname'.eqnAA).get("`zvar'")
 			mata: st_local("shortstack",`eqn'.shortstack)
+			mata: st_local("poolstack",`eqn'.poolstack)
 			// MSE, Z
 			mata: `A'.put(("`ztilde'_mse","scalar"),return_result_item(`eqn',"`ztilde'","MSE","`rep'"))
 			// MSE folds, Z
 			mata: `A'.put(("`ztilde'_mse_folds","matrix"),return_result_item(`eqn',"`ztilde'","MSE_folds","`rep'"))
 			// shortstack weights, Z
 			if "`spec'"=="ss" {
-				mata: `A'.put(("`zvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'","ss_weights","`rep'"))
+				mata: `A'.put(("`zvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'_s","ss_weights","`rep'"))
+			}
+			// poolstack weights, Z
+			if "`spec'"=="ps" {
+				mata: `A'.put(("`zvar'_psw","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
 			}
 		}
 	

@@ -35,16 +35,18 @@ st_global("s(compiled_date)","`current_date")
 // uniquely identified by vname = dep var in the equation
 // equation structure: one for E[y|x], E[d|x] etc
 struct eStruct {
-	string scalar					vname		// name of variable to be orthogonalized
-	real matrix						vtlist		// list of orthogonalized (learner) variables
-	string scalar					shortstack	// name of shortstack variable
-	real scalar						nlearners	// number of learners
-	real scalar						lieflag		// =1 if LIE spec with two estimation strings etc.
-	real scalar						ateflag		// =1 if treatment variable in ATE/LATE
-	class AssociativeArray scalar	lrnAA		// AssociativeArray with all learners //
-												// (keys=vtilde,object)
-	class AssociativeArray scalar	resAA		// AssociativeArray with all learner results //
-												// (keys=vtilde,object,rep)
+	string scalar					vname			// name of variable to be orthogonalized
+	real matrix						vtlist			// list of orthogonalized (learner) variables
+	string scalar					shortstack		// name of shortstack variable
+	string scalar					poolstack		// name of poolstack variable
+	real scalar						nlearners		// number of learners
+	real scalar						lieflag			// =1 if LIE spec with two estimation strings etc.
+	real scalar						ateflag			// =1 if treatment variable in ATE/LATE
+	real scalar						pystackedmulti	// =#learner if pystacked with multiple learners
+	class AssociativeArray scalar	lrnAA			// AssociativeArray with all learners //
+													// (keys=vtilde,object)
+	class AssociativeArray scalar	resAA			// AssociativeArray with all learner results //
+													// (keys=vtilde,object,rep)
 
 }
 
@@ -54,12 +56,14 @@ struct eStruct init_eStruct()
 	struct eStruct scalar			d
 //	class AssociativeArray scalar	A2, A3
 
-	d.vname			= ""
-	d.vtlist		= J(1,0,"")
-	d.shortstack	= ""
-	d.nlearners		= 0
-	d.lieflag		= 0
-	d.ateflag		= 0
+	d.vname				= ""
+	d.vtlist			= J(1,0,"")
+	d.shortstack		= ""
+	d.poolstack			= ""
+	d.nlearners			= 0
+	d.lieflag			= 0
+	d.ateflag			= 0
+	d.pystackedmulti	= 0
 	
 	(d.lrnAA).reinit("string",2)
 	(d.resAA).reinit("string",3)
@@ -74,6 +78,7 @@ void clear_equation_results(struct eStruct e)
 {
 	(e.resAA).reinit("string",3)
 	e.shortstack	= ""
+	e.poolstack		= ""
 }
 
 // ddml model structure
@@ -89,10 +94,11 @@ struct mStruct {
 	string colvector				nameD			// treatment variable(s)
 	string colvector				nameZ			// instrument(s)
 	string scalar					fclustvar		// name of fold cluster variable (="" if none)
-	real scalar						ssflag			// flag for shortstacking
+	real scalar						ssflag			// flag for short-stacking
+	real scalar						psflag			// flag for pooled-stacking
 	string scalar					strDatavars		// string with expanded names of Stata variables
 	real matrix						matDatavars		// matrix with values of Stata variables
-	real scalar						crossfitted   	// =1 if crossvalidation has been done; 0 if not
+	real scalar						crossfitted   	// =number of reps for which crossfitting; 0 if not
 	real scalar						estimated		// =1 if estimation has been done; 0 if not
 	real scalar						ycounter		// counter for default y learners
 	real scalar						dcounter		// counter for default d learners
@@ -113,6 +119,7 @@ struct mStruct init_mStruct()
 	d.nameD			= J(1,0,"")
 	d.nameZ			= J(1,0,"")
 	d.ssflag		= 0
+	d.psflag		= 0
 	d.fclustvar		= ""
 	d.strDatavars	= ""
 	d.matDatavars	= J(0,0,.)
@@ -137,10 +144,11 @@ struct mStruct init_mStruct()
 void clear_model_results(struct mStruct d)
 {
 	// if not crossfitted, nothing to clear
-	if (d.crossfitted==1) {
+	if (d.crossfitted>0) {
 		struct eStruct scalar			e
 		class AssociativeArray scalar	A3
 		
+		// clear results for each equation
 		eqnlist = (d.nameY, d.nameD, d.nameZ)
 		for (i=1; i<=cols(eqnlist); i++) {
 			clear_equation_results((d.eqnAA).get(eqnlist[i]))
@@ -160,7 +168,7 @@ void clear_model_results(struct mStruct d)
 // clear only estimation results in mStruct
 void clear_model_estimation(struct mStruct d)
 {
-    d.estimated		= 0
+	d.estimated		= 0
 	d.ncombos		= 0
 	(d.estAA).reinit("string",2)
 	(d.estAA).notfound(NULL)

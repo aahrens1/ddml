@@ -25,9 +25,17 @@ program _ddml_drop, eclass
 		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 		// equation struct naming is the model name + dep variable name
 		local eqnlist `mname'_`nameY'
-		mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
+		mata: st_local("vtlist",invtokens(`eqn'.vtlist))
 		mata: st_local("ssvname",invtokens(`eqn'.shortstack))
-		local vtlist `vtlistY' `ssvname'
+		if "`ssvname'"~="" {
+			// add _ss and append
+			local vtlist `vtlist' `ssvname'_ss
+		}
+		mata: st_local("psvname",invtokens(`eqn'.poolstack))
+		if "`psvname'"~="" {
+			// add _ps and append
+			local vtlist `vtlist' `psvname'_ps
+		}
 	}
 	
 	if `numeqnD' {
@@ -37,7 +45,15 @@ program _ddml_drop, eclass
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			mata: st_local("ssvname",invtokens(`eqn'.shortstack))
-			local vtlist `vtlist' `vtlistD' `ssvname'
+			if "`ssvname'"~="" {
+				// add _ss and append
+				local vtlist `vtlist' `vtlistD' `ssvname'_ss
+			}
+			mata: st_local("psvname",invtokens(`eqn'.poolstack))
+			if "`psvname'"~="" {
+				// add _ps and append
+				local vtlist `vtlist' `vtlistD' `psvname'_ps
+			}
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			if `lieflag' {
 				foreach vn in `vtlistD' {
@@ -54,10 +70,18 @@ program _ddml_drop, eclass
 			local eqnlist `eqnlist' `mname'_`var'
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
 			mata: st_local("ssvname",invtokens(`eqn'.shortstack))
-			local vtlist `vtlistZ' `ssvname'
+			if "`ssvname'"~="" {
+				// add _ss and append
+				local vtlist `vtlist' `vtlistZ' `ssvname'_ss
+			}
+			mata: st_local("psvname",invtokens(`eqn'.poolstack))
+			if "`psvname'"~="" {
+				// add _ps and append
+				local vtlist `vtlist' `vtlistZ' `psvname'_ps
+			}
 		}
 	}
-	
+
 	*** Add wildcards, then unabbreviate
 	foreach var in `vtlist' {
 		// variables may not exist yet

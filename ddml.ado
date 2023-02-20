@@ -53,6 +53,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 						vtype(string)			///  "double", "float" etc
 						REPlace					///
 						cmdname(name)			///
+						NOIsily					///
 						/* NOPrefix */ 			/// don't add model name as prefix (disabled - interferes with save/use option)
 						*						///
 						]
@@ -302,7 +303,8 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 								subcmd(`subcmd')	///
 								posof(`posof')		///
 								estring(`eqn')		///
-								cmdname(`cmdname')
+								cmdname(`cmdname')	///
+								`noisily'
 			
 		}
 	
@@ -310,7 +312,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		if "`subcmd'" =="crossfit" {
 	
 			// crossfit
-			_ddml_crossfit, `options' mname(`mname') 
+			_ddml_crossfit, `options' `noisily' mname(`mname') 
 			
 		}
 	
@@ -417,8 +419,12 @@ program define add_eqn_to_model, rclass
 							posof(integer 0)		/// position of vname in name list; =0 if a new vname (new eqn)
 							NOIsily					///
 							cmdname(name)			///
+							*						///
 							]
 
+	if "`noisily'"=="" {
+		local qui quietly
+	}
 	// syntax checks
 	mata: st_local("model",`mname'.model)
 	// ATE or LIE with multiple D variables not supported
@@ -444,6 +450,10 @@ program define add_eqn_to_model, rclass
 		}
 	}
 	
+	// if we are adding a new equation, any existing crossfitting and estimation results should be dropped.
+	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
+	if `crossfitted' mata: clear_model_results(`mname')
+
 	// used for temporary Mata object
 	tempname t
 	
@@ -512,6 +522,73 @@ program define add_eqn_to_model, rclass
 		else if "`model'"=="late" & ("`subcmd'"=="yeq" | "`subcmd'"=="deq") {
 			mata: `eqn'.ateflag = 1
 		}
+	}
+
+	mata: st_local("nlearners", strofreal(`eqn'.nlearners))
+	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+	
+	local cmd : word 1 of `est_main'
+	if `pystackedmulti' & (`nlearners'>1) {
+		// treat previous multilearner single pystacked as just another learner
+		mata: `eqn'.pystackedmulti = 0
+		di as text "Note: previously-added pystacked multilearner now treated as a single learner"
+	}
+	else if `nlearners'==1 & "`cmd'"=="pystacked" {
+		// identify if pystacked with multiple learners
+		// if yes, set pystackedmulti=number of base learners (>1)
+		tempname holdname
+		_estimates hold `holdname', nullok
+		`qui' di as text "calling pystacked on full sample with noestimate option..."
+		cap `est_main' , `est_options' noestimate
+		if _rc==0 {
+			`qui' di as text "N=" as res e(N)
+			`qui' di as text "number of learners = " as res `e(mcount)'
+			local mcount = e(mcount)
+			`qui' di as text "Base learners: " _c
+			forvalues j=1/`mcount' {
+				`qui' di as res e(method`j') " " _c
+			}
+			`qui' di
+		}
+		else {
+			`qui' di as text "noestimate option unavailable (consider updating your pystacked)"
+			`qui' di as text "parsing pystacked to obtain count of base learners..."
+			tokenize `"`est_main'"', parse("|")
+			local doublebarsyntax = ("`2'"=="|")*("`3'"=="|")
+			if `doublebarsyntax' {
+				// count pairs of ||s; 3 or more indicates multiple learners
+				local est_main : subinstr local est_main "||" "||", all count(local mcount)
+				// assumes users correctly use || before comma
+				local mcount = `mcount' - 1
+			}
+			else {
+				// count methods
+				local 0 `est_main' , `est_options'
+				syntax [anything(everything)] [ , Methods(string) * ]
+				local mcount : word count `methods'
+				// default is 3 base learners
+				if `mcount'==0 {
+					local mcount 3
+				}
+			}
+			`qui' di as text "number of learners = " as res `mcount'
+		}
+		_estimates unhold `holdname'
+		if `mcount' > 1 {
+			// will be >1 if pystacked is the only learner and #learners>1
+			mata: `eqn'.pystackedmulti = `mcount'
+			`qui' di as text "adding pystacked multilearner..."
+		}
+	}
+	
+	`qui' di as text "number of ddml learners = " as res `nlearners'
+	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+	`qui' di as text "pystackedmulti = " _c
+	if `pystackedmulti'==0 {
+		`qui' di as res `pystackedmulti' as text " (any pystacked call treated as a single learner by ddml)"
+	}
+	else {
+		`qui' di as res `pystackedmulti' as text " (number of pystacked base learners)"
 	}
 
 	// insert eqn struct into model struct

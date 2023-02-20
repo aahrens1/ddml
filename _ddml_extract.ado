@@ -32,7 +32,7 @@ program define _ddml_extract, rclass
 	// show macro can be lower or upper case; upper required below
 	local show = upper("`show'")
 	// syntax check
-	local showlist PYSTACKED MSE N SHORTSTACK
+	local showlist PYSTACKED MSE N SHORTSTACK POOLSTACK
 	if "`show'"~="" {
 		local showok : list posof "`show'" in showlist
 		if `showok'==0 {
@@ -139,12 +139,22 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 		rmatlist = J(1,0,"")
 		for (i=1;i<=rows(vnames);i++) {
 			eqn = (d.eqnAA).get(vnames[i])
-			vtlist = eqn.vtlist
+			if (eqn.pystackedmulti) {
+				// shortstacking of pystacked base learners
+				vtlist = tokens((eqn.lrnAA).get((invtokens(eqn.vtlist),"stack_base_est")))
+				nlearners=eqn.pystackedmulti
+			}
+			else {
+				// non-pystacked shortstacking of ddml learners in vtlist
+				vtlist = eqn.vtlist
+				nlearners=eqn.nlearners
+			}
+			rstripe = vtlist'
 			if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
 				// base case - plm, plm IV, ATE D, LATE Z, LIE Y
 				// initialize
 				cstripe = "mean_weight"
-				rmat = J(0,eqn.nlearners,.)
+				rmat = J(0,nlearners,.)
 				vnkey = vnames[i] + "_ssw"
 				for (m=1;m<=nreps;m++) {
 					AA = (d.estAA).get(("ss",strofreal(m)))
@@ -157,7 +167,6 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 				// in output, rows are learners, columns are resamples
 				rmat = rmat'
 				cstripe = (J(rows(cstripe),1,""), cstripe)
-				rstripe = (vtlist)'
 				rstripe = (J(rows(rstripe),1,""), rstripe)
 				st_matrix("r("+vnkey+")",rmat)
 				st_matrixcolstripe("r("+vnkey+")",cstripe)
@@ -179,8 +188,8 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 				else {
 					cstripe = ("Z=0/1" \ "mean_weight")
 				}
-				rmat0 = J(0,eqn.nlearners,.)
-				rmat1 = J(0,eqn.nlearners,.)
+				rmat0 = J(0,nlearners,.)
+				rmat1 = J(0,nlearners,.)
 				vnkey = vnames[i] + "_ssw"
 				vnkey_h = vnames[i] + "_h_ssw"
 				vnkey0 = vnames[i] + "_ssw0"
@@ -215,7 +224,7 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 				// combine
 				rmat = (rmat0 \ rmat1)
 				// add sort column to rmat
-				lnum = runningsum(J(eqn.nlearners,1,1))
+				lnum = runningsum(J(nlearners,1,1))
 				lnum = (lnum \ lnum)
 				rmat = (lnum, rmat)
 				// sort rmat
@@ -245,6 +254,127 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 				st_matrixrowstripe("r("+vnkey+")",rstripe)
 				rmatlist = (rmatlist, vnkey)
 				printf("\n{res}short-stacked weights across resamples for %s\n",vnames[i])
+				stata("mat list " + "r("+vnkey+"), noheader noblank")
+			}
+		}
+		st_global("r(matlist)",invtokens(sort(rmatlist,1)))
+	}
+	else if (show=="POOLSTACK") {
+		// enter only for pooled stacking of pystacked base learners
+		vnames =(d.eqnAA).keys()
+		vnames = sort(vnames,(1::cols(vnames))')
+		nreps = d.nreps
+		rmatlist = J(1,0,"")
+		for (i=1;i<=rows(vnames);i++) {
+			eqn = (d.eqnAA).get(vnames[i])
+			// poolstacking of pystacked base learners
+			vtlist = tokens((eqn.lrnAA).get((invtokens(eqn.vtlist),"stack_base_est")))
+			rstripe = vtlist'
+			nlearners=eqn.pystackedmulti
+			if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+				// base case - plm, plm IV, ATE D, LATE Z, LIE Y
+				// initialize
+				cstripe = "mean_weight"
+				rmat = J(0,nlearners,.)
+				vnkey = vnames[i] + "_psw"
+				for (m=1;m<=nreps;m++) {
+					AA = (d.estAA).get(("ps",strofreal(m)))
+					rrep = AA.get((vnkey,"matrix"))
+					rmat = (rmat \ rrep)
+					cstripe = (cstripe \ ("rep_"+strofreal(m)))
+				}
+				// add mean across reps
+				rmat = (mean(rmat) \ rmat)
+				// in output, rows are learners, columns are resamples
+				rmat = rmat'
+				cstripe = (J(rows(cstripe),1,""), cstripe)
+				rstripe = (J(rows(rstripe),1,""), rstripe)
+				st_matrix("r("+vnkey+")",rmat)
+				st_matrixcolstripe("r("+vnkey+")",cstripe)
+				st_matrixrowstripe("r("+vnkey+")",rstripe)
+				rmatlist = (rmatlist, vnkey)
+				printf("\n{res}pool-stacked weights across resamples for %s\n",vnames[i])
+				stata("mat list " + "r("+vnkey+"), noheader noblank")
+			}
+			else {
+				// LIE means D and Dhat so we need a column to indicate h=0/1
+				// ATE/LATE means we need a column for D or Z = 0/1
+				// initialize
+				if (eqn.lieflag==1) {
+					cstripe = ("h=0/1" \ "mean_weight")
+				}
+				else if (d.model=="interactive") {
+					cstripe = ("D=0/1" \ "mean_weight")
+				}
+				else {
+					cstripe = ("Z=0/1" \ "mean_weight")
+				}
+				rmat0 = J(0,nlearners,.)
+				rmat1 = J(0,nlearners,.)
+				vnkey = vnames[i] + "_psw"
+				vnkey_h = vnames[i] + "_h_psw"
+				vnkey0 = vnames[i] + "_psw0"
+				vnkey1 = vnames[i] + "_psw1"
+				for (m=1;m<=nreps;m++) {
+					AA = (d.estAA).get(("ps",strofreal(m)))
+					if (eqn.lieflag==1) {
+						// D
+						rrep0 = AA.get((vnkey,"matrix"))
+						// Dhat
+						rrep1 = AA.get((vnkey_h,"matrix"))
+					}
+					else {
+						// D/Z=0
+						rrep0 = AA.get((vnkey0,"matrix"))
+						// D/Z=1
+						rrep1 = AA.get((vnkey1,"matrix"))
+					}
+					rmat0 = (rmat0 \ rrep0 )
+					rmat1 = (rmat1 \ rrep1 )
+					cstripe = (cstripe \ ("rep_"+strofreal(m)))
+				}
+				// add mean across reps
+				rmat0 = (mean(rmat0) \ rmat0)
+				rmat1 = (mean(rmat1) \ rmat1)
+				// in output, rows are learners, columns are resamples
+				rmat0 = rmat0'
+				rmat1 = rmat1'
+				// add h column
+				rmat0 = (J(rows(rmat0),1,0) , rmat0)
+				rmat1 = (J(rows(rmat1),1,1) , rmat1)
+				// combine
+				rmat = (rmat0 \ rmat1)
+				// add sort column to rmat
+				lnum = runningsum(J(nlearners,1,1))
+				lnum = (lnum \ lnum)
+				rmat = (lnum, rmat)
+				// sort rmat
+				if (eqn.lieflag==1) {
+					// with LIE, group vnames (with/without h) together)
+					rmat = sort(rmat, (1,2))
+				}
+				else {
+					// group by 0/1
+					rmat = sort(rmat, (2,1))
+				}
+				// remove sort column
+				rmat = rmat[.,2..cols(rmat)]
+				cstripe = (J(rows(cstripe),1,""), cstripe)
+				rstripe = J(0,1,"")
+				if (eqn.lieflag==1) {
+					for (vn=1;vn<=cols(vtlist);vn++) {
+						rstripe = (rstripe \ vtlist[vn] \ (vtlist[vn]+"_h"))
+					}
+				}
+				else {
+					rstripe = (vtlist' \ vtlist')
+				}
+				rstripe = (J(rows(rstripe),1,""), rstripe)
+				st_matrix("r("+vnkey+")",rmat)
+				st_matrixcolstripe("r("+vnkey+")",cstripe)
+				st_matrixrowstripe("r("+vnkey+")",rstripe)
+				rmatlist = (rmatlist, vnkey)
+				printf("\n{res}pool-stacked weights across resamples for %s\n",vnames[i])
 				stata("mat list " + "r("+vnkey+"), noheader noblank")
 			}
 		}
