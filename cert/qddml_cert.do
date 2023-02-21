@@ -28,7 +28,7 @@ ddml estimate
 local b1 = _b[$D]
 
 set seed 42
-qddml $Y $D ($X), kfolds(2) model(partial) cmd(pystacked) cmdopt(type(reg) method(rf)) noreg
+qddml $Y $D ($X), kfolds(2) model(partial) cmd(pystacked) cmdopt(type(reg) method(rf))
 local b2 = _b[$D]
 ddml estimate 
 
@@ -52,7 +52,7 @@ ddml estimate, robust
 local b1 = _b[$D]
 
 set seed 42
-qddml $Y ($X) ($D=$Z), kfolds(30) model(iv) cmd(rforest) cmdopt(type(reg)) vtype(none) robust noreg
+qddml $Y ($X) ($D=$Z), kfolds(30) model(iv) cmd(rforest) cmdopt(type(reg)) vtype(none) robust
 local b2 = _b[$D]
 
 assert reldif(`b1',`b2')<$tol
@@ -76,7 +76,7 @@ ddml estimate, atet
 local b1_atet=_b[$D]
 
 set seed 42
-qddml $Y $D ($X), kfolds(5) reps(5) model(interactive) cmd(pystacked) ycmdopt(type(reg) method(gradboost)) dcmdopt(type(class) method(gradboost)) noreg
+qddml $Y $D ($X), kfolds(5) reps(5) model(interactive) cmd(pystacked) ycmdopt(type(reg) method(gradboost)) dcmdopt(type(class) method(gradboost))
 local b2 = _b[$D]
 
 ddml estimate, atet
@@ -104,7 +104,7 @@ ddml estimate
 local b1 = _b[$D]
 
 set seed 42
-qddml $Y (c.($X)# #c($X)) ($D=$Z), kfolds(5) model(interactiveiv) cmd(pystacked) ycmdopt(type(reg) m(lassocv)) dcmdopt(type(class) m(lassocv)) zcmdopt(type(class) m(lassocv)) noreg
+qddml $Y (c.($X)# #c($X)) ($D=$Z), kfolds(5) model(interactiveiv) cmd(pystacked) ycmdopt(type(reg) m(lassocv)) dcmdopt(type(class) m(lassocv)) zcmdopt(type(class) m(lassocv))
 local b2 = _b[$D]
 
 assert reldif(`b1',`b2')<$tol
@@ -127,7 +127,7 @@ ddml estimate
 local b1 = _b[$D]
 
 set seed 42
-qddml $Y ($X) ($D=$Z), model(fiv) cmd(pystacked) cmdopt(type(reg)) noreg
+qddml $Y ($X) ($D=$Z), model(fiv) cmd(pystacked) cmdopt(type(reg))
 local b2 = _b[$D]
 
 assert reldif(`b1',`b2')<$tol

@@ -8,9 +8,14 @@ if ("`c(username)'"=="kahrens") {
 }
 
 cap log close
-log using "qddml_cert", replace text
+log using "ddml_cert", replace text
 
-net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/dev/) replace
+// net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/dev/) replace
+
+// necessary programs for cert; script exits with error if not installed
+findfile pystacked.ado
+findfile svmachines.ado
+findfile rforest.ado
 
 global tol = 0.0001
 which ddml
@@ -37,8 +42,14 @@ ddml E[Y|X]: svmachines $Y $X, type(svr)
 ddml E[D|X]: reg $D $X
 ddml E[D|X]: pystacked $D $X, type(reg) method(rf gradboost)
 ddml E[D|X]: svmachines $D $X, type(svr)
-ddml E[D|X]: parsnip2 $D $X, model(linear_reg) engine(glmnet) penalty(.5) clearR
-
+// add eqn if parsnip installed
+cap findfile parsnip2.ado
+local hasparsnip=_rc
+cap findfile parsnip.ado
+local hasparsnip=`hasparsnip'+_rc
+if `hasparsnip'==0 {
+	ddml E[D|X]: parsnip2 $D $X, model(linear_reg) engine(glmnet) penalty(.5) clearR
+}
 ddml desc
 
 ddml crossfit 
@@ -51,8 +62,6 @@ assert reldif(`b1',`b2')<$tol
 
 ddml estimate, robust allcombos
 
-ddml extract, show(pystacked)
-mat list r(Y2_pystacked_L2_m)
 ddml extract, show(mse)
 ddml extract, show(n)
 
@@ -62,6 +71,20 @@ ddml drop
 cap ddml desc
 assert _rc==3259
 
+// pystacked as a single learner with multiple base learners;
+// shortstacking; multiple reps; ddml extract
+ddml init partial, kfolds(2) reps(2)
+
+ddml E[Y|X]: pystacked $Y $X, type(reg) method(rf gradboost)
+ddml E[D|X]: pystacked $D $X, type(reg) method(rf gradboost)
+ddml desc
+
+ddml crossfit, shortstack
+
+ddml estimate, robust
+
+ddml extract, show(pystacked)
+ddml extract, show(shortstack)
 
 ******************************************************************************** 
 **** Partially linear IV model.										         ***

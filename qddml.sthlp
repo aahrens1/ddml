@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 21jan2023}{...}
+{* *! version 21feb2023}{...}
 {hline}
 {cmd:help ddml}{right: v1.2}
 {hline}
@@ -45,7 +45,6 @@ program.
 {opt cmd(string)}
 {opt cmdopt(string)}
 {opt mname(string)}
-{opt noreg}
 {opt ...} ]}
 
 {pstd}
@@ -106,9 +105,6 @@ select variance-covariance estimator, see {helpb regress##vcetype:here}
 {p_end}
 {synopt:{opt cluster(varname)}}
 select cluster-robust variance-covariance estimator.
-{p_end}
-{synopt:{opt noreg}}
-do not add {helpb regress} as an additional learner. 
 {p_end}
 
 {synoptset 20}{...}
@@ -203,16 +199,21 @@ Please also see the examples in the {helpb ddml##examples:ddml help file}
 {pstd}The options {cmd:model(partial)} selects the partially linear model
 and {cmd:kfolds(2)} selects two cross-fitting folds.
 We use the options {cmd:cmd()} and {cmd:cmdopt()} to select
-random forest for estimating the conditional expectations.{p_end}
+random forest and cross-validated lasso for estimating the conditional expectations.{p_end}
 
 {pstd}Note that we set the number of random folds to 2, so that 
 the model runs quickly. The default is {opt kfolds(5)}. We recommend 
 to consider at least 5-10 folds and even more if your sample size is small.{p_end}
 
 {pstd}Note also that we recommend to re-run the model multiple time on 
-different random folds, see options {opt reps(integer)}.{p_end}
+different random folds; see options {opt reps(integer)}.{p_end}
 
-{phang2}. {stata "qddml $Y $D ($X), kfolds(2) model(partial) cmd(pystacked) cmdopt(type(reg) method(rf))"}{p_end}
+{phang2}. {stata "qddml $Y $D ($X), kfolds(2) model(partial) cmd(pystacked) cmdopt(type(reg) method(rf lassocv))"}{p_end}
+
+{pstd}Postestimation options for {helpb ddml} also work after {opt qddml}.
+Here we request display of the {helpb pystacked} stacking weights and MSEs.{p_end}
+
+{phang2}. {stata "ddml extract, show(pystacked)"}{p_end}
 
 {pstd}{ul:Partially linear IV model.} 
 
