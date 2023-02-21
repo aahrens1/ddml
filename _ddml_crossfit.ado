@@ -1,11 +1,6 @@
 *! ddml v1.2
-*! last edited: 21 jan 2023
+*! last edited: 21 feb 2023
 *! authors: aa/ms
-
-// do we need ssflag and psflag at the model level?
-// what to do if some but not all eqns shortstack or poolstack - how to catch?
-// possibly set ssflag and psflag to zero if this case is encountered by crossfit
-// currently handled in _ddml_estimate but won't work there since based on number of learners
 
 *** ddml cross-fitting
 program _ddml_crossfit, eclass sortpreserve

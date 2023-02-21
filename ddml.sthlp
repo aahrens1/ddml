@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 21jan2023}{...}
+{* *! version 21feb2023}{...}
 {hline}
 {cmd:help ddml}{right: v1.2}
 {hline}
@@ -110,6 +110,13 @@ Report information about {cmd:ddml} model:
 {p 8 14}{cmd:ddml desc} [ , {opt mname(name)} {opt learn:ers} {opt cross:fit} {opt est:imates} {opt sam:ple} {opt all}{bind: ]}
 
 {pstd}
+Add cross-fitting repetitions to an existing and possibly already-estimated model;
+the number of additional repetitions is indicated either by {opt append(#)}
+or by {opt append} and the cross-fit fold identifiers in {opt foldvar(varlist)}:
+
+{p 8 14}{cmd:ddml sample} [ , {opt append}[{cmd:(}{it:integer}{cmd:)}] {opt foldvar(varlist)} {bind: ]}
+
+{pstd}
 Export results in csv format:
 
 {p 8 14}{cmd:ddml export} [ using filename , {opt mname(name)}{bind: ]}
@@ -122,7 +129,7 @@ Retrieve information from {cmd:ddml}:
 {opt subkey2(string)}{bind: ]}
 
 {pstd}
-{it:display_item} can be {it:mse}, {it:n} or {it:pystacked}.
+{it:display_item} can be {it:mse}, {it:n}, {it:shortstack} or {it:pystacked}.
 {cmd:ddml} stores many internal results on associative arrays.
 These can be retrieved using the different key options.
 See {helpb ddml extract} for details.

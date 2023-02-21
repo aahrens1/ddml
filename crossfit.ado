@@ -1,8 +1,7 @@
 *! crossfit v0.6
-*! last edited: 17feb2023
+*! last edited: 21feb2023
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
-* ConstrLSClassifier() weights seems not to sum to 1
 
 program define crossfit, rclass sortpreserve
 	// minimum Stata is version 14, with support for associative arrays
