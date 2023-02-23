@@ -555,14 +555,14 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	if `tableflag' {
 		di
 		di as text "DDML estimation results (`teffect'):"
-		di as text "spec  r" %14s "Y0 learner" _c
-		di as text           %14s "Y1 learner" _c
+		di as text "spec  r" %14s "Y(0) learner" _c
+		di as text           %14s "Y(1) learner" _c
 		if `ateflag' {
 			di as text           %14s "D learner" _c
 		}
 		else {
-			di as text           %14s "D0 learner" _c
-			di as text           %14s "D1 learner" _c
+			di as text           %14s "D(0) learner" _c
+			di as text           %14s "D(1) learner" _c
 		}
 		di as text %10s "b" %10s "SE" _c
 		if ~`ateflag' {
@@ -712,14 +712,14 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		
 	if `nreps' > 1 & `tableflag' {
 		di
-		di as text "Mean/med.  Y0 learner" _c
-		di as text           %14s "Y1 learner" _c
+		di as text "Mean/med.  Y(0) learner" _c
+		di as text           %14s "Y(1) learner" _c
 		if `ateflag' {
 			di as text           %14s "D learner" _c
 		}
 		else {
-			di as text           %14s "D0 learner" _c
-			di as text           %14s "D1 learner" _c
+			di as text           %14s "D(0) learner" _c
+			di as text           %14s "D(1) learner" _c
 		}
 		di as text %10s "b" %10s "SE" _c
 		if ~`ateflag' {
