@@ -2705,6 +2705,7 @@ from sfi import Data,Matrix,Scalar,SFIToolkit
 from sklearn.linear_model import LinearRegression
 from sklearn.base import TransformerMixin,BaseEstimator
 from sklearn.utils import check_X_y,check_array
+from sklearn.utils.validation import _check_sample_weight
 import numpy as np
 from scipy.optimize import minimize 
 from scipy.optimize import nnls 
@@ -2767,7 +2768,7 @@ class ConstrLS(BaseEstimator):
         cons = {'type': 'eq', 'fun': lambda coef: np.sum(coef)-1}
         bounds = [[0.0,1.0] for i in range(xdim)] 
 
-        w = np.reshape(np.sqrt(w),(-1,1))
+        w = _check_sample_weight(w, X)
         #If weights vector=1, no weighting needed
         if np.all(w==1):
             #Do minimisation

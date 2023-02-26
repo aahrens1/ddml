@@ -53,24 +53,24 @@ struct eStruct {
 // should perhaps make vname a required argument for this function
 struct eStruct init_eStruct()
 {
-	struct eStruct scalar			d
+	struct eStruct scalar	m
 //	class AssociativeArray scalar	A2, A3
 
-	d.vname				= ""
-	d.vtlist			= J(1,0,"")
-	d.shortstack		= ""
-	d.poolstack			= ""
-	d.nlearners			= 0
-	d.lieflag			= 0
-	d.ateflag			= 0
-	d.pystackedmulti	= 0
+	m.vname				= ""
+	m.vtlist			= J(1,0,"")
+	m.shortstack		= ""
+	m.poolstack			= ""
+	m.nlearners			= 0
+	m.lieflag			= 0
+	m.ateflag			= 0
+	m.pystackedmulti	= 0
 	
-	(d.lrnAA).reinit("string",2)
-	(d.resAA).reinit("string",3)
-	(d.lrnAA).notfound(NULL)
-	(d.resAA).notfound(NULL)
+	(m.lrnAA).reinit("string",2)
+	(m.resAA).reinit("string",3)
+	(m.lrnAA).notfound(NULL)
+	(m.resAA).notfound(NULL)
 	
-	return(d)
+	return(m)
 }
 
 // clear results from eStruct
@@ -108,70 +108,70 @@ struct mStruct {
 struct mStruct init_mStruct()
 {
 
-	struct mStruct scalar			d
+	struct mStruct scalar	m
 	
-	d.model			= ""
-	d.id			= J(0,1,.)
-	d.nreps			= 0
-	d.ncombos		= 0
-	d.kfolds		= 0
-	d.nameY			= ""
-	d.nameD			= J(1,0,"")
-	d.nameZ			= J(1,0,"")
-	d.ssflag		= 0
-	d.psflag		= 0
-	d.fclustvar		= ""
-	d.strDatavars	= ""
-	d.matDatavars	= J(0,0,.)
-	d.crossfitted	= 0
-	d.estimated		= 0
+	m.model			= ""
+	m.id			= J(0,1,.)
+	m.nreps			= 0
+	m.ncombos		= 0
+	m.kfolds		= 0
+	m.nameY			= ""
+	m.nameD			= J(1,0,"")
+	m.nameZ			= J(1,0,"")
+	m.ssflag		= 0
+	m.psflag		= 0
+	m.fclustvar		= ""
+	m.strDatavars	= ""
+	m.matDatavars	= J(0,0,.)
+	m.crossfitted	= 0
+	m.estimated		= 0
 	
-	(d.eqnAA).reinit("string",1)
-	(d.eqnAA).notfound(NULL)
+	(m.eqnAA).reinit("string",1)
+	(m.eqnAA).notfound(NULL)
 	
-	(d.estAA).reinit("string",2)
-	(d.estAA).notfound(NULL)
+	(m.estAA).reinit("string",2)
+	(m.estAA).notfound(NULL)
 	
 	// initialize counters used for default learner names
-	d.ycounter		= 1
-	d.dcounter		= 1
-	d.zcounter		= 1
+	m.ycounter		= 1
+	m.dcounter		= 1
+	m.zcounter		= 1
 	
-	return(d)
+	return(m)
 }
 
 // clear results from all eStructs in mStruct
-void clear_model_results(struct mStruct d)
+void clear_model_results(struct mStruct m)
 {
 	// if not crossfitted, nothing to clear
-	if (d.crossfitted>0) {
+	if (m.crossfitted>0) {
 		struct eStruct scalar			e
 		class AssociativeArray scalar	A3
 		
 		// clear results for each equation
-		eqnlist = (d.nameY, d.nameD, d.nameZ)
+		eqnlist = (m.nameY, m.nameD, m.nameZ)
 		for (i=1; i<=cols(eqnlist); i++) {
-			clear_equation_results((d.eqnAA).get(eqnlist[i]))
+			clear_equation_results((m.eqnAA).get(eqnlist[i]))
 		}
 		
 		// also clear:
-		d.ncombos		= 0
-		d.crossfitted	= 0
-		d.ssflag		= 0
-		d.strDatavars	= ""
-		d.matDatavars	= J(0,0,.)
-		(d.estAA).reinit("string",2)
-		(d.estAA).notfound(NULL)
+		m.ncombos		= 0
+		m.crossfitted	= 0
+		m.ssflag		= 0
+		m.strDatavars	= ""
+		m.matDatavars	= J(0,0,.)
+		(m.estAA).reinit("string",2)
+		(m.estAA).notfound(NULL)
 	}
 }
 
 // clear only estimation results in mStruct
-void clear_model_estimation(struct mStruct d)
+void clear_model_estimation(struct mStruct m)
 {
-	d.estimated		= 0
-	d.ncombos		= 0
-	(d.estAA).reinit("string",2)
-	(d.estAA).notfound(NULL)
+	m.estimated		= 0
+	m.ncombos		= 0
+	(m.estAA).reinit("string",2)
+	(m.estAA).notfound(NULL)
 }
 
 // add item about learner to eStruct
@@ -190,7 +190,14 @@ transmorphic return_learner_item(	struct eStruct e,
 									string scalar key2
 									)
 {
-	return((e.lrnAA).get((key1,key2)))
+	r = (e.lrnAA).get((key1,key2))
+	if (r==NULL) {
+		s = sprintf("error - learner item key1(%s), key2(%s) not found",key1,key2)
+		_error(310,s)
+	}
+	else {
+		return(r)
+	}
 }
 
 // add result from learner/resample to eStruct
@@ -211,7 +218,62 @@ transmorphic return_result_item(	struct eStruct e,
 									string scalar rep
 									)
 {
-	return((e.resAA).get((key1,key2,rep)))
+	r = (e.resAA).get((key1,key2,rep))
+	if (r==NULL) {
+		s = printf("error - learner item key1(%s), key2(%s), rep(%s) not found",key1,key2,rep)
+		_error(310,s)
+	}
+	else {
+		return(r)
+	}
+}
+
+
+// return number of possible combinations of specs
+transmorphic return_ncombos(struct mStruct m)
+{
+   	struct eStruct scalar	eqn
+
+	eqn = (m.eqnAA).get(m.nameY)
+	comboY = cols(eqn.vtlist)
+
+	comboD = 1
+	for (i=1;i<=cols(m.nameD);i++) {
+		eqn = (m.eqnAA).get(m.nameD[1,i])
+		numlrnD = cols(eqn.vtlist)
+		comboD = comboD * numlrnD
+	}
+	comboZ = 1
+	for (i=1;i<=cols(m.nameZ);i++) {
+		eqn = (m.eqnAA).get(m.nameZ[1,i])
+		numlrnZ = cols(eqn.vtlist)
+		comboZ = comboZ * numlrnZ
+	}
+	
+	if (m.model=="interactive" | m.model=="late") {
+	    comboY = comboY^2
+	}
+	if (m.model=="late" | m.model=="fiv") {
+	    comboD = comboD^2
+	}
+	
+	// possible specs:
+	return(comboY * comboD * comboZ)
+}
+
+
+transmorphic check_spec(							///
+							struct mStruct m,		///
+							string scalar spec,		///
+							string scalar rep		///
+						)
+{
+	B = (m.estAA).get((spec,rep))
+	if (B==NULL) {
+		s = sprintf("error - spec(%s), rep(%s) not found",spec,rep)
+		_error(310,s)
+	}
+
 }
 
 

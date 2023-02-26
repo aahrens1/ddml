@@ -6,19 +6,23 @@ program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that
 	version 13
 
 	syntax [if] [in] , mname(name) [				///
-							foldvar(varlist)		/// optional list of variables indicating folds
-							reps(integer 0)			///
+							foldvar(varlist)		/// optional list of variables indicating folds, one per rep
+							reps(integer 0)			/// default=1 below
 							APPEND1					/// option abbrev is "append", allowing both "append" and "append(#)"
 							append(integer 0)		///
 							NORANDOM				/// first fold ID uses obs in existing order
 							vars(varlist)			///
-							kfolds(integer 5)		///
+							kfolds(integer 0)		/// default=5 below
 							tabfold					///
 							]
 	
 	// incompatible options
 	if "`foldvar'"~="" & `reps' {
 		di as err "error - incompatible options, foldvar(`foldvar') and reps(`reps')"
+		exit 198
+	}
+	if "`foldvar'"~="" & `kfolds' {
+		di as err "error - incompatible options, foldvar(`foldvar') and kfolds(`kfolds')"
 		exit 198
 	}
 	if `reps' & `append' {
@@ -34,23 +38,39 @@ program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that
 		exit 198
 	}
 	
+	// syntax checks and defaults
+	if `kfolds'<0 {
+		di as err "error - invalid kfolds(`kfolds'); must be an integer > 1"
+		exit 198
+	}
+	else if `kfolds'==0 & "`foldvar'"=="" {
+		// default number of folds unless foldvar is provided
+		local kfolds=5
+	}
+	if `reps'<0 {
+		di as err "error - invalid reps(`reps'); must be an integer > 0"
+		exit 198
+	}
+	else if `reps'==0 & "`foldvar'"=="" {
+		// default number of folds unless foldvar is provided
+		local kfold	=5
+		local reps	=1
+	}
+	else if `reps'==0 {
+		local reps : word count `foldvar'
+	}
+	
+	
 	// update append macro; append1 macro not needed after this
 	if "`append1'"~="" {
 		// update append macro to have number of appended resamples from #foldvars
 		local append : word count `foldvar'
 	}
 	
-	// reps, kfolds macros
+	// if appending, reps and kfolds = current setting for model
 	if `append' {
-		// if appending, reps = current setting for model
 		mata: st_local("reps", strofreal(`mname'.nreps))
 		mata: st_local("kfolds", strofreal(`mname'.kfolds))
-	}
-	else {
-		// no appending, setup from scratch
-		// if neither foldvar nor reps provided, set reps to default, otherwise set to #foldvars
-		if "`foldvar'"=="" & `reps'==0	local reps=1
-		else if `reps'==0				local reps : word count `foldvar'
 	}
 	
 	// clear all results (crossfits and estimation) or just estimations

@@ -33,10 +33,21 @@ program _ddml_estimate_linear, eclass sortpreserve
 	local tableflag = "`notable'"==""
 	// request estimation/reporting of all combinations
 	local doallcombos = "`allcombos'"~=""
-	// remaining flags
+	// remaining macro flags
+	mata: st_local("nreps",strofreal(`mname'.nreps))
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 	mata: st_local("psflag",strofreal(`mname'.psflag))
+	
+	// can't estimate unless crossfitted first
+	if `crossfitted'==0 {
+		di as err "error - model must be crossfitted before final estimation"
+		exit 198
+	}
+	else if `crossfitted'<`nreps' {
+		di as err "error - total reps=`nreps' but only `crossfitted' reps crossfitted"
+		exit 198
+	}
 	
 	// reestimation necessary unless replay specified
 	if `replayflag' {
@@ -49,7 +60,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 			di as err "error - replay specified but model not yet estimated"
 			exit 198
 		}
-		if `ncombos'==0 & "`spec'"~="" & real("`spec'")<. {
+		if `ncombos'==0 & "`spec'"~="" & real("`spec'")<. & real("`spec'")>1 {
 			di as err "error - spec(`spec') not available; add 'allcombos' to estimate all combinations"
 			di as err "add 'replay' to retrieve one of the available estimations stored in memory"
 			exit 198
@@ -57,7 +68,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 	}
 	else {
 		// error checks
-		if `doallcombos'==0 & "`spec'"~="" & real("`spec'")<. {
+		if `doallcombos'==0 & "`spec'"~="" & real("`spec'")<. & real("`spec'")>1 {
 			di as err "error - spec(`spec') not available; add 'allcombos' to estimate all combinations"
 			exit 198
 		}
@@ -77,7 +88,6 @@ program _ddml_estimate_linear, eclass sortpreserve
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
-	mata: st_local("nreps",strofreal(`mname'.nreps))
 
 	** standard errors
 	// local vce is the argument to the Stata option vce(.)
@@ -89,13 +99,17 @@ program _ddml_estimate_linear, eclass sortpreserve
 		exit 198
 	}
 
-	// default spec is ss if available, otherwise mse	
+	// default spec is ss if available, otherwise mse if ncombos>1, otherwise 1 since ncombos=1
 	if "`spec'"=="" & `ssflag' {
 		local spec "ss"
 	}
-	else if "`spec'"=="" {
+	else if "`spec'"=="" & `ncombos'>1 {
 		local spec "mse"
 	}
+	else if "`spec'"=="" {
+		local spec 1
+	}
+	
 	// allowed forms of spec and rep
 	if "`spec'"=="shortstack"	local spec ss
 	if "`spec'"=="poolstack"	local spec ps
@@ -159,6 +173,29 @@ program _ddml_estimate_linear, eclass sortpreserve
 		}
 	}
 	
+	// number of possible combos; if only one spec, will replace "mse" label
+	mata: st_local("poss_combos",strofreal(return_ncombos(`mname')))
+	
+	// multiple specs
+	// text locals control messages and lookups
+	if `replayflag' {
+		local spectext	`spec'
+	}
+	else if `poss_combos'>1 {
+		local msetext	"min-mse "
+		local MSEtext	"Min MSE "
+		local spectext	mse
+		local otext		mse
+	}
+	else {
+		local msetext
+		local MSEtext
+		local spectext		1
+		local otext			1
+		// if only one combo, enter allcombos code so estimation gets numbered
+		local doallcombos	=1
+	}
+	
 	************* ESTIMATE ************
 	
 	if `estimated'==0 {
@@ -166,6 +203,12 @@ program _ddml_estimate_linear, eclass sortpreserve
 	
 		// Loop over resamples and estimate/save the min mse and ss model for each
 		forvalues m=1/`nreps' {
+			
+			// text used in output below
+			// multiple reps
+			if `nreps'>1 {
+				local stext " (sample=`m')"
+			}
 			
 			// reset locals
 			local Yopt
@@ -194,11 +237,6 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local Zopt `Zopt' `oneZopt'
 			}
 			
-			// text used in output below
-			if `nreps'>1 {
-				local stext " (sample=`m')"
-			}
-			
 			if "`model'"=="fiv" {
 				local dlist
 				local zlist
@@ -223,13 +261,14 @@ program _ddml_estimate_linear, eclass sortpreserve
 				local d `Dopt'
 				local z `Zopt'
 			}
-			local title Min MSE DDML model`stext'
+			local title "`MSEtext'DDML model`stext'"
 			`qui' _ddml_reg if `mname'_sample_`m' & `touse',					///
 					`noconstant' vce(`vce')										///
 					y(`Yopt') yname(`nameY')									///
 					d(`d') dnames(`nameD') dvtnames(`dvtnames')			 		///
 					z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
-					mname(`mname') spec(mse) rep(`m') title(`title') `norep'
+					mname(`mname') spec(`spectext') rep(`m')					///
+					title(`title') `norep'
 			
 			// estimate shortstack for this rep
 			if `ssflag' {
@@ -264,7 +303,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 						y(`Yss') yname(`nameY')										///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames') 				///
 						z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
-						mname(`mname') spec(ss) rep(`m') title(`title') `norep'
+						mname(`mname') spec(ss) rep(`m')							///
+						title(`title') `norep'
 			}
 			// estimate poolstack for this rep
 			if `psflag' {
@@ -299,15 +339,16 @@ program _ddml_estimate_linear, eclass sortpreserve
 						y(`Yps') yname(`nameY')										///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames') 				///
 						z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
-						mname(`mname') spec(ps) rep(`m') title(`title') `norep'
+						mname(`mname') spec(ps) rep(`m')							///
+						title(`title') `norep'
 			}
 		}
 		
 		// have looped over reps to get each optimal model and shortstack per rep
 		// now aggregate over reps to get mean/median
 		if `nreps' > 1 {
-			`qui' _ddml_reg, mname(`mname') spec(mse) medmean(mn) title("Mean over min-mse specifications") `noconstant'
-			`qui' _ddml_reg, mname(`mname') spec(mse) medmean(md) title("Median over min-mse specifications") `noconstant'
+			`qui' _ddml_reg, mname(`mname') spec(`spectext') medmean(mn) title("Mean over `nreps' `msetext'resamples") `noconstant'
+			`qui' _ddml_reg, mname(`mname') spec(`spectext') medmean(md) title("Median over `nreps' `msetext'resamples") `noconstant'
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean over `nreps' resamples)"
@@ -340,6 +381,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 		mata: `semat' = (`mname'.estAA).get(("semat","all"))
 		// recover min MSE specs
 		forvalues m=1/`nreps' {
+			mata: check_spec(`mname',"optspec","`m'")
 			mata: st_local("optspec",(`mname'.estAA).get(("optspec","`m'")))
 			local optspec`m' = `optspec'
 		}
@@ -432,7 +474,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 				if `isYopt' & `isDopt' & `isZopt' {
 					local optspec`m' = `i'
 					local isopt *
-					local title Min MSE `title'
+					local title `MSEtext'`title'
 					// save in AA
 					mata: (`mname'.estAA).put(("optspec","`m'"),"`i'")
 				}
@@ -461,7 +503,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 						y(`y') yname(`nameY')									///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames')		 		///
 						z(`z') znames(`nameZ') zvtnames(`zvtnames')				///
-						mname(`mname') spec(`i') rep(`m') title(`title') `norep'
+						mname(`mname') spec(`i') rep(`m')						///
+						title(`title') `norep'
 				
 				mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
 				mata: `semat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(semat)")
@@ -498,7 +541,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 						y(`Yss') yname(`nameY')										///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames') 				///
 						z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
-						mname(`mname') spec(ss) rep(`m') title(`title') `norep'
+						mname(`mname') spec(ss) rep(`m')							///
+						title(`title') `norep'
 			}
 			if `psflag' {
 				if "`model'"=="fiv" {
@@ -531,7 +575,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 						y(`Yps') yname(`nameY')										///
 						d(`d') dnames(`nameD') dvtnames(`dvtnames') 				///
 						z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
-						mname(`mname') spec(ps) rep(`m') title(`title') `norep'
+						mname(`mname') spec(ps) rep(`m')							///
+						title(`title') `norep'
 			}
 	
 		}
@@ -546,6 +591,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 	************** REPORT RESULTS **************
 	
 	*** Results ***
+	
 	// optional table of results
 	if `tableflag' {
 		di
@@ -576,7 +622,8 @@ program _ddml_estimate_linear, eclass sortpreserve
 					if "`ztlist'"~="" {
 						mata: st_local("ztlist",invtokens(abbrev(tokens(`nmat'[`i',3]),13)))
 					}
-					if "`optspec`m''"=="`i'" {
+					if "`optspec`m''"=="`i'" & `ncombos'>1 {
+						// print * for opt (lowest MSE combo) if more than 1 combo
 						di "*" _c
 					}
 					else {
@@ -621,14 +668,14 @@ program _ddml_estimate_linear, eclass sortpreserve
 			}
 			else {
 				// only mse/ss specs available/reported
-				`qui' _ddml_reg, mname(`mname') spec(mse) rep(`m') replay `noconstant'
+				`qui' _ddml_reg, mname(`mname') spec(`spectext') rep(`m') replay `noconstant'
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
-				local specrep `: di "opt" %3.0f `m''
-				// pad out to 6 spaces
-				local specrep = " " + "`specrep'"
-				local rcmd stata ddml estimate, mname(`mname') spec(mse) rep(`m') replay notable `noconstant'
+				local specrep `: di "`otext'" %3.0f `m''
+				// pad out to 7 spaces
+				local specrep = (7-length("`specrep'"))*" " + "`specrep'"
+				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') replay notable `noconstant'
 				di %6s "{`rcmd':`specrep'}" _c
 				mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 				mata: st_local("yt",return_learner_item(`eqn',"opt","`m'"))
@@ -734,13 +781,16 @@ program _ddml_estimate_linear, eclass sortpreserve
 				di
 			}
 		}
-		if `doallcombos' {
-			di as res "*" _c
+		// footnote needed only if multiple specs possible
+		if `poss_combos'>1 {
+			if `doallcombos' {
+				di as res "*" _c
+			}
+			else {
+				di as text "mse" _c
+			}
+			di as text " = minimum MSE specification for that resample."
 		}
-		else {
-			di as text "opt" _c
-		}
-		di as text " = minimum MSE specification for that resample."
 	}
 
 	if `nreps' > 1 & `tableflag' {
@@ -761,7 +811,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 		foreach medmean in mn md {
 			** mean and median over mse
 			// force noconstant with mean/median
-			`qui' _ddml_reg, mname(`mname') spec(mse) rep(`medmean') replay noconstant
+			`qui' _ddml_reg, mname(`mname') spec(`spectext') rep(`medmean') replay noconstant
 			tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 			mat `btemp' = e(b)
 			mat `Vtemp' = e(V)
@@ -769,7 +819,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 			// pad out to 6 spaces
 			local specrep = " " + "`specrep'"
 			// force noconstant with mean/median
-			local rcmd stata ddml estimate, mname(`mname') spec(mse) rep(`medmean') replay notable `noconstant'
+			local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') replay notable `noconstant'
 			di %6s "{`rcmd':`specrep'}" _c
 			di as res %14s "[min-mse]" _c
 			forvalues j=1/`numeqnD' {
@@ -851,10 +901,10 @@ program _ddml_estimate_linear, eclass sortpreserve
 	di
 	if ("`rep'"=="mn" | "`rep'"=="md") {
 		// force noconstant with mean/median
-		_ddml_reg, mname(`mname') spec(`spec') rep(`rep') replay noconstant
+		_ddml_reg, mname(`mname') spec(`spectext') rep(`rep') replay noconstant
 	}
 	else {
-		_ddml_reg, mname(`mname') spec(`spec') rep(`rep') replay `noconstant'
+		_ddml_reg, mname(`mname') spec(`spectext') rep(`rep') replay `noconstant'
 	}
 	di
 	
@@ -1139,6 +1189,7 @@ program define _ddml_reg, eclass
 		mata: `bvec' = J(`nreps',`K',0)
 		mata: `bagg' = J(1,`K',0)
 		forvalues m=1/`nreps' {
+			mata: check_spec(`mname',"`spec'","`m'")
 			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 			mata: `brow' = `B'.get(("b","post"))
 			// don't aggregate the constant
@@ -1193,6 +1244,7 @@ program define _ddml_reg, eclass
 			// harmonic mean
 			// inefficient - does off-diagonals twice
 			forvalues m=1/`nreps' {
+				mata: check_spec(`mname',"`spec'","`m'")
 				mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 				mata: `Vi' = `B'.get(("V","post"))
 				// don't aggregate the constant
@@ -1214,6 +1266,7 @@ program define _ddml_reg, eclass
 			forvalues j=1/`K' {
 				forvalues k=1/`K' {
 					forvalues m=1/`nreps' {
+						mata: check_spec(`mname',"`spec'","`m'")
 						mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 						mata: `Vi' = `B'.get(("V","post"))
 						mata: `Vvec'[`m'] = `Vi'[`j',`k']
@@ -1288,6 +1341,7 @@ program define _ddml_reg, eclass
 		tempname B keys isscalar islocal ismatrix
 
 		mata: `B' = AssociativeArray()
+		mata: check_spec(`mname',"`spec'","`rep'")
 		mata: `B' = (`mname'.estAA).get(("`spec'","`rep'"))
 		mata: `keys' = `B'.keys()
 		mata: st_local("nentries",strofreal(rows(`keys')))

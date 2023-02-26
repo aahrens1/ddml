@@ -31,14 +31,21 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	local tableflag = "`notable'"==""
 	// request estimation/reporting of all combinations
 	local doallcombos = "`allcombos'"~=""
-	// estimated macro =0/1 indicating estimation results exist
-	mata: st_local("estimated", strofreal(`mname'.estimated))
-	// initial ncombos; will be 0 if all combos not (yet) estimated
-	mata: st_local("ncombos", strofreal(`mname'.ncombos))
-	// remaining flags	
+	// remaining macro flags	
+	mata: st_local("nreps",strofreal(`mname'.nreps))
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 	mata: st_local("psflag",strofreal(`mname'.psflag))
+	
+	// can't estimate unless crossfitted first
+	if `crossfitted'==0 {
+		di as err "error - model must be crossfitted before final estimation"
+		exit 198
+	}
+	else if `crossfitted'<`nreps' {
+		di as err "error - total reps=`nreps' but only `crossfitted' reps crossfitted"
+		exit 198
+	}
 	
 	// reestimation necessary unless replay specified
 	if `replayflag' {
@@ -51,7 +58,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			di as err "error - replay specified but model not yet estimated"
 			exit 198
 		}
-		if `ncombos'==0 & "`spec'"~="" & real("`spec'")<. {
+		if `ncombos'==0 & "`spec'"~="" & real("`spec'")<. & real("`spec'")>1 {
 			di as err "error - spec(`spec') not available; add 'allcombos' to estimate all combinations"
 			di as err "add 'replay' to retrieve one of the available estimations stored in memory"
 			exit 198
@@ -59,7 +66,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	}
 	else {
 		// error checks
-		if `doallcombos'==0 & "`spec'"~="" & real("`spec'")<. {
+		if `doallcombos'==0 & "`spec'"~="" & real("`spec'")<. & real("`spec'")>1 {
 			di as err "error - spec(`spec') not available; add 'allcombos' to estimate all combinations"
 			exit 198
 		}
@@ -79,7 +86,6 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
-	mata: st_local("nreps",strofreal(`mname'.nreps))
 	
 	** standard errors
 	// local vce is the argument to the Stata option vce(.)
@@ -92,14 +98,17 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		exit 198
 	}
 	
-	// default spec is ss if available, otherwise mse	
+	// default spec is ss if available, otherwise mse if ncombos>1, otherwise 1 since ncombos=1
 	if "`spec'"=="" & `ssflag' {
 		local spec "ss"
 	}
-	else if "`spec'"=="" {
+	else if "`spec'"=="" & `ncombos'>1 {
 		local spec "mse"
 	}
-
+	else if "`spec'"=="" {
+		local spec 1
+	}
+	
 	// allowed forms of spec and rep
 	if "`spec'"=="shortstack"	local spec ss
 	if "`spec'"=="poolstack"	local spec ps
@@ -199,7 +208,30 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		local D1ps	`nameD'_ps
 		local Zps	`nameZ'_ps
 	}
-		
+	
+	// number of possible combos; if only one spec, will replace "mse" label
+	mata: st_local("poss_combos",strofreal(return_ncombos(`mname')))
+	
+	// multiple specs
+	// text locals control messages and lookups
+	if `replayflag' {
+		local spectext	`spec'
+	}
+	else if `poss_combos'>1 {
+		local msetext	"min-mse "
+		local MSEtext	"Min MSE "
+		local spectext	mse
+		local otext		mse
+	}
+	else {
+		local msetext
+		local MSEtext
+		local spectext		1
+		local otext			1
+		// if only one combo, enter allcombos code so estimation gets numbered
+		local doallcombos	=1
+	}
+
 	************* ESTIMATE ************
 	
 	// estimate or not
@@ -207,6 +239,20 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 
 		// Loop over resamples and estimate/save the min mse and ss model for each
 		forvalues m=1/`nreps' {
+		
+			// text used in output below
+			// multiple reps
+			if `nreps'>1 {
+				local stext " (sample=`m')"
+			}
+			
+			// reset locals
+			local Y0opt
+			local Y1opt
+			local Dopt
+			local D0opt
+			local D1opt
+			local Zopt
 			
 			*** retrieve best model
 			mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
@@ -223,18 +269,14 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				mata: st_local("Zopt",return_learner_item(`eqn',"opt","`m'"))
 			}
 
-			// text used in output below
-			if `nreps'>1 {
-				local stext " (sample=`m')"
-			}
-			
 			// code works for both ATE and LATE
+			local title "`MSEtext'DDML model`stext' (`teffect')"
 			`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
 				yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
 				y0tilde(`Y0opt') y1tilde(`Y1opt')					///
 				dtilde(`Dopt') d0tilde(`D0opt') d1tilde(`D1opt')	///
 				ztilde(`Zopt')										///
-				spec(mse) rep(`m')									///
+				spec(`spectext') rep(`m')									///
 				mname(`mname')										///
 				title(`title')										///
 				trim(`trim')										///
@@ -280,8 +322,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		// have looped over reps to get each optimal model and shortstack per rep
 		// now aggregate over reps to get mean/median
 		if `nreps' > 1 {
-			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(mn) title("Mean over `nreps' min-mse specifications (`teffect')") vce(`vce') te(`teffect')
- 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(md) title("Median over `nreps' min-mse specifications (`teffect')") vce(`vce') te(`teffect')
+			`qui' _ddml_ate_late, mname(`mname') spec(`spectext') medmean(mn) title("Mean over `nreps' `msetext'resamples (`teffect')") vce(`vce') te(`teffect')
+ 			`qui' _ddml_ate_late, mname(`mname') spec(`spectext') medmean(md) title("Median over `nreps' `msetext'resamples (`teffect')") vce(`vce') te(`teffect')
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean over `nreps' resamples) (`teffect')"
@@ -306,7 +348,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	
 	******************************************
 	
-	if `ncombos'>0 {
+	if `ncombos' {
 		// all combos have already been estimated, so just recover matrices
 		tempname nmat bmat semat
 		mata: `nmat' = (`mname'.estAA).get(("nmat","all"))
@@ -314,6 +356,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		mata: `semat' = (`mname'.estAA).get(("semat","all"))
 		// recover min MSE specs
 		forvalues m=1/`nreps' {
+			mata: check_spec(`mname',"optspec","`m'")
 			mata: st_local("optspec",(`mname'.estAA).get(("optspec","`m'")))
 			local optspec`m' = `optspec'
 		}
@@ -538,7 +581,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			}
 		}
 		
-		// estimation complete
+		// estimation of all combos complete; ncombos > 0 indicates all combos estimated
 		mata: `mname'.ncombos = `ncombos'
 		mata: (`mname'.estAA).put(("nmat","all"),`nmat')
 		mata: (`mname'.estAA).put(("bmat","all"),`bmat')
@@ -575,7 +618,8 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 				forvalues i=1/`ncombos' {
 					mata: st_local("yt0",abbrev(`nmat'[`i',1],13))
 					mata: st_local("yt1",abbrev(`nmat'[`i',2],13))
-					if "`optspec`m''"=="`i'" {
+					if "`optspec`m''"=="`i'" & `ncombos'>1 {
+						// print * for opt (lowest MSE combo) if more than 1 combo
 						di "*" _c
 					}
 					else {
@@ -612,14 +656,14 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 			}
 			else {
 				// only mse/ss specs available/reported
-				`qui' _ddml_ate_late, mname(`mname') spec(mse) rep(`m') replay
+				`qui' _ddml_ate_late, mname(`mname') spec(`spectext') rep(`m') replay
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
-				local specrep `: di "opt" %3.0f `m''
-				// pad out to 6 spaces
-				local specrep = " " + "`specrep'"
-				local rcmd stata ddml estimate, mname(`mname') spec(mse) rep(`m') replay notable
+				local specrep `: di "mse" %3.0f `m''
+				// pad out to 7 spaces
+				local specrep = (7-length("`specrep'"))*" " + "`specrep'"
+				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') replay notable
 				di %6s "{`rcmd':`specrep'}" _c
 				mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 				mata: st_local("yt0",return_learner_item(`eqn',"opt0","`m'"))
@@ -727,14 +771,14 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		}
 		di
 		foreach medmean in mn md {
-			`qui' _ddml_ate_late, mname(`mname') spec(mse) rep(`medmean') replay
+			`qui' _ddml_ate_late, mname(`mname') spec(`spectext') rep(`medmean') replay
 			tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 			mat `btemp' = e(b)
 			mat `Vtemp' = e(V)
 			local specrep `: di "mse" %3s "`medmean'"'
 			// pad out to 6 spaces
 			local specrep = " " + "`specrep'"
-			local rcmd stata ddml estimate, mname(`mname') spec(mse) rep(`medmean') replay notable
+			local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') replay notable
 			di %6s "{`rcmd':`specrep'}" _c
 			di as res %14s "[min-mse]" _c
 			di as res %14s "[mse]" _c
@@ -802,7 +846,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 
 	// post selected estimates; rep is the resample number (default=1)
 	di
-	_ddml_ate_late, mname(`mname') spec(`spec') rep(`rep') replay
+	_ddml_ate_late, mname(`mname') spec(`spectext') rep(`rep') replay
 	di
 	
 	if `nreps' > 1 & ("`rep'"=="mn" | "`rep'"=="md") {
@@ -1071,6 +1115,7 @@ program _ddml_ate_late, eclass
 		mata: `bvec' = J(`nreps',`K',0)
 		mata: `bagg' = J(1,`K',0)
 		forvalues m=1/`nreps' {
+			mata: check_spec(`mname',"`spec'","`m'")
 			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 			mata: `bvec'[`m',.] = `B'.get(("b","post"))
 			// row/colnames etc. - need to do this only once
@@ -1124,6 +1169,7 @@ program _ddml_ate_late, eclass
 			// harmonic mean
 			// inefficient - does off-diagonals twice
 			forvalues m=1/`nreps' {
+				mata: check_spec(`mname',"`spec'","`m'")
 				mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 				mata: `Vi' = `B'.get(("V","post"))
 				forvalues j=1/`K' {
@@ -1143,6 +1189,7 @@ program _ddml_ate_late, eclass
 			forvalues j=1/`K' {
 				forvalues k=1/`K' {
 					forvalues m=1/`nreps' {
+						mata: check_spec(`mname',"`spec'","`m'")
 						mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 						mata: `Vi' = `B'.get(("V","post"))
 						mata: `Vvec'[`m'] = `Vi'[`j',`k']
@@ -1173,6 +1220,7 @@ program _ddml_ate_late, eclass
 		mata: `nlltrim' = 0
 		mata: `nultrim' = 0
 		forvalues m=1/`nreps' {
+			mata: check_spec(`mname',"`spec'","`m'")
 			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
 			mata: `nlltrim' = `nlltrim' + (`B'.get(("lltrim","scalar"))>0)
 			mata: `nultrim' = `nultrim' + (`B'.get(("ultrim","scalar"))>0)
@@ -1232,6 +1280,7 @@ program _ddml_ate_late, eclass
 		tempname B keys isscalar islocal ismatrix
 
 		mata: `B' = AssociativeArray()
+		mata: check_spec(`mname',"`spec'","`rep'")
 		mata: `B' = (`mname'.estAA).get(("`spec'","`rep'"))
 		mata: `keys' = `B'.keys()
 		mata: st_local("nentries",strofreal(rows(`keys')))
