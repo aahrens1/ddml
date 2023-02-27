@@ -407,9 +407,9 @@ end
 program define add_eqn_to_model, rclass
 
 	syntax [anything],								/// 
-							[						///
 							mname(name)				/// name of mata struct with model
 							vname(varname)			/// name of dep var in equation (to be orthogonalized)
+							[						///
 							vtilde(name)			/// names of tilde variable
 							vtype(string)			///
 							predopt(string asis)	///
