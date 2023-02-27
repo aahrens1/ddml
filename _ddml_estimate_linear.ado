@@ -11,7 +11,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 								dh(varname)			///
 								* ]
 
-	if "`y'`d'`z'"=="" {
+	if "`y'`d'`z'`dh'"=="" {
 		// main program for estimation
 		_ddml_estimate_main `anything' `if' `in', `options'
 	}
