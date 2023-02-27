@@ -170,11 +170,13 @@ program define _crossfit_pystacked, rclass sortpreserve
 	local psflag	= "`poolstack'"~=""
 	** indicator for interactive model
 	local tvflag	= "`treatvar'"~=""
+	** indicator for residuals vs predicted values
+	local residflag	= "`resid'"~=""
 
 	// LIE => we want predicted values not resids
-	if `lieflag' & "`resid'"~="" {
+	if `lieflag' & `residflag' {
 		di as res "resid option ignored"
-		local resid
+		local residflag=0
 	}
 	
 	if "`noisily'"=="" {
@@ -778,7 +780,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `ssw' = e(b)
 				cap drop `shortstack'_ss_`m'
 				mat score `vtype' `shortstack'_ss_`m' = `ssw' if `touse'
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `shortstack'_ss_`m' = `vname' - `shortstack'_ss_`m'
 				}
@@ -792,7 +794,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `ssw1' = e(b)
 				cap drop `shortstack'_ss1_`m'
 				mat score `vtype' `shortstack'_ss1_`m' = `ssw1' if `touse'
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `shortstack'_ss1_`m' = `vname' - `shortstack'_ss1_`m'
 				}
@@ -805,7 +807,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `ssw0' = e(b)
 				cap drop `shortstack'_ss0_`m'
 				mat score `vtype' `shortstack'_ss0_`m' = `ssw0' if `touse'
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `shortstack'_ss0_`m' = `vname' - `shortstack'_ss0_`m'
 				}
@@ -875,7 +877,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat colnames `psw' =  `vtilde_list'
 				cap drop `poolstack'_ps_`m'
 				mat score `vtype' `poolstack'_ps_`m' = `psw' if `touse'
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `poolstack'_ps_`m' = `vname' - `poolstack'_ps_`m'
 				}
@@ -901,7 +903,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat colnames `psw1' = `vtilde1_list'
 				cap drop `poolstack'_ps1_`m'
 				mat score `vtype' `poolstack'_ps1_`m' = `psw1' if `touse'
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `poolstack'_ps1_`m' = `vname' - `poolstack'_ps1_`m'
 				}
@@ -925,7 +927,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat colnames `psw0' =  `vtilde0_list'
 				cap drop `poolstack'_ps0_`m'
 				mat score `vtype' `poolstack'_ps0_`m' = `psw0' if `touse'
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `poolstack'_ps0_`m' = `vname' - `poolstack'_ps0_`m'
 				}
@@ -950,7 +952,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat colnames `psw' =  `vtilde_list'
 				cap drop `poolstack'_ps_`m'
 				mat score `vtype' `poolstack'_ps_`m' = `psw' if `touse'
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `poolstack'_ps_`m' = `vname' - `poolstack'_ps_`m'
 				}
@@ -972,7 +974,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mat colnames `psw' =  `r(varlist)'
 					cap drop `poolstack'_h_ps_`m'
 					mat score `vtype' `poolstack'_h_ps_`m' = `psw' if `touse'
-					if "`resid'"~="" {
+					if `residflag' {
 						// vtilde is the residual
 						qui replace `poolstack'_h_ps_`m' = `vname' - `poolstack'_ps_`m'
 					}
@@ -987,6 +989,13 @@ program define _crossfit_pystacked, rclass sortpreserve
 			di as text "...completed pooled-stacking" _c
 		}
 		
+		// residualize pystacked base learners (linear models)
+		// use general foreach to allow for an empty list
+		if `residflag' {
+			foreach v in `vtilde_list' `vtilde_h_list' {
+				qui replace `v' = `vname' - `v'
+			}
+		}
 		************************************************************************************
 		
 		// clean up
@@ -1577,11 +1586,13 @@ program define _crossfit_other, rclass sortpreserve
 	local ssflag	= "`shortstack'"~=""
 	** indicator for interactive model
 	local tvflag	= "`treatvar'"~=""
+	** indicator for residuals vs predicted values
+	local residflag	= "`resid'"~=""
 
 	// LIE => we want predicted values not resids
-	if `lieflag' & "`resid'"~="" {
+	if `lieflag' & `residflag' {
 		di as res "resid option ignored"
-		local resid
+		local resid = 0
 	}
 	
 	if "`noisily'"=="" {
@@ -1894,7 +1905,7 @@ program define _crossfit_other, rclass sortpreserve
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'_ss_`m' = `vtemp'
 					
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `shortstack'_ss_`m' = `vname' - `shortstack'_ss_`m'
 				}
@@ -1915,7 +1926,7 @@ program define _crossfit_other, rclass sortpreserve
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'_ss1_`m'=`vtemp'
 					
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `shortstack'_ss1_`m' = `vname' - `shortstack'_ss1_`m'
 				}
@@ -1932,7 +1943,7 @@ program define _crossfit_other, rclass sortpreserve
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'_ss0_`m'=`vtemp'
 		
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `shortstack'_ss0_`m' = `vname' - `shortstack'_ss0_`m'
 				}
@@ -2028,19 +2039,19 @@ program define _crossfit_other, rclass sortpreserve
 			
 			if ~`tvflag' & ~`lieflag' { // case 1
 				qui replace `shortstack'_ss_`m' = `vhat1'
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `shortstack'_ss_`m' = `vname' - `shortstack'_ss_`m'
 				}
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 				qui replace `shortstack'_ss1_`m'=`vhat11'
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `shortstack'_ss1_`m' = `vname' - `shortstack'_ss1_`m' if `treatvar'==1
 				}
 				qui replace `shortstack'_ss0_`m'=`vhat01'
-				if "`resid'"~="" {
+				if `residflag' {
 					// vtilde is the residual
 					qui replace `shortstack'_ss0_`m' = `vname' - `shortstack'_ss0_`m' if `treatvar'==0
 				}
