@@ -1,9 +1,150 @@
 *! ddml v1.2
-*! last edited: 21 feb 2023
+*! last edited: 27 feb 2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
+	syntax [anything] [if] [in] ,					/// 
+								[					///
+								y(varname)			/// for estimating by hand...
+								d(varlist)			/// 
+								z(varlist)			///
+								dh(varname)			///
+								* ]
 
+	if "`y'`d'`z'"=="" {
+		// main program for estimation
+		_ddml_estimate_main `anything' `if' `in', `options'
+	}
+	else {
+		// a single user-specified estimation
+		_ddml_estimate_single `anything' `if' `in', y(`y') d(`d') z(`z') dh(`dh') `options'
+	}
+end
+
+// a single user-specified estimation
+program _ddml_estimate_single, eclass sortpreserve
+	syntax namelist(name=mname) [if] [in] ,			/// 
+								[					///
+								y(varname)			/// for estimating by hand...
+								d(varlist)			/// 
+								z(varlist)			///
+								dh(varname)			///
+								ROBust				///
+								CLUster(varname)	///
+								vce(string)			///
+								NOConstant			///
+								* ]
+
+	mata: st_local("model",`mname'.model)
+	mata: st_local("nameY",`mname'.nameY)
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	local numeqnD : word count `nameD'
+	local numeqnZ : word count `nameZ'
+
+	// checks
+	if "`y'"=="" {
+		di as err "option y(.) missing"
+		exit 198
+	}
+	if "`d'"=="" {
+		di as err "option d(.) missing"
+		exit 198
+	}
+	if "`model'"=="partial" {
+		if "`z'"~="" {
+			di as err "z(.) should be empty for model=partial
+			exit 198
+		}
+		local numD : word count `d'
+		if `numD'~=`numeqnD' {
+			di as err "error - model has `numeqnD' D variables but `numD' specified"
+			exit 198
+		}		
+	}
+	else if "`model'"=="iv" {
+		if "`z'"=="" {
+			di as err "option z(.) missing"
+			exit 198
+		}
+	}
+	else if "`model'"=="fiv" {
+		if "`z'"~="" {
+			di as err "z(.) should be empty for model=fiv"
+			exit 198
+		}
+		if "`dh'"=="" {
+			di as err "option dh(.) missing"
+			exit 198
+		}
+		// create new D and Z
+		tempvar d_orthog z_opt
+		qui gen double `d_orthog'	= `nameD' - `dh'
+		qui gen double `z_opt'		= `d'     - `dh'
+	}
+	
+	if "`robust'"!=""	local vce robust
+	if "`cluster'"~=""	local vce cluster `cluster'
+	tempname b V
+	tempvar esample
+	marksample touse
+	if "`z'`dh'"=="" {
+		qui reg `y' `d' if `touse', vce(`vce') `noconstant'
+	}
+	else if "`z'"~="" {
+		qui reg `y' `d' (`z') if `touse', vce(`vce') `noconstant'
+	}
+	else if "`dh'"~="" {
+		qui reg `y' `d_orthog' (`z_opt') if `touse', vce(`vce') `noconstant'
+	}
+	else {
+		di as err "internal ddml estimate error"
+		exit
+	}
+	mat `b'=e(b)
+	mat `V'=e(V)
+	local cnames			`nameD'
+	if "`noconstant'"=="" {
+		local cnames		`cnames' _cons
+	}
+	mat colnames `b' = `cnames'
+	mat colnames `V' = `cnames'
+	mat rownames `V' = `cnames'
+	local N=e(N)
+	local vcetype			`e(vcetype)'
+	local clustvar			`e(clustvar)'
+	qui gen byte `esample'=e(sample)
+	ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
+	ereturn local cmd		ddml
+	ereturn local model		`model'
+	ereturn local dh		`dh'
+	ereturn local z			`z'
+	ereturn local d			`d'
+	ereturn local y			`y'
+	ereturn local vce		`vce'
+	ereturn local vcetype	`vcetype'
+	di as text "`e(title)'"
+	di as text "y-E[y|X]" _col(11) "= " as res "`e(y)'" _c
+	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
+	if "`e(model)'"~="fiv" {
+		di as text "D-" _c
+	}
+	di as text "E[D|X,Z]" _col(11)  "= " as res "`e(d)'"
+	if "`e(model)'" == "iv" {
+		di as text "Z-E[Z|X]" _col(11) "= " as res "`e(z)'"
+	}
+	else if "`e(model)'" == "fiv" {
+		di as text "E[D|X]" _col(11) "= " as res "`e(dh)'"
+	}
+	if "`e(model)'" == "fiv" {
+		di as text "Orthogonalized D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
+	}
+	ereturn display
+
+end
+
+// main estimation program
+program _ddml_estimate_main
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
 								ROBust				///
@@ -1426,7 +1567,7 @@ program define _ddml_reg, eclass
 			di as text "E[D|X]" _col(11) "= " as res "`e(dh_m)'"
 		}
 		if "`e(model)'" == "fiv" {
-			di as text "Orthogonalised D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
+			di as text "Orthogonalized D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
 		}
 		ereturn display
 		
