@@ -807,16 +807,14 @@ fit these against X to estimate E[D^|X].{p_end}
 When adding learners for E[D|Z,X],
 we need to provide a name
 for each learners using {opt learner(name)}.{p_end}
-{phang2}. {stata "ddml E[D|Z,X], learner(Dhat_reg): reg $D $X $Z"}{p_end}
 {phang2}. {stata "ddml E[D|Z,X], learner(Dhat_pystacked): pystacked $D $X $Z, type(reg)"}{p_end}
 
 {pstd}
 When adding learners for E[D|X], we explicitly refer to the learner from 
-the previous step (e.g., {cmd:learner(Dhat_reg)}) and
+the previous step (e.g., {cmd:learner(Dhat_pystacked)}) and
 also provide the name of the treatment variable ({cmd:vname($D)}).
 Finally, we use the placeholder {cmd:{D}} in place of the dependent variable. 
 {p_end}
-{phang2}. {stata "ddml E[D|X], learner(Dhat_reg) vname($D): reg {D} $X"}{p_end}
 {phang2}. {stata "ddml E[D|X], learner(Dhat_pystacked) vname($D): pystacked {D} $X, type(reg)"}{p_end}
  
 {pstd}That's it. Now we can move to cross-fitting and estimation.{p_end}
@@ -824,10 +822,9 @@ Finally, we use the placeholder {cmd:{D}} in place of the dependent variable.
 {phang2}. {stata "ddml estimate, robust"}{p_end}
 
 {pstd}If you are curious about what {cmd:ddml} does in the background:{p_end}
-{phang2}. {stata "ddml estimate, allcombos spec(8) rep(1) robust"}{p_end}
 {phang2}. {stata "gen Dtilde = $D - Dhat_pystacked_h_1"}{p_end}
 {phang2}. {stata "gen Zopt = Dhat_pystacked_1 - Dhat_pystacked_h_1"}{p_end}
-{phang2}. {stata "ivreg Y2_pystacked_1 (Dtilde=Zopt), robust"}{p_end}
+{phang2}. {stata "ivreg Y1_pystacked_1 (Dtilde=Zopt), robust"}{p_end}
 
 {marker references}{title:References}
 
