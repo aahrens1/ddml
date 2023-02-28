@@ -53,7 +53,7 @@ program _ddml_estimate_single, eclass sortpreserve
 	}
 	if "`model'"=="partial" {
 		if "`z'"~="" {
-			di as err "z(.) should be empty for model=partial
+			di as err "z(.) should be empty for model=partial"
 			exit 198
 		}
 		local numD : word count `d'
@@ -81,6 +81,10 @@ program _ddml_estimate_single, eclass sortpreserve
 		tempvar d_orthog z_opt
 		qui gen double `d_orthog'	= `nameD' - `dh'
 		qui gen double `z_opt'		= `d'     - `dh'
+	}
+	else {
+		di as err "error - unknown model `model'"
+		exit 198
 	}
 	
 	if "`robust'"!=""	local vce robust
@@ -123,7 +127,8 @@ program _ddml_estimate_single, eclass sortpreserve
 	ereturn local y			`y'
 	ereturn local vce		`vce'
 	ereturn local vcetype	`vcetype'
-	di as text "`e(title)'"
+	
+	di
 	di as text "y-E[y|X]" _col(11) "= " as res "`e(y)'" _c
 	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
 	if "`e(model)'"~="fiv" {

@@ -3,7 +3,201 @@
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
+	syntax [anything] [if] [in] ,					/// 
+								[					///
+								y0(varname)			/// for estimating by hand...
+								y1(varname)			/// 
+								d(varname)			/// 
+								d0(varname)			/// 
+								d1(varname)			/// 
+								z(varname)			///
+								* ]
 
+	if "`y0'`y1'`d'`d0'`d1'`z'"=="" {
+		// main program for estimation
+		_ddml_estimate_main `anything' `if' `in', `options'
+	}
+	else {
+		// a single user-specified estimation
+		_ddml_estimate_single `anything' `if' `in', y0(`y0') y1(`y1') d(`d') d0(`d0') d1(`d1') z(`z') `options'
+	}
+end
+
+// a single user-specified estimation
+program _ddml_estimate_single, eclass sortpreserve
+	syntax namelist(name=mname) [if] [in] ,			/// 
+								[					///
+								y0(varname)			/// for estimating by hand...
+								y1(varname)			/// 
+								d(varname)			/// 
+								d0(varname)			/// 
+								d1(varname)			/// 
+								z(varname)			///
+								ATET 				///
+								ATEU				///
+								foldid(varname)		/// needed for ATET and ATEU
+								ROBust				/// has no effect
+								CLUster(varname)	///
+								vce(string)			///
+								trim(real 0.01)		///
+								* ]
+
+	mata: st_local("model",`mname'.model)
+	mata: st_local("nameY",`mname'.nameY)
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+
+	// checks
+	if "`y0'"=="" | "`y1'"=="" {
+		di as err "options y0(.) and y1(.) required"
+		exit 198
+	}
+	if "`model'"=="interactive" {
+		if "`z'"~="" {
+			di as err "z(.) should be empty for model=interactive"
+			exit 198
+		}
+		if "`d'"=="" {
+			di as err "option d(.) missing"
+			exit 198
+		}
+		if "`atet'`ateu'"~="" & "`foldvar'"=="" {
+			di as err "option foldvar(varname) required for ATET or ATEU"
+			exit 198
+		}
+	}
+	else if "`model'"=="late" {
+		if "`z'"=="" {
+			di as err "option z(.) missing"
+			exit 198
+		}
+		if "`d0'"=="" | "`d1'"=="" {
+			di as err "options d0(.) and d1(.) required"
+			exit 198
+		}
+	}
+	else {
+		di as err "error - unknown model `model'"
+		exit 198
+	}
+
+	local ateflag=("`model'"=="interactive")
+	// teffect is either ATE, ATET, ATEU or LATE
+	local check_opt : word count `atet' `ateu'
+	if `check_opt' > 1 {
+		di as err "error - may request only one of atet or ateu"
+		exit 198
+	}
+	else if `check_opt'==1 & ~`ateflag' {
+		di as err "error - `atet'`ateu' not available with LATE (interactiveiv)"
+		exit 198
+	}
+	if ~`ateflag' {
+		// it's LATE
+		local teffect LATE
+	}
+	else if "`atet'`ateu'"=="" {
+		// default
+		local teffect ATE
+	}
+	else if "`atet'"~="" {
+		local teffect ATET
+	}
+	else {
+		local teffect ATEU
+	}
+	
+	if "`robust'"!=""	local vce robust
+	local vce1: word 1 of `vce'
+	if "`vce1'"=="cluster" {
+		local clustvar : word 2 of `vce'
+	}
+	tempname b V
+	tempvar esample
+	marksample touse
+	if "`model'"=="interactive" {
+		qui gen byte `esample' = `y0'<. & `y1'<. & `d'<. & `touse'
+		mata: ATE("`teffect'","`nameY'","`nameD'","`y0'", "`y1'", "`d'","`touse'","`b'","`V'","`clustvar'","`foldid'",`trim')
+	}
+	else {
+		qui gen byte `esample' = `y0'<. & `y1'<. & `d0'<. & `d1'<. & `z'<. & `touse'
+		mata: LATE("`nameY'","`nameD'","`nameZ'","`y0'", "`y1'", "`d0'","`d1'","`z'","`touse'","`b'","`V'","`clustvar'",`trim')
+	}
+	if "`clustvar'"=="" {
+		// e(.) for basic robust
+		local vce		robust
+		local vcetype	Robust
+	}
+	else {
+		// e(.) for cluster-robust; clustvar already defined
+		local vce		cluster
+		local vcetype	Robust
+		local N_clust	=r(N_clust)
+	}
+	local lltrim	
+	mat `b'				=r(b)
+	mat `V'				=r(V)
+	local N				=r(N)
+	local lltrim		=r(lltrim)
+	local ultrim		=r(ultrim)
+	mat colnames `b'	=`nameD'
+	mat colnames `V'	=`nameD'
+	mat rownames `V'	=`nameD'
+
+	// qui gen byte `esample'=
+	ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
+	ereturn local cmd		ddml
+	ereturn local model		`model'
+	ereturn local z			`z'
+	ereturn local d			`d'
+	ereturn local d0		`d0'
+	ereturn local d1		`d1'
+	ereturn local y0		`y0'
+	ereturn local y1		`y1'
+	ereturn local vce		`vce'
+	ereturn local vcetype	`vcetype'
+	ereturn scalar lltrim	=`lltrim'
+	ereturn scalar ultrim	=`ultrim'
+	if "`clustvar'"~="" ereturn scalar N_clust=`Nclust'
+	
+	di
+	di as text "E[y|X,D=0]" _col(14) "= " as res "`e(y0)'" _c
+	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
+	di as text "E[y|X,D=1]" _col(14) "= " as res "`e(y1)'"
+	if "`e(model)'"=="interactive" {
+		di as text "E[D|X]" _col(14)  "= " as res "`e(d)'"
+	}
+	else {
+		di as text "E[D|X,Z=0]" _col(14)  "= " as res "`e(d0)'"
+		di as text "E[D|X,Z=1]" _col(14)  "= " as res "`e(d1)'"
+		di as text "E[Z|X]" _col(14)  "= " as res "`e(z)'"
+	}
+	ereturn display
+	
+	// report warning if clustered SEs requested but doesn't match clustered crossfitting
+	mata: st_local("fclustvar",`mname'.fclustvar)
+	if "`e(clustvar)'"~="" {
+		if "`fclustvar'"=="" {
+			di as res "Warning" as text ": crossfit folds do not respect cluster structure used for VCE."
+		}
+		else if "`fclustvar'"~="`e(clustvar)'" {
+			di as res "Warning" as text ": cluster variable for VCE does not match cluster variable for crossfit folds."
+		}
+	}
+	
+	// warn if any values trimmed
+	if e(lltrim)>0 & e(lltrim)<. {
+		di as res "Warning" as text ": " _c
+		di as text e(lltrim) " propensity scores trimmed to lower limit " e(trim) "."
+	}
+	if e(ultrim) & e(ultrim)<. {
+		di as res "Warning" as text ": " _c
+		di as text e(ultrim) " propensity scores trimmed to upper limit " 1-e(trim) "."
+	}
+end
+
+// main estimation program
+program _ddml_estimate_main
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
 								ATET 				///
