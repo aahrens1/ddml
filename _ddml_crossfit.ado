@@ -13,6 +13,7 @@ program _ddml_crossfit, eclass sortpreserve
 							shortstack				///
 							poolstack				///
 							Verbose 				///
+							*						///
 							]
 
 	// no checks included yet
@@ -196,7 +197,7 @@ program _ddml_crossfit, eclass sortpreserve
 			foldvar(`fidlist')						///
 			firstrep(`firstrep')					///
 			treatvar(`treatvar')					///
-			`residy' `noisily'
+			`residy' `noisily' `options'
 		// resinsert into model struct AA with equations
 		mata: (`mname'.eqnAA).put("`nameY'",`eqn')
 
@@ -229,7 +230,8 @@ program _ddml_crossfit, eclass sortpreserve
 					foldvar(`fidlist')						///
 					firstrep(`firstrep')					///
 					treatvar(`treatvar')					///
-					`resid' `noisily' `allowallzero'
+					`resid' `noisily' `options'				///
+					`allowallzero'
 				mata: (`mname'.eqnAA).put("`var'",`eqn')
 			}
 		}
@@ -249,7 +251,7 @@ program _ddml_crossfit, eclass sortpreserve
 					ename(`eqn') noreplace					///
 					foldvar(`fidlist')						///
 					firstrep(`firstrep')					///
-					`resid' `noisily'
+					`resid' `noisily' `options'
 				mata: (`mname'.eqnAA).put("`var'",`eqn')
 			}
 		}

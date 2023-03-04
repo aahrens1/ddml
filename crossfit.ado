@@ -2723,39 +2723,43 @@ from scipy.optimize import nnls
 
 def py_get_stack_weights(yvar,xvars,touse,wvar,finalest,stype):
 
-	X = Data.get(xvars,selectvar=touse)
-	y = Data.get(yvar,selectvar=touse)
-	w = Data.get(wvar,selectvar=touse)
+    X = Data.get(xvars,selectvar=touse)
+    y = Data.get(yvar,selectvar=touse)
+    w = Data.get(wvar,selectvar=touse)
 
-	if finalest == "nnls0" and stype == "class": 
-		fin_est = LinearRegressionClassifier(fit_intercept=False,positive=True)
-	elif finalest == "nnls_sk" and stype == "class": 
-		fin_est = LinearRegressionClassifier(fit_intercept=False,positive=True)
-	elif finalest == "nnls1" and stype == "class": 
-		fin_est = ConstrLSClassifier()
-	elif finalest == "ridge" and stype == "class": 
-		fin_est = LogisticRegression()
-	elif finalest == "nnls0" and stype == "reg": 
-		fin_est = LinearRegression(fit_intercept=False,positive=True)
-	elif finalest == "nnls_sk" and stype == "reg": 
-		fin_est = LinearRegression(fit_intercept=False,positive=True)
-	elif finalest == "nnls1" and stype == "reg": 
-		fin_est = ConstrLS()
-	elif finalest == "ridge" and stype == "reg": 
-		fin_est = RidgeCV()
-	elif finalest == "singlebest" and stype == "reg": 
-		fin_est = SingleBest()
-	elif finalest == "ols" and stype == "class": 
-		fin_est = LinearRegressionClassifier()	
-	elif finalest == "ols" and stype == "reg": 
-		fin_est = LinearRegression()	
-	else:
-		sfi.SFIToolkit.stata('di as err "final estimator not supported with type()"')
-		#"
-		sfi.SFIToolkit.error(198)
-	fin_est.fit(X, y, w)
-	b = fin_est.coef_
-	Matrix.store("r(b)", b)
+    if finalest == "nnls0" and stype == "class": 
+        fin_est = LinearRegressionClassifier(fit_intercept=False,positive=True)
+    elif finalest == "nnls_sk" and stype == "class": 
+        fin_est = LinearRegressionClassifier(fit_intercept=False,positive=True)
+    elif finalest == "nnls1" and stype == "class": 
+        fin_est = ConstrLSClassifier()
+    elif finalest == "ridge" and stype == "class": 
+        fin_est = LogisticRegression()
+    elif finalest == "nnls0" and stype == "reg": 
+        fin_est = LinearRegression(fit_intercept=False,positive=True)
+    elif finalest == "nnls_sk" and stype == "reg": 
+        fin_est = LinearRegression(fit_intercept=False,positive=True)
+    elif finalest == "nnls1" and stype == "reg": 
+        fin_est = ConstrLS()
+    elif finalest == "ridge" and stype == "reg": 
+        fin_est = RidgeCV()
+    elif finalest == "singlebest" and stype == "reg": 
+        fin_est = SingleBest()
+    elif finalest == "ols" and stype == "class": 
+        fin_est = LinearRegressionClassifier()    
+    elif finalest == "ols" and stype == "reg": 
+        fin_est = LinearRegression()    
+    elif finalest == "ls1" and stype == "reg":
+        fin_est = ConstrLS(unit_interval=False)    
+    elif finalest == "ls1" and stype == "class":
+        fin_est = ConstrLSClassifier(unit_interval=False)    
+    else:
+        sfi.SFIToolkit.stata('di as err "final estimator not supported with type()"')
+        #"
+        sfi.SFIToolkit.error(198)
+    fin_est.fit(X, y, w)
+    b = fin_est.coef_
+    Matrix.store("r(b)", b)
 
 class ConstrLS(BaseEstimator):
     _estimator_type="regressor"
@@ -2777,7 +2781,10 @@ class ConstrLS(BaseEstimator):
         
         #Constraints and bounds
         cons = {'type': 'eq', 'fun': lambda coef: np.sum(coef)-1}
-        bounds = [[0.0,1.0] for i in range(xdim)] 
+        if self.unit_interval==True:
+            bounds = [[0.0,1.0] for i in range(xdim)] 
+        else:
+            bounds = None
 
         w = _check_sample_weight(w, X)
         #If weights vector=1, no weighting needed
@@ -2785,8 +2792,8 @@ class ConstrLS(BaseEstimator):
             #Do minimisation
             fit = minimize(fn,coef0,args=(X, y),method='SLSQP',bounds=bounds,constraints=cons)
         else:
-	        #Use additional precision
-    	    Xw = np.multiply(X,w,dtype=np.longdouble)
+            #Use additional precision
+            Xw = np.multiply(X,w,dtype=np.longdouble)
             yw = np.multiply(y,w,dtype=np.longdouble)
             #Do minimisation
             fit = minimize(fn,coef0,args=(Xw, yw),method='SLSQP',bounds=bounds,constraints=cons)
@@ -2803,6 +2810,8 @@ class ConstrLS(BaseEstimator):
         check_is_fitted(self, 'is_fitted_')
         return np.matmul(X,self.coef_)
 
+    def __init__(self, unit_interval=True):
+        self.unit_interval = unit_interval
 
 class SingleBest(BaseEstimator):
     _estimator_type="regressor"
