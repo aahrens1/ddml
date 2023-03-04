@@ -31,7 +31,11 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		yvtype(string)							///  "double", "float" etc
 		dvtype(string)							///  "double", "float" etc
 		zvtype(string)							///  "double", "float" etc
-		CMDOPTions(string asis)					///
+		CMDOPTions(string asis)					///  will be added on to all learners
+		pystacked(string asis)					///
+		pystacked_y(string asis)				///
+		pystacked_d(string asis)				///
+		pystacked_z(string asis)				///
 		NOIsily 								///
 		REPs(integer 0)							///
 		shortstack 								///
@@ -63,21 +67,48 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if "`robust'"!=""	local vce robust
 	if "`cluster'"~=""	local vce cluster `cluster'
 	if "`vverbose'"=="" local qui qui
-	if "`cmd'"=="" local cmd pystacked
-	if "`ycmd'"=="" local ycmd `cmd'
-	if "`dcmd'"=="" local dcmd `cmd'
-	if "`zcmd'"=="" local zcmd `cmd'
 	if "`yvtype'"=="" local yvtype `vtype'
 	if "`dvtype'"=="" local dvtype `vtype'
 	if "`zvtype'"=="" local zvtype `vtype'
 	if "`ypredopt'"=="" local ypredopt `predopt'
 	if "`dpredopt'"=="" local dpredopt `predopt'
 	if "`zpredopt'"=="" local zpredopt `predopt'
-	local ycmdoptions `ycmdoptions' `cmdoptions'
-	local dcmdoptions `dcmdoptions' `cmdoptions'
-	local zcmdoptions `zcmdoptions' `cmdoptions'
-	local dhcmd `dcmd'
-	local dhcmdoptions `dcmdoptions'
+	
+	if "`pystacked'`pystacked_y'`pystacked_d'`pystacked_z'"~="" {
+		local ycmd		pystacked
+		local dcmd		pystacked
+		local zcmd		pystacked
+		local dhcmd		pystacked
+		if "`pystacked_y'"==""	local ycmdoptions	`pystacked'
+		else					local ycmdoptions	`pystacked_y'
+		if "`pystacked_d'"==""	local dcmdoptions	`pystacked'
+		else					local dcmdoptions	`pystacked_d'
+		if "`pystacked_z'"==""	local zcmdoptions	`pystacked'
+		else					local zcmdoptions	`pystacked_z'
+		local dhcmdoptions		`dcmdoptions'
+		foreach opt in ycmdoptions dcmdoptions zcmdoptions dhcmdoptions {
+			local `opt' : subinstr local `opt' "||" "||", all count(local doublebarsyntax)
+			if `doublebarsyntax'==0 {
+				// no || syntax so add a comma to the start of the options unless one is there already
+				local `opt'		=trim("``opt''")
+				if substr("``opt''",1,1) ~= "," {
+					local `opt'		, ``opt''
+				}
+			}
+		}
+	}
+	else {
+		if "`cmd'"=="" local cmd pystacked
+		if "`ycmd'"=="" local ycmd `cmd'
+		if "`dcmd'"=="" local dcmd `cmd'
+		if "`zcmd'"=="" local zcmd `cmd'
+		local dhcmd `dcmd'
+		// include comma for pystacked compatibility
+		local ycmdoptions	, `ycmdoptions'
+		local dcmdoptions	, `dcmdoptions'
+		local zcmdoptions	, `zcmdoptions'
+		local dhcmdoptions	, `dcmdoptions'
+	}
 
 	**** syntax checks
 	if ("`model'"=="fiv") {
@@ -149,47 +180,60 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	*** IV-HD
 	if ("`model'"=="fiv") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
-		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dhcmd' {D} `xctrl', `dhcmdoptions' 
+		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):						///
+			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
+		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'):	///
+			`dcmd' `dendog' `xctrl' `exexog' `dcmdoptions' `cmdoptions'
+		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'):	///
+			`dhcmd' {D} `xctrl' `dhcmdoptions' `cmdoptions'
 	} 
 
 	*** IV 
 	else if ("`model'"=="iv") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):	///
+			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
 		local j = 1
 		foreach d of varlist `dendog' {
-			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `d' `xctrl', `dcmdoptions' 
+			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'):	///
+				`dcmd' `d' `xctrl' `dcmdoptions' `cmdoptions'
 			local j = `j' + 1
 		}
 		local j = 1
 		foreach z of varlist `exexog' {
-			`qui' ddml E[Z|X], mname(`mname') vname(`z') predopt(`zpredopt') vtype(`zvtype'): `zcmd' `z' `xctrl', `zcmdoptions' 
+			`qui' ddml E[Z|X], mname(`mname') vname(`z') predopt(`zpredopt') vtype(`zvtype'):	///
+				`zcmd' `z' `xctrl' `zcmdoptions' `cmdoptions'
 			local j = `j' + 1
 		}
 	}
 
 	*** late / interactive IV
 	else if ("`model'"=="late"|"`model'"=="interactiveiv") {
-		`qui' ddml E[Y|Z,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
-		`qui' ddml E[D|Z,X], mname(`mname') vname(`dendog') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
-		`qui' ddml E[Z|X], mname(`mname') vname(`exexog') predopt(`zpredopt') vtype(`zvtype'): `zcmd' `exexog' `xctrl', `zcmdoptions' 
+		`qui' ddml E[Y|Z,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):	///
+			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
+		`qui' ddml E[D|Z,X], mname(`mname') vname(`dendog') predopt(`dpredopt') vtype(`dvtype'):	///
+			`dcmd' `dendog' `xctrl' `dcmdoptions' `cmdoptions'
+		`qui' ddml E[Z|X], mname(`mname') vname(`exexog') predopt(`zpredopt') vtype(`zvtype'):		///
+			`zcmd' `exexog' `xctrl' `zcmdoptions' `cmdoptions'
 	}
 
 	*** partial linear model
 	else if ("`model'"=="partial") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):		///
+			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
 		local j = 1
 		foreach d of varlist `dexog' {
-			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `d' `xctrl', `dcmdoptions' 
+			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'):		///
+				`dcmd' `d' `xctrl' `dcmdoptions' `cmdoptions'
 			local j = `j' + 1
 		}
 	}
 
 	*** interactive model
 	else if ("`model'"=="interactive") {
-		`qui' ddml E[Y|D,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dexog') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
+		`qui' ddml E[Y|D,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):	///
+			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
+		`qui' ddml E[D|X], mname(`mname') vname(`dexog') predopt(`dpredopt') vtype(`dvtype'):		///
+			`dcmd' `dexog' `xctrl' `dcmdoptions' `cmdoptions'
 	}	
 		
 	`qui' ddml crossfit, `noisily' `shortstack' `poolstack'
