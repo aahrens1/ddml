@@ -95,6 +95,11 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 					local `opt'		, ``opt''
 				}
 			}
+			else {
+				// || syntax so check if there is a comma to be followed by options; add a comma if not
+				local `opt' : subinstr local `opt' "," ",", all count(local hascomma)
+				if !`hascomma'	local `opt' ``opt'' ,
+			}
 		}
 	}
 	else {
