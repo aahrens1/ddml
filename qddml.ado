@@ -40,10 +40,23 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		REPs(integer 0)							///
 		shortstack 								///
 		poolstack								///
+		stdstack								///
+		ssfinalest(name)						///
+		psfinalest(name)						///
 		atet 									///
 		]
 
 	mata: s_ivparse("`anything'")
+	** indicators for pystacked and stacking methods
+	local pyflag	= "`pystacked'`pystacked_y'`pystacked_d'`pystacked_z'"~=""
+	local ssflag	= "`shortstack'"~=""
+	local psflag	= "`poolstack'"~=""
+	local stdsflag	= "`stdstack'"~=""
+	// if no stacking specified, shortstack
+	if ~`ssflag' & ~`psflag' & ~`stdsflag' {
+		local ssflag		= 1
+		local shortstack	shortstack
+	}
 
 	local depvar	`s(depvar)'
 	local dendog	`s(dendog)'
@@ -74,7 +87,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if "`dpredopt'"=="" local dpredopt `predopt'
 	if "`zpredopt'"=="" local zpredopt `predopt'
 	
-	if "`pystacked'`pystacked_y'`pystacked_d'`pystacked_z'"~="" {
+	if `pyflag' {
 		local ycmd		pystacked
 		local dcmd		pystacked
 		local zcmd		pystacked
@@ -99,6 +112,10 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 				// || syntax so check if there is a comma to be followed by options; add a comma if not
 				local `opt' : subinstr local `opt' "," ",", all count(local hascomma)
 				if !`hascomma'	local `opt' ``opt'' ,
+			}
+			// if no standard or pooled stacking, use voting to avoid unnecessary stacking CV steps
+			if `stdsflag'==0 & `psflag'==0 {
+				local `opt' ``opt'' voting
 			}
 		}
 	}
@@ -241,7 +258,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 			`dcmd' `dexog' `xctrl' `dcmdoptions' `cmdoptions'
 	}	
 		
-	`qui' ddml crossfit, `noisily' `shortstack' `poolstack'
+	`qui' ddml crossfit, `noisily' `shortstack' `poolstack' ssfinalest(`ssfinalest') psfinalest(`psfinalest')
 	if "`verbose'"!="" ddml desc
 	ddml estimate, vce(`vce') `atet'
 
