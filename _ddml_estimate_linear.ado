@@ -1043,14 +1043,33 @@ program _ddml_estimate_main
 			}
 		}
 	}
-	
+
+	// select result to display and post
+	// default is, as available: 1. ss 2. ps 3. only spec or MSE
+	if `replayflag' {
+		local specdisp `spec'
+	}
+	else if `ssflag' {
+		local specdisp ss
+	}
+	else if `psflag' {
+		local specdisp ps
+	}
+	// reach this point if only 1 spec and numbered, or mult specs and numbered, or 1 spec and MSE
+	else if `poss_combos'==1 {
+		local specdisp 1
+	}
+	else {
+		local specdisp mse
+	}
+
 	di
 	if ("`rep'"=="mn" | "`rep'"=="md") {
 		// force noconstant with mean/median
-		_ddml_reg, mname(`mname') spec(`spectext') rep(`rep') replay noconstant
+		_ddml_reg, mname(`mname') spec(`specdisp') rep(`rep') replay noconstant
 	}
 	else {
-		_ddml_reg, mname(`mname') spec(`spectext') rep(`rep') replay `noconstant'
+		_ddml_reg, mname(`mname') spec(`specdisp') rep(`rep') replay `noconstant'
 	}
 	di
 	

@@ -428,8 +428,8 @@ program _ddml_estimate_main
 
 	************* ESTIMATE ************
 	
-	// estimate or not
 	if `estimated'==0 {
+		// enter if no estimates exist
 
 		// Loop over resamples and estimate/save the min mse and ss model for each
 		forvalues m=1/`nreps' {
@@ -683,7 +683,7 @@ program _ddml_estimate_main
 				if `isY0opt' & `isY1opt' & `isDopt' & `isD0opt' & `isD1opt' & `isZopt' {
 					local optspec`m' = `i'
 					local isopt *
-					local title Min MSE `title'
+					local title `MSEtext'`title'
 					// save in AA
 					mata: (`mname'.estAA).put(("optspec","`m'"),"`i'")
 				}
@@ -937,15 +937,17 @@ program _ddml_estimate_main
 				}
 				di
 			}
-			
 		}
-		if `doallcombos' {
-			di as res "*" _c
+		// footnote needed only if multiple specs possible
+		if `poss_combos'>1 {
+			if `doallcombos' {
+				di as res "*" _c
+			}
+			else {
+				di as text "mse" _c
+			}
+			di as text " = minimum MSE specification for that resample."
 		}
-		else {
-			di as text "opt" _c
-		}
-		di as text " = minimum MSE specification for that resample."
 	}
 		
 	if `nreps' > 1 & `tableflag' {
@@ -1038,9 +1040,28 @@ program _ddml_estimate_main
 		}
 	}
 
+	// select result to display and post
+	// default is, as available: 1. ss 2. ps 3. only spec or MSE
+	if `replayflag' {
+		local specdisp `spec'
+	}
+	else if `ssflag' {
+		local specdisp ss
+	}
+	else if `psflag' {
+		local specdisp ps
+	}
+	// reach this point if only 1 spec and numbered, or mult specs and numbered, or 1 spec and MSE
+	else if `poss_combos'==1 {
+		local specdisp 1
+	}
+	else {
+		local specdisp mse
+	}
+	
 	// post selected estimates; rep is the resample number (default=1)
 	di
-	_ddml_ate_late, mname(`mname') spec(`spectext') rep(`rep') replay
+	_ddml_ate_late, mname(`mname') spec(`specdisp') rep(`rep') replay
 	di
 	
 	if `nreps' > 1 & ("`rep'"=="mn" | "`rep'"=="md") {
