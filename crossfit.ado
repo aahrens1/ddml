@@ -151,12 +151,19 @@ program define _crossfit_pystacked, rclass sortpreserve
 													/// if omitted then default is additive model
 							NOIsily					///
 							allowallzero			/// in the LATE model: allow D
-							finalest(name)			///
+							ssfinalest(name)		/// final estimator for short-stacking
+							psfinalest(name)		/// final estimator for pooled-stacking
+							finalest(name)			/// final estimator for both
 							*						/// ignored options
 							]
 
 	// used throughout	
 	local cmd pystacked
+
+	// final estimator choice; default is NNLS + coefs sum to 1
+	if "`finalest'"==""		local finalest nnls1
+	if "`ssfinalest'"==""	local ssfinalest `finalest'
+	if "`psfinalest'"==""	local psfinalest `finalest'
 	
 	mata: st_local("vname", `ename'.vname)
 	mata: st_local("vtlist", invtokens(`ename'.vtlist))
@@ -430,6 +437,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				`qui' `est_main' if `fid'!=`k' & `touse', `est_options'
 				`qui' di as text "N=" as res e(N)
 				local base_est `e(base_est)'
+				local stack_final_est `e(finalest)'
 				// check
 				assert "`e(cmd)'"=="pystacked"
 				assert e(mcount)>1 & e(mcount)<.
@@ -493,6 +501,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				`qui' `est_main' if `fid'!=`k' & `treatvar' == 1 & `touse', `est_options'
 				`qui' di as text "N=" as res e(N)
 				local base_est `e(base_est)'
+				local stack_final_est `e(finalest)'
 				// check
 				assert "`e(cmd)'"=="pystacked"
 				assert e(mcount)>1 & e(mcount)<.
@@ -559,6 +568,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 					`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options'
 					`qui' di as text "N=" as res e(N)
 					local base_est `e(base_est)'
+					local stack_final_est `e(finalest)'
 		
 					// save pystacked weights and MSEs if #learners>1
 					if e(mcount)>1 & e(mcount)<. {
@@ -624,6 +634,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				`qui' `est_main' if `fid'!=`k' & `touse', `est_options'
 				`qui' di as text "N=" as res e(N)
 				local base_est `e(base_est)'
+				local stack_final_est `e(finalest)'
 				// check
 				assert "`e(cmd)'"=="pystacked"
 				assert e(mcount)>1 & e(mcount)<.
@@ -692,6 +703,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				local cmd_h `e(cmd)'
 				if `pystacked_h_flag' {
 					local base_est_h `e(base_est)'
+					local stack_final_est_h `e(finalest)'
 					// check
 					assert "`cmd_h'"=="pystacked"
 					assert e(mcount)>1 & e(mcount)<.
@@ -773,8 +785,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 			if ~`tvflag' & ~`lieflag' { // case 1
 				// stack dep var against all OOS (cross-fit) learner predicted values
 				`qui' di
-				`qui' di as text as text "Short-stacking NNLS (additive model):"
-				`qui' get_stack_weights `vname' `vtilde_list' if `touse', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (additive model):"
+				`qui' get_stack_weights `vname' `vtilde_list' if `touse', finalest(`ssfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw
 				mat `ssw' = e(b)
@@ -787,8 +799,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 				`qui' di
-				`qui' di as text as text "Stacking NNLS (interactive model, treatvar=1):"
-				`qui' get_stack_weights `vname' `vtilde1_list' if `touse' & `treatvar'==1, finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=1):"
+				`qui' get_stack_weights `vname' `vtilde1_list' if `touse' & `treatvar'==1, finalest(`ssfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw1
 				mat `ssw1' = e(b)
@@ -800,8 +812,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				}
 				// treatvar == 0
 				`qui' di
-				`qui' di as text as text "Stacking NNLS (interactive model, treatvar=0):"
-				`qui' get_stack_weights `vname' `vtilde0_list' if `touse' & `treatvar'==0, finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=0):"
+				`qui' get_stack_weights `vname' `vtilde0_list' if `touse' & `treatvar'==0, finalest(`ssfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw0
 				mat `ssw0' = e(b)
@@ -815,8 +827,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 			else if `lieflag' {
 				// apply short-stacking to cross-fitted (out-of-sample) predicted values of E[D|XZ]
 				`qui' di
-				`qui' di as text as text "Stacking NNLS (LIE, OOS E[D|XZ]):"
-				`qui' get_stack_weights `vname' `vtilde_list' if `touse', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (LIE, OOS E[D|XZ]):"
+				`qui' get_stack_weights `vname' `vtilde_list' if `touse', finalest(`ssfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw
 				mat `ssw'= e(b)
@@ -831,8 +843,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 					frame change `tframe'
 					getmata (`vname' `vtilde_h_list')=`d_dhat_j_insample', force replace
 					`qui' di
-					`qui' di as text as text "Short-stacking NNLS (LIE, OOS E[D^|X]):"
-					`qui' get_stack_weights `vname' `vtilde_h_list', finalest(`finalest') stype(`stype') `noisily'
+					`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (LIE, OOS E[D^|X]):"
+					`qui' get_stack_weights `vname' `vtilde_h_list', finalest(`ssfinalest') stype(`stype') `noisily'
 					`qui' di as text "N=" as res e(N)
 					tempname ssw_h
 					mata: `ssw_h' = st_matrix("e(b)")
@@ -866,8 +878,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				frame change `tframe'
 				getmata (`vname' `vtilde_list')=`y_stacking_cv', force replace
 				`qui' di
-				`qui' di as text "Pooled-stacking NNLS (additive model):"
-				`qui' get_stack_weights `vname' `vtilde_list', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (additive model):"
+				`qui' get_stack_weights `vname' `vtilde_list', finalest(`psfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname psw
 				mata: `psw' = st_matrix("e(b)")
@@ -892,8 +904,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				frame change `tframe'
 				getmata (`vname' `vtilde1_list')=`y_stacking_cv1', force replace
 				`qui' di
-				`qui' di as text "Pooled-stacking NNLS (additive model):"
-				`qui' get_stack_weights `vname' `vtilde1_list', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (additive model):"
+				`qui' get_stack_weights `vname' `vtilde1_list', finalest(`psfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname psw1
 				mata: `psw1' = st_matrix("e(b)")
@@ -916,8 +928,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				frame change `tframe'
 				getmata (`vname' `vtilde0_list')=`y_stacking_cv0', force replace
 				`qui' di
-				`qui' di as text "Pooled-stacking NNLS (additive model):"
-				`qui' get_stack_weights `vname' `vtilde0_list', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (additive model):"
+				`qui' get_stack_weights `vname' `vtilde0_list', finalest(`psfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname psw0
 				mata: `psw0' = st_matrix("e(b)")
@@ -942,8 +954,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				frame change `tframe'
 				getmata (`vname' `vtilde_list')=`d_xz_stack_cv', force replace
 				`qui' di
-				`qui' di as text "Pooled-stacking NNLS (LIE, Step I, D on X,Z):"
-				`qui' get_stack_weights `vname' `vtilde_list', finalest(`finalest') stype(`stype') `noisily'
+				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (LIE, Step I, D on X,Z):"
+				`qui' get_stack_weights `vname' `vtilde_list', finalest(`psfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname psw
 				mata: `psw' = st_matrix("e(b)")
@@ -962,8 +974,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 					clear
 					getmata (`vname' `vtilde_h_list')=`dhat_x_stack_cv', force replace
 					`qui' di
-					`qui' di as text "Pooled-stacking NNLS (LIE, Step II, Dhat on X):"
-					`qui' get_stack_weights `vname' `vtilde_h_list', finalest(`finalest') stype(`stype') `noisily'
+					`qui' di as text "Pooled-stacking, finalest=`psfinalest' (LIE, Step II, Dhat on X):"
+					`qui' get_stack_weights `vname' `vtilde_h_list', finalest(`psfinalest') stype(`stype') `noisily'
 					`qui' di as text "N=" as res e(N)
 					tempname psw_h
 					mata: `psw_h' = st_matrix("e(b)")
@@ -1069,6 +1081,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 			mata: add_result_item(`ename',"`vtilde'","stack_MSEs",      "`m'", st_matrix("`pysm'"))
 			
 			mata: add_learner_item(`ename',"`vtilde'","stack_base_est","`base_est'")
+			mata: add_learner_item(`ename',"`vtilde'","stack_final_est","`stack_final_est'")
 			// only one learner so it's the opt			
 			local mse_opt		= `mse'
 			mata: add_learner_item(`ename',"opt","`m'","`vtilde'")
@@ -1155,6 +1168,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 			mata: add_result_item(`ename',"`vtilde'","stack_MSEs1","`m'",    st_matrix("`pysm1'"))
 			
 			mata: add_learner_item(`ename',"`vtilde'","stack_base_est","`base_est'")
+			mata: add_learner_item(`ename',"`vtilde'","stack_final_est","`stack_final_est'")
 			forvalues t=0/1 {
 				local mse`t'_opt		= `mse`t''
 				mata: add_learner_item(`ename',"opt`t'","`m'","`vtilde'")
@@ -1235,6 +1249,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 			
 			mata: add_learner_item(`ename',"`vtilde'","stack_base_est",   "`base_est'")					
 			mata: add_learner_item(`ename',"`vtilde'","stack_base_est_h", "`base_est_h'")					
+			mata: add_learner_item(`ename',"`vtilde'","stack_final_est",  "`stack_final_est'")
+			mata: add_learner_item(`ename',"`vtilde'","stack_final_est_h","`stack_final_est_h'")
 			// optimal D and H
 			local mse_opt		= `mse'
 			mata: add_learner_item(`ename',"opt","`m'","`vtilde'")
@@ -1274,7 +1290,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mata: add_result_item(`ename',"`shortstack'_ss","MSE",          "`m'", `mse')
 				mata: add_result_item(`ename',"`shortstack'_ss","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
 				mata: add_result_item(`ename',"`shortstack'_ss","ss_weights",   "`m'", st_matrix("`ssw'"))
-				
+				// final estimator used to stack is a learner item
+				mata: add_learner_item(`ename',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2
 			
@@ -1321,6 +1338,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mata: add_result_item(`ename',"`shortstack'_ss","MSE`t'_folds",     "`m'", st_matrix("`mse`t'_folds'"))
 					mata: add_result_item(`ename',"`shortstack'_ss","ss_weights`t'",    "`m'", st_matrix("`ssw`t''"))
 				}
+				// final estimator used to stack is a learner item
+				mata: add_learner_item(`ename',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
 			}
 			else if `lieflag' {	// case 3
 	
@@ -1350,6 +1369,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mata: add_result_item(`ename',"`shortstack'_ss","MSE",          "`m'", `mse')
 				mata: add_result_item(`ename',"`shortstack'_ss","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
 				mata: add_result_item(`ename',"`shortstack'_ss","ss_weights",   "`m'", st_matrix("`ssw'"))
+				// final estimator used to stack is a learner item; same in "_h" estimation
+				mata: add_learner_item(`ename',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
 	
 				if `pystacked_h_flag' {
 					qui sum `hres_sq' if `touse', meanonly
@@ -1407,6 +1428,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mata: add_result_item(`ename',"`poolstack'_ps","MSE",           "`m'", `mse')
 				mata: add_result_item(`ename',"`poolstack'_ps","MSE_folds",     "`m'", st_matrix("`mse_folds'"))
 				mata: add_result_item(`ename',"`poolstack'_ps","ps_weights",    "`m'", st_matrix("`psw'"))
+				// final estimator used to stack is a learner item
+				mata: add_learner_item(`ename',"`poolstack'_ps","ps_final_est", "`psfinalest'")
 				
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2
@@ -1454,6 +1477,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mata: add_result_item(`ename',"`poolstack'_ps","MSE`t'_folds",  "`m'", st_matrix("`mse`t'_folds'"))
 					mata: add_result_item(`ename',"`poolstack'_ps","ps_weights`t'", "`m'", st_matrix("`psw`t''"))
 				}
+				// final estimator used to stack is a learner item
+				mata: add_learner_item(`ename',"`poolstack'_ps","ps_final_est", "`psfinalest'")
 			}
 			else if `lieflag' {	// case 3
 	
@@ -1483,6 +1508,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mata: add_result_item(`ename',"`poolstack'_ps","MSE",           "`m'", `mse')
 				mata: add_result_item(`ename',"`poolstack'_ps","MSE_folds",     "`m'", st_matrix("`mse_folds'"))
 				mata: add_result_item(`ename',"`poolstack'_ps","ps_weights",    "`m'", st_matrix("`psw'"))
+				// final estimator used to stack is a learner item; same in "_h" estimation
+				mata: add_learner_item(`ename',"`poolstack'_ps","ps_final_est", "`psfinalest'")
 				
 				if `pystacked_h_flag' {
 					qui sum `hres_sq' if `touse', meanonly
@@ -1573,8 +1600,16 @@ program define _crossfit_other, rclass sortpreserve
 													/// if omitted then default is additive model
 							NOIsily					///
 							allowallzero			/// in the LATE model: allow D
+							ssfinalest(name)		/// final estimator for short-stacking
+							psfinalest(name)		/// final estimator for pooled-stacking
+							finalest(name)			/// final estimator for both
 							*						/// ignored options
 							]
+
+	// final estimator choice; default is NNLS + coefs sum to 1
+	if "`finalest'"==""		local finalest nnls1
+	if "`ssfinalest'"==""	local ssfinalest `finalest'
+	if "`psfinalest'"==""	local psfinalest `finalest'
 	
 	mata: st_local("vname", `ename'.vname)
 	mata: st_local("vtlist", invtokens(`ename'.vtlist))
@@ -1897,8 +1932,9 @@ program define _crossfit_other, rclass sortpreserve
 				}
 				tempvar vss
 				`qui' di
-				`qui' di as text "Stacking NNLS (additive model):"
-				`qui' _ddml_nnls `vname' `vhats'
+				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (additive model):"
+				`qui' get_stack_weights `vname' `vhats', finalest(`ssfinalest') `noisily'
+				`qui' di as text "N=" as res e(N)
 				tempname ssw
 				mat `ssw' = e(b)
 				tempvar vtemp
@@ -1919,10 +1955,11 @@ program define _crossfit_other, rclass sortpreserve
 				}
 				tempvar vtemp
 				`qui' di
-				`qui' di as text "Stacking NNLS (interactive model, treatvar=1):"
-				`qui' _ddml_nnls `vname' `vhats1' if `treatvar'==1
-				tempname ssw0
-				mat `ssw0' = e(b)
+				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=1):"
+				`qui' get_stack_weights `vname' `vhats1' if `treatvar'==1, finalest(`ssfinalest') `noisily'
+				`qui' di as text "N=" as res e(N)
+				tempname ssw1
+				mat `ssw1' = e(b)
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'_ss1_`m'=`vtemp'
 					
@@ -1936,10 +1973,11 @@ program define _crossfit_other, rclass sortpreserve
 				}
 				tempvar vtemp
 				`qui' di
-				`qui' di as text "Stacking NNLS (interactive model, treatvar=0):"
-				`qui' _ddml_nnls `vname' `vhats0' if `treatvar'==0
-				tempname ssw1
-				mat `ssw1' = e(b)
+				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=0):"
+				`qui' get_stack_weights `vname' `vhats0' if `treatvar'==0, finalest(`ssfinalest') `noisily'
+				`qui' di as text "N=" as res e(N)
+				tempname ssw0
+				mat `ssw0' = e(b)
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'_ss0_`m'=`vtemp'
 		
@@ -1955,8 +1993,8 @@ program define _crossfit_other, rclass sortpreserve
 					local dhats `dhats' `dhat`j''
 				}
 				`qui' di
-				`qui' di as text "Stacking NNLS (LIE, OOS E[D|XZ]):"
-				`qui' _ddml_nnls `vname' `dhats' if `touse'
+				`qui' di as text "Short-stacking, finalest=`ssfinalest' (LIE, OOS E[D|XZ]):"
+				`qui' get_stack_weights `vname' `dhats' if `touse'
 				tempname ssw
 				mat `ssw'= e(b)
 				tempvar vtemp
@@ -1971,8 +2009,8 @@ program define _crossfit_other, rclass sortpreserve
 					}
 					tempvar vtemp
 					`qui' di
-					`qui' di as text "Stacking NNLS (LIE, in-sample E[D|XZ] fold `k':"
-					`qui' _ddml_nnls `vname' `dhats_is' if `fid'!=`k' & `touse' 
+					`qui' di as text "Short-stacking, finalest=`ssfinalest' (LIE, in-sample E[D|XZ] fold `k':"
+					`qui' get_stack_weights `vname' `dhats_is' if `fid'!=`k' & `touse' 
 					qui predict `vtype' `vtemp'
 					qui replace `dhat_isSS_`k'' = `vtemp' if `fid'!=`k' & `touse'
 					qui replace `dhat_oosSS' = `vtemp' if `fid'==`k' & `touse'
@@ -2011,8 +2049,8 @@ program define _crossfit_other, rclass sortpreserve
 						local hhatSS_list `hhatSS_list' `hhatSS`j''
 					}
 					`qui' di
-					`qui' di as text "Stacking NNLS (LIE, E[D|X]):"
-					`qui' _ddml_nnls `dhat_oosSS' `hhatSS_list'
+					`qui' di as text "Short-stacking, finalest=`ssfinalest' (LIE, E[D|X]):"
+					`qui' get_stack_weights `dhat_oosSS' `hhatSS_list'
 					if (`k'==1) {
 						mat `ssw_h' = e(b)
 					}
@@ -2317,6 +2355,8 @@ program define _crossfit_other, rclass sortpreserve
 				mata: add_result_item(`ename',"`shortstack'_ss","MSE",          "`m'", `mse')
 				mata: add_result_item(`ename',"`shortstack'_ss","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
 				mata: add_result_item(`ename',"`shortstack'_ss","ss_weights",   "`m'", st_matrix("`ssw'"))
+				// final estimator used to stack is a learner item
+				mata: add_learner_item(`ename',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
 				
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2
@@ -2364,6 +2404,8 @@ program define _crossfit_other, rclass sortpreserve
 					mata: add_result_item(`ename',"`shortstack'_ss","MSE`t'_folds",  "`m'", st_matrix("`mse`t'_folds'"))
 					mata: add_result_item(`ename',"`shortstack'_ss","ss_weights`t'", "`m'", st_matrix("`ssw`t''"))
 				}
+				// final estimator used to stack is a learner item
+				mata: add_learner_item(`ename',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
 			}
 			else if `lieflag' {	// case 3
 	
@@ -2392,6 +2434,8 @@ program define _crossfit_other, rclass sortpreserve
 				mata: add_result_item(`ename',"`shortstack'_ss","N_folds",   "`m'", st_matrix("`N_folds'"))
 				mata: add_result_item(`ename',"`shortstack'_ss","MSE",       "`m'", `mse')
 				mata: add_result_item(`ename',"`shortstack'_ss","MSE_folds", "`m'", st_matrix("`mse_folds'"))
+				// final estimator used to stack is a learner item; same in "_h" estimation
+				mata: add_learner_item(`ename',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
 	
 				qui sum `hres_sq' if `touse', meanonly
 				local mse_h			= r(mean)
@@ -2754,7 +2798,7 @@ def py_get_stack_weights(yvar,xvars,touse,wvar,finalest,stype):
     elif finalest == "ls1" and stype == "class":
         fin_est = ConstrLSClassifier(unit_interval=False)    
     else:
-        sfi.SFIToolkit.stata('di as err "final estimator not supported with type()"')
+        sfi.SFIToolkit.stata('di as err "specified final estimator not supported"')
         #"
         sfi.SFIToolkit.error(198)
     fin_est.fit(X, y, w)
