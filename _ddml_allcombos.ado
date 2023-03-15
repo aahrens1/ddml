@@ -38,6 +38,7 @@ program define _ddml_allcombos, rclass
 	// put one specific order at the end (intended for optimal model)
 	mata: `out' = put_last(`out',"`putlast'")
 	if ("`debug'"!="") {
+		di as text "_ddml_all_combos:"
 		mata: `out'
 	}
 
