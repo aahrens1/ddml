@@ -2757,7 +2757,7 @@ python:
 
 import sfi
 from sfi import Data,Matrix,Scalar,SFIToolkit
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression,RidgeCV
 from sklearn.base import TransformerMixin,BaseEstimator
 from sklearn.utils import check_X_y,check_array
 from sklearn.utils.validation import _check_sample_weight
