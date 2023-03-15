@@ -37,114 +37,7 @@ program _ddml_nnls
     }
 end
 
-program _ddml_nnls_python, eclass sortpreserve
-
-    version 16
-    syntax varlist(numeric min=2)                ///
-        [if] [in] [aw fw iw] [,                  /// 
-                                    VERBose      ///
-                                    *            ///
-                                    ]
-
-    if "`verbose'"==""   local qui qui
-
-    marksample touse
-    qui count if `touse'
-    local N = r(N)
-    
-    local yvar : word 1 of `varlist'
-    local xvars : list varlist - yvar
-    
-    tempvar wt
-    if "`weight'"~="" {
-        qui gen double `wt' `exp'
-    }
-    else {
-    	qui gen byte `wt' = 1
-    }
-
-    `qui' python: py_nnls("`yvar'","`xvars'","`touse'","`wt'")
-    tempname bhat
-    // python returns column vectors
-    mat `bhat' = r(b)'
-    matrix colnames `bhat' = `xvars'
-    matrix rownames `bhat' = `yvar'
-    ereturn clear
-    ereturn post `bhat', depname(`yvar') obs(`N') esample(`touse')
-    ereturn display    
-
-end
-
-
-version 16.0
-python:
-
-from sfi import Data,Matrix,Scalar,SFIToolkit
-from sklearn.linear_model import LinearRegression
-from sklearn.utils import check_X_y
-from sklearn.base import BaseEstimator
-import numpy as np
-from scipy.optimize import minimize
-from scipy.optimize import nnls
-
-def py_nnls(yvar,xvars,touse,wvar):
-
-    X = Data.get(xvars,selectvar=touse)
-    y = Data.get(yvar,selectvar=touse)
-    w = Data.get(wvar,selectvar=touse)
-    
-    # standard nnls doesn't impose constraint that coefs sum to 1
-    # reg_nnls = LinearRegression(positive=True,fit_intercept=False)
-    # so use scipy minimize instead
-    reg_nnls = ConstrLS()
-    reg_nnls.fit(X, y, w)       
-    b = reg_nnls.coef_
-    Matrix.store("r(b)", b)
-
-class ConstrLS(BaseEstimator):
-    _estimator_type="regressor"
-    def fit(self, X, y, w):
-
-        X,y = check_X_y(X,y, accept_sparse=True)
-        xdim = X.shape[1]
-
-        #Use nnls to get initial guess
-        #coef0, rnorm = nnls(X,y)
-        #Use LinearRegression below to get initial guess, incorporating weights
-        initial_est = LinearRegression(positive=True,fit_intercept=False)
-        initial_est.fit(X, y, w)
-        coef0 = initial_est.coef_
-
-        #Define minimisation function
-        def fn(coef, X, y):
-            return np.linalg.norm(X.dot(coef) - y)
-        
-        #Constraints and bounds
-        cons = {'type': 'eq', 'fun': lambda coef: np.sum(coef)-1}
-        bounds = [[0.0,1.0] for i in range(xdim)]
-
-        w = np.reshape(np.sqrt(w),(-1,1))
-        #If weights vector=1, no weighting needed
-        if np.all(w==1):
-            #Do minimisation
-            fit = minimize(fn,coef0,args=(X, y),method='SLSQP',bounds=bounds,constraints=cons)
-        else:
-	        #Use additional precision
-    	    Xw = np.multiply(X,w,dtype=np.longdouble)
-            yw = np.multiply(y,w,dtype=np.longdouble)
-            #Do minimisation
-            fit = minimize(fn,coef0,args=(Xw, yw),method='SLSQP',bounds=bounds,constraints=cons)
- 
-        self.coef_ = fit.x
-        if abs(sum(self.coef_)-1)>1e-12:
-            #Renormalize if coefs still don't sum to 1
-            self.coef_ = self.coef_ * 1/sum(self.coef_)
-        self.is_fitted_ = True
-        return self
-
-end
-
-**** end python section
+******************************************************************************
 
 program _ddml_nnls_stata, eclass sortpreserve
 
@@ -262,3 +155,187 @@ program _ddml_nnls_stata, eclass sortpreserve
     ereturn local predict _ddml_nnls_p
 
 end  
+
+******************************************************************************
+
+program _ddml_nnls_python, eclass sortpreserve
+
+	version 16
+	syntax varlist(numeric min=2)					///
+		[if] [in] [aw fw iw] [,						/// 
+									NOIsily			///
+									finalest(name)	///
+									stype(name)		///
+									*				///
+									]
+
+	* defaults
+	if "`noisily'"==""		local qui qui
+	if "`finalest'"==""		local finalest nnls1
+	if "`stype'"==""		local stype reg
+
+	marksample touse
+	qui count if `touse'
+	local N = r(N)
+	
+	local yvar : word 1 of `varlist'
+	local xvars : list varlist - yvar
+	
+    tempvar wt
+    if "`weight'"~="" {
+        qui gen double `wt' `exp'
+    }
+    else {
+    	qui gen byte `wt' = 1
+    }
+
+	`qui' python: py_get_stack_weights("`yvar'","`xvars'","`touse'","`wt'","`finalest'","`stype'")
+	tempname bhat
+	// python returns column vectors
+	mat `bhat' = r(b)'
+	matrix colnames `bhat' = `xvars'
+	matrix rownames `bhat' = `yvar'
+	ereturn clear
+	ereturn post `bhat', depname(`yvar') obs(`N') esample(`touse')
+	ereturn scalar N = `N'
+	ereturn display
+
+end
+
+version 16.0
+python:
+
+import sfi
+from sfi import Data,Matrix,Scalar,SFIToolkit
+from sklearn.linear_model import LinearRegression,RidgeCV
+from sklearn.base import TransformerMixin,BaseEstimator
+from sklearn.utils import check_X_y,check_array
+from sklearn.utils.validation import _check_sample_weight
+import numpy as np
+from scipy.optimize import minimize 
+from scipy.optimize import nnls 
+
+def py_get_stack_weights(yvar,xvars,touse,wvar,finalest,stype):
+
+    X = Data.get(xvars,selectvar=touse)
+    y = Data.get(yvar,selectvar=touse)
+    w = Data.get(wvar,selectvar=touse)
+
+    if finalest == "nnls0" and stype == "class": 
+        fin_est = LinearRegressionClassifier(fit_intercept=False,positive=True)
+    elif finalest == "nnls_sk" and stype == "class": 
+        fin_est = LinearRegressionClassifier(fit_intercept=False,positive=True)
+    elif finalest == "nnls1" and stype == "class": 
+        fin_est = ConstrLSClassifier()
+    elif finalest == "ridge" and stype == "class": 
+        fin_est = LogisticRegression()
+    elif finalest == "nnls0" and stype == "reg": 
+        fin_est = LinearRegression(fit_intercept=False,positive=True)
+    elif finalest == "nnls_sk" and stype == "reg": 
+        fin_est = LinearRegression(fit_intercept=False,positive=True)
+    elif finalest == "nnls1" and stype == "reg": 
+        fin_est = ConstrLS()
+    elif finalest == "ridge" and stype == "reg": 
+        fin_est = RidgeCV()
+    elif finalest == "singlebest" and stype == "reg": 
+        fin_est = SingleBest()
+    elif finalest == "ols" and stype == "class": 
+        fin_est = LinearRegressionClassifier()    
+    elif finalest == "ols" and stype == "reg": 
+        fin_est = LinearRegression()    
+    elif finalest == "ls1" and stype == "reg":
+        fin_est = ConstrLS(unit_interval=False)    
+    elif finalest == "ls1" and stype == "class":
+        fin_est = ConstrLSClassifier(unit_interval=False)    
+    else:
+        sfi.SFIToolkit.stata('di as err "specified final estimator not supported"')
+        #"
+        sfi.SFIToolkit.error(198)
+    fin_est.fit(X, y, w)
+    b = fin_est.coef_
+    Matrix.store("r(b)", b)
+
+class ConstrLS(BaseEstimator):
+    _estimator_type="regressor"
+    def fit(self, X, y, w):
+
+        X,y = check_X_y(X,y, accept_sparse=True)
+        xdim = X.shape[1]
+
+        #Use nnls to get initial guess
+        #coef0, rnorm = nnls(X,y)
+        #Use LinearRegression to get initial guess
+        initial_est = LinearRegression(positive=True,fit_intercept=False)
+        initial_est.fit(X, y, w)
+        coef0 = initial_est.coef_
+
+        #Define minimisation function
+        def fn(coef, X, y):
+            return np.linalg.norm(X.dot(coef) - y)
+        
+        #Constraints and bounds
+        cons = {'type': 'eq', 'fun': lambda coef: np.sum(coef)-1}
+        if self.unit_interval==True:
+            bounds = [[0.0,1.0] for i in range(xdim)] 
+        else:
+            bounds = None
+
+        w = _check_sample_weight(w, X)
+        #If weights vector=1, no weighting needed
+        if np.all(w==1):
+            #Do minimisation
+            fit = minimize(fn,coef0,args=(X, y),method='SLSQP',bounds=bounds,constraints=cons)
+        else:
+            #Use additional precision
+            Xw = np.multiply(X,w,dtype=np.longdouble)
+            yw = np.multiply(y,w,dtype=np.longdouble)
+            #Do minimisation
+            fit = minimize(fn,coef0,args=(Xw, yw),method='SLSQP',bounds=bounds,constraints=cons)
+        
+        self.coef_ = fit.x
+        if abs(sum(self.coef_)-1)>1e-12:
+            #Renormalize if coefs still don't sum to 1
+            self.coef_ = self.coef_ * 1/sum(self.coef_)
+        self.is_fitted_ = True
+        return self
+        
+    def predict(self, X):
+        X = check_array(X, accept_sparse=True)
+        check_is_fitted(self, 'is_fitted_')
+        return np.matmul(X,self.coef_)
+
+    def __init__(self, unit_interval=True):
+        self.unit_interval = unit_interval
+
+class SingleBest(BaseEstimator):
+    _estimator_type="regressor"
+    def fit(self, X, y, w):
+        X, y = check_X_y(X, y, accept_sparse=True)
+        self.is_fitted_ = True
+        ncols = X.shape[1]
+        lowest_mse = np.Inf
+        for i in range(ncols):
+            this_mse=np.mean((y-X[:, i]) ** 2)
+            if this_mse < lowest_mse:
+                lowest_mse = this_mse
+                best = i
+        self.best = best
+        coef = np.zeros(ncols)
+        coef[best] = 1
+        self.coef_ = coef
+        self.cvalid=X
+        return self
+    def predict(self, X):
+        X = check_array(X, accept_sparse=True)
+        check_is_fitted(self, 'is_fitted_')
+        return X[:,self.best]
+
+class ConstrLSClassifier(ConstrLS):
+    _estimator_type="classifier"
+    def predict_proba(self, X):
+        return self.predict(X)
+
+
+end
+
+**** end python section
