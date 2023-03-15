@@ -210,7 +210,7 @@ program _ddml_estimate_main
 								clear				/// deletes all tilde-variables (to be implemented)
 								spec(string)		/// specification to post/display
 								REP(string)			/// resampling iteration to post/display
-								replay				/// model has been estimated, just display results
+								replay				/// model has been estimated, just display results (option may be redundant)
 								trim(real 0.01)		///
 								debug				///
 								* ]
@@ -219,8 +219,8 @@ program _ddml_estimate_main
 	
 	marksample touse
 	
-	// replay existing results
-	local replayflag = "`replay'"~=""
+	// replay existing results (replay option may be redundant)
+	local replayflag = "`replay'`spec'`rep'"~=""
 	// display summary table
 	local tableflag = "`notable'"==""
 	// request estimation/reporting of all combinations
@@ -465,32 +465,32 @@ program _ddml_estimate_main
 
 			// code works for both ATE and LATE
 			local title "`MSEtext'DDML model`stext' (`teffect')"
-			`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
-				yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
-				y0tilde(`Y0opt') y1tilde(`Y1opt')					///
-				dtilde(`Dopt') d0tilde(`D0opt') d1tilde(`D1opt')	///
-				ztilde(`Zopt')										///
-				spec(`spectext') rep(`m')									///
-				mname(`mname')										///
-				title(`title')										///
-				trim(`trim')										///
-				vce(`vce')											///
+			`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+				yvar(`nameY') dvar(`nameD') zvar(`nameZ')				///
+				y0tilde(`Y0opt') y1tilde(`Y1opt')						///
+				dtilde(`Dopt') d0tilde(`D0opt') d1tilde(`D1opt')		///
+				ztilde(`Zopt')											///
+				spec(`spectext') rep(`m')								///
+				mname(`mname')											///
+				title(`title')											///
+				trim(`trim')											///
+				vce(`vce')												///
 				te(`teffect')
 			
 			// estimate shortstack for this rep
 			if `ssflag' {
 				// code works for both ATE and LATE
 				local title "Shortstack DDML model`stext' (`teffect')"
-				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
-					yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
-					y0tilde(`Y0ss') y1tilde(`Y1ss')						///
-					dtilde(`Dss') d0tilde(`D0ss') d1tilde(`D1ss')		///
-					ztilde(`Zss')										///
-					spec(ss) rep(`m')									///
-					mname(`mname')										///
-					title(`title')										///
-					trim(`trim')										///
-					vce(`vce')											///
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')				///
+					y0tilde(`Y0ss') y1tilde(`Y1ss')							///
+					dtilde(`Dss') d0tilde(`D0ss') d1tilde(`D1ss')			///
+					ztilde(`Zss')											///
+					spec(ss) rep(`m'	)									///
+					mname(`mname')											///
+					title(`title')											///
+					trim(`trim')											///
+					vce(`vce')												///
 					te(`teffect')
 			}
 			
@@ -498,16 +498,16 @@ program _ddml_estimate_main
 			if `psflag' {
 				// code works for both ATE and LATE
 				local title "Poolstack DDML model`stext' (`teffect')"
-				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
-					yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
-					y0tilde(`Y0ps') y1tilde(`Y1ps')						///
-					dtilde(`Dps') d0tilde(`D0ps') d1tilde(`D1ps')		///
-					ztilde(`Zps')										///
-					spec(ps) rep(`m')									///
-					mname(`mname')										///
-					title(`title')										///
-					trim(`trim')										///
-					vce(`vce')											///
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')				///
+					y0tilde(`Y0ps') y1tilde(`Y1ps')							///
+					dtilde(`Dps') d0tilde(`D0ps') d1tilde(`D1ps')			///
+					ztilde(`Zps')											///
+					spec(ps) rep(`m')										///
+					mname(`mname')											///
+					title(`title')											///
+					trim(`trim')											///
+					vce(`vce')												///
 					te(`teffect')
 			}
 
@@ -516,21 +516,23 @@ program _ddml_estimate_main
 		// have looped over reps to get each optimal model and shortstack per rep
 		// now aggregate over reps to get mean/median
 		if `nreps' > 1 {
-			`qui' _ddml_ate_late, mname(`mname') spec(`spectext') medmean(mn) title("Mean over `nreps' `msetext'resamples (`teffect')") vce(`vce') te(`teffect')
- 			`qui' _ddml_ate_late, mname(`mname') spec(`spectext') medmean(md) title("Median over `nreps' `msetext'resamples (`teffect')") vce(`vce') te(`teffect')
+			local title "Mean over `nreps' `msetext'resamples (`teffect')"
+			`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(mn) title(`title') vce(`vce') te(`teffect')
+			local title "Median over `nreps' `msetext'resamples (`teffect')"
+ 			`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(md) title(`title') vce(`vce') te(`teffect')
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean over `nreps' resamples) (`teffect')"
-				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(mn) title(`title') vce(`vce') te(`teffect')
 				local title "Shortstack DDML model (median over `nreps' resamples) (`teffect')"
-				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(md) title(`title') vce(`vce') te(`teffect')
 			}
 			// poolstack
 			if `psflag' {
 				local title "Poolstack DDML model (mean over `nreps' resamples) (`teffect')"
-				`qui' _ddml_ate_late, mname(`mname') spec(ps) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(mn) title(`title') vce(`vce') te(`teffect')
 				local title "Poolstack DDML model (median over `nreps' resamples) (`teffect')"
-				`qui' _ddml_ate_late, mname(`mname') spec(ps) medmean(md) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(md) title(`title') vce(`vce') te(`teffect')
 			}
 		}
 		
@@ -688,16 +690,16 @@ program _ddml_estimate_main
 					mata: (`mname'.estAA).put(("optspec","`m'"),"`i'")
 				}
 				// code works for both ATE and LATE
-				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
-					yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
-					y0tilde(`y0') y1tilde(`y1')							///
-					dtilde(`d') d0tilde(`d0') d1tilde(`d1')				///
-					ztilde(`z')											///
-					spec(`i') rep(`m')									///
-					mname(`mname')										///
-					title(`title')										///
-					trim(`trim')										///
-					vce(`vce')											///
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')				///
+					y0tilde(`y0') y1tilde(`y1')								///
+					dtilde(`d') d0tilde(`d0') d1tilde(`d1')					///
+					ztilde(`z')												///
+					spec(`i') rep(`m')										///
+					mname(`mname')											///
+					title(`title')											///
+					trim(`trim')											///
+					vce(`vce')												///
 					te(`teffect')
 				
 				mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
@@ -708,32 +710,32 @@ program _ddml_estimate_main
 			if `ssflag' {
 				// code works for both ATE and LATE
 				local title "Shortstack DDML model`stext' (`teffect')"
-				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
-					yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
-					y0tilde(`Y0ss') y1tilde(`Y1ss')						///
-					dtilde(`Dss') d0tilde(`D0ss') d1tilde(`D1ss')		///
-					ztilde(`Zss')										///
-					spec(ss) rep(`m')									///
-					mname(`mname')										///
-					title(`title')										///
-					trim(`trim')										///
-					vce(`vce')											///
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')				///
+					y0tilde(`Y0ss') y1tilde(`Y1ss')							///
+					dtilde(`Dss') d0tilde(`D0ss') d1tilde(`D1ss')			///
+					ztilde(`Zss')											///
+					spec(ss) rep(`m')										///
+					mname(`mname')											///
+					title(`title')											///
+					trim(`trim')											///
+					vce(`vce')												///
 					te(`teffect')
 			}
 			
 			if `psflag' {
 				// code works for both ATE and LATE
 				local title "Poolstack DDML model`stext' (`teffect')"
-				`qui' _ddml_ate_late if `mname'_sample_`m' & `touse',	///
-					yvar(`nameY') dvar(`nameD') zvar(`nameZ')			///
-					y0tilde(`Y0ps') y1tilde(`Y1ps')						///
-					dtilde(`Dps') d0tilde(`D0ps') d1tilde(`D1ps')		///
-					ztilde(`Zps')										///
-					spec(ps) rep(`m')									///
-					mname(`mname')										///
-					title(`title')										///
-					trim(`trim')										///
-					vce(`vce')											///
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')				///
+					y0tilde(`Y0ps') y1tilde(`Y1ps')							///
+					dtilde(`Dps') d0tilde(`D0ps') d1tilde(`D1ps')			///
+					ztilde(`Zps')											///
+					spec(ps) rep(`m')										///
+					mname(`mname')											///
+					title(`title')											///
+					trim(`trim')											///
+					vce(`vce')												///
 					te(`teffect')
 			}
 
@@ -750,28 +752,30 @@ program _ddml_estimate_main
 		
 		// aggregate across resamplings
 		if `nreps' > 1 {
- 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(mn) title("Mean over `nreps' min-mse specifications (`teffect')") vce(`vce') te(`teffect')
- 			`qui' _ddml_ate_late, mname(`mname') spec(mse) medmean(md) title("Median over `nreps' min-mse specifications (`teffect')") vce(`vce') te(`teffect')
+			local title "Mean over `nreps' min-mse specifications (`teffect')"
+ 			`qui' medmean_and_store, mname(`mname') spec(mse) medmean(mn) title(`title') vce(`vce') te(`teffect')
+ 			local title "Median over `nreps' min-mse specifications (`teffect')"
+ 			`qui' medmean_and_store, mname(`mname') spec(mse) medmean(md) title(`title') vce(`vce') te(`teffect')
 			// numbered specifications
 			forvalues i = 1/`ncombos' {
 				local title "DDML model, specification `i' (mean over `nreps' resamples) (`teffect')"
-				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(`i') medmean(mn) title(`title') vce(`vce') te(`teffect')
 				local title "DDML model, specification `i' (median over `nreps' resamples) (`teffect')"
-				`qui' _ddml_ate_late, mname(`mname') spec(`i') medmean(md) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(`i') medmean(md) title(`title') vce(`vce') te(`teffect')
 			}
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean over `nreps' resamples) (`teffect')"
-				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(mn) title(`title') vce(`vce') te(`teffect')
 				local title "Shortstack DDML model (median over `nreps' resamples) (`teffect')"
-				`qui' _ddml_ate_late, mname(`mname') spec(ss) medmean(md) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(md) title(`title') vce(`vce') te(`teffect')
 			}
 			// poolstack
 			if `psflag' {
 				local title "Poolstack DDML model (mean over `nreps' resamples) (`teffect')"
-				`qui' _ddml_ate_late, mname(`mname') spec(ps) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(mn) title(`title') vce(`vce') te(`teffect')
 				local title "Poolstack DDML model (median over `nreps' resamples) (`teffect')"
-				`qui' _ddml_ate_late, mname(`mname') spec(ps) medmean(md) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(md) title(`title') vce(`vce') te(`teffect')
 			}
 		}
 		
@@ -822,7 +826,7 @@ program _ddml_estimate_main
 					local specrep `: di %3.0f `i' %3.0f `m''
 					// pad out to 6 spaces
 					local specrep = (6-length("`specrep'"))*" " + "`specrep'"
-					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') replay notable
+					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') notable
 					di %6s "{`rcmd':`specrep'}" _c
 					di as res %14s "`yt0'" _c
 					di as res %14s "`yt1'" _c
@@ -850,14 +854,14 @@ program _ddml_estimate_main
 			}
 			else {
 				// only mse/ss specs available/reported
-				`qui' _ddml_ate_late, mname(`mname') spec(`spectext') rep(`m') replay
+				`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`m')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep `: di "mse" %3.0f `m''
 				// pad out to 7 spaces
 				local specrep = (7-length("`specrep'"))*" " + "`specrep'"
-				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') replay notable
+				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') notable
 				di %6s "{`rcmd':`specrep'}" _c
 				mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 				mata: st_local("yt0",return_learner_item(`eqn',"opt0","`m'"))
@@ -889,14 +893,14 @@ program _ddml_estimate_main
 			}
 
 			if `ssflag' {
-				`qui' _ddml_ate_late, mname(`mname') spec(ss) rep(`m') replay
+				`qui' replay_estimate, mname(`mname') spec(ss) rep(`m')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep `: di "ss" %3.0f `m''
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
-				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`m') replay notable
+				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`m') notable
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
 				di as res %14s "[ss]" _c
@@ -914,14 +918,14 @@ program _ddml_estimate_main
 			}
 
 			if `psflag' {
-				`qui' _ddml_ate_late, mname(`mname') spec(ps) rep(`m') replay
+				`qui' replay_estimate, mname(`mname') spec(ps) rep(`m')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep `: di "ps" %3.0f `m''
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
-				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`m') replay notable
+				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`m') notable
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[poolstack]" _c
 				di as res %14s "[ps]" _c
@@ -967,14 +971,14 @@ program _ddml_estimate_main
 		}
 		di
 		foreach medmean in mn md {
-			`qui' _ddml_ate_late, mname(`mname') spec(`spectext') rep(`medmean') replay
+			`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`medmean')
 			tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 			mat `btemp' = e(b)
 			mat `Vtemp' = e(V)
 			local specrep `: di "mse" %3s "`medmean'"'
 			// pad out to 6 spaces
 			local specrep = " " + "`specrep'"
-			local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') replay notable
+			local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable
 			di %6s "{`rcmd':`specrep'}" _c
 			di as res %14s "[min-mse]" _c
 			di as res %14s "[mse]" _c
@@ -990,14 +994,14 @@ program _ddml_estimate_main
 			}
 			di
 			if `ssflag' {
-				`qui' _ddml_ate_late, mname(`mname') spec(ss) rep(`medmean') replay
+				`qui' replay_estimate, mname(`mname') spec(ss) rep(`medmean')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep `: di "ss" %3s "`medmean'"'
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
-				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`medmean') replay notable
+				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`medmean') notable
 				di as res %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
 				di as res %14s "[ss]" _c
@@ -1014,14 +1018,14 @@ program _ddml_estimate_main
 				di
 			}
 			if `psflag' {
-				`qui' _ddml_ate_late, mname(`mname') spec(ps) rep(`medmean') replay
+				`qui' replay_estimate, mname(`mname') spec(ps) rep(`medmean')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep `: di "ps" %3s "`medmean'"'
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
-				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`medmean') replay notable
+				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`medmean') notable
 				di as res %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[poolstack]" _c
 				di as res %14s "[ps]" _c
@@ -1061,7 +1065,7 @@ program _ddml_estimate_main
 	
 	// post selected estimates; rep is the resample number (default=1)
 	di
-	_ddml_ate_late, mname(`mname') spec(`specdisp') rep(`rep') replay
+	replay_estimate, mname(`mname') spec(`specdisp') rep(`rep')
 	di
 	
 	if `nreps' > 1 & ("`rep'"=="mn" | "`rep'"=="md") {
@@ -1104,510 +1108,6 @@ program define add_suffix, sclass
 	}
 	
 	sreturn local vnames `vnames'
-end
-
-
-* code below currently supports only a single treatment variable, but coded for multiple variables in places
-program _ddml_ate_late, eclass
-
-	version 13
-
-	syntax [anything] [if] [in] ,				///
-						[						///
-							yvar(varname)		///
-							dvar(varname)		///
-							zvar(varname)		///
-							y0tilde(name)		///
-							y1tilde(name)		///
-							dtilde(name)		///
-							d0tilde(name)		///
-							d1tilde(name)		///
-							ztilde(name)		///
-							mname(name)			///
-							spec(string)		///
-							rep(string)			///
-							replay				///
-							title(string)		///
-							medmean(string)		///
-							vce(string) 		///
-							TEffect(name)		/// either ATE, ATET or ATEU
-							trim(real 0)	    /// value should be provided by calling program
-						]
-		
-	mata: st_local("model",`mname'.model)
-	
-	marksample touse
-	
-	if "`replay'"=="" & "`medmean'"=="" {	// estimate from scratch
-		
-		tempname A
-		mata: `A' = AssociativeArray()
-		mata: `A'.reinit("string",2)
-		mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
-		
-		// 0/1 etc
-		local y0		`y0tilde'
-		local y1		`y1tilde'
-		local d			`dtilde'
-		local d0		`d0tilde'
-		local d1		`d1tilde'
-		local z			`ztilde'
-		// add suffixes
-		local y0_m		`y0tilde'0_`rep'
-		local y1_m		`y1tilde'1_`rep'
-		local d_m		`dtilde'_`rep'
-		local d0_m		`d0tilde'0_`rep'
-		local d1_m		`d1tilde'1_`rep'
-		local z_m		`ztilde'_`rep'
-
-		// estimation samples may differ across conditional expectations
-		if "`model'"=="interactive" {
-			markout `touse' `y0_m' `y1_m' `d_m'
-		}
-		else {
-			markout `touse' `y0_m' `y1_m' `d0_m' `d1_m' `z_m'
-		}
-		
-		local vce1: word 1 of `vce'
-		if "`vce1'"=="cluster" {
-			local clustvar : word 2 of `vce'
-		}
-		
-		if "`model'"=="interactive" {
-			mata: ATE("`teffect'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustvar'","`mname'_fid_`rep'",`trim')
-		}
-		else {
-			mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'","`clustvar'",`trim')
-		}
-		if "`clustvar'"=="" {
-			// e(.) for basic robust
-			local vce		robust
-			local vcetype	Robust
-		}
-		else {
-			// e(.) for cluster-robust; clustvar already defined
-			local vce		cluster
-			local vcetype	Robust
-			local N_clust	=r(N_clust)
-		}
-		
-		// store post objects
-		mata: `A'.put(("N","post"),`r(N)')
-		mata: `A'.put(("b","post"),st_matrix("r(b)"))
-		mata: `A'.put(("V","post"),st_matrix("r(V)"))
-		mata: `A'.put(("depvar","post"),"`yvar'")
-		
-		// for calling program
-		ereturn clear
-		mata: st_matrix("e(bmat)",st_matrix("r(b)"))
-		mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("r(V)"))'))
-		
-		// store locals
-		local list_local title yvar dvar y0 y0_m y1 y1_m vce vcetype teffect
-		if "`model'"=="interactive" {
-			local list_local `list_local' d d_m
-		}
-		else {
-			local list_local `list_local' d0 d0_m d1 d1_m z z_m
-		}
-		if "`clustvar'"~=""		local list_local `list_local' clustvar
-		foreach obj in `list_local' {
-			mata: `A'.put(("`obj'","local"),"``obj''")
-		}
-		// store scalars
-		mata: `A'.put(("lltrim","scalar"),`r(lltrim)')
-		mata: `A'.put(("ultrim","scalar"),`r(ultrim)')
-		mata: `A'.put(("trim","scalar"),`trim')
-		if "`clustvar'"~="" {
-			mata: `A'.put(("N_clust","scalar"),`N_clust')
-		}
-		// additional estimation results
-		tempname eqn
-		mata: `eqn' = init_eStruct()
-		// Y eqn results
-		mata: `eqn' = (`mname'.eqnAA).get("`yvar'")
-		mata: st_local("shortstack",`eqn'.shortstack)
-		mata: st_local("poolstack",`eqn'.poolstack)
-		// MSE
-		mata: `A'.put(("`y0tilde'_mse","scalar"),return_result_item(`eqn',"`y0tilde'","MSE0","`rep'"))
-		mata: `A'.put(("`y1tilde'_mse","scalar"),return_result_item(`eqn',"`y1tilde'","MSE1","`rep'"))
-		// MSE folds
-		mata: `A'.put(("`y0tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y0tilde'","MSE0_folds","`rep'"))
-		mata: `A'.put(("`y1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y1tilde'","MSE1_folds","`rep'"))
-		// shortstack weights
-		if "`spec'"=="ss" {
-			mata: `A'.put(("`yvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights0","`rep'"))
-			mata: `A'.put(("`yvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights1","`rep'"))
-		}
-		// poolstack weights
-		if "`spec'"=="ps" {
-			mata: `A'.put(("`yvar'_psw0","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights0","`rep'"))
-			mata: `A'.put(("`yvar'_psw1","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights1","`rep'"))
-		}
-		if "`model'"=="interactive" {
-			// D eqn results
-			mata: `eqn' = (`mname'.eqnAA).get("`dvar'")
-			mata: st_local("shortstack",`eqn'.shortstack)
-			mata: st_local("poolstack",`eqn'.poolstack)
-			// MSE
-			mata: `A'.put(("`dtilde'_mse","scalar"),return_result_item(`eqn',"`dtilde'","MSE","`rep'"))
-			// MSE folds
-			mata: `A'.put(("`dtilde'_mse_folds","matrix"),return_result_item(`eqn',"`dtilde'","MSE_folds","`rep'"))
-			// shortstack weights
-			if "`spec'"=="ss" {
-				mata: `A'.put(("`dvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
-			}
-			// poolstack weights
-			if "`spec'"=="ps" {
-				mata: `A'.put(("`dvar'_psw","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
-			}
-		}
-		else {
-			// D
-			mata: `eqn' = (`mname'.eqnAA).get("`dvar'")
-			mata: st_local("shortstack",`eqn'.shortstack)
-			mata: st_local("poolstack",`eqn'.poolstack)
-			// MSE, D
-			mata: `A'.put(("`d0tilde'_mse","scalar"),return_result_item(`eqn',"`d0tilde'","MSE0","`rep'"))
-			mata: `A'.put(("`d1tilde'_mse","scalar"),return_result_item(`eqn',"`d1tilde'","MSE1","`rep'"))
-			// MSE folds, D
-			mata: `A'.put(("`d0tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d0tilde'","MSE0_folds","`rep'"))
-			mata: `A'.put(("`d1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d1tilde'","MSE1_folds","`rep'"))
-			// shortstack weights, D
-			if "`spec'"=="ss" {
-				mata: `A'.put(("`dvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights0","`rep'"))
-				mata: `A'.put(("`dvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights1","`rep'"))
-			}
-			// poolstack weights, D
-			if "`spec'"=="ps" {
-				mata: `A'.put(("`dvar'_psw0","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights0","`rep'"))
-				mata: `A'.put(("`dvar'_psw1","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights1","`rep'"))
-			}
-			// Z
-			mata: `eqn' = (`mname'.eqnAA).get("`zvar'")
-			mata: st_local("shortstack",`eqn'.shortstack)
-			mata: st_local("poolstack",`eqn'.poolstack)
-			// MSE, Z
-			mata: `A'.put(("`ztilde'_mse","scalar"),return_result_item(`eqn',"`ztilde'","MSE","`rep'"))
-			// MSE folds, Z
-			mata: `A'.put(("`ztilde'_mse_folds","matrix"),return_result_item(`eqn',"`ztilde'","MSE_folds","`rep'"))
-			// shortstack weights, Z
-			if "`spec'"=="ss" {
-				mata: `A'.put(("`zvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
-			}
-			// poolstack weights, Z
-			if "`spec'"=="ps" {
-				mata: `A'.put(("`zvar'_psw","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
-			}
-		}
-	
-		mata: (`mname'.estAA).put(("`spec'","`rep'"),`A')
-		
-		// no longer needed
-		foreach obj in `A' `eqn' {
-			cap mata: mata drop `obj'
-		}
-	
-	}
-	else if "`replay'"=="" & "`medmean'"~="" {	// aggregate over resamples
-		
-		tempname b V bagg Vagg Vi
-		tempname bvec sbvec bmed Vvec sVvec Vmed
-		tempname nlltrim nultrim trimval
-		tempvar esample
-		tempname B
-		
-		// initialize
-		mata: st_local("nameD",invtokens(`mname'.nameD))
-		local K : word count `nameD'
-		mata: st_local("nreps",strofreal(`mname'.nreps))
-		mata: `B' = AssociativeArray()
-		local isodd = mod(`nreps',2)
-		local medrow = ceil(`nreps'/2)
-		local N = 0
-		
-		// bvec a misnomer - usually a vector, but can be a matrix if multiple D variables
-		mata: `bvec' = J(`nreps',`K',0)
-		mata: `bagg' = J(1,`K',0)
-		forvalues m=1/`nreps' {
-			mata: check_spec(`mname',"`spec'","`m'")
-			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-			mata: `bvec'[`m',.] = `B'.get(("b","post"))
-			// row/colnames etc. - need to do this only once
-			if `m'==1 {
-				mata: st_local("depvar",`B'.get(("depvar","post")))
-				// retrieve locals; if empty, will be ""
-				local list_local y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar vce vcetype clustvar
-				foreach obj in `list_local' {
-					mata: st_local("`obj'",`B'.get(("`obj'","local")))
-				}
-				// retrieve scalars (as locals)
-				local list_scalar
-				if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
-				foreach obj in `list_scalar' {
-					mata: st_local("`obj'",strofreal(`B'.get(("`obj'","scalar"))))
-				}
-			}
-			// possible that different estimation samples have different #obs
-			qui count if `mname'_sample_`m'==1
-			local N = `N' + r(N)
-		}
-		local N = round(`N'/`nreps')
-		if "`medmean'"=="mn" {
-			// mean beta
-			mata: `bagg' = mean(`bvec')
-			mata: st_matrix("`bagg'",`bagg')
-		}
-		else if "`medmean'"=="md" {
-			// median beta
-			forvalues k=1/`K' {
-				// leave order of bvec unchanged
-				mata: `sbvec' = sort(`bvec',`k')
-				// mata: _sort(`bvec',`k')
-				if `isodd' {
-					mata: `bagg'[1,`k'] = `sbvec'[`medrow',`k']
-				}
-				else {
-					mata: `bagg'[1,`k'] = (`sbvec'[`medrow',`k'] + `sbvec'[`medrow'+1,`k'])/2
-				}
-			}
-			mata: st_matrix("`bagg'",`bagg')
-		}
-		else {
-			di as err "_ddml_ate_late error - unrecognized option `medmean'"
-			exit 198
-		}
-		
-		mata: `Vagg' = J(`K',`K',0)
-		mata: `Vvec' = J(`nreps',1,0)
-		if "`medmean'"=="mn" {
-			// harmonic mean
-			// inefficient - does off-diagonals twice
-			forvalues m=1/`nreps' {
-				mata: check_spec(`mname',"`spec'","`m'")
-				mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-				mata: `Vi' = `B'.get(("V","post"))
-				forvalues j=1/`K' {
-					forvalues k=1/`K' {
-						// abs(.) needed?
-						mata: `Vi'[`j',`k'] = `Vi'[`j',`k'] + abs((`bvec'[`m',`j'] - `bagg'[1,`j'])*(`bvec'[`m',`k'] - `bagg'[1,`k']))
-					}
-				}
-				mata: `Vagg' = `Vagg' + 1:/`Vi'
-			}
-			mata: `Vagg' = `nreps' :/ `Vagg'
-			mata: st_matrix("`Vagg'",`Vagg')
-		}
-		else if "`medmean'"=="md" {
-			// median VCV
-			// inefficient - does off-diagonals twice
-			forvalues j=1/`K' {
-				forvalues k=1/`K' {
-					forvalues m=1/`nreps' {
-						mata: check_spec(`mname',"`spec'","`m'")
-						mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-						mata: `Vi' = `B'.get(("V","post"))
-						mata: `Vvec'[`m'] = `Vi'[`j',`k']
-					}
-					// adjustment as per
-					// https://docs.doubleml.org/stable/guide/resampling.html#repeated-cross-fitting-with-k-folds-and-m-repetition
-					// (generalized to multiple D variables)
-					mata: `Vvec' = `Vvec' + abs((`bvec'[.,`j'] :- `bagg'[1,`j']):*(`bvec'[.,`k'] :- `bagg'[1,`k']))
-					// leave order of Vvec unchanged
-					mata: `sVvec' = sort(`Vvec',1)
-					// mata: _sort(`Vvec',1)
-					if `isodd' {
-						mata: `Vagg'[`j',`k'] = `sVvec'[`medrow',1]
-					}
-					else {
-						mata: `Vagg'[`j',`k'] = (`sVvec'[`medrow',1] + `sVvec'[`medrow'+1,1])/2
-					}
-				}
-			}
-			mata: st_matrix("`Vagg'",`Vagg')
-		}
-		else {
-			di as err "_ddml_ate_late error - unrecognized option `medmean'"
-			exit 198
-		}
-		
-		// count trim instances
-		mata: `nlltrim' = 0
-		mata: `nultrim' = 0
-		forvalues m=1/`nreps' {
-			mata: check_spec(`mname',"`spec'","`m'")
-			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-			mata: `nlltrim' = `nlltrim' + (`B'.get(("lltrim","scalar"))>0)
-			mata: `nultrim' = `nultrim' + (`B'.get(("ultrim","scalar"))>0)
-		}
-		// retrieve from last rep (will be stored in all)
-		mata: `trimval' = `B'.get(("trim","scalar"))
-	
-		tempname A
-		mata: `A' = AssociativeArray()
-		mata: `A'.reinit("string",2)
-		mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
-		
-		mata: `A'.put(("N","post"),`N')
-		mata: `A'.put(("b","post"),`bagg')
-		mata: `A'.put(("V","post"),`Vagg')
-		mata: `A'.put(("depvar","post"),"`depvar'")
-		mata: `A'.put(("b_resamples","matrix"),`bvec')
-		
-		// store locals
-		local list_local title yvar dvar y0 y1 vce vcetype teffect
-		if "`model'"=="interactive" {
-			local list_local `list_local' d
-		}
-		else {
-			local list_local `list_local' d0 d1 z
-		}
-		if "`clustvar'"~=""		local list_local `list_local' clustvar
-		foreach obj in `list_local' {
-			mata: `A'.put(("`obj'","local"),"``obj''")
-		}
-		// special case - "_m" subscript doesn't apply to mean/median over resamplings
-		// so store without resample subscript
-		foreach obj in title y0 y1 d d0 d1 z {
-			mata: `A'.put(("`obj'_m","local"),"``obj''")
-		}
-		
-		// store scalars
-		local trim `trimval'	// hack, to fix
-		local list_scalar nlltrim nultrim trim
-		if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
-		foreach obj in `list_scalar' {
-			mata: `A'.put(("`obj'","scalar"),``obj'')
-		}
-		
-		// store AA with median/mean results
-		mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
-		
-		// no longer needed
-		foreach obj in `A' `B' `bagg' `bvec' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' `nlltrim' `nultrim' `trimval' {
-			cap mata: mata drop `obj'
-		}
-			
-	}
-	else {
-		// replay
-				
-		tempname B keys isscalar islocal ismatrix
-
-		mata: `B' = AssociativeArray()
-		mata: check_spec(`mname',"`spec'","`rep'")
-		mata: `B' = (`mname'.estAA).get(("`spec'","`rep'"))
-		mata: `keys' = `B'.keys()
-		mata: st_local("nentries",strofreal(rows(`keys')))
-		mata: `isscalar'	= (`keys'[.,2] :== "scalar")
-		mata: `islocal'		= (`keys'[.,2] :== "local")
-		mata: `ismatrix'	= (`keys'[.,2] :== "matrix")
-		
-		tempname b V
-		mata: st_matrix("`b'",`B'.get(("b","post")))
-		mata: st_matrix("`V'",`B'.get(("V","post")))
-		mata: st_local("N",strofreal(`B'.get(("N","post"))))
-		mata: st_local("depvar",`B'.get(("depvar","post")))
-		
-		mata: st_local("yvar",`B'.get(("yvar","local")))
-		mata: st_local("dvar",`B'.get(("dvar","local")))
-		
-		matrix rownames `b' = `depvar'
-		matrix colnames `b' = `dvar'
-	 	matrix colnames `V' = `dvar'
-		matrix rownames `V' = `dvar'
-		
-		tempvar esample
-		cap gen `esample' = `mname'_sample_`rep'
-		if _rc>0 {
-			// sample variable doesn't exist; ignore
-			local esample
-		}
-		
-		ereturn clear
-		ereturn post `b' `V', depname(`depvar') obs(`N') esample(`esample')
-		
-		ereturn local cmd ddml
-		ereturn local model `model'
-		ereturn local rep `rep'
-		ereturn local spec `spec'
-		ereturn local tmname `mname'
-		ereturn local teffect `teffect'
-		
-		// extract and post scalars, locals, matrices
-		forvalues i=1/`nentries' {
-			mata: st_local("topost",strofreal(`isscalar'[`i']))
-			if `topost' {
-				mata: st_local("sname",substr(`keys'[`i',1],1,32))
-				mata: st_numscalar("e(`sname')",`B'.get(`keys'[`i',.]))
-			}
-		}
-		forvalues i=1/`nentries' {
-			mata: st_local("topost",strofreal(`islocal'[`i']))
-			if `topost' {
-				mata: st_local("lname",substr(`keys'[`i',1],1,32))
-				mata: st_global("e(`lname')",`B'.get(`keys'[`i',.]))
-			}
-		}
-		forvalues i=1/`nentries' {
-			mata: st_local("topost",strofreal(`ismatrix'[`i']))
-			if `topost' {
-				mata: st_local("tmname",substr(`keys'[`i',1],1,32))
-				mata: st_matrix("e(`tmname')",`B'.get(`keys'[`i',.]))
-			}
-		}
-		
-		// no longer needed
-		foreach obj in `B' `keys' `isscalar' `islocal' `ismatrix' {
-			cap mata: mata drop `obj'
-		}
-		
-		// display results
-		di as text "`e(title)'"
-		di as text "E[y|X,D=0]" _col(14) "= " as res "`e(y0_m)'" _c
-		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
-		di as text "E[y|X,D=1]" _col(14) "= " as res "`e(y1_m)'"
-		if "`e(model)'"=="interactive" {
-			di as text "E[D|X]" _col(14)  "= " as res "`e(d_m)'"
-		}
-		else {
-			di as text "E[D|X,Z=0]" _col(14)  "= " as res "`e(d0_m)'"
-			di as text "E[D|X,Z=1]" _col(14)  "= " as res "`e(d1_m)'"
-			di as text "E[Z|X]" _col(14)  "= " as res "`e(z_m)'"
-		}
-		ereturn display
-		
-		// report warning if clustered SEs requested but doesn't match clustered crossfitting
-		mata: st_local("fclustvar",`mname'.fclustvar)
-		if "`e(clustvar)'"~="" {
-			if "`fclustvar'"=="" {
-				di as res "Warning" as text ": crossfit folds do not respect cluster structure used for VCE."
-			}
-			else if "`fclustvar'"~="`e(clustvar)'" {
-				di as res "Warning" as text ": cluster variable for VCE does not match cluster variable for crossfit folds."
-			}
-		}
-	}
-	
-	// warn if any values trimmed
-	if e(lltrim)>0 & e(lltrim)<. {
-		di as res "Warning" as text ": " _c
-		di as text e(lltrim) " propensity scores trimmed to lower limit " e(trim) "."
-	}
-	if e(ultrim) & e(ultrim)<. {
-		di as res "Warning" as text ": " _c
-		di as text e(ultrim) " propensity scores trimmed to upper limit " 1-e(trim) "."
-	}
-	// for mean/median over resamples
-	if e(nlltrim)>0 & e(nlltrim)<. {
-		di as res "Warning" as text ": " _c
-		di as text e(nlltrim) " resamples had propensity scores trimmed to lower limit " e(trim) "."
-	}
-	if e(ultrim) & e(ultrim)<. {
-		di as res "Warning" as text ": " _c
-		di as text e(nultrim) " resamples had propensity scores trimmed to upper limit " 1-e(trim) "."
-	}
-	
 end
 
 
@@ -1785,3 +1285,538 @@ void LATE(  string scalar yvar,      // Y
 }
 
 end
+
+* code below currently supports only a single treatment variable, but coded for multiple variables in places
+program define estimate_and_store, eclass
+
+	version 13
+
+	syntax [anything] [if] [in] ,				///
+						[						///
+							yvar(varname)		///
+							dvar(varname)		///
+							zvar(varname)		///
+							y0tilde(name)		///
+							y1tilde(name)		///
+							dtilde(name)		///
+							d0tilde(name)		///
+							d1tilde(name)		///
+							ztilde(name)		///
+							mname(name)			///
+							spec(string)		///
+							rep(string)			///
+							replay				///
+							title(string)		///
+							medmean(string)		///
+							vce(string) 		///
+							TEffect(name)		/// either ATE, ATET or ATEU
+							trim(real 0)	    /// value should be provided by calling program
+						]
+		
+	mata: st_local("model",`mname'.model)
+	
+	marksample touse
+		
+	tempname A
+	mata: `A' = AssociativeArray()
+	mata: `A'.reinit("string",2)
+	mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
+	
+	// 0/1 etc
+	local y0		`y0tilde'
+	local y1		`y1tilde'
+	local d			`dtilde'
+	local d0		`d0tilde'
+	local d1		`d1tilde'
+	local z			`ztilde'
+	// add suffixes
+	local y0_m		`y0tilde'0_`rep'
+	local y1_m		`y1tilde'1_`rep'
+	local d_m		`dtilde'_`rep'
+	local d0_m		`d0tilde'0_`rep'
+	local d1_m		`d1tilde'1_`rep'
+	local z_m		`ztilde'_`rep'
+
+	// estimation samples may differ across conditional expectations
+	if "`model'"=="interactive" {
+		markout `touse' `y0_m' `y1_m' `d_m'
+	}
+	else {
+		markout `touse' `y0_m' `y1_m' `d0_m' `d1_m' `z_m'
+	}
+	
+	local vce1: word 1 of `vce'
+	if "`vce1'"=="cluster" {
+		local clustvar : word 2 of `vce'
+	}
+	
+	if "`model'"=="interactive" {
+		mata: ATE("`teffect'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustvar'","`mname'_fid_`rep'",`trim')
+	}
+	else {
+		mata: LATE("`yvar'","`dvar'","`zvar'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'","`clustvar'",`trim')
+	}
+	if "`clustvar'"=="" {
+		// e(.) for basic robust
+		local vce		robust
+		local vcetype	Robust
+	}
+	else {
+		// e(.) for cluster-robust; clustvar already defined
+		local vce		cluster
+		local vcetype	Robust
+		local N_clust	=r(N_clust)
+	}
+	
+	// store post objects
+	mata: `A'.put(("N","post"),`r(N)')
+	mata: `A'.put(("b","post"),st_matrix("r(b)"))
+	mata: `A'.put(("V","post"),st_matrix("r(V)"))
+	mata: `A'.put(("depvar","post"),"`yvar'")
+	
+	// for calling program
+	ereturn clear
+	mata: st_matrix("e(bmat)",st_matrix("r(b)"))
+	mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("r(V)"))'))
+	
+	// store locals
+	local list_local title yvar dvar y0 y0_m y1 y1_m vce vcetype teffect
+	if "`model'"=="interactive" {
+		local list_local `list_local' d d_m
+	}
+	else {
+		local list_local `list_local' d0 d0_m d1 d1_m z z_m
+	}
+	if "`clustvar'"~=""		local list_local `list_local' clustvar
+	foreach obj in `list_local' {
+		mata: `A'.put(("`obj'","local"),"``obj''")
+	}
+	// store scalars
+	mata: `A'.put(("lltrim","scalar"),`r(lltrim)')
+	mata: `A'.put(("ultrim","scalar"),`r(ultrim)')
+	mata: `A'.put(("trim","scalar"),`trim')
+	if "`clustvar'"~="" {
+		mata: `A'.put(("N_clust","scalar"),`N_clust')
+	}
+	// additional estimation results
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	// Y eqn results
+	mata: `eqn' = (`mname'.eqnAA).get("`yvar'")
+	mata: st_local("shortstack",`eqn'.shortstack)
+	mata: st_local("poolstack",`eqn'.poolstack)
+	// MSE
+	mata: `A'.put(("`y0tilde'_mse","scalar"),return_result_item(`eqn',"`y0tilde'","MSE0","`rep'"))
+	mata: `A'.put(("`y1tilde'_mse","scalar"),return_result_item(`eqn',"`y1tilde'","MSE1","`rep'"))
+	// MSE folds
+	mata: `A'.put(("`y0tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y0tilde'","MSE0_folds","`rep'"))
+	mata: `A'.put(("`y1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y1tilde'","MSE1_folds","`rep'"))
+	// shortstack weights
+	if "`spec'"=="ss" {
+		mata: `A'.put(("`yvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights0","`rep'"))
+		mata: `A'.put(("`yvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights1","`rep'"))
+	}
+	// poolstack weights
+	if "`spec'"=="ps" {
+		mata: `A'.put(("`yvar'_psw0","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights0","`rep'"))
+		mata: `A'.put(("`yvar'_psw1","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights1","`rep'"))
+	}
+	if "`model'"=="interactive" {
+		// D eqn results
+		mata: `eqn' = (`mname'.eqnAA).get("`dvar'")
+		mata: st_local("shortstack",`eqn'.shortstack)
+		mata: st_local("poolstack",`eqn'.poolstack)
+		// MSE
+		mata: `A'.put(("`dtilde'_mse","scalar"),return_result_item(`eqn',"`dtilde'","MSE","`rep'"))
+		// MSE folds
+		mata: `A'.put(("`dtilde'_mse_folds","matrix"),return_result_item(`eqn',"`dtilde'","MSE_folds","`rep'"))
+		// shortstack weights
+		if "`spec'"=="ss" {
+			mata: `A'.put(("`dvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
+		}
+		// poolstack weights
+		if "`spec'"=="ps" {
+			mata: `A'.put(("`dvar'_psw","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
+		}
+	}
+	else {
+		// D
+		mata: `eqn' = (`mname'.eqnAA).get("`dvar'")
+		mata: st_local("shortstack",`eqn'.shortstack)
+		mata: st_local("poolstack",`eqn'.poolstack)
+		// MSE, D
+		mata: `A'.put(("`d0tilde'_mse","scalar"),return_result_item(`eqn',"`d0tilde'","MSE0","`rep'"))
+		mata: `A'.put(("`d1tilde'_mse","scalar"),return_result_item(`eqn',"`d1tilde'","MSE1","`rep'"))
+		// MSE folds, D
+		mata: `A'.put(("`d0tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d0tilde'","MSE0_folds","`rep'"))
+		mata: `A'.put(("`d1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d1tilde'","MSE1_folds","`rep'"))
+		// shortstack weights, D
+		if "`spec'"=="ss" {
+			mata: `A'.put(("`dvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights0","`rep'"))
+			mata: `A'.put(("`dvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights1","`rep'"))
+		}
+		// poolstack weights, D
+		if "`spec'"=="ps" {
+			mata: `A'.put(("`dvar'_psw0","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights0","`rep'"))
+			mata: `A'.put(("`dvar'_psw1","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights1","`rep'"))
+		}
+		// Z
+		mata: `eqn' = (`mname'.eqnAA).get("`zvar'")
+		mata: st_local("shortstack",`eqn'.shortstack)
+		mata: st_local("poolstack",`eqn'.poolstack)
+		// MSE, Z
+		mata: `A'.put(("`ztilde'_mse","scalar"),return_result_item(`eqn',"`ztilde'","MSE","`rep'"))
+		// MSE folds, Z
+		mata: `A'.put(("`ztilde'_mse_folds","matrix"),return_result_item(`eqn',"`ztilde'","MSE_folds","`rep'"))
+		// shortstack weights, Z
+		if "`spec'"=="ss" {
+			mata: `A'.put(("`zvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
+		}
+		// poolstack weights, Z
+		if "`spec'"=="ps" {
+			mata: `A'.put(("`zvar'_psw","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
+		}
+	}
+
+	mata: (`mname'.estAA).put(("`spec'","`rep'"),`A')
+	
+	// no longer needed
+	foreach obj in `A' `eqn' {
+		cap mata: mata drop `obj'
+	}
+
+end
+
+// estimates and stores mean/median estimates across resamples
+program medmean_and_store, eclass
+
+	version 13
+
+	syntax [anything] [if] [in] ,				///
+						[						///
+							mname(name)			///
+							spec(string)		///
+							title(string)		///
+							medmean(string)		///
+							vce(string) 		///
+							TEffect(name)		/// either ATE, ATET or ATEU
+						]
+		
+	mata: st_local("model",`mname'.model)
+	
+	marksample touse
+
+	tempname b V bagg Vagg Vi
+	tempname bvec sbvec bmed Vvec sVvec Vmed
+	tempname nlltrim nultrim trimval
+	tempvar esample
+	tempname B
+	
+	// initialize
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	local K : word count `nameD'
+	mata: st_local("nreps",strofreal(`mname'.nreps))
+	mata: `B' = AssociativeArray()
+	local isodd = mod(`nreps',2)
+	local medrow = ceil(`nreps'/2)
+	local N = 0
+	
+	// bvec a misnomer - usually a vector, but can be a matrix if multiple D variables
+	mata: `bvec' = J(`nreps',`K',0)
+	mata: `bagg' = J(1,`K',0)
+	forvalues m=1/`nreps' {
+		mata: check_spec(`mname',"`spec'","`m'")
+		mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
+		mata: `bvec'[`m',.] = `B'.get(("b","post"))
+		// row/colnames etc. - need to do this only once
+		if `m'==1 {
+			mata: st_local("depvar",`B'.get(("depvar","post")))
+			// retrieve locals; if empty, will be ""
+			local list_local y0 y0_m y1 y1_m d d_m d0 d0_m d1 d1_m z z_m yvar dvar vce vcetype clustvar
+			foreach obj in `list_local' {
+				mata: st_local("`obj'",`B'.get(("`obj'","local")))
+			}
+			// retrieve scalars (as locals)
+			local list_scalar
+			if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+			foreach obj in `list_scalar' {
+				mata: st_local("`obj'",strofreal(`B'.get(("`obj'","scalar"))))
+			}
+		}
+		// possible that different estimation samples have different #obs
+		qui count if `mname'_sample_`m'==1
+		local N = `N' + r(N)
+	}
+	local N = round(`N'/`nreps')
+	if "`medmean'"=="mn" {
+		// mean beta
+		mata: `bagg' = mean(`bvec')
+		mata: st_matrix("`bagg'",`bagg')
+	}
+	else if "`medmean'"=="md" {
+		// median beta
+		forvalues k=1/`K' {
+			// leave order of bvec unchanged
+			mata: `sbvec' = sort(`bvec',`k')
+			// mata: _sort(`bvec',`k')
+			if `isodd' {
+				mata: `bagg'[1,`k'] = `sbvec'[`medrow',`k']
+			}
+			else {
+				mata: `bagg'[1,`k'] = (`sbvec'[`medrow',`k'] + `sbvec'[`medrow'+1,`k'])/2
+			}
+		}
+		mata: st_matrix("`bagg'",`bagg')
+	}
+	else {
+		di as err "replay_estimate error - unrecognized option `medmean'"
+		exit 198
+	}
+	
+	mata: `Vagg' = J(`K',`K',0)
+	mata: `Vvec' = J(`nreps',1,0)
+	if "`medmean'"=="mn" {
+		// harmonic mean
+		// inefficient - does off-diagonals twice
+		forvalues m=1/`nreps' {
+			mata: check_spec(`mname',"`spec'","`m'")
+			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
+			mata: `Vi' = `B'.get(("V","post"))
+			forvalues j=1/`K' {
+				forvalues k=1/`K' {
+					// abs(.) needed?
+					mata: `Vi'[`j',`k'] = `Vi'[`j',`k'] + abs((`bvec'[`m',`j'] - `bagg'[1,`j'])*(`bvec'[`m',`k'] - `bagg'[1,`k']))
+				}
+			}
+			mata: `Vagg' = `Vagg' + 1:/`Vi'
+		}
+		mata: `Vagg' = `nreps' :/ `Vagg'
+		mata: st_matrix("`Vagg'",`Vagg')
+	}
+	else if "`medmean'"=="md" {
+		// median VCV
+		// inefficient - does off-diagonals twice
+		forvalues j=1/`K' {
+			forvalues k=1/`K' {
+				forvalues m=1/`nreps' {
+					mata: check_spec(`mname',"`spec'","`m'")
+					mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
+					mata: `Vi' = `B'.get(("V","post"))
+					mata: `Vvec'[`m'] = `Vi'[`j',`k']
+				}
+				// adjustment as per
+				// https://docs.doubleml.org/stable/guide/resampling.html#repeated-cross-fitting-with-k-folds-and-m-repetition
+				// (generalized to multiple D variables)
+				mata: `Vvec' = `Vvec' + abs((`bvec'[.,`j'] :- `bagg'[1,`j']):*(`bvec'[.,`k'] :- `bagg'[1,`k']))
+				// leave order of Vvec unchanged
+				mata: `sVvec' = sort(`Vvec',1)
+				// mata: _sort(`Vvec',1)
+				if `isodd' {
+					mata: `Vagg'[`j',`k'] = `sVvec'[`medrow',1]
+				}
+				else {
+					mata: `Vagg'[`j',`k'] = (`sVvec'[`medrow',1] + `sVvec'[`medrow'+1,1])/2
+				}
+			}
+		}
+		mata: st_matrix("`Vagg'",`Vagg')
+	}
+	else {
+		di as err "replay_estimate error - unrecognized option `medmean'"
+		exit 198
+	}
+	
+	// count trim instances
+	mata: `nlltrim' = 0
+	mata: `nultrim' = 0
+	forvalues m=1/`nreps' {
+		mata: check_spec(`mname',"`spec'","`m'")
+		mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
+		mata: `nlltrim' = `nlltrim' + (`B'.get(("lltrim","scalar"))>0)
+		mata: `nultrim' = `nultrim' + (`B'.get(("ultrim","scalar"))>0)
+	}
+	// retrieve from last rep (will be stored in all)
+	mata: `trimval' = `B'.get(("trim","scalar"))
+
+	tempname A
+	mata: `A' = AssociativeArray()
+	mata: `A'.reinit("string",2)
+	mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
+	
+	mata: `A'.put(("N","post"),`N')
+	mata: `A'.put(("b","post"),`bagg')
+	mata: `A'.put(("V","post"),`Vagg')
+	mata: `A'.put(("depvar","post"),"`depvar'")
+	mata: `A'.put(("b_resamples","matrix"),`bvec')
+	
+	// store locals
+	local list_local title yvar dvar y0 y1 vce vcetype teffect
+	if "`model'"=="interactive" {
+		local list_local `list_local' d
+	}
+	else {
+		local list_local `list_local' d0 d1 z
+	}
+	if "`clustvar'"~=""		local list_local `list_local' clustvar
+	foreach obj in `list_local' {
+		mata: `A'.put(("`obj'","local"),"``obj''")
+	}
+	// special case - "_m" subscript doesn't apply to mean/median over resamplings
+	// so store without resample subscript
+	foreach obj in title y0 y1 d d0 d1 z {
+		mata: `A'.put(("`obj'_m","local"),"``obj''")
+	}
+	
+	// store scalars
+	local trim `trimval'	// hack, to fix
+	local list_scalar nlltrim nultrim trim
+	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+	foreach obj in `list_scalar' {
+		mata: `A'.put(("`obj'","scalar"),``obj'')
+	}
+	
+	// store AA with median/mean results
+	mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
+	
+	// no longer needed
+	foreach obj in `A' `B' `bagg' `bvec' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' `nlltrim' `nultrim' `trimval' {
+		cap mata: mata drop `obj'
+	}
+end
+
+
+* code below currently supports only a single treatment variable, but coded for multiple variables in places
+program replay_estimate, eclass
+
+	version 13
+
+	syntax [anything] [if] [in] ,				///
+						[						///
+							mname(name)			///
+							spec(string)		///
+							rep(string)			///
+						]
+		
+	mata: st_local("model",`mname'.model)
+	
+	marksample touse
+
+	// replay
+			
+	tempname B keys isscalar islocal ismatrix
+
+	mata: `B' = AssociativeArray()
+	mata: check_spec(`mname',"`spec'","`rep'")
+	mata: `B' = (`mname'.estAA).get(("`spec'","`rep'"))
+	mata: `keys' = `B'.keys()
+	mata: st_local("nentries",strofreal(rows(`keys')))
+	mata: `isscalar'	= (`keys'[.,2] :== "scalar")
+	mata: `islocal'		= (`keys'[.,2] :== "local")
+	mata: `ismatrix'	= (`keys'[.,2] :== "matrix")
+	
+	tempname b V
+	mata: st_matrix("`b'",`B'.get(("b","post")))
+	mata: st_matrix("`V'",`B'.get(("V","post")))
+	mata: st_local("N",strofreal(`B'.get(("N","post"))))
+	mata: st_local("depvar",`B'.get(("depvar","post")))
+	
+	mata: st_local("yvar",`B'.get(("yvar","local")))
+	mata: st_local("dvar",`B'.get(("dvar","local")))
+	
+	matrix rownames `b' = `depvar'
+	matrix colnames `b' = `dvar'
+ 	matrix colnames `V' = `dvar'
+	matrix rownames `V' = `dvar'
+	
+	tempvar esample
+	cap gen `esample' = `mname'_sample_`rep'
+	if _rc>0 {
+		// sample variable doesn't exist; ignore
+		local esample
+	}
+	
+	ereturn clear
+	ereturn post `b' `V', depname(`depvar') obs(`N') esample(`esample')
+	
+	ereturn local cmd ddml
+	ereturn local model `model'
+	ereturn local rep `rep'
+	ereturn local spec `spec'
+	ereturn local tmname `mname'
+	ereturn local teffect `teffect'
+	
+	// extract and post scalars, locals, matrices
+	forvalues i=1/`nentries' {
+		mata: st_local("topost",strofreal(`isscalar'[`i']))
+		if `topost' {
+			mata: st_local("sname",substr(`keys'[`i',1],1,32))
+			mata: st_numscalar("e(`sname')",`B'.get(`keys'[`i',.]))
+		}
+	}
+	forvalues i=1/`nentries' {
+		mata: st_local("topost",strofreal(`islocal'[`i']))
+		if `topost' {
+			mata: st_local("lname",substr(`keys'[`i',1],1,32))
+			mata: st_global("e(`lname')",`B'.get(`keys'[`i',.]))
+		}
+	}
+	forvalues i=1/`nentries' {
+		mata: st_local("topost",strofreal(`ismatrix'[`i']))
+		if `topost' {
+			mata: st_local("tmname",substr(`keys'[`i',1],1,32))
+			mata: st_matrix("e(`tmname')",`B'.get(`keys'[`i',.]))
+		}
+	}
+	
+	// no longer needed
+	foreach obj in `B' `keys' `isscalar' `islocal' `ismatrix' {
+		cap mata: mata drop `obj'
+	}
+	
+	// display results
+	di as text "`e(title)'"
+	di as text "E[y|X,D=0]" _col(14) "= " as res "`e(y0_m)'" _c
+	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
+	di as text "E[y|X,D=1]" _col(14) "= " as res "`e(y1_m)'"
+	if "`e(model)'"=="interactive" {
+		di as text "E[D|X]" _col(14)  "= " as res "`e(d_m)'"
+	}
+	else {
+		di as text "E[D|X,Z=0]" _col(14)  "= " as res "`e(d0_m)'"
+		di as text "E[D|X,Z=1]" _col(14)  "= " as res "`e(d1_m)'"
+		di as text "E[Z|X]" _col(14)  "= " as res "`e(z_m)'"
+	}
+	ereturn display
+	
+	// report warning if clustered SEs requested but doesn't match clustered crossfitting
+	mata: st_local("fclustvar",`mname'.fclustvar)
+	if "`e(clustvar)'"~="" {
+		if "`fclustvar'"=="" {
+			di as res "Warning" as text ": crossfit folds do not respect cluster structure used for VCE."
+		}
+		else if "`fclustvar'"~="`e(clustvar)'" {
+			di as res "Warning" as text ": cluster variable for VCE does not match cluster variable for crossfit folds."
+		}
+	}
+	
+	// warn if any values trimmed
+	if e(lltrim)>0 & e(lltrim)<. {
+		di as res "Warning" as text ": " _c
+		di as text e(lltrim) " propensity scores trimmed to lower limit " e(trim) "."
+	}
+	if e(ultrim) & e(ultrim)<. {
+		di as res "Warning" as text ": " _c
+		di as text e(ultrim) " propensity scores trimmed to upper limit " 1-e(trim) "."
+	}
+	// for mean/median over resamples
+	if e(nlltrim)>0 & e(nlltrim)<. {
+		di as res "Warning" as text ": " _c
+		di as text e(nlltrim) " resamples had propensity scores trimmed to lower limit " e(trim) "."
+	}
+	if e(ultrim) & e(ultrim)<. {
+		di as res "Warning" as text ": " _c
+		di as text e(nultrim) " resamples had propensity scores trimmed to upper limit " 1-e(trim) "."
+	}
+	
+end
+

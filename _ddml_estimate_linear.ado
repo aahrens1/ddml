@@ -60,7 +60,7 @@ program _ddml_estimate_single, eclass sortpreserve
 		if `numD'~=`numeqnD' {
 			di as err "error - model has `numeqnD' D variables but `numD' specified"
 			exit 198
-		}		
+		}
 	}
 	else if "`model'"=="iv" {
 		if "`z'"=="" {
@@ -77,34 +77,53 @@ program _ddml_estimate_single, eclass sortpreserve
 			di as err "option dh(.) missing"
 			exit 198
 		}
-		// create new D and Z
-		tempvar d_orthog z_opt
-		qui gen double `d_orthog'	= `nameD' - `dh'
-		qui gen double `z_opt'		= `d'     - `dh'
 	}
 	else {
 		di as err "error - unknown model `model'"
 		exit 198
 	}
-	
+
+	// residualization
+	tempvar yt
+	qui gen double `yt' = `nameY' - `y'
+	if "`model'"~="fiv" {
+		// applies to plm and iv models
+		forvalues i=1/`numeqnD' {
+			tempvar d_resid
+			local dname_i : word `i' of `nameD'
+			local dtilde_i : word `i' of `d'
+			qui gen double `d_resid' = `dname_i' - `dtilde_i'
+			local d_resid_list `d_resid_list' `d_resid'
+		}
+		// if plm model, won't enter
+		forvalues i=1/`numeqnZ' {
+			tempvar z_resid
+			local zname_i : word `i' of `nameZ'
+			local ztilde_i : word `i' of `z'
+			qui gen double `z_resid' = `zname_i' - `ztilde_i'
+			local z_resid_list `z_resid_list' `z_resid'
+		}
+	}
+	else {
+		// create new D and Z
+		tempvar d_resid_list z_resid_list
+		qui gen double `d_resid_list'	= `nameD' - `dh'
+		qui gen double `z_resid_list'	= `d'     - `dh'
+
+	}
+
 	if "`robust'"!=""	local vce robust
 	if "`cluster'"~=""	local vce cluster `cluster'
 	tempname b V
 	tempvar esample
 	marksample touse
-	if "`z'`dh'"=="" {
-		qui reg `y' `d' if `touse', vce(`vce') `noconstant'
-	}
-	else if "`z'"~="" {
-		qui reg `y' `d' (`z') if `touse', vce(`vce') `noconstant'
-	}
-	else if "`dh'"~="" {
-		qui reg `y' `d_orthog' (`z_opt') if `touse', vce(`vce') `noconstant'
+	if "`model'"=="partial" {
+		qui reg `yt' `d_resid_list' if `touse', vce(`vce') `noconstant'
 	}
 	else {
-		di as err "internal ddml estimate error"
-		exit
+		qui reg `yt' `d_resid_list' (`z_resid_list') if `touse', vce(`vce') `noconstant'
 	}
+
 	mat `b'=e(b)
 	mat `V'=e(V)
 	local cnames			`nameD'
@@ -162,7 +181,7 @@ program _ddml_estimate_main
 								clear				/// deletes all tilde-variables (to be implemented)
 								spec(string)		/// specification to post/display
 								REP(string)			/// resampling iteration to post/display or mean/median
-								replay				/// model has been estimated, just display results
+								replay				/// model has been estimated, just display results (option may be redundant)
 								debug				///
 								* ]
 	
@@ -173,8 +192,8 @@ program _ddml_estimate_main
 	// consflag
 	local consflag = ("`noconstant'"=="")
 	local showconsflag = ("`showconstant'"~="" & `consflag')	// ignored if nocons
-	// replay existing results
-	local replayflag = "`replay'"~=""
+	// replay existing results (replay option may be redundant)
+	local replayflag = "`replay'`spec'`rep'"~=""
 	// display summary table
 	local tableflag = "`notable'"==""
 	// request estimation/reporting of all combinations
@@ -234,6 +253,8 @@ program _ddml_estimate_main
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
+	local ivflag	= "`model'"=="iv"
+	local fivflag	= "`model'"=="fiv"
 
 	** standard errors
 	// local vce is the argument to the Stata option vce(.)
@@ -302,20 +323,32 @@ program _ddml_estimate_main
 		local Yss `nameY'_ss
 		foreach var in `nameD' {
 			local Dss `Dss' `var'_ss
-			local DHss `DHss' `var'_h_ss
 		}
-		foreach var in `nameZ' {
-			local Zss `Zss' `var'_ss
+		if `fivflag' {
+			foreach var in `nameD' {
+				local Zss `Zss' `var'_h_ss
+			}
+		}
+		else {
+			foreach var in `nameZ' {
+				local Zss `Zss' `var'_ss
+			}
 		}
 	}
 	if `psflag' {
 		local Yps `nameY'_ps
 		foreach var in `nameD' {
 			local Dps `Dps' `var'_ps
-			local DHps `DHps' `var'_h_ps
 		}
-		foreach var in `nameZ' {
-			local Zps `Zps' `var'_ps
+		if `fivflag' {
+			foreach var in `nameD' {
+				local Zps `Zps' `var'_h_ps
+			}
+		}
+		else {
+			foreach var in `nameZ' {
+				local Zps `Zps' `var'_ps
+			}
 		}
 	}
 	
@@ -382,132 +415,60 @@ program _ddml_estimate_main
 				mata: st_local("oneZopt",return_learner_item(`eqn',"opt","`m'"))
 				local Zopt `Zopt' `oneZopt'
 			}
-			
-			if "`model'"=="fiv" {
-				local dlist
-				local zlist
-				forvalues j = 1/`numeqnD' {
-					tempvar zvar`j' 
-					tempvar dx`j'
-					local dh : word `j' of `Zopt'
-					local dt : word `j' of `Dopt'
-					local dd : word `j' of `nameD'
-					qui gen double `zvar`j'' = `dt'_`m'-`dh'_`m' // E[D|ZX]-E[D|X] = instrument
-					qui gen double `dx`j'' = `dd'-`dh'_`m' // D-E[D|X] = endogenous regressor
-					local dlist `dlist' `dx`j''
-					local zlist `zlist' `zvar`j''
-				}
-				local dvtnames `Dopt'
-				local zvtnames `Zopt'
-				local d `dlist'
-				local z `zlist'
-				local norep norep
-			}
-			else {
-				local d `Dopt'
-				local z `Zopt'
-			}
+		
 			local title "`MSEtext'DDML model`stext'"
-			`qui' _ddml_reg if `mname'_sample_`m' & `touse',					///
-					`noconstant' vce(`vce')										///
-					y(`Yopt') yname(`nameY')									///
-					d(`d') dnames(`nameD') dvtnames(`dvtnames')			 		///
-					z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
-					mname(`mname') spec(`spectext') rep(`m')					///
-					title(`title') `norep'
-			
+			`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+					`noconstant' vce(`vce')								///
+					y(`Yopt') yname(`nameY')							///
+					d(`Dopt') dnames(`nameD')			 				///
+					z(`Zopt') znames(`nameZ')							///
+					mname(`mname') spec(`spectext') rep(`m')			///
+					title(`title')
+		
 			// estimate shortstack for this rep
 			if `ssflag' {
-				if "`model'"=="fiv" {
-					local dlist
-					local zlist
-					forvalues j = 1/`numeqnD' {
-						tempvar zvar`j' 
-						tempvar dx`j'
-						local dh : word `j' of `DHss'
-						local dt : word `j' of `Dss'
-						local dd : word `j' of `nameD'
-						qui gen double `zvar`j'' = `dt'_`m'-`dh'_`m' // E[D|ZX]-E[D|X] = instrument
-						qui gen double `dx`j'' = `dd'-`dh'_`m' // D-E[D|X] = endogenous regressor
-						local dlist `dlist' `dx`j''
-						local zlist `zlist' `zvar`j''
-					}
-					local dvtnames `Dss'
-					local zvtnames `DHss'
-					local d `dlist'
-					local z `zlist'
-					local norep norep
-				}
-				else {
-					local d `Dss'
-					local z `Zss'
-				}
-				
 				local title "Shortstack DDML model`stext'"
-				`qui' _ddml_reg if `mname'_sample_`m' & `touse',					///
-						`noconstant' vce(`vce')										///
-						y(`Yss') yname(`nameY')										///
-						d(`d') dnames(`nameD') dvtnames(`dvtnames') 				///
-						z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
-						mname(`mname') spec(ss) rep(`m')							///
-						title(`title') `norep'
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+						`noconstant' vce(`vce')								///
+						y(`Yss') yname(`nameY')								///
+						d(`Dss') dnames(`nameD') 							///
+						z(`Zss') znames(`nameZ') 							///
+						mname(`mname') spec(ss) rep(`m')					///
+						title(`title')
 			}
 			// estimate poolstack for this rep
 			if `psflag' {
-				if "`model'"=="fiv" {
-					local dlist
-					local zlist
-					forvalues j = 1/`numeqnD' {
-						tempvar zvar`j' 
-						tempvar dx`j'
-						local dh : word `j' of `DHps'
-						local dt : word `j' of `Dps'
-						local dd : word `j' of `nameD'
-						qui gen double `zvar`j'' = `dt'_`m'-`dh'_`m' // E[D|ZX]-E[D|X] = instrument
-						qui gen double `dx`j'' = `dd'-`dh'_`m' // D-E[D|X] = endogenous regressor
-						local dlist `dlist' `dx`j''
-						local zlist `zlist' `zvar`j''
-					}
-					local dvtnames `Dps'
-					local zvtnames `DHps'
-					local d `dlist'
-					local z `zlist'
-					local norep norep
-				}
-				else {
-					local d `Dps'
-					local z `Zps'
-				}
-				
 				local title "Poolstack DDML model`stext'"
-				`qui' _ddml_reg if `mname'_sample_`m' & `touse',					///
-						`noconstant' vce(`vce')										///
-						y(`Yps') yname(`nameY')										///
-						d(`d') dnames(`nameD') dvtnames(`dvtnames') 				///
-						z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
-						mname(`mname') spec(ps) rep(`m')							///
-						title(`title') `norep'
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+						`noconstant' vce(`vce')								///
+						y(`Yps') yname(`nameY')								///
+						d(`Dps') dnames(`nameD') 							///
+						z(`Zps') znames(`nameZ')							///
+						mname(`mname') spec(ps) rep(`m')					///
+						title(`title')
 			}
 		}
 		
 		// have looped over reps to get each optimal model and shortstack per rep
 		// now aggregate over reps to get mean/median
 		if `nreps' > 1 {
-			`qui' _ddml_reg, mname(`mname') spec(`spectext') medmean(mn) title("Mean over `nreps' `msetext'resamples") `noconstant'
-			`qui' _ddml_reg, mname(`mname') spec(`spectext') medmean(md) title("Median over `nreps' `msetext'resamples") `noconstant'
+			local title "Mean over `nreps' `msetext'resamples"
+			`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(mn) title(`title') `noconstant'
+			local title "Median over `nreps' `msetext'resamples"
+			`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(md) title(`title') `noconstant'
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean over `nreps' resamples)"
-				`qui' _ddml_reg, mname(`mname') spec(ss) medmean(mn) title(`title') `noconstant'
+				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(mn) title(`title') `noconstant'
 				local title "Shortstack DDML model (median over `nreps' resamples)"
-				`qui' _ddml_reg, mname(`mname') spec(ss) medmean(md) title(`title') `noconstant'
+				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(md) title(`title') `noconstant'
 			}
 			// poolstack
 			if `psflag' {
 				local title "Poolstack DDML model (mean over `nreps' resamples)"
-				`qui' _ddml_reg, mname(`mname') spec(ps) medmean(mn) title(`title') `noconstant'
+				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(mn) title(`title') `noconstant'
 				local title "Poolstack DDML model (median over `nreps' resamples)"
-				`qui' _ddml_reg, mname(`mname') spec(ps) medmean(md) title(`title') `noconstant'
+				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(md) title(`title') `noconstant'
 			}
 		}
 		
@@ -624,105 +585,36 @@ program _ddml_estimate_main
 					// save in AA
 					mata: (`mname'.estAA).put(("optspec","`m'"),"`i'")
 				}
-				if "`model'"=="fiv" {
-					local dlist
-					local zlist
-					forvalues j = 1/`numeqnD' {
-						tempvar zvar`j' 
-						tempvar dx`j'
-						local dh : word `j' of `z'
-						local dt : word `j' of `d'
-						local dd : word `j' of `nameD'
-						qui gen double `zvar`j'' = `dt'_`m'-`dh'_`m' // E[D|ZX]-E[D|X] = instrument
-						qui gen double `dx`j'' = `dd'-`dh'_`m' // D-E[D|X] = endogenous regressor
-						local dlist `dlist' `dx`j''
-						local zlist `zlist' `zvar`j''
-					}
-					local dvtnames `d'
-					local zvtnames `z'
-					local d `dlist'
-					local z `zlist'
-					local norep norep
-				}
-				`qui' _ddml_reg if `mname'_sample_`m' & `touse',				///
-						`noconstant' vce(`vce')									///
-						y(`y') yname(`nameY')									///
-						d(`d') dnames(`nameD') dvtnames(`dvtnames')		 		///
-						z(`z') znames(`nameZ') zvtnames(`zvtnames')				///
-						mname(`mname') spec(`i') rep(`m')						///
-						title(`title') `norep'
-				
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+						`noconstant' vce(`vce')								///
+						y(`y') yname(`nameY')								///
+						d(`d') dnames(`nameD')						 		///
+						z(`z') znames(`nameZ')								///
+						mname(`mname') spec(`i') rep(`m')					///
+						title(`title')
 				mata: `bmat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(bmat)")
 				mata: `semat'[(`m'-1)*`ncombos'+`i',.] = st_matrix("e(semat)")
 			}
 			
 			if `ssflag' {
-				if "`model'"=="fiv" {
-					local dlist
-					local zlist
-					forvalues j = 1/`numeqnD' {
-						tempvar zvar`j' 
-						tempvar dx`j'
-						local dh : word `j' of `DHss'
-						local dt : word `j' of `Dss'
-						local dd : word `j' of `nameD'
-						qui gen double `zvar`j'' = `dt'_`m'-`dh'_`m' // E[D|ZX]-E[D|X] = instrument
-						qui gen double `dx`j'' = `dd'-`dh'_`m' // D-E[D|X] = endogenous regressor
-						local dlist `dlist' `dx`j''
-						local zlist `zlist' `zvar`j''
-					}
-					local dvtnames `Dss'
-					local zvtnames `DHss'
-					local d `dlist'
-					local z `zlist'
-					local norep norep
-				}
-				else {
-					local d `Dss'
-					local z `Zss'
-				}
 				local title "Shortstack DDML model`stext'"
-				`qui' _ddml_reg if `mname'_sample_`m' & `touse',					///
-						`noconstant' vce(`vce')										///
-						y(`Yss') yname(`nameY')										///
-						d(`d') dnames(`nameD') dvtnames(`dvtnames') 				///
-						z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
-						mname(`mname') spec(ss) rep(`m')							///
-						title(`title') `norep'
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+						`noconstant' vce(`vce')								///
+						y(`Yss') yname(`nameY')								///
+						d(`Dss') dnames(`nameD')							///
+						z(`Zss') znames(`nameZ')							///
+						mname(`mname') spec(ss) rep(`m')					///
+						title(`title')
 			}
 			if `psflag' {
-				if "`model'"=="fiv" {
-					local dlist
-					local zlist
-					forvalues j = 1/`numeqnD' {
-						tempvar zvar`j' 
-						tempvar dx`j'
-						local dh : word `j' of `DHps'
-						local dt : word `j' of `Dps'
-						local dd : word `j' of `nameD'
-						qui gen double `zvar`j'' = `dt'_`m'-`dh'_`m' // E[D|ZX]-E[D|X] = instrument
-						qui gen double `dx`j'' = `dd'-`dh'_`m' // D-E[D|X] = endogenous regrepsor
-						local dlist `dlist' `dx`j''
-						local zlist `zlist' `zvar`j''
-					}
-					local dvtnames `Dps'
-					local zvtnames `DHps'
-					local d `dlist'
-					local z `zlist'
-					local norep norep
-				}
-				else {
-					local d `Dps'
-					local z `Zps'
-				}
 				local title "Poolstack DDML model`stext'"
-				`qui' _ddml_reg if `mname'_sample_`m' & `touse',					///
-						`noconstant' vce(`vce')										///
-						y(`Yps') yname(`nameY')										///
-						d(`d') dnames(`nameD') dvtnames(`dvtnames') 				///
-						z(`z') znames(`nameZ') zvtnames(`zvtnames')					///
-						mname(`mname') spec(ps) rep(`m')							///
-						title(`title') `norep'
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+						`noconstant' vce(`vce')								///
+						y(`Yps') yname(`nameY')								///
+						d(`Dps') dnames(`nameD') 							///
+						z(`Zps') znames(`nameZ')							///
+						mname(`mname') spec(ps) rep(`m')					///
+						title(`title')
 			}
 	
 		}
@@ -778,7 +670,7 @@ program _ddml_estimate_main
 					local specrep `: di %3.0f `i' %3.0f `m''
 					// pad out to 6 spaces
 					local specrep = (6-length("`specrep'"))*" " + "`specrep'"
-					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') replay notable `noconstant'
+					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') notable `noconstant'
 					di %6s "{`rcmd':`specrep'}" _c
 					di as res %14s "`yt'" _c
 					forvalues j=1/`numeqnD' {
@@ -814,14 +706,14 @@ program _ddml_estimate_main
 			}
 			else {
 				// only mse/ss specs available/reported
-				`qui' _ddml_reg, mname(`mname') spec(`spectext') rep(`m') replay `noconstant'
+				`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`m') `noconstant'
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep `: di "`otext'" %3.0f `m''
 				// pad out to 7 spaces
 				local specrep = (7-length("`specrep'"))*" " + "`specrep'"
-				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') replay notable `noconstant'
+				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') notable `noconstant'
 				di %6s "{`rcmd':`specrep'}" _c
 				mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 				mata: st_local("yt",return_learner_item(`eqn',"opt","`m'"))
@@ -859,14 +751,14 @@ program _ddml_estimate_main
 				di
 			}
 			if `ssflag' {
-				`qui' _ddml_reg, mname(`mname') spec(ss) rep(`m') replay `noconstant'
+				`qui' replay_estimate, mname(`mname') spec(ss) rep(`m') `noconstant'
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep `: di "ss" %3.0f `m''
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
-				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`m') replay notable `noconstant'
+				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`m') notable `noconstant'
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
@@ -893,14 +785,14 @@ program _ddml_estimate_main
 				di
 			}
 			if `psflag' {
-				`qui' _ddml_reg, mname(`mname') spec(ps) rep(`m') replay `noconstant'
+				`qui' replay_estimate, mname(`mname') spec(ps) rep(`m') `noconstant'
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep `: di "ps" %3.0f `m''
 				// pad out to 6 spaces
 				local specrep = "  " + "`specrep'"
-				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`m') replay notable `noconstant'
+				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`m') notable `noconstant'
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[poolstack]" _c
 				forvalues j=1/`numeqnD' {
@@ -957,7 +849,7 @@ program _ddml_estimate_main
 		foreach medmean in mn md {
 			** mean and median over mse
 			// force noconstant with mean/median
-			`qui' _ddml_reg, mname(`mname') spec(`spectext') rep(`medmean') replay noconstant
+			`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`medmean') noconstant
 			tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 			mat `btemp' = e(b)
 			mat `Vtemp' = e(V)
@@ -965,7 +857,7 @@ program _ddml_estimate_main
 			// pad out to 6 spaces
 			local specrep = " " + "`specrep'"
 			// force noconstant with mean/median
-			local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') replay notable `noconstant'
+			local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable `noconstant'
 			di %6s "{`rcmd':`specrep'}" _c
 			di as res %14s "[min-mse]" _c
 			forvalues j=1/`numeqnD' {
@@ -985,7 +877,7 @@ program _ddml_estimate_main
 			di
 			if `ssflag' {
 				// force noconstant with mean/median
-				`qui' _ddml_reg, mname(`mname') spec(ss) rep(`medmean') replay noconstant
+				`qui' replay_estimate, mname(`mname') spec(ss) rep(`medmean') noconstant
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
@@ -993,7 +885,7 @@ program _ddml_estimate_main
 				// pad out to 6 spaces
 				local specrep = " " + "`specrep'"
 				// force noconstant with mean/median
-				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`medmean') replay notable noconstant
+				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`medmean') notable noconstant
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
@@ -1014,7 +906,7 @@ program _ddml_estimate_main
 			}
 			if `psflag' {
 				// force noconstant with mean/median
-				`qui' _ddml_reg, mname(`mname') spec(ps) rep(`medmean') replay noconstant
+				`qui' replay_estimate, mname(`mname') spec(ps) rep(`medmean') noconstant
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
@@ -1022,7 +914,7 @@ program _ddml_estimate_main
 				// pad out to 6 spaces
 				local specrep = " " + "`specrep'"
 				// force noconstant with mean/median
-				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`medmean') replay notable noconstant
+				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`medmean') notable noconstant
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[poolstack]" _c
 				forvalues j=1/`numeqnD' {
@@ -1066,10 +958,10 @@ program _ddml_estimate_main
 	di
 	if ("`rep'"=="mn" | "`rep'"=="md") {
 		// force noconstant with mean/median
-		_ddml_reg, mname(`mname') spec(`specdisp') rep(`rep') replay noconstant
+		replay_estimate, mname(`mname') spec(`specdisp') rep(`rep') noconstant
 	}
 	else {
-		_ddml_reg, mname(`mname') spec(`specdisp') rep(`rep') replay `noconstant'
+		replay_estimate, mname(`mname') spec(`specdisp') rep(`rep') `noconstant'
 	}
 	di
 	
@@ -1125,488 +1017,6 @@ program define add_suffix, sclass
 	}
 	
 	sreturn local vnames `vnames'
-end
-
-// does OLS/IV and reports with substitute yname and dnames
-program define _ddml_reg, eclass
-	syntax [anything] [if] [in] , [								///
-				y(name) yname(name)								/// actual residualized var, original var
-				d(namelist) dnames(namelist) dvtnames(namelist)	/// actual var (may be a temp), original var, residualized (tilde) varname
-				z(namelist) znames(namelist) zvtnames(namelist)	/// actual var (may be a temp), original var, residualized (tilde) varname
-				mname(name)										///
-				spec(string) rep(string)						///
-				vce(string)										///
-				title(string)									///
-				medmean(string)									///
-				NOREP											///
-				NOConstant										///
-				replay											///
-				*												///
-				]
-
-	// consflag
-	local consflag = ("`noconstant'"=="")
-	mata: st_local("model",`mname'.model)
-	local fivflag	= "`model'"=="fiv"
-
-	if "`replay'"=="" & "`medmean'"=="" {	// estimate from scratch
-		
-		marksample touse
-		
-		tempname A
-		mata: `A' = AssociativeArray()
-		mata: `A'.reinit("string",2)
-		mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
-		
-		// default vtilde names
-		if "`dvtnames'"=="" {
-			local dvtnames `d'
-		}
-		if "`zvtnames'"=="" {
-			local zvtnames `z'
-		}
-
-		// add resample suffixes
-		// y always gets a suffix
-		local y_m `y'_`rep'
-		if "`norep'"=="" {	
-			add_suffix `d', suffix("_`rep'")
-			local d_m `s(vnames)'
-			add_suffix `z', suffix("_`rep'")
-			local z_m `s(vnames)'
-		}
-		else {
-			local d_m `d'
-			local z_m `z'
-		}
-		
-		// estimate
-		if "`z_m'"=="" {
-			qui reg `y_m' `d_m'         if `touse', vce(`vce') `noconstant' `options'
-		}
-		else {
-			// old-style regress syntax: put IVs in parentheses
-			qui reg `y_m' `d_m' (`z_m') if `touse', vce(`vce') `noconstant' `options'
-		}
-		tempname b V
-		mat `b' = e(b)
-		mat `V' = e(V)
-		local N = e(N)
-		local vce		`e(vce)'
-		local vcetype	`e(vcetype)'
-		local clustvar	`e(clustvar)'
-		local N_clust	=e(N_clust)
-		if `fivflag' {
-			local d		`dvtnames'
-			add_suffix	`dvtnames', suffix("_`rep'")
-			local d_m	`s(vnames)'
-			local dh	`zvtnames'
-			add_suffix	`zvtnames', suffix("_`rep'")
-			local dh_m	`s(vnames)'
-			// clear locals (IV info is stored as dh not z)
-			local z
-			local z_m
-		}
-		
-		// store post objects
-		mata: `A'.put(("N","post"),`N')
-		mata: `A'.put(("b","post"),st_matrix("`b'"))
-		mata: `A'.put(("V","post"),st_matrix("`V'"))
-		mata: `A'.put(("depvar","post"),"`yname'")
-		
-		// for calling program
-		ereturn clear
-		mata: st_matrix("e(bmat)",st_matrix("`b'"))
-		mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("`V'"))'))
-		
-		// store locals
-		local list_local title y y_m d d_m yname dnames vce vcetype
-		if "`model'"=="iv" {
-			local list_local `list_local' z z_m
-		}
-		else if "`model'"=="fiv" {
-			local list_local `list_local' z z_m dh dh_m
-		}
-		if "`clustvar'"~=""		local list_local `list_local' clustvar
-		foreach obj in `list_local' {
-			mata: `A'.put(("`obj'","local"),"``obj''")
-		}
-		// store scalars
-		local list_scalar
-		if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
-		foreach obj in `list_scalar' {
-			mata: `A'.put(("`obj'","scalar"),``obj'')
-		}
-		
-		// additional estimation results
-		ereturn scalar resample = `rep'
-		tempname eqn
-		mata: `eqn' = init_eStruct()
-		// Y eqn results
-		mata: `eqn' = (`mname'.eqnAA).get("`yname'")
-		// MSE
-		mata: `A'.put(("`y'_mse","scalar"),return_result_item(`eqn',"`y'","MSE","`rep'"))
-		// MSE folds
-		mata: `A'.put(("`y'_mse_folds","matrix"),return_result_item(`eqn',"`y'","MSE_folds","`rep'"))
-		// ss weights
-		if "`spec'"=="ss" {
-			mata: st_local("shortstack", `eqn'.shortstack)
-			mata: `A'.put(("`yname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
-		}
-		// ps weights
-		if "`spec'"=="ps" {
-			mata: st_local("poolstack", `eqn'.poolstack)
-			mata: `A'.put(("`yname'_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
-		}
-
-		// D eqn results - uses vtnames
-		local numeqnD	: word count `dnames'
-		forvalues i=1/`numeqnD' {
-			local dname : word `i' of `dnames'
-			local vtilde : word `i' of `dvtnames'
-			// no longer needed - can just use vtilde for vtilde_h
-			// local vtilde_h : word `i' of `zvtnames'
-			// remove the trailing "_h" so that the AA lookup uses the learner name
-			// local vtilde_h = substr("`vtilde_h'",1,strlen("`vtilde_h'")-2)
-			local vtilde_h `vtilde'
-
-			mata: `eqn' = (`mname'.eqnAA).get("`dname'")
-			// MSE
-			mata: `A'.put(("`vtilde'_mse","scalar"),return_result_item(`eqn',"`vtilde'","MSE","`rep'"))
-			// MSE folds
-			mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
-			// ss weights
-			if "`spec'"=="ss" {
-				mata: st_local("shortstack", `eqn'.shortstack)
-				mata: `A'.put(("`dname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
-			}
-			// ps weights
-			if "`spec'"=="ps" {
-				mata: st_local("poolstack", `eqn'.poolstack)
-				mata: `A'.put(("`dname'_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
-			}
-			if `fivflag' {
-				// MSE
-				mata: `A'.put(("`vtilde_h'_mse","scalar"),return_result_item(`eqn',"`vtilde_h'","MSE_h","`rep'"))
-				// MSE folds
-				mata: `A'.put(("`vtilde_h'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde_h'","MSE_h_folds","`rep'"))
-				// ss weights
-				if "`spec'"=="ss" {
-						mata: st_local("shortstack", `eqn'.shortstack)
-						mata: `A'.put(("`dname'_h_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights_h","`rep'"))
-				}
-				// ps weights
-				if "`spec'"=="ps" {
-						mata: st_local("poolstack", `eqn'.poolstack)
-						mata: `A'.put(("`dname'_h_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights_h","`rep'"))
-				}
-			}
-		}
-		if `fivflag'==0 {
-			// Z eqn results; fiv won't enter
-			local numeqnZ	: word count `znames'
-			forvalues i=1/`numeqnZ' {
-				local zname : word `i' of `znames'
-				local vtilde : word `i' of `z'
-				mata: `eqn' = (`mname'.eqnAA).get("`zname'")
-				// MSE
-				mata: `A'.put(("`vtilde'_mse","scalar"),return_result_item(`eqn',"`vtilde'","MSE","`rep'"))
-				// MSE folds
-				mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
-				// ss weights
-				if "`spec'"=="ss" {
-					mata: st_local("shortstack", `eqn'.shortstack)
-					mata: `A'.put(("`zname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
-				}
-				// ps weights
-				if "`spec'"=="ps" {
-					mata: st_local("poolstack", `eqn'.poolstack)
-					mata: `A'.put(("`zname'_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
-				}
-			}
-		}
-		
-		mata: (`mname'.estAA).put(("`spec'","`rep'"),`A')
-		
-		// no longer needed
-		foreach obj in `A' `eqn' {
-			cap mata: mata drop `obj'
-		}
-	}
-	else if "`replay'"=="" & "`medmean'"~="" {	// aggregate over resamples
-		
-		tempname b V bagg Vagg Vi
-		tempname bvec brow sbvec bmed Vvec sVvec Vmed
-		tempvar esample
-		tempname B
-		
-		// initialize
-		mata: st_local("nameD",invtokens(`mname'.nameD))
-		// don't aggregate the constant
-		local K : word count `nameD'
-		mata: st_local("nreps",strofreal(`mname'.nreps))
-		mata: `B' = AssociativeArray()
-		local isodd = mod(`nreps',2)
-		local medrow = ceil(`nreps'/2)
-		local N = 0
-		
-		// bvec a misnomer - usually a vector, but can be a matrix if multiple D variables
-		mata: `bvec' = J(`nreps',`K',0)
-		mata: `bagg' = J(1,`K',0)
-		forvalues m=1/`nreps' {
-			mata: check_spec(`mname',"`spec'","`m'")
-			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-			mata: `brow' = `B'.get(("b","post"))
-			// don't aggregate the constant
-			mata: `bvec'[`m',.] = `brow'[1,(1..(cols(`brow')-`consflag'))]
-			// row/colnames etc. - need to do this only once
-			if `m'==1 {
-				mata: st_local("depvar",`B'.get(("depvar","post")))
-				// retrieve locals; if empty, will be ""
-				local list_local y d dh z yname dnames vce vcetype clustvar
-				foreach obj in `list_local' {
-					mata: st_local("`obj'",`B'.get(("`obj'","local")))
-				}
-				// retrieve scalars (as locals)
-				local list_scalar
-				if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
-				foreach obj in `list_scalar' {
-					mata: st_local("`obj'",strofreal(`B'.get(("`obj'","scalar"))))
-				}
-			}
-			// possible that different estimation samples have different #obs
-			qui count if `mname'_sample_`m'==1
-			local N = `N' + r(N)
-		}
-		local N = round(`N'/`nreps')
-		
-		if "`medmean'"=="mn" {
-			// mean beta
-			mata: `bagg' = mean(`bvec')
-			mata: st_matrix("`bagg'",`bagg')
-		}
-		else if "`medmean'"=="md" {
-			// median beta
-			forvalues k=1/`K' {
-				mata: `sbvec' = sort(`bvec',`k')
-				if `isodd' {
-					mata: `bagg'[1,`k'] = `sbvec'[`medrow',`k']
-				}
-				else {
-					mata: `bagg'[1,`k'] = (`sbvec'[`medrow',`k'] + `sbvec'[`medrow'+1,`k'])/2
-				}
-			}
-			mata: st_matrix("`bagg'",`bagg')
-		}
-		else {
-			di as err "_ddml_reg error - unrecognized option `medmean'"
-			exit 198
-		}
-		
-		mata: `Vagg' = J(`K',`K',0)
-		mata: `Vvec' = J(`nreps',1,0)
-		if "`medmean'"=="mn" {
-			// harmonic mean
-			// inefficient - does off-diagonals twice
-			forvalues m=1/`nreps' {
-				mata: check_spec(`mname',"`spec'","`m'")
-				mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-				mata: `Vi' = `B'.get(("V","post"))
-				// don't aggregate the constant
-				mata: `Vi' = `Vi'[(1::(cols(`Vi')-`consflag')),(1..(cols(`Vi')-`consflag'))]
-				forvalues j=1/`K' {
-					forvalues k=1/`K' {
-						// abs(.) needed?
-						mata: `Vi'[`j',`k'] = `Vi'[`j',`k'] + abs((`bvec'[`m',`j'] - `bagg'[1,`j'])*(`bvec'[`m',`k'] - `bagg'[1,`k']))
-					}
-				}
-				mata: `Vagg' = `Vagg' + 1:/`Vi'
-			}
-			mata: `Vagg' = `nreps' :/ `Vagg'
-			mata: st_matrix("`Vagg'",`Vagg')
-		}
-		else if "`medmean'"=="md" {
-			// median VCV
-			// inefficient - does off-diagonals twice
-			forvalues j=1/`K' {
-				forvalues k=1/`K' {
-					forvalues m=1/`nreps' {
-						mata: check_spec(`mname',"`spec'","`m'")
-						mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-						mata: `Vi' = `B'.get(("V","post"))
-						mata: `Vvec'[`m'] = `Vi'[`j',`k']
-					}
-					// adjustment as per
-					// https://docs.doubleml.org/stable/guide/resampling.html#repeated-cross-fitting-with-k-folds-and-m-repetition
-					// (generalized to multiple D variables)
-					mata: `Vvec' = `Vvec' + abs((`bvec'[.,`j'] :- `bagg'[1,`j']):*(`bvec'[.,`k'] :- `bagg'[1,`k']))
-					mata: `sVvec' = sort(`Vvec',1)
-					if `isodd' {
-						mata: `Vagg'[`j',`k'] = `sVvec'[`medrow',1]
-					}
-					else {
-						mata: `Vagg'[`j',`k'] = (`sVvec'[`medrow',1] + `sVvec'[`medrow'+1,1])/2
-					}
-				}
-			}
-			mata: st_matrix("`Vagg'",`Vagg')
-		}
-		else {
-			di as err "_ddml_reg error - unrecognized option `medmean'"
-			exit 198
-		}
-	
-		tempname A
-		mata: `A' = AssociativeArray()
-		mata: `A'.reinit("string",2)
-		mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
-		
-		mata: `A'.put(("N","post"),`N')
-		mata: `A'.put(("b","post"),`bagg')
-		mata: `A'.put(("V","post"),`Vagg')
-		mata: `A'.put(("depvar","post"),"`depvar'")
-		
-		// store locals
-		local list_local title y d yname dnames vce vcetype
-		if "`model'"=="iv" {
-			local list_local `list_local' z
-		}
-		else if "`model'"=="fiv" {
-			local list_local `list_local' z dh
-		}
-		if "`clustvar'"~=""		local list_local `list_local' clustvar
-		foreach obj in `list_local' {
-			mata: `A'.put(("`obj'","local"),"``obj''")
-		}
-		// store scalars
-		local list_scalar
-		if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
-		foreach obj in `list_scalar' {
-			mata: `A'.put(("`obj'","scalar"),``obj'')
-		}
-		// special case - "_m" subscript doesn't apply to mean/median over resamplings
-		// so store without resample subscript
-		foreach obj in y d dh z {
-			mata: `A'.put(("`obj'_m","local"),"``obj''")
-		}
-		// special case - vector of betas available only for mean/median
-		mata: `A'.put(("b_resamples","matrix"),`bvec')
-		
-		// store AA with median/mean results
-		mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
-		
-		// no longer needed
-		foreach obj in `A' `B' `bagg' `bvec' `brow' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' {
-			cap mata: mata drop `obj'
-		}
-		
-	}
-	else {
-		// replay
-		tempname B keys isscalar islocal ismatrix
-
-		mata: `B' = AssociativeArray()
-		mata: check_spec(`mname',"`spec'","`rep'")
-		mata: `B' = (`mname'.estAA).get(("`spec'","`rep'"))
-		mata: `keys' = `B'.keys()
-		mata: st_local("nentries",strofreal(rows(`keys')))
-		mata: `isscalar'	= (`keys'[.,2] :== "scalar")
-		mata: `islocal'		= (`keys'[.,2] :== "local")
-		mata: `ismatrix'	= (`keys'[.,2] :== "matrix")
-		
-		tempname b V
-		mata: st_matrix("`b'",`B'.get(("b","post")))
-		mata: st_matrix("`V'",`B'.get(("V","post")))
-		mata: st_local("N",strofreal(`B'.get(("N","post"))))
-		mata: st_local("depvar",`B'.get(("depvar","post")))
-		mata: st_local("yname",`B'.get(("yname","local")))
-		mata: st_local("dnames",`B'.get(("dnames","local")))
-		
-		if `consflag' {
-			// will be empty if no constant
-			local consname "_cons"
-		}
-		
-		matrix rownames `b' = `depvar'
-		matrix colnames `b' = `dnames' `consname'
-	 	matrix colnames `V' = `dnames' `consname'
-		matrix rownames `V' = `dnames' `consname'
-		
-		tempvar esample
-		cap gen `esample' = `mname'_sample_`rep'
-		if _rc>0 {
-			// sample variable doesn't exist; ignore
-			local esample
-		}
-		
-		ereturn clear
-		ereturn post `b' `V', depname(`depvar') obs(`N') esample(`esample')
-		
-		ereturn local cmd ddml
-		ereturn local model `model'
-		ereturn local rep `rep'
-		ereturn local spec `spec'
-		ereturn local tmname `mname'	// temporary mname
-		
-		// extract and post scalars, locals, matrices
-		forvalues i=1/`nentries' {
-			mata: st_local("topost",strofreal(`isscalar'[`i']))
-			if `topost' {
-				mata: st_local("sname",substr(`keys'[`i',1],1,32))
-				mata: st_numscalar("e(`sname')",`B'.get(`keys'[`i',.]))
-			}
-		}
-		forvalues i=1/`nentries' {
-			mata: st_local("topost",strofreal(`islocal'[`i']))
-			if `topost' {
-				mata: st_local("lname",substr(`keys'[`i',1],1,32))
-				mata: st_global("e(`lname')",`B'.get(`keys'[`i',.]))
-			}
-		}
-		forvalues i=1/`nentries' {
-			mata: st_local("topost",strofreal(`ismatrix'[`i']))
-			if `topost' {
-				mata: st_local("tmname",substr(`keys'[`i',1],1,32))
-				mata: st_matrix("e(`tmname')",`B'.get(`keys'[`i',.]))
-			}
-		}
-		
-		// no longer needed
-		foreach obj in `B' `keys' `isscalar' `islocal' `ismatrix' {
-			cap mata: mata drop `obj'
-		}
-		
-		// display results
-		di as text "`e(title)'"
-		di as text "y-E[y|X]" _col(11) "= " as res "`e(y_m)'" _c
-		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
-		if "`e(model)'"~="fiv" {
-			di as text "D-" _c
-		}
-		di as text "E[D|X,Z]" _col(11)  "= " as res "`e(d_m)'"
-		if "`e(model)'" == "iv" {
-			di as text "Z-E[Z|X]" _col(11) "= " as res "`e(z_m)'"
-		}
-		else if "`e(model)'" == "fiv" {
-			di as text "E[D|X]" _col(11) "= " as res "`e(dh_m)'"
-		}
-		if "`e(model)'" == "fiv" {
-			di as text "Orthogonalized D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
-		}
-		ereturn display
-		
-		// report warning if clustered SEs requested but doesn't match clustered crossfitting
-		mata: st_local("fclustvar",`mname'.fclustvar)
-		if "`e(clustvar)'"~="" {
-			if "`fclustvar'"=="" {
-				di as res "Warning" as text ": crossfit folds do not respect cluster structure used for VCE."
-			}
-			else if "`fclustvar'"~="`e(clustvar)'" {
-				di as res "Warning" as text ": cluster variable for VCE does not match cluster variable for crossfit folds."
-			}
-		}
-	}
-
 end
 
 program define _ddml_make_varlists, rclass
@@ -1705,5 +1115,529 @@ program define _ddml_make_varlists, rclass
 	return local yvars `vtlistY'
 	return local dvars `Dtilde'
 	return local zvars `Ztilde' `DHtilde'
+
+end
+
+// does OLS/IV and reports with substitute yname and dnames
+program define estimate_and_store, eclass
+	syntax [anything] [if] [in] , [				///
+				y(name) yname(name)				/// predicted var, original var
+				d(namelist) dnames(namelist)	/// predicted var, original var
+				z(namelist) znames(namelist)	/// predicted var, original var
+												/// if model=fiv, z=DH
+				mname(name)						///
+				spec(string)					///
+				rep(string)						///
+				vce(string)						///
+				title(string)					///
+				NOConstant						///
+				*								///
+				]
+
+	local consflag = ("`noconstant'"=="")
+	mata: st_local("model",`mname'.model)
+	local ivflag	= "`model'"=="iv"
+	local fivflag	= "`model'"=="fiv"
+	local numeqnD	: word count `dnames'
+	local numeqnZ	: word count `znames'
+		
+	marksample touse
+	
+	tempname A
+	mata: `A' = AssociativeArray()
+	mata: `A'.reinit("string",2)
+	mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
+	
+	// add resample suffixes
+	local y_m `y'_`rep'
+	add_suffix `d', suffix("_`rep'")
+	local d_m `s(vnames)'
+	add_suffix `z', suffix("_`rep'")
+	local z_m `s(vnames)'
+	
+	// residualize
+	// y var
+	tempvar y_resid
+	qui gen double `y_resid' = `yname' - `y_m'
+	// D vars
+	forvalues i=1/`numeqnD' {
+		tempvar d_resid
+		local dname_i : word `i' of `dnames'
+		local dtilde_i : word `i' of `d_m'
+		qui gen double `d_resid' = `dname_i' - `dtilde_i'
+		local d_resid_list `d_resid_list' `d_resid'
+	}
+	// Z vars, iv model
+	if `ivflag' {
+		forvalues i=1/`numeqnZ' {
+			tempvar z_resid
+			local zname_i : word `i' of `znames'
+			local ztilde_i : word `i' of `z_m'
+			qui gen double `z_resid' = `zname_i' - `ztilde_i'
+			local z_resid_list `z_resid_list' `z_resid'
+		}
+	}
+	// D and Z, fiv model (nb: awkward naming)
+	if `fivflag' {
+		tempvar d_resid_list z_resid_list
+		qui gen double `d_resid_list' = `dnames' - `z_m'
+		qui gen double `z_resid_list' = `d_m' - `z_m'
+	}
+	// estimate
+	if ~`ivflag' & ~`fivflag' {
+		qui reg `y_resid' `d_resid_list' if `touse', vce(`vce') `noconstant' `options'
+	}
+	else {
+		// old-style regress syntax: put IVs in parentheses
+		 qui reg `y_resid' `d_resid_list' (`z_resid_list') if `touse', vce(`vce') `noconstant' `options'
+	}
+	tempname b V
+	mat `b' = e(b)
+	mat `V' = e(V)
+	local N = e(N)
+	local vce		`e(vce)'
+	local vcetype	`e(vcetype)'
+	local clustvar	`e(clustvar)'
+	local N_clust	=e(N_clust)
+	if `fivflag' {
+		local dh	`z'
+		local dh_m	`z_m'
+		// clear locals (IV info is stored as dh not z)
+		local z
+		local z_m
+	}
+	
+	// store post objects
+	mata: `A'.put(("N","post"),`N')
+	mata: `A'.put(("b","post"),st_matrix("`b'"))
+	mata: `A'.put(("V","post"),st_matrix("`V'"))
+	mata: `A'.put(("depvar","post"),"`yname'")
+	
+	// for calling program
+	ereturn clear
+	mata: st_matrix("e(bmat)",st_matrix("`b'"))
+	mata: st_matrix("e(semat)",sqrt(diagonal(st_matrix("`V'"))'))
+	
+	// store locals
+	local list_local title y y_m d d_m yname dnames vce vcetype
+	if "`model'"=="iv" {
+		local list_local `list_local' z z_m
+	}
+	else if "`model'"=="fiv" {
+		local list_local `list_local' z z_m dh dh_m
+	}
+	if "`clustvar'"~=""		local list_local `list_local' clustvar
+	foreach obj in `list_local' {
+		mata: `A'.put(("`obj'","local"),"``obj''")
+	}
+	// store scalars
+	local list_scalar
+	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+	foreach obj in `list_scalar' {
+		mata: `A'.put(("`obj'","scalar"),``obj'')
+	}
+	
+	// additional estimation results
+	ereturn scalar resample = `rep'
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	// Y eqn results
+	mata: `eqn' = (`mname'.eqnAA).get("`yname'")
+	// MSE
+	mata: `A'.put(("`y'_mse","scalar"),return_result_item(`eqn',"`y'","MSE","`rep'"))
+	// MSE folds
+	mata: `A'.put(("`y'_mse_folds","matrix"),return_result_item(`eqn',"`y'","MSE_folds","`rep'"))
+	// ss weights
+	if "`spec'"=="ss" {
+		mata: st_local("shortstack", `eqn'.shortstack)
+		mata: `A'.put(("`yname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
+	}
+	// ps weights
+	if "`spec'"=="ps" {
+		mata: st_local("poolstack", `eqn'.poolstack)
+		mata: `A'.put(("`yname'_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
+	}
+
+	// D eqn results - uses vtilde names in d
+	forvalues i=1/`numeqnD' {
+		local dname : word `i' of `dnames'
+		local vtilde : word `i' of `d'
+		local vtilde_h `vtilde'
+
+		mata: `eqn' = (`mname'.eqnAA).get("`dname'")
+		// MSE
+		mata: `A'.put(("`vtilde'_mse","scalar"),return_result_item(`eqn',"`vtilde'","MSE","`rep'"))
+		// MSE folds
+		mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
+		// ss weights
+		if "`spec'"=="ss" {
+			mata: st_local("shortstack", `eqn'.shortstack)
+			mata: `A'.put(("`dname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
+		}
+		// ps weights
+		if "`spec'"=="ps" {
+			mata: st_local("poolstack", `eqn'.poolstack)
+			mata: `A'.put(("`dname'_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
+		}
+		if `fivflag' {
+			// MSE
+			mata: `A'.put(("`vtilde_h'_mse","scalar"),return_result_item(`eqn',"`vtilde_h'","MSE_h","`rep'"))
+			// MSE folds
+			mata: `A'.put(("`vtilde_h'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde_h'","MSE_h_folds","`rep'"))
+			// ss weights
+			if "`spec'"=="ss" {
+					mata: st_local("shortstack", `eqn'.shortstack)
+					mata: `A'.put(("`dname'_h_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights_h","`rep'"))
+			}
+			// ps weights
+			if "`spec'"=="ps" {
+					mata: st_local("poolstack", `eqn'.poolstack)
+					mata: `A'.put(("`dname'_h_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights_h","`rep'"))
+			}
+		}
+	}
+	if `fivflag'==0 {
+		// Z eqn results; fiv won't enter
+		forvalues i=1/`numeqnZ' {
+			local zname : word `i' of `znames'
+			local vtilde : word `i' of `z'
+			mata: `eqn' = (`mname'.eqnAA).get("`zname'")
+			// MSE
+			mata: `A'.put(("`vtilde'_mse","scalar"),return_result_item(`eqn',"`vtilde'","MSE","`rep'"))
+			// MSE folds
+			mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
+			// ss weights
+			if "`spec'"=="ss" {
+				mata: st_local("shortstack", `eqn'.shortstack)
+				mata: `A'.put(("`zname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
+			}
+			// ps weights
+			if "`spec'"=="ps" {
+				mata: st_local("poolstack", `eqn'.poolstack)
+				mata: `A'.put(("`zname'_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
+			}
+		}
+	}
+	
+	mata: (`mname'.estAA).put(("`spec'","`rep'"),`A')
+	
+	// no longer needed
+	foreach obj in `A' `eqn' {
+		cap mata: mata drop `obj'
+	}
+	
+end
+
+// estimates and stores mean/median estimates across resamples
+program define medmean_and_store, eclass
+	syntax [anything] [if] [in] , [								///
+				mname(name)										///
+				spec(string)									///
+				title(string)									///
+				medmean(string)									///
+				NOConstant										///
+				]
+
+	local consflag = ("`noconstant'"=="")
+	mata: st_local("model",`mname'.model)
+	local ivflag	= "`model'"=="iv"
+	local fivflag	= "`model'"=="fiv"
+		
+	tempname b V bagg Vagg Vi
+	tempname bvec brow sbvec bmed Vvec sVvec Vmed
+	tempvar esample
+	tempname B
+	
+	// initialize
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	// don't aggregate the constant
+	local K : word count `nameD'
+	mata: st_local("nreps",strofreal(`mname'.nreps))
+	mata: `B' = AssociativeArray()
+	local isodd = mod(`nreps',2)
+	local medrow = ceil(`nreps'/2)
+	local N = 0
+	
+	// bvec a misnomer - usually a vector, but can be a matrix if multiple D variables
+	mata: `bvec' = J(`nreps',`K',0)
+	mata: `bagg' = J(1,`K',0)
+	forvalues m=1/`nreps' {
+		mata: check_spec(`mname',"`spec'","`m'")
+		mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
+		mata: `brow' = `B'.get(("b","post"))
+		// don't aggregate the constant
+		mata: `bvec'[`m',.] = `brow'[1,(1..(cols(`brow')-`consflag'))]
+		// row/colnames etc. - need to do this only once
+		if `m'==1 {
+			mata: st_local("depvar",`B'.get(("depvar","post")))
+			// retrieve locals; if empty, will be ""
+			local list_local y d dh z yname dnames vce vcetype clustvar
+			foreach obj in `list_local' {
+				mata: st_local("`obj'",`B'.get(("`obj'","local")))
+			}
+			// retrieve scalars (as locals)
+			local list_scalar
+			if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+			foreach obj in `list_scalar' {
+				mata: st_local("`obj'",strofreal(`B'.get(("`obj'","scalar"))))
+			}
+		}
+		// possible that different estimation samples have different #obs
+		qui count if `mname'_sample_`m'==1
+		local N = `N' + r(N)
+	}
+	local N = round(`N'/`nreps')
+	
+	if "`medmean'"=="mn" {
+		// mean beta
+		mata: `bagg' = mean(`bvec')
+		mata: st_matrix("`bagg'",`bagg')
+	}
+	else if "`medmean'"=="md" {
+		// median beta
+		forvalues k=1/`K' {
+			mata: `sbvec' = sort(`bvec',`k')
+			if `isodd' {
+				mata: `bagg'[1,`k'] = `sbvec'[`medrow',`k']
+			}
+			else {
+				mata: `bagg'[1,`k'] = (`sbvec'[`medrow',`k'] + `sbvec'[`medrow'+1,`k'])/2
+			}
+		}
+		mata: st_matrix("`bagg'",`bagg')
+	}
+	else {
+		di as err "replay_estimate error - unrecognized option `medmean'"
+		exit 198
+	}
+	
+	mata: `Vagg' = J(`K',`K',0)
+	mata: `Vvec' = J(`nreps',1,0)
+	if "`medmean'"=="mn" {
+		// harmonic mean
+		// inefficient - does off-diagonals twice
+		forvalues m=1/`nreps' {
+			mata: check_spec(`mname',"`spec'","`m'")
+			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
+			mata: `Vi' = `B'.get(("V","post"))
+			// don't aggregate the constant
+			mata: `Vi' = `Vi'[(1::(cols(`Vi')-`consflag')),(1..(cols(`Vi')-`consflag'))]
+			forvalues j=1/`K' {
+				forvalues k=1/`K' {
+					// abs(.) needed?
+					mata: `Vi'[`j',`k'] = `Vi'[`j',`k'] + abs((`bvec'[`m',`j'] - `bagg'[1,`j'])*(`bvec'[`m',`k'] - `bagg'[1,`k']))
+				}
+			}
+			mata: `Vagg' = `Vagg' + 1:/`Vi'
+		}
+		mata: `Vagg' = `nreps' :/ `Vagg'
+		mata: st_matrix("`Vagg'",`Vagg')
+	}
+	else if "`medmean'"=="md" {
+		// median VCV
+		// inefficient - does off-diagonals twice
+		forvalues j=1/`K' {
+			forvalues k=1/`K' {
+				forvalues m=1/`nreps' {
+					mata: check_spec(`mname',"`spec'","`m'")
+					mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
+					mata: `Vi' = `B'.get(("V","post"))
+					mata: `Vvec'[`m'] = `Vi'[`j',`k']
+				}
+				// adjustment as per
+				// https://docs.doubleml.org/stable/guide/resampling.html#repeated-cross-fitting-with-k-folds-and-m-repetition
+				// (generalized to multiple D variables)
+				mata: `Vvec' = `Vvec' + abs((`bvec'[.,`j'] :- `bagg'[1,`j']):*(`bvec'[.,`k'] :- `bagg'[1,`k']))
+				mata: `sVvec' = sort(`Vvec',1)
+				if `isodd' {
+					mata: `Vagg'[`j',`k'] = `sVvec'[`medrow',1]
+				}
+				else {
+					mata: `Vagg'[`j',`k'] = (`sVvec'[`medrow',1] + `sVvec'[`medrow'+1,1])/2
+				}
+			}
+		}
+		mata: st_matrix("`Vagg'",`Vagg')
+	}
+	else {
+		di as err "replay_estimate error - unrecognized option `medmean'"
+		exit 198
+	}
+
+	tempname A
+	mata: `A' = AssociativeArray()
+	mata: `A'.reinit("string",2)
+	mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
+	
+	mata: `A'.put(("N","post"),`N')
+	mata: `A'.put(("b","post"),`bagg')
+	mata: `A'.put(("V","post"),`Vagg')
+	mata: `A'.put(("depvar","post"),"`depvar'")
+	
+	// store locals
+	local list_local title y d yname dnames vce vcetype
+	if "`model'"=="iv" {
+		local list_local `list_local' z
+	}
+	else if "`model'"=="fiv" {
+		local list_local `list_local' z dh
+	}
+	if "`clustvar'"~=""		local list_local `list_local' clustvar
+	foreach obj in `list_local' {
+		mata: `A'.put(("`obj'","local"),"``obj''")
+	}
+	// store scalars
+	local list_scalar
+	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+	foreach obj in `list_scalar' {
+		mata: `A'.put(("`obj'","scalar"),``obj'')
+	}
+	// special case - "_m" subscript doesn't apply to mean/median over resamplings
+	// so store without resample subscript
+	foreach obj in y d dh z {
+		mata: `A'.put(("`obj'_m","local"),"``obj''")
+	}
+	// special case - vector of betas available only for mean/median
+	mata: `A'.put(("b_resamples","matrix"),`bvec')
+	
+	// store AA with median/mean results
+	mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
+	
+	// no longer needed
+	foreach obj in `A' `B' `bagg' `bvec' `brow' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' {
+		cap mata: mata drop `obj'
+	}
+	
+end
+
+// replays stored estimate
+program define replay_estimate, eclass
+	syntax [anything] [if] [in] , [								///
+				mname(name)										///
+				spec(string)									///
+				rep(string)										///
+				NOConstant										///
+				]
+
+	local consflag = ("`noconstant'"=="")
+	mata: st_local("model",`mname'.model)
+	local ivflag	= "`model'"=="iv"
+	local fivflag	= "`model'"=="fiv"
+
+	// replay
+	tempname B keys isscalar islocal ismatrix
+
+	mata: `B' = AssociativeArray()
+	mata: check_spec(`mname',"`spec'","`rep'")
+	mata: `B' = (`mname'.estAA).get(("`spec'","`rep'"))
+	mata: `keys' = `B'.keys()
+	mata: st_local("nentries",strofreal(rows(`keys')))
+	mata: `isscalar'	= (`keys'[.,2] :== "scalar")
+	mata: `islocal'		= (`keys'[.,2] :== "local")
+	mata: `ismatrix'	= (`keys'[.,2] :== "matrix")
+	
+	tempname b V
+	mata: st_matrix("`b'",`B'.get(("b","post")))
+	mata: st_matrix("`V'",`B'.get(("V","post")))
+	mata: st_local("N",strofreal(`B'.get(("N","post"))))
+	mata: st_local("depvar",`B'.get(("depvar","post")))
+	mata: st_local("yname",`B'.get(("yname","local")))
+	mata: st_local("dnames",`B'.get(("dnames","local")))
+	
+	if `consflag' {
+		// will be empty if no constant
+		local consname "_cons"
+	}
+	
+	matrix rownames `b' = `depvar'
+	matrix colnames `b' = `dnames' `consname'
+ 	matrix colnames `V' = `dnames' `consname'
+	matrix rownames `V' = `dnames' `consname'
+	
+	tempvar esample
+	cap gen `esample' = `mname'_sample_`rep'
+	if _rc>0 {
+		// sample variable doesn't exist; ignore
+		local esample
+	}
+	
+	ereturn clear
+	ereturn post `b' `V', depname(`depvar') obs(`N') esample(`esample')
+	
+	ereturn local cmd ddml
+	ereturn local model `model'
+	ereturn local rep `rep'
+	ereturn local spec `spec'
+	ereturn local tmname `mname'	// temporary mname
+	
+	// extract and post scalars, locals, matrices
+	forvalues i=1/`nentries' {
+		mata: st_local("topost",strofreal(`isscalar'[`i']))
+		if `topost' {
+			mata: st_local("sname",substr(`keys'[`i',1],1,32))
+			mata: st_numscalar("e(`sname')",`B'.get(`keys'[`i',.]))
+		}
+	}
+	forvalues i=1/`nentries' {
+		mata: st_local("topost",strofreal(`islocal'[`i']))
+		if `topost' {
+			mata: st_local("lname",substr(`keys'[`i',1],1,32))
+			mata: st_global("e(`lname')",`B'.get(`keys'[`i',.]))
+		}
+	}
+	forvalues i=1/`nentries' {
+		mata: st_local("topost",strofreal(`ismatrix'[`i']))
+		if `topost' {
+			mata: st_local("tmname",substr(`keys'[`i',1],1,32))
+			mata: st_matrix("e(`tmname')",`B'.get(`keys'[`i',.]))
+		}
+	}
+	
+	// no longer needed
+	foreach obj in `B' `keys' `isscalar' `islocal' `ismatrix' {
+		cap mata: mata drop `obj'
+	}
+	
+	// display results
+	di as text "`e(title)'"
+	di as text "y-E[y|X]" _col(11) "= " as res "y-`e(y_m)'" _c
+	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
+	if "`e(model)'"~="fiv" {
+		di as text "D-" _c
+	}
+	di as text "E[D|X,Z]" _col(11) "= " _c
+	local numeqnD : word count `e(d_m)'
+	forvalues i=1/`numeqnD' {
+		local Dtilde : word `i' of `e(d_m)' {
+		// iv model residualizes, fiv model uses different approach
+		if "`e(model)'"=="iv" di as res "D`i'-" _c
+		di as res "`Dtilde' " _c
+	}
+	di
+	if "`e(model)'" == "iv" {
+		di as text "Z-E[Z|X]" _col(11) "= " _c
+		local numeqnZ : word count `e(z_m)'
+		forvalues i=1/`numeqnZ' {
+			local Ztilde : word `i' of `e(z_m)' {
+			di as res "Z`i'-`Ztilde' " _c
+		}
+		di
+	}
+	if "`e(model)'" == "fiv" {
+		di as text "E[D|X]" _col(11) "= " as res "`e(dh_m)'"
+		di as text "Orthogonalized D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
+	}
+	ereturn display
+	
+	// report warning if clustered SEs requested but doesn't match clustered crossfitting
+	mata: st_local("fclustvar",`mname'.fclustvar)
+	if "`e(clustvar)'"~="" {
+		if "`fclustvar'"=="" {
+			di as res "Warning" as text ": crossfit folds do not respect cluster structure used for VCE."
+		}
+		else if "`fclustvar'"~="`e(clustvar)'" {
+			di as res "Warning" as text ": cluster variable for VCE does not match cluster variable for crossfit folds."
+		}
+	}
 
 end
