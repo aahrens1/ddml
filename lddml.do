@@ -192,7 +192,7 @@ transmorphic return_learner_item(	struct eStruct e,
 {
 	r = (e.lrnAA).get((key1,key2))
 	if (r==NULL) {
-		s = sprintf("error - learner item key1(%s), key2(%s) not found",key1,key2)
+		s = sprintf("\nerror - learner item key1(%s), key2(%s) not found\n",key1,key2)
 		_error(310,s)
 	}
 	else {
@@ -220,7 +220,7 @@ transmorphic return_result_item(	struct eStruct e,
 {
 	r = (e.resAA).get((key1,key2,rep))
 	if (r==NULL) {
-		s = printf("error - learner item key1(%s), key2(%s), rep(%s) not found",key1,key2,rep)
+		s = printf("\nerror - learner item key1(%s), key2(%s), rep(%s) not found\n",key1,key2,rep)
 		_error(310,s)
 	}
 	else {
@@ -270,7 +270,7 @@ transmorphic check_spec(							///
 {
 	B = (m.estAA).get((spec,rep))
 	if (B==NULL) {
-		s = sprintf("error - spec(%s), rep(%s) not found",spec,rep)
+		s = sprintf("\nerror - spec(%s), rep(%s) not found\n",spec,rep)
 		_error(310,s)
 	}
 
