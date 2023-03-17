@@ -11,8 +11,13 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								d0(varname)			/// 
 								d1(varname)			/// 
 								z(varname)			///
+								shortstack			///
 								* ]
 
+	if "`shortstack'"~="" {
+		// restack
+		_ddml_estimate_stacking `anything' `if' `in', `options'
+	}
 	if "`y0'`y1'`d'`d0'`d1'`z'"=="" {
 		// main program for estimation
 		_ddml_estimate_main `anything' `if' `in', `options'
@@ -22,6 +27,282 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		_ddml_estimate_single `anything' `if' `in', y0(`y0') y1(`y1') d(`d') d0(`d0') d1(`d1') z(`z') `options'
 	}
 end
+
+// (re-)estimate shortstacked
+program _ddml_estimate_stacking, eclass sortpreserve
+	syntax namelist(name=mname) [if] [in] ,			/// 
+								[					///
+								finalest(name)		///
+								NOIsily				///
+								*					///
+								]
+
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	// used multiple times below
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	
+	if "`noisily'"==""	local qui qui
+	
+	marksample touse
+
+	mata: st_local("model",`mname'.model)
+	mata: st_local("nameY",`mname'.nameY)
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	// reps = total number of reps; crossfitted = reps done so far (=0 if none)
+	mata: st_local("reps", strofreal(`mname'.nreps))
+	mata: st_local("kfolds", strofreal(`mname'.kfolds))
+	mata: st_local("crossfitted", strofreal(`mname'.crossfitted))
+	// assume shortstacking available for all
+	local ssflag = 1
+
+	// two sets of lists, one for variables that come in 0/1 pairs and one for the rest
+	// with pystacked, will always be a single 0/1 vtilde pair and eqn struct for every variable
+	// for rest, with pystacked+interactive, always a single vtilde and eqn struct
+	
+	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+	// used for checking
+	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+	if `pystackedmulti' {
+		mata: st_local("vtildeY",invtokens(`eqn'.vtlist))
+		local namelist01	`nameY'
+		local vtlist01		`vtildeY'
+	}
+	else {
+		di as err "error - restacking of `nameY' requires pystacked to be the sole learner"
+		local ssflag	= 0
+	}
+
+	if "`model'"=="interactive" {
+		// for interactive model, D is standard, not 0/1
+		local treatvar	`nameD'
+		mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
+		// used for checking
+		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+		if `pystackedmulti' {
+			mata: st_local("vtildeD",invtokens(`eqn'.vtlist))
+			local namelist	`nameD'
+			local vtlist	`vtildeD'
+		}
+		else {
+			di as err "error - restacking of `vname' requires pystacked to be the sole learner"
+			local ssflag	= 0
+		}
+	}
+	else {
+		// for late model, D is 0/1 and Z is standard
+		mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
+		// used for checking
+		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+		if `pystackedmulti' {
+			mata: st_local("vtildeD",invtokens(`eqn'.vtlist))
+			local namelist01	`namelist01' `nameD'
+			local vtlist01		`vtlist01' `vtildeD'
+		}
+		else {
+			di as err "error - restacking of `vname' requires pystacked to be the sole learner"
+			local ssflag	= 0
+		}
+		local treatvar	`nameZ'
+		mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
+		// used for checking
+		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+		if `pystackedmulti' {
+			mata: st_local("vtildeZ",invtokens(`eqn'.vtlist))
+			local namelist	`nameZ'
+			local vtlist	`vtildeZ'
+		}
+		else {
+			di as err "error - restacking of `vname' requires pystacked to be the sole learner"
+			local ssflag	= 0
+		}
+	}
+
+	tempname ssw N_folds mse_folds
+	local numvts : word count `vtlist'
+	// loop through standard vtildes
+	forvalues i=1/`numvts' {
+		local vname :	word `i' of `namelist'
+		local vtilde :	word `i' of `vtlist'
+
+		mata: `eqn' = (`mname'.eqnAA).get("`vname'")
+		mata: st_local("base_est",return_learner_item(`eqn',"`vtilde'","stack_base_est"))
+		mata: st_local("lieflag", strofreal(`eqn'.lieflag))
+		local nlearners : word count `base_est'
+		mata: st_local("shortstack", `eqn'.shortstack)
+		if "`shortstack'"=="" {
+			// not previously shortstacked, set local and struct field to default
+			local shortstack `vname'
+			mata: `eqn'.shortstack = "`shortstack'"
+			local ssnew 1
+		}
+		else {
+			local ssnew 0
+		}
+		mata: st_local("poolstack", `eqn'.poolstack)
+
+		// loop through reps
+		forvalues m=1/`reps' {
+		
+			// assemble learner list
+			// clear macro
+			local learner_list
+			forvalues j=1/`nlearners' {
+				local learner_list `learner_list' `vtilde'_L`j'_`m'
+			}
+
+			// get stacking weights
+			qui `qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') if `touse'
+			local ssfinalest	`e(finalest)'
+
+			mat `ssw'			= e(b)
+			tempvar yhat
+			qui predict double `yhat'
+			if `ssnew' {
+				cap drop `shortstack'_ss_`m'
+				qui gen double `shortstack'_ss_`m' = `yhat'
+				label var `shortstack'_ss_`m' "Predicted values cond. exp. of `vname' using shortstacking"
+			}
+			else {
+				if "`noisily'"~="" {
+					di
+					di "Existing vs new predicted values:"
+					sum `shortstack'_ss_`m' `yhat'
+				}
+				qui replace `shortstack'_ss_`m' = `yhat'
+			}
+			get_stack_stats if `touse', kfolds(`kfolds') fid(`mname'_fid_`m') vname(`nameY') vhat(`yhat')
+			local N				= r(N)
+			local mse			= r(mse)
+			mat `N_folds'		= r(N_folds)
+			mat `mse_folds'		= r(mse_folds)
+			
+			// to store:
+			mata: add_result_item(`eqn',"`shortstack'_ss","N",            "`m'", `N')
+			mata: add_result_item(`eqn',"`shortstack'_ss","N_folds",      "`m'", st_matrix("`N_folds'"))
+			mata: add_result_item(`eqn',"`shortstack'_ss","MSE",          "`m'", `mse')
+			mata: add_result_item(`eqn',"`shortstack'_ss","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
+			mata: add_result_item(`eqn',"`shortstack'_ss","ss_weights",   "`m'", st_matrix("`ssw'"))
+			// final estimator used to stack is a learner item
+			mata: add_learner_item(`eqn',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
+			// replace updated eqn
+			mata: (`mname'.eqnAA).put("`vname'",`eqn')
+		}
+	}
+
+	tempname ssw0 ssw1 N0_folds N1_folds mse0_folds mse1_folds
+	local numvts : word count `vtlist01'
+	// loop through 0/1 vtildes
+	forvalues i=1/`numvts' {
+		local vname :	word `i' of `namelist01'
+		local vtilde :	word `i' of `vtlist01'
+
+		mata: `eqn' = (`mname'.eqnAA).get("`vname'")
+		mata: st_local("base_est",return_learner_item(`eqn',"`vtilde'","stack_base_est"))
+		mata: st_local("lieflag", strofreal(`eqn'.lieflag))
+		local nlearners : word count `base_est'
+		mata: st_local("shortstack", `eqn'.shortstack)
+		if "`shortstack'"=="" {
+			// not previously shortstacked, set local and struct field to default
+			local shortstack `vname'
+			mata: `eqn'.shortstack = "`shortstack'"
+			local ssnew 1
+		}
+		else {
+			local ssnew 0
+		}
+		mata: st_local("poolstack", `eqn'.poolstack)
+
+		// loop through reps
+		forvalues m=1/`reps' {
+			// loop through treatvar=0/1
+			forvalues t=0/1 {
+				// assemble learner list
+				// clear macro
+				local learner_list
+				forvalues j=1/`nlearners' {
+					local learner_list `learner_list' `vtilde'`t'_L`j'_`m'
+				}
+				// get stacking weights
+				qui `qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') if `touse' & `treatvar'==`t'
+				local ssfinalest	`e(finalest)'
+	
+				mat `ssw`t''		= e(b)
+				tempvar yhat
+				qui predict double `yhat'
+				if `ssnew' {
+					cap drop `shortstack'_ss`t'_`m'
+					qui gen double `shortstack'_ss`t'_`m' = `yhat'
+					label var `shortstack'_ss`t'_`m' "Predicted values cond. exp. of `vname' given `treatvar'=`t' using shortstacking"
+				}
+				else {
+					if "`noisily'"~="" {
+						di
+						di "Existing vs new predicted values:"
+						sum `shortstack'_ss`t'_`m' `yhat'
+					}
+					qui replace `shortstack'_ss`t'_`m' = `yhat'
+				}
+				get_stack_stats if `touse', kfolds(`kfolds') fid(`mname'_fid_`m') vname(`vname') vhat(`yhat')
+				local N				= r(N)
+				local mse			= r(mse)
+				mat `N_folds'		= r(N_folds)
+				mat `mse_folds'		= r(mse_folds)
+				
+				// to store:
+				mata: add_result_item(`eqn',"`shortstack'_ss","N`t'",            "`m'", `N')
+				mata: add_result_item(`eqn',"`shortstack'_ss","N`t'_folds",      "`m'", st_matrix("`N_folds'"))
+				mata: add_result_item(`eqn',"`shortstack'_ss","MSE`t'",          "`m'", `mse')
+				mata: add_result_item(`eqn',"`shortstack'_ss","MSE`t'_folds",    "`m'", st_matrix("`mse_folds'"))
+				mata: add_result_item(`eqn',"`shortstack'_ss","ss_weights`t'",   "`m'", st_matrix("`ssw'"))
+				// final estimator used to stack is a learner item
+				mata: add_learner_item(`eqn',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
+			}
+			
+			// replace updated eqn
+			mata: (`mname'.eqnAA).put("`vname'",`eqn')
+		}
+	}
+
+	// update ssflag on mstruct
+	mata: `mname'.ssflag = `ssflag'
+
+end
+
+// utility for stacking results
+program get_stack_stats, rclass
+	syntax [anything] [if] [in] , [ kfolds(integer 2) fid(varname) vname(varname) vhat(varname) ]
+	
+	marksample touse
+	markout `touse' `fid' `vname' `vhat'
+	
+	tempname mse_folds N_folds mse_list N_list mse_folds_list N_folds_list
+	
+	// calculate and return mspe and sample size
+	tempvar vres_sq
+	// shortstack macros have fitted values
+	qui gen double `vres_sq' = (`vname' - `vhat')^2
+
+	// additive-type model
+	qui sum `vres_sq' if `touse', meanonly
+	local mse			= r(mean)
+	local N				= r(N)
+	forvalues k = 1(1)`kfolds' {
+		qui sum `vres_sq' if `touse' & `fid'==`k', meanonly
+		mat `mse_folds' = (nullmat(`mse_folds'), r(mean))
+		qui count if `touse' & `fid'==`k' & `vres_sq'<.
+		mat `N_folds' = (nullmat(`N_folds'), r(N))
+	}
+	
+	return scalar mse		= `mse'
+	return scalar N			= `N'
+	return mat mse_folds	= `mse_folds'
+	return mat N_folds		= `N_folds'
+	
+end
+
+
 
 // a single user-specified estimation
 program _ddml_estimate_single, eclass sortpreserve
@@ -213,9 +494,10 @@ program _ddml_estimate_main
 								replay				/// model has been estimated, just display results (option may be redundant)
 								trim(real 0.01)		///
 								debug				///
+								noisily				///
 								* ]
 	
-	if "`debug'"==""	local qui qui
+	if "`debug'`noisily'"==""	local qui qui
 	
 	marksample touse
 	
@@ -823,9 +1105,7 @@ program _ddml_estimate_main
 					else {
 						di " " _c
 					}
-					local specrep `: di %3.0f `i' %3.0f `m''
-					// pad out to 6 spaces
-					local specrep = (6-length("`specrep'"))*" " + "`specrep'"
+					local specrep "`: di %3.0f `i' %3.0f `m''"
 					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') notable
 					di %6s "{`rcmd':`specrep'}" _c
 					di as res %14s "`yt0'" _c
@@ -858,9 +1138,7 @@ program _ddml_estimate_main
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
-				local specrep `: di "mse" %3.0f `m''
-				// pad out to 7 spaces
-				local specrep = (7-length("`specrep'"))*" " + "`specrep'"
+				local specrep "`: di %4s "`otext'" %3.0f `m''"
 				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') notable
 				di %6s "{`rcmd':`specrep'}" _c
 				mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
@@ -897,9 +1175,7 @@ program _ddml_estimate_main
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
-				local specrep `: di "ss" %3.0f `m''
-				// pad out to 6 spaces
-				local specrep = "  " + "`specrep'"
+				local specrep "`: di %4s "ss" %3.0f `m''"
 				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`m') notable
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
@@ -922,9 +1198,7 @@ program _ddml_estimate_main
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
-				local specrep `: di "ps" %3.0f `m''
-				// pad out to 6 spaces
-				local specrep = "  " + "`specrep'"
+				local specrep "`: di %4s "ps" %3.0f `m''"
 				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`m') notable
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[poolstack]" _c
@@ -956,8 +1230,8 @@ program _ddml_estimate_main
 		
 	if `nreps' > 1 & `tableflag' {
 		di
-		di as text "Mean/med.  Y(0) learner" _c
-		di as text           %14s "Y(1) learner" _c
+		di as text "Mean/med Y(0) learner" _c
+		di as text               %14s "Y(1) learner" _c
 		if `ateflag' {
 			di as text           %14s "D learner" _c
 		}
@@ -965,7 +1239,7 @@ program _ddml_estimate_main
 			di as text           %14s "D(0) learner" _c
 			di as text           %14s "D(1) learner" _c
 		}
-		di as text %10s "b" %10s "SE" _c
+		di as text               %10s "b" %10s "SE" _c
 		if ~`ateflag' {
 			di as text           %14s "Z learner" _c
 		}
@@ -975,9 +1249,7 @@ program _ddml_estimate_main
 			tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 			mat `btemp' = e(b)
 			mat `Vtemp' = e(V)
-			local specrep `: di "mse" %3s "`medmean'"'
-			// pad out to 6 spaces
-			local specrep = " " + "`specrep'"
+			local specrep "`: di %4s "mse" %3s "`medmean'"'"
 			local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable
 			di %6s "{`rcmd':`specrep'}" _c
 			di as res %14s "[min-mse]" _c
@@ -998,9 +1270,7 @@ program _ddml_estimate_main
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
-				local specrep `: di "ss" %3s "`medmean'"'
-				// pad out to 6 spaces
-				local specrep = "  " + "`specrep'"
+				local specrep "`: di %4s "ss" %3s "`medmean'"'"
 				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`medmean') notable
 				di as res %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
@@ -1022,9 +1292,7 @@ program _ddml_estimate_main
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
-				local specrep `: di "ps" %3s "`medmean'"'
-				// pad out to 6 spaces
-				local specrep = "  " + "`specrep'"
+				local specrep "`: di %4s "ps" %3s "`medmean'"'"
 				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`medmean') notable
 				di as res %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[poolstack]" _c
@@ -1323,13 +1591,13 @@ program define estimate_and_store, eclass
 	mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
 	
 	// 0/1 etc
-	local y0		`y0tilde'
-	local y1		`y1tilde'
+	local y0		`y0tilde'0
+	local y1		`y1tilde'1
 	local d			`dtilde'
-	local d0		`d0tilde'
-	local d1		`d1tilde'
+	local d0		`d0tilde'0
+	local d1		`d1tilde'1
 	local z			`ztilde'
-	// add suffixes
+	// add suffixes and 0/1 indicator
 	local y0_m		`y0tilde'0_`rep'
 	local y1_m		`y1tilde'1_`rep'
 	local d_m		`dtilde'_`rep'
@@ -1349,7 +1617,6 @@ program define estimate_and_store, eclass
 	if "`vce1'"=="cluster" {
 		local clustvar : word 2 of `vce'
 	}
-	
 	if "`model'"=="interactive" {
 		mata: ATE("`teffect'","`yvar'","`dvar'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustvar'","`mname'_fid_`rep'",`trim')
 	}
@@ -1406,20 +1673,29 @@ program define estimate_and_store, eclass
 	mata: st_local("shortstack",`eqn'.shortstack)
 	mata: st_local("poolstack",`eqn'.poolstack)
 	// MSE
-	mata: `A'.put(("`y0tilde'_mse","scalar"),return_result_item(`eqn',"`y0tilde'","MSE0","`rep'"))
-	mata: `A'.put(("`y1tilde'_mse","scalar"),return_result_item(`eqn',"`y1tilde'","MSE1","`rep'"))
+	mata: `A'.put(("`y0'_mse","scalar"),return_result_item(`eqn',"`y0tilde'","MSE0","`rep'"))
+	mata: `A'.put(("`y1'_mse","scalar"),return_result_item(`eqn',"`y1tilde'","MSE1","`rep'"))
 	// MSE folds
-	mata: `A'.put(("`y0tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y0tilde'","MSE0_folds","`rep'"))
-	mata: `A'.put(("`y1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`y1tilde'","MSE1_folds","`rep'"))
-	// shortstack weights
+	mata: `A'.put(("`y0'_mse_folds","matrix"),return_result_item(`eqn',"`y0tilde'","MSE0_folds","`rep'"))
+	mata: `A'.put(("`y1'_mse_folds","matrix"),return_result_item(`eqn',"`y1tilde'","MSE1_folds","`rep'"))
+	// pystacked final est (pystacked multi only)
+	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+	if `pystackedmulti' {
+	// cap because won't exist for e.g. shortstack variable
+		cap mata: `A'.put(("`y0'_stack_final_est","local"), return_learner_item(`eqn',"`y0tilde'","stack_final_est"))
+		cap mata: `A'.put(("`y1'_stack_final_est","local"), return_learner_item(`eqn',"`y1tilde'","stack_final_est"))
+	}
+	// shortstack results
 	if "`spec'"=="ss" {
 		mata: `A'.put(("`yvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights0","`rep'"))
 		mata: `A'.put(("`yvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights1","`rep'"))
+		mata: `A'.put(("`yvar'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
 	}
-	// poolstack weights
+	// poolstack results
 	if "`spec'"=="ps" {
 		mata: `A'.put(("`yvar'_psw0","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights0","`rep'"))
 		mata: `A'.put(("`yvar'_psw1","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights1","`rep'"))
+		mata: `A'.put(("`yvar'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
 	}
 	if "`model'"=="interactive" {
 		// D eqn results
@@ -1430,13 +1706,15 @@ program define estimate_and_store, eclass
 		mata: `A'.put(("`dtilde'_mse","scalar"),return_result_item(`eqn',"`dtilde'","MSE","`rep'"))
 		// MSE folds
 		mata: `A'.put(("`dtilde'_mse_folds","matrix"),return_result_item(`eqn',"`dtilde'","MSE_folds","`rep'"))
-		// shortstack weights
+		// shortstack results
 		if "`spec'"=="ss" {
 			mata: `A'.put(("`dvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
+			mata: `A'.put(("`dvar'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
 		}
-		// poolstack weights
+		// poolstack results
 		if "`spec'"=="ps" {
 			mata: `A'.put(("`dvar'_psw","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
+			mata: `A'.put(("`dvar'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
 		}
 	}
 	else {
@@ -1445,20 +1723,22 @@ program define estimate_and_store, eclass
 		mata: st_local("shortstack",`eqn'.shortstack)
 		mata: st_local("poolstack",`eqn'.poolstack)
 		// MSE, D
-		mata: `A'.put(("`d0tilde'_mse","scalar"),return_result_item(`eqn',"`d0tilde'","MSE0","`rep'"))
-		mata: `A'.put(("`d1tilde'_mse","scalar"),return_result_item(`eqn',"`d1tilde'","MSE1","`rep'"))
+		mata: `A'.put(("`d0'_mse","scalar"),return_result_item(`eqn',"`d0tilde'","MSE0","`rep'"))
+		mata: `A'.put(("`d1'_mse","scalar"),return_result_item(`eqn',"`d1tilde'","MSE1","`rep'"))
 		// MSE folds, D
-		mata: `A'.put(("`d0tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d0tilde'","MSE0_folds","`rep'"))
-		mata: `A'.put(("`d1tilde'_mse_folds","matrix"),return_result_item(`eqn',"`d1tilde'","MSE1_folds","`rep'"))
-		// shortstack weights, D
+		mata: `A'.put(("`d0'_mse_folds","matrix"),return_result_item(`eqn',"`d0tilde'","MSE0_folds","`rep'"))
+		mata: `A'.put(("`d1'_mse_folds","matrix"),return_result_item(`eqn',"`d1tilde'","MSE1_folds","`rep'"))
+		// shortstack results, D
 		if "`spec'"=="ss" {
 			mata: `A'.put(("`dvar'_ssw0","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights0","`rep'"))
 			mata: `A'.put(("`dvar'_ssw1","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights1","`rep'"))
+			mata: `A'.put(("`dvar'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
 		}
-		// poolstack weights, D
+		// poolstack results, D
 		if "`spec'"=="ps" {
 			mata: `A'.put(("`dvar'_psw0","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights0","`rep'"))
 			mata: `A'.put(("`dvar'_psw1","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights1","`rep'"))
+			mata: `A'.put(("`dvar'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
 		}
 		// Z
 		mata: `eqn' = (`mname'.eqnAA).get("`zvar'")
@@ -1468,13 +1748,15 @@ program define estimate_and_store, eclass
 		mata: `A'.put(("`ztilde'_mse","scalar"),return_result_item(`eqn',"`ztilde'","MSE","`rep'"))
 		// MSE folds, Z
 		mata: `A'.put(("`ztilde'_mse_folds","matrix"),return_result_item(`eqn',"`ztilde'","MSE_folds","`rep'"))
-		// shortstack weights, Z
+		// shortstack results, Z
 		if "`spec'"=="ss" {
 			mata: `A'.put(("`zvar'_ssw","matrix"),return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
+			mata: `A'.put(("`zvar'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
 		}
-		// poolstack weights, Z
+		// poolstack results, Z
 		if "`spec'"=="ps" {
 			mata: `A'.put(("`zvar'_psw","matrix"),return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
+			mata: `A'.put(("`zvar'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
 		}
 	}
 
@@ -1674,7 +1956,81 @@ program medmean_and_store, eclass
 	foreach obj in `list_scalar' {
 		mata: `A'.put(("`obj'","scalar"),``obj'')
 	}
-	
+
+/*
+	// additional estimation results
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	// Y eqn results
+	mata: `eqn' = (`mname'.eqnAA).get("`yname'")
+	// pystacked final est (pystacked multi only)
+	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+	if `pystackedmulti' {
+		// cap because won't exist for e.g. shortstack variable
+		cap mata: `A'.put(("`y'_stack_final_est","local"), return_learner_item(`eqn',"`y'","stack_final_est"))
+	}
+	// ss results
+	if "`spec'"=="ss" {
+		mata: st_local("shortstack", `eqn'.shortstack)
+		mata: `A'.put(("`yname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
+	}
+	// ps results
+	if "`spec'"=="ps" {
+		mata: st_local("poolstack", `eqn'.poolstack)
+		mata: `A'.put(("`yname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
+	}
+
+	// D eqn results - uses vtilde names in d
+	forvalues i=1/`numeqnD' {
+		local dname : word `i' of `dnames'
+		local vtilde : word `i' of `d'
+		local vtilde_h `vtilde'
+
+		mata: `eqn' = (`mname'.eqnAA).get("`dname'")
+		// pystacked final est (pystacked multi only)
+		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+		if `pystackedmulti' {
+			// cap because won't exist for e.g. shortstack variable
+			cap mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
+		}
+		// ss results
+		if "`spec'"=="ss" {
+			mata: st_local("shortstack", `eqn'.shortstack)
+			mata: `A'.put(("`dname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
+		}
+		// ps results
+		if "`spec'"=="ps" {
+			mata: st_local("poolstack", `eqn'.poolstack)
+			mata: `A'.put(("`dname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
+		}
+	}
+	if `fivflag'==0 {
+		// Z eqn results; fiv won't enter
+		forvalues i=1/`numeqnZ' {
+			local zname : word `i' of `znames'
+			local vtilde : word `i' of `z'
+			mata: `eqn' = (`mname'.eqnAA).get("`zname'")
+			// pystacked final est (pystacked multi only)
+			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+			if `pystackedmulti' {
+				// cap because won't exist for e.g. shortstack variable
+				cap mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
+			}
+			// ss results
+			if "`spec'"=="ss" {
+				mata: st_local("shortstack", `eqn'.shortstack)
+				mata: `A'.put(("`zname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
+			}
+			// ps results
+			if "`spec'"=="ps" {
+				mata: st_local("poolstack", `eqn'.poolstack)
+				mata: `A'.put(("`zname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
+			}
+		}
+	}
+*/
+
+
 	// store AA with median/mean results
 	mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
 	
