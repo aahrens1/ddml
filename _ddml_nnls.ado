@@ -198,6 +198,7 @@ program _ddml_nnls_python, eclass sortpreserve
 	ereturn clear
 	ereturn post `bhat', depname(`yvar') obs(`N') esample(`touse')
 	ereturn scalar N = `N'
+	ereturn local finalest `finalest'
 	ereturn display
 
 end
