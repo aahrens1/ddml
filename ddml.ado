@@ -322,19 +322,19 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			mata: st_global("r(model)",`mname'.model)
 			// cluster(varname) syntax is for ddml estimate; fcluster(varname) is for ddml define
 			if ("`r(model)'"=="partial") {
-				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
+				_ddml_estimate_linear `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
 			if ("`r(model)'"=="iv") {
-				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
+				_ddml_estimate_linear `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
 			if ("`r(model)'"=="interactive") {
-				_ddml_estimate_ate_late `mname' `if' `in', `options' cluster(`cluster')
+				_ddml_estimate_ate_late `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
 			if ("`r(model)'"=="late") {
-				_ddml_estimate_ate_late `mname' `if' `in', `options' cluster(`cluster')
+				_ddml_estimate_ate_late `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
 			if ("`r(model)'"=="fiv") {
-				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
+				_ddml_estimate_linear `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
 			
 		}
