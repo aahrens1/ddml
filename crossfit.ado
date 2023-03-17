@@ -1265,8 +1265,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 		
 				// calculate and return mspe and sample size
 				tempvar vres_sq
-				// shortstack macro has the residuals
-				qui gen double `vres_sq' = (`shortstack'_ss_`m')^2 if `touse'
+				// shortstack macros have fitted values
+				qui gen double `vres_sq' = (`vname' - `shortstack'_ss_`m')^2 if `touse'
 			
 				// additive-type model
 				qui sum `vres_sq' if `touse', meanonly
@@ -1298,8 +1298,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				// calculate and return mspe and sample size
 				tempvar vres0_sq vres1_sq
 				// shortstack macros have fitted values
-				qui gen double `vres0_sq' = (`shortstack'_ss0_`m')^2 if `treatvar' == 0 & `touse'
-				qui gen double `vres1_sq' = (`shortstack'_ss1_`m')^2 if `treatvar' == 1 & `touse'
+				qui gen double `vres0_sq' = (`vname' - `shortstack'_ss0_`m')^2 if `treatvar' == 0 & `touse'
+				qui gen double `vres1_sq' = (`vname' - `shortstack'_ss1_`m')^2 if `treatvar' == 1 & `touse'
 		
 				// interactive-type model, return mse separately for treatvar =0 and =1
 				qui sum `vres0_sq' if `treatvar' == 0 & `touse', meanonly
@@ -1403,8 +1403,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 		
 				// calculate and return mspe and sample size
 				tempvar vres_sq
-				// poolstack macro has the residuals
-				qui gen double `vres_sq' = (`poolstack'_ps_`m')^2 if `touse'
+				// poolstack macros have fitted values
+				qui gen double `vres_sq' = (`vname' - `poolstack'_ps_`m')^2 if `touse'
 			
 				// additive-type model
 				qui sum `vres_sq' if `touse', meanonly
