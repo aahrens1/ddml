@@ -366,6 +366,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 	// update flag on mstruct
 	if `ssflag'		mata: `mname'.ssflag = 1
 	else			mata: `mname'.psflag = 1
+	// re-stacking means any previous model estimation results should be dropped
+	mata: clear_model_estimation(`mname')
 
 end
 
@@ -590,7 +592,7 @@ program _ddml_estimate_main
 								clear				/// deletes all tilde-variables (to be implemented)
 								spec(string)		/// specification to post/display
 								REP(string)			/// resampling iteration to post/display
-								replay				/// model has been estimated, just display results (option may be redundant)
+								replay				/// model has been estimated, just display results
 								trim(real 0.01)		///
 								debug				///
 								noisily				///
@@ -600,8 +602,8 @@ program _ddml_estimate_main
 	
 	marksample touse
 	
-	// replay existing results (replay option may be redundant)
-	local replayflag = "`replay'`spec'`rep'"~=""
+	// replay existing results
+	local replayflag = "`replay'"~=""
 	// display summary table
 	local tableflag = "`notable'"==""
 	// request estimation/reporting of all combinations
@@ -1205,7 +1207,7 @@ program _ddml_estimate_main
 						di " " _c
 					}
 					local specrep "`: di %3.0f `i' %3.0f `m''"
-					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') notable
+					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') notable replay
 					di %6s "{`rcmd':`specrep'}" _c
 					di as res %14s "`yt0'" _c
 					di as res %14s "`yt1'" _c
@@ -1238,7 +1240,7 @@ program _ddml_estimate_main
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep "`: di %4s "`otext'" %3.0f `m''"
-				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') notable
+				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') notable replay
 				di %6s "{`rcmd':`specrep'}" _c
 				mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 				mata: st_local("yt0",return_learner_item(`eqn',"opt0","`m'"))
@@ -1275,7 +1277,7 @@ program _ddml_estimate_main
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep "`: di %4s "ss" %3.0f `m''"
-				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`m') notable
+				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`m') notable replay
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
 				di as res %14s "[ss]" _c
@@ -1298,7 +1300,7 @@ program _ddml_estimate_main
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep "`: di %4s "ps" %3.0f `m''"
-				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`m') notable
+				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`m') notable replay
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[poolstack]" _c
 				di as res %14s "[ps]" _c
@@ -1349,7 +1351,7 @@ program _ddml_estimate_main
 			mat `btemp' = e(b)
 			mat `Vtemp' = e(V)
 			local specrep "`: di %4s "mse" %3s "`medmean'"'"
-			local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable
+			local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable replay
 			di %6s "{`rcmd':`specrep'}" _c
 			di as res %14s "[min-mse]" _c
 			di as res %14s "[mse]" _c
@@ -1370,7 +1372,7 @@ program _ddml_estimate_main
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep "`: di %4s "ss" %3s "`medmean'"'"
-				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`medmean') notable
+				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`medmean') notable replay
 				di as res %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
 				di as res %14s "[ss]" _c
@@ -1392,7 +1394,7 @@ program _ddml_estimate_main
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep "`: di %4s "ps" %3s "`medmean'"'"
-				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`medmean') notable
+				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`medmean') notable replay
 				di as res %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[poolstack]" _c
 				di as res %14s "[ps]" _c
@@ -1413,7 +1415,7 @@ program _ddml_estimate_main
 
 	// select result to display and post
 	// default is, as available: 1. ss 2. ps 3. only spec or MSE
-	if `replayflag' {
+	if `replayflag' | "`spec'"~="" {
 		local specdisp `spec'
 	}
 	else if `ssflag' {
