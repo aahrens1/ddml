@@ -158,17 +158,27 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		mata: st_local("base_est",return_learner_item(`eqn',"`vtilde'","stack_base_est"))
 		mata: st_local("lieflag", strofreal(`eqn'.lieflag))
 		local nlearners : word count `base_est'
-		mata: st_local("`typestack'", `eqn'.`typestack')
-		if "``typestack''"=="" {
-			// not previously stacked, set local and struct field to default
-			local `typestack' `vname'
-			mata: `eqn'.`typestack' = "``typestack''"
-			local newstack 1
+		// check if previously stacked; required for poolstacking
+		if `ssflag' {
+			mata: st_local("shortstack", `eqn'.shortstack)
+			if "`shortstack'"=="" {
+				// not previously shortstacked, set local and struct field to default
+				local shortstack `vname'
+				mata: `eqn'.shortstack = "`shortstack'"
+				local newstack 1
+			}
+			else {
+				local newstack 0
+			}
 		}
 		else {
-			local newstack 0
+			mata: st_local("poolstack", `eqn'.poolstack)
+			// must previously have been poolstacked for restacking to work
+			if "`poolstack'"=="" {
+				di as err "error - must poolstack at crossfitting stage first"
+				exit 198
+			}
 		}
-		mata: st_local("poolstack", `eqn'.poolstack)
 
 		// loop through reps
 		forvalues m=1/`reps' {
@@ -254,17 +264,27 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		mata: st_local("base_est",return_learner_item(`eqn',"`vtilde'","stack_base_est"))
 		mata: st_local("lieflag", strofreal(`eqn'.lieflag))
 		local nlearners : word count `base_est'
-		mata: st_local("`typestack'", `eqn'.`typestack')
-		if "``typestack''"=="" {
-			// not previously stacked, set local and struct field to default
-			local `typestack' `vname'
-			mata: `eqn'.`typestack' = "``typestack''"
-			local newstack 1
+		// check if previously stacked; required for poolstacking
+		if `ssflag' {
+			mata: st_local("shortstack", `eqn'.shortstack)
+			if "`shortstack'"=="" {
+				// not previously shortstacked, set local and struct field to default
+				local shortstack `vname'
+				mata: `eqn'.shortstack = "`shortstack'"
+				local newstack 1
+			}
+			else {
+				local newstack 0
+			}
 		}
 		else {
-			local newstack 0
+			mata: st_local("poolstack", `eqn'.poolstack)
+			// must previously have been poolstacked for restacking to work
+			if "`poolstack'"=="" {
+				di as err "error - must poolstack at crossfitting stage first"
+				exit 198
+			}
 		}
-		mata: st_local("poolstack", `eqn'.poolstack)
 
 		// loop through reps
 		forvalues m=1/`reps' {
