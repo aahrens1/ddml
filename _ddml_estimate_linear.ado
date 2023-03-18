@@ -10,11 +10,16 @@ program _ddml_estimate_linear, eclass sortpreserve
 								z(varlist)			///
 								dh(varname)			///
 								shortstack			///
+								poolstack			///
 								* ]
 
 	if "`shortstack'"~="" {
 		// restack
-		_ddml_estimate_stacking `anything' `if' `in', `options'
+		_ddml_estimate_stacking `anything' `if' `in', ss `options'
+	}
+	if "`poolstack'"~="" {
+		// restack
+		_ddml_estimate_stacking `anything' `if' `in', ps `options'
 	}
 	if "`y'`d'`z'`dh'"=="" {
 		// main program for estimation
@@ -30,6 +35,8 @@ end
 program _ddml_estimate_stacking, eclass sortpreserve
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
+								ss					///
+								ps					///
 								finalest(name)		///
 								NOIsily				///
 								*					///
@@ -41,6 +48,27 @@ program _ddml_estimate_stacking, eclass sortpreserve
 	mata: `eqn' = init_eStruct()
 	
 	if "`noisily'"==""	local qui qui
+	
+	// macro `ts' is either "ss" or "ts"
+	// macro `typestack' is either "shortstack" or "poolstack"
+	
+	if "`ss'"~="" {
+		// shortstacking
+		local ssflag = 1
+		local typestack	shortstack
+		local ts ss
+	}
+	else if "`ps'"~="" {
+		// poolstacking
+		local ssflag = 0
+		local typestack poolstack
+		local ts ps
+	}
+	else {
+		// error
+		di as err "internal _ddml_estimate_stacking error - missing ss or ts option"
+		exit 198
+	}
 	
 	marksample touse
 
@@ -54,8 +82,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 	mata: st_local("reps", strofreal(`mname'.nreps))
 	mata: st_local("kfolds", strofreal(`mname'.kfolds))
 	mata: st_local("crossfitted", strofreal(`mname'.crossfitted))
-	// assume shortstacking available for all
-	local ssflag = 1
+	// assume stacking available for all
+	local stackflag = 1
 	
 	// with pystacked, will always be a single vtilde and eqn struct for every variable
 	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
@@ -68,7 +96,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 	}
 	else {
 		di as err "error - restacking of `nameY' requires pystacked to be the sole learner"
-		local ssflag	= 0
+		local stackflag	= 0
 	}
 
 	// can be multiple D eqns for multiple D vars, and similarly for Z
@@ -83,11 +111,11 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		}
 		else {
 			di as err "error - restacking of `vname' requires pystacked to be the sole learner"
-			local ssflag	= 0
+			local stackflag	= 0
 		}
 	}
 
-	tempname ssw N_folds mse_folds
+	tempname sweights N_folds mse_folds
 	local numvts : word count `vtlist'
 	// loop through vtildes
 	forvalues i=1/`numvts' {
@@ -98,15 +126,15 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		mata: st_local("base_est",return_learner_item(`eqn',"`vtilde'","stack_base_est"))
 		mata: st_local("lieflag", strofreal(`eqn'.lieflag))
 		local nlearners : word count `base_est'
-		mata: st_local("shortstack", `eqn'.shortstack)
-		if "`shortstack'"=="" {
-			// not previously shortstacked, set local and struct field to default
-			local shortstack `vname'
-			mata: `eqn'.shortstack = "`shortstack'"
-			local ssnew 1
+		mata: st_local("`typestack'", `eqn'.`typestack')
+		if "``typestack''"=="" {
+			// not previously stacked, set local and struct field to default
+			local `typestack' `vname'
+			mata: `eqn'.`typestack' = "``typestack''"
+			local newstack 1
 		}
 		else {
-			local ssnew 0
+			local newstack 0
 		}
 		mata: st_local("poolstack", `eqn'.poolstack)
 
@@ -121,24 +149,48 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			}
 
 			// get stacking weights
-			qui `qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') if `touse'
-			local ssfinalest	`e(finalest)'
-
-			mat `ssw'			= e(b)
 			tempvar yhat
-			qui predict double `yhat'
-			if `ssnew' {
-				cap drop `shortstack'_ss_`m'
-				qui gen double `shortstack'_ss_`m' = `yhat'
-				label var `shortstack'_ss_`m' "Predicted values cond. exp. of `vname' using shortstacking"
+			if `ssflag' {
+				// shortstacking uses crossfit predictions
+				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') if `touse'
+				local finalest	`e(finalest)'
+				mat `sweights'	= e(b)
+				qui predict double `yhat'
+			}
+			else {
+				// poolstacking uses stacking CV predictions, stored in a mata struct
+				tempname tframe y_stacking_cv
+				qui frame pwf
+				local cframe `r(currentframe)'
+				frame create `tframe'
+				frame change `tframe'
+				tempname
+				mata: `y_stacking_cv' = return_result_item(`eqn',"``typestack''_ps","y_stacking_cv", "`m'")				
+				// touse ignored at weights stage
+				getmata (`vname' `learner_list')=`y_stacking_cv', force replace
+				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest')
+				mata: `sweights' = st_matrix("e(b)")
+				frame change `cframe'
+				frame drop `tframe'
+				mata: st_matrix("`sweights'",`sweights')
+				mat colnames `sweights' =  `learner_list'
+				mat score double `yhat' = `sweights' if `touse'
+				cap mata: mata drop `y_stacking_cv'
+				cap mata: mata drop `sweights'
+			}
+
+			if `newstack' {
+				cap drop ``typestack''_`ts'_`m'
+				qui gen double ``typestack''_`ts'_`m' = `yhat'
+				label var ``typestack''_`ts'_`m' "Predicted values cond. exp. of `vname' using `typestack'ing"
 			}
 			else {
 				if "`noisily'"~="" {
 					di
 					di "Existing vs new predicted values:"
-					sum `shortstack'_ss_`m' `yhat'
+					sum ``typestack''_`ts'_`m' `yhat'
 				}
-				qui replace `shortstack'_ss_`m' = `yhat'
+				qui replace ``typestack''_`ts'_`m' = `yhat'
 			}
 			get_stack_stats if `touse', kfolds(`kfolds') fid(`mname'_fid_`m') vname(`vname') vhat(`yhat')
 			local N				= r(N)
@@ -147,20 +199,21 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			mat `mse_folds'		= r(mse_folds)
 			
 			// to store:
-			mata: add_result_item(`eqn',"`shortstack'_ss","N",            "`m'", `N')
-			mata: add_result_item(`eqn',"`shortstack'_ss","N_folds",      "`m'", st_matrix("`N_folds'"))
-			mata: add_result_item(`eqn',"`shortstack'_ss","MSE",          "`m'", `mse')
-			mata: add_result_item(`eqn',"`shortstack'_ss","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
-			mata: add_result_item(`eqn',"`shortstack'_ss","ss_weights",   "`m'", st_matrix("`ssw'"))
+			mata: add_result_item(`eqn',"``typestack''_`ts'","N",            "`m'", `N')
+			mata: add_result_item(`eqn',"``typestack''_`ts'","N_folds",      "`m'", st_matrix("`N_folds'"))
+			mata: add_result_item(`eqn',"``typestack''_`ts'","MSE",          "`m'", `mse')
+			mata: add_result_item(`eqn',"``typestack''_`ts'","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
+			mata: add_result_item(`eqn',"``typestack''_`ts'","`ts'_weights",   "`m'", st_matrix("`sweights'"))
 			// final estimator used to stack is a learner item
-			mata: add_learner_item(`eqn',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
+			mata: add_learner_item(`eqn',"``typestack''_`ts'","`ts'_final_est", "`finalest'")
 			// replace updated eqn
 			mata: (`mname'.eqnAA).put("`vname'",`eqn')
 		}
 	}
 	
-	// update ssflag on mstruct
-	mata: `mname'.ssflag = `ssflag'
+	// update flag on mstruct
+	if `ssflag'		mata: `mname'.ssflag = 1
+	else			mata: `mname'.psflag = 1
 
 end
 
@@ -175,7 +228,7 @@ program get_stack_stats, rclass
 	
 	// calculate and return mspe and sample size
 	tempvar vres_sq
-	// shortstack macros have fitted values
+	// stack macros have fitted values
 	qui gen double `vres_sq' = (`vname' - `vhat')^2
 
 	// additive-type model
