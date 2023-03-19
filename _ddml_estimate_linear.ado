@@ -1995,8 +1995,8 @@ program define replay_estimate, eclass
 		di
 	}
 	if "`e(model)'" == "fiv" {
-		di as text "E[D|X]" _col(11) "= " as res "`e(dh_m)'"
-		di as text "Orthogonalized D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
+		di as text "E[D^|X]" _col(11) "= " as res "`e(dh_m)'"
+		di as text "Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X]."
 	}
 	ereturn display
 	
