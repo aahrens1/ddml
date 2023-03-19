@@ -33,7 +33,7 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	}
 end
 
-// (re-)estimate shortstacked
+// (re-)stack
 program _ddml_estimate_stacking, eclass sortpreserve
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
@@ -177,6 +177,9 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			if "`poolstack'"=="" {
 				di as err "error - must poolstack at crossfitting stage first"
 				exit 198
+			}
+			else {
+				local newstack 0
 			}
 		}
 
@@ -651,6 +654,9 @@ program _ddml_estimate_main
 		local estimated = 0
 		local ncombos = 0
 	}
+	
+	// number of possible combos; if only one spec, will replace "mse" label
+	mata: st_local("poss_combos",strofreal(return_ncombos(`mname')))
 		
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
@@ -785,9 +791,6 @@ program _ddml_estimate_main
 		local D1ps	`nameD'_ps
 		local Zps	`nameZ'_ps
 	}
-	
-	// number of possible combos; if only one spec, will replace "mse" label
-	mata: st_local("poss_combos",strofreal(return_ncombos(`mname')))
 	
 	// multiple specs
 	// text locals control messages and lookups

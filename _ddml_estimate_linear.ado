@@ -31,7 +31,7 @@ program _ddml_estimate_linear, eclass sortpreserve
 	}
 end
 
-// (re-)estimate shortstacked
+// (re-)stack
 program _ddml_estimate_stacking, eclass sortpreserve
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
@@ -115,7 +115,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		}
 	}
 
-	tempname sweights N_folds mse_folds
+	tempname sweights N_folds mse_folds sweights_h N_folds_h mse_folds_h
 	local numvts : word count `vtlist'
 	// loop through vtildes
 	forvalues i=1/`numvts' {
@@ -146,6 +146,9 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				di as err "error - must poolstack at crossfitting stage first"
 				exit 198
 			}
+			else {
+				local newstack 0
+			}
 		}
 
 		// loop through reps
@@ -154,12 +157,15 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			// assemble learner list
 			// clear macro
 			local learner_list
+			local learner_h_list
 			forvalues j=1/`nlearners' {
 				local learner_list `learner_list' `vtilde'_L`j'_`m'
+				if `lieflag' {
+					local learner_h_list `learner_h_list' `vtilde'_h_L`j'_`m'
+				}
 			}
-
 			// get stacking weights
-			tempvar yhat
+			tempvar yhat yhat_h
 			if `ssflag' {
 				// shortstacking uses crossfit predictions
 				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') if `touse'
@@ -169,13 +175,13 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			}
 			else {
 				// poolstacking uses stacking CV predictions, stored in a mata struct
-				tempname tframe y_stacking_cv
+				tempname tframe y_stacking_cv y_h_stacking_cv
 				qui frame pwf
 				local cframe `r(currentframe)'
 				frame create `tframe'
 				frame change `tframe'
-				tempname
-				mata: `y_stacking_cv' = return_result_item(`eqn',"``typestack''_ps","y_stacking_cv", "`m'")				
+				// standard case; includes first ("d") part of LIE
+				mata: `y_stacking_cv' = return_result_item(`eqn',"`poolstack'_ps","y_stacking_cv", "`m'")				
 				// touse ignored at weights stage
 				getmata (`vname' `learner_list')=`y_stacking_cv', force replace
 				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest')
@@ -187,12 +193,35 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				mat score double `yhat' = `sweights' if `touse'
 				cap mata: mata drop `y_stacking_cv'
 				cap mata: mata drop `sweights'
+				if `lieflag' {
+					// second ("d_h") part of LIE
+					frame create `tframe'
+					frame change `tframe'
+					// dep var in stacking estimation is "Dhat"
+					mata: `y_h_stacking_cv' = return_result_item(`eqn',"`poolstack'_ps","y_h_stacking_cv", "`m'")
+					// touse ignored at weights stage
+					getmata (`vname'_h `learner_h_list')=`y_h_stacking_cv', force replace
+					`qui' _ddml_nnls `vname'_h `learner_h_list', finalest(`finalest')
+					mata: `sweights_h' = st_matrix("e(b)")
+					frame change `cframe'
+					frame drop `tframe'
+					mata: st_matrix("`sweights_h'",`sweights_h')
+					mat colnames `sweights_h' =  `learner_h_list'
+					mat score double `yhat_h' = `sweights_h' if `touse'
+					cap mata: mata drop `y_h_stacking_cv'
+					cap mata: mata drop `sweights_h'
+				}
 			}
 
 			if `newstack' {
 				cap drop ``typestack''_`ts'_`m'
 				qui gen double ``typestack''_`ts'_`m' = `yhat'
 				label var ``typestack''_`ts'_`m' "Predicted values cond. exp. of `vname' using `typestack'ing"
+				if `lieflag' {
+					cap drop ``typestack''_h_`ts'_`m'
+					qui gen double ``typestack''_h_`ts'_`m' = `yhat_h'
+					label var ``typestack''_h_`ts'_`m' "Predicted values E[`vname'|X] using `typestack'ing"
+				}
 			}
 			else {
 				if "`noisily'"~="" {
@@ -201,19 +230,37 @@ program _ddml_estimate_stacking, eclass sortpreserve
 					sum ``typestack''_`ts'_`m' `yhat'
 				}
 				qui replace ``typestack''_`ts'_`m' = `yhat'
+				if `lieflag' {
+					if "`noisily'"~="" {
+						sum ``typestack''_h_`ts'_`m' `yhat_h'
+					}
+					qui replace ``typestack''_h_`ts'_`m' = `yhat_h'
+				}
 			}
 			get_stack_stats if `touse', kfolds(`kfolds') fid(`mname'_fid_`m') vname(`vname') vhat(`yhat')
 			local N				= r(N)
 			local mse			= r(mse)
 			mat `N_folds'		= r(N_folds)
 			mat `mse_folds'		= r(mse_folds)
-			
-			// to store:
+			// store:
 			mata: add_result_item(`eqn',"``typestack''_`ts'","N",            "`m'", `N')
 			mata: add_result_item(`eqn',"``typestack''_`ts'","N_folds",      "`m'", st_matrix("`N_folds'"))
 			mata: add_result_item(`eqn',"``typestack''_`ts'","MSE",          "`m'", `mse')
 			mata: add_result_item(`eqn',"``typestack''_`ts'","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
-			mata: add_result_item(`eqn',"``typestack''_`ts'","`ts'_weights",   "`m'", st_matrix("`sweights'"))
+			mata: add_result_item(`eqn',"``typestack''_`ts'","`ts'_weights", "`m'", st_matrix("`sweights'"))
+			if `lieflag' {
+				get_stack_stats if `touse', kfolds(`kfolds') fid(`mname'_fid_`m') vname(`vname') vhat(`yhat_h')
+				local N_h			= r(N)
+				local mse_h			= r(mse)
+				mat `N_folds_h'		= r(N_folds)
+				mat `mse_folds_h'	= r(mse_folds)
+				// store:
+				mata: add_result_item(`eqn',"``typestack''_`ts'","N_h",            "`m'", `N_h')
+				mata: add_result_item(`eqn',"``typestack''_`ts'","N_folds_h",      "`m'", st_matrix("`N_folds_h'"))
+				mata: add_result_item(`eqn',"``typestack''_`ts'","MSE_h",          "`m'", `mse_h')
+				mata: add_result_item(`eqn',"``typestack''_`ts'","MSE_folds_h",    "`m'", st_matrix("`mse_folds_h'"))
+				mata: add_result_item(`eqn',"``typestack''_`ts'","`ts'_weights_h", "`m'", st_matrix("`sweights_h'"))
+			}
 			// final estimator used to stack is a learner item
 			mata: add_learner_item(`eqn',"``typestack''_`ts'","`ts'_final_est", "`finalest'")
 			// replace updated eqn
@@ -398,10 +445,10 @@ program _ddml_estimate_single, eclass sortpreserve
 		di as text "Z-E[Z|X]" _col(11) "= " as res "`e(z)'"
 	}
 	else if "`e(model)'" == "fiv" {
-		di as text "E[D|X]" _col(11) "= " as res "`e(dh)'"
+		di as text "E[D^|X]" _col(11) "= " as res "`e(dh)'"
 	}
 	if "`e(model)'" == "fiv" {
-		di as text "Orthogonalized D = D - E[D|X]; optimal IV = E[D|X,Z] - E[D|X]."
+		di as text "Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X]."
 	}
 	ereturn display
 
@@ -483,6 +530,9 @@ program _ddml_estimate_main
 		local ncombos = 0
 	}
 	
+	// number of possible combos; if only one spec, will replace "mse" label
+	mata: st_local("poss_combos",strofreal(return_ncombos(`mname')))
+	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
 	mata: `eqn' = init_eStruct()
@@ -511,7 +561,7 @@ program _ddml_estimate_main
 	if "`spec'"=="" & `ssflag' {
 		local spec "ss"
 	}
-	else if "`spec'"=="" & `ncombos'>1 {
+	else if "`spec'"=="" & `poss_combos'>1 {
 		local spec "mse"
 	}
 	else if "`spec'"=="" {
@@ -593,9 +643,6 @@ program _ddml_estimate_main
 		}
 	}
 	
-	// number of possible combos; if only one spec, will replace "mse" label
-	mata: st_local("poss_combos",strofreal(return_ncombos(`mname')))
-	
 	// multiple specs
 	// text locals control messages and lookups
 	if `replayflag' {
@@ -615,7 +662,7 @@ program _ddml_estimate_main
 		// if only one combo, enter allcombos code so estimation gets numbered
 		local doallcombos	=1
 	}
-	
+
 	************* ESTIMATE ************
 	
 	if `estimated'==0 {

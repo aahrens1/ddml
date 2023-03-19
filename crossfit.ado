@@ -309,6 +309,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 	// `vtilde_h_list': list of `vtilde'_h_L`j'_`m' for j=1,2,...; reset for each m loop.
 	// `y_stacking_cv': mata matrix with depvar in column 1 and in-sample CV base learner predicted values in rest
 	//   used for poolstacking; accumulated in mata since row dimension >> rows of dataset; 0/1 variants for ate/late
+	// `d_dhat_j_insample': in-sample base learner predicted values used for shortstacking
+	// `d_xz_stack_cv': in-sample base learner CV predicted values used for LIE poolstacking
 	
 	// loop over resamples (crossfitting, shortstacking, store results)
 	forvalues m=`firstrep'/`lastrep' {
@@ -340,6 +342,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				local vtilde_h_list `vtilde_h_list' `vtilde'_h_L`j'_`m'
 			}
 		}
+		
 		******************************** CROSSFITTING ************************************
 		
 		// cross-fitting fundamentally depends on three cases 
@@ -620,13 +623,13 @@ program define _crossfit_pystacked, rclass sortpreserve
 	
 			else if `lieflag' { // case 3
 				
-				if (`k'==1) & `psflag' {
-					// initialize mata object to hold D and in-sample crossfit CV predictions for pooled-stacking
-					mata: `d_xz_stack_cv' = J(0,`nlearners'+1,0)
-				}
 				if (`k'==1) & `ssflag' {
 					// initialize mata object to hold D and in-sample predictions for short-stacking
 					mata: `d_dhat_j_insample' = J(0,`nlearners'+1,0)
+				}
+				if (`k'==1) & `psflag' {
+					// initialize mata object to hold D and in-sample crossfit CV predictions for pooled-stacking
+					mata: `d_xz_stack_cv' = J(0,`nlearners'+1,0)
 				}
 					
 				// Step I: estimation of E[D|XZ]=D^
@@ -676,19 +679,19 @@ program define _crossfit_pystacked, rclass sortpreserve
 				// vhat = OOS Dhat stacked predicted values
 				qui replace `vhat' = `vhat_k' if `fid'==`k' & `touse'
 				
-				if `psflag' {
-					// in-sample CV base learner predicted values
-					// accumulated in mata along with corresponding values of dep var
-					qui replace `tomata' = `fid'!=`k' & `touse'
-					fvexpand `stacking_p_cv'*
-					mata: `d_xz_stack_cv' = `d_xz_stack_cv' \ st_data(., "`vname' `r(varlist)'", "`tomata'")
-				}
 				if `ssflag' {
 					// in-sample base learner predicted values, used for short-stacking
 					// accumulated in mata along with corresponding values of D
 					qui replace `tomata' = `fid'!=`k' & `touse'
 					fvexpand `stacking_p'*
 					mata: `d_dhat_j_insample' = `d_dhat_j_insample' \ st_data(., "`vname' `r(varlist)'", "`tomata'")
+				}
+				if `psflag' {
+					// in-sample CV base learner predicted values
+					// accumulated in mata along with corresponding values of dep var
+					qui replace `tomata' = `fid'!=`k' & `touse'
+					fvexpand `stacking_p_cv'*
+					mata: `d_xz_stack_cv' = `d_xz_stack_cv' \ st_data(., "`vname' `r(varlist)'", "`tomata'")
 				}
 
 				// Step II: estimation of E[D^|X]
@@ -1494,12 +1497,12 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `mse_folds_list'	= (nullmat(`mse_folds_list') \ `mse_folds')
 				mat `N_folds_list'		= (nullmat(`N_folds_list')\ `N_folds')
 
-				mata: add_result_item(`ename',"`poolstack'_ps","N",                 "`m'", `N')
-				mata: add_result_item(`ename',"`poolstack'_ps","N_folds",           "`m'", st_matrix("`N_folds'"))
-				mata: add_result_item(`ename',"`poolstack'_ps","MSE",               "`m'", `mse')
-				mata: add_result_item(`ename',"`poolstack'_ps","MSE_folds",         "`m'", st_matrix("`mse_folds'"))
-				mata: add_result_item(`ename',"`poolstack'_ps","ps_weights",        "`m'", st_matrix("`psw'"))
-				mata: add_result_item(`ename',"`poolstack'_ps","d_dhat_j_insample", "`m'", `d_dhat_j_insample')
+				mata: add_result_item(`ename',"`poolstack'_ps","N",             "`m'", `N')
+				mata: add_result_item(`ename',"`poolstack'_ps","N_folds",       "`m'", st_matrix("`N_folds'"))
+				mata: add_result_item(`ename',"`poolstack'_ps","MSE",           "`m'", `mse')
+				mata: add_result_item(`ename',"`poolstack'_ps","MSE_folds",     "`m'", st_matrix("`mse_folds'"))
+				mata: add_result_item(`ename',"`poolstack'_ps","ps_weights",    "`m'", st_matrix("`psw'"))
+				mata: add_result_item(`ename',"`poolstack'_ps","y_stacking_cv", "`m'", `d_xz_stack_cv')
 				// final estimator used to stack is a learner item; same in "_h" estimation
 				mata: add_learner_item(`ename',"`poolstack'_ps","ps_final_est", "`psfinalest'")
 				
@@ -1524,7 +1527,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mata: add_result_item(`ename',"`poolstack'_ps","MSE_h",           "`m'", `mse_h')
 					mata: add_result_item(`ename',"`poolstack'_ps","MSE_h_folds",     "`m'", st_matrix("`mse_h_folds'"))
 					mata: add_result_item(`ename',"`poolstack'_ps","ps_weights_h",    "`m'", st_matrix("`psw_h'"))
-					mata: add_result_item(`ename',"`poolstack'_ps","dhat_x_stack_cv", "`m'", `dhat_x_stack_cv')
+					mata: add_result_item(`ename',"`poolstack'_ps","y_h_stacking_cv", "`m'", `dhat_x_stack_cv')
 				}
 			}
 		}
@@ -1532,9 +1535,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 		// final clean up
 		cap mata: mata drop `y_stacking_cv'
 		cap mata: mata drop `y_stacking_cv0' `y_stacking_cv1'
-		cap mata: mata drop `d_xz_stack_cv'
 		cap mata: mata drop `d_dhat_j_insample'
 		cap mata: mata drop `dhat_x_stack_cv'
+		cap mata: mata drop `d_xz_stack_cv'
 		cap mata: mata drop `psw'
 		cap mata: mata drop `psw_h'
 		cap mata: mata drop `psw1' `psw0'
