@@ -1385,6 +1385,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mata: add_result_item(`ename',"`shortstack'_ss","MSE_h",        "`m'", `mse_h')
 					mata: add_result_item(`ename',"`shortstack'_ss","MSE_h_folds",  "`m'", st_matrix("`mse_h_folds'"))
 					mata: add_result_item(`ename',"`shortstack'_ss","ss_weights_h", "`m'", st_matrix("`ssw_h'"))
+					mata: add_result_item(`ename',"`shortstack'_ss","y_h_stacking_ss", "`m'", `d_dhat_j_insample')
 				}
 			}
 		}

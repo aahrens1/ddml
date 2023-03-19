@@ -116,6 +116,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 	}
 
 	tempname sweights N_folds mse_folds sweights_h N_folds_h mse_folds_h
+	tempname tframe y_stacking_cv y_h_stacking_cv y_h_stacking_ss
 	local numvts : word count `vtlist'
 	// loop through vtildes
 	forvalues i=1/`numvts' {
@@ -172,10 +173,29 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				local finalest	`e(finalest)'
 				mat `sweights'	= e(b)
 				qui predict double `yhat'
+				if `lieflag' {
+					// second ("d_h") part of LIE
+					qui frame pwf
+					local cframe `r(currentframe)'
+					frame create `tframe'
+					frame change `tframe'
+					// dep var in stacking estimation is "Dhat"
+					mata: `y_h_stacking_ss' = return_result_item(`eqn',"`shortstack'_ss","y_h_stacking_ss", "`m'")
+					// touse ignored at weights stage
+					getmata (`vname'_h `learner_h_list')=`y_h_stacking_ss', force replace
+					`qui' _ddml_nnls `vname'_h `learner_h_list', finalest(`finalest')
+					mata: `sweights_h' = st_matrix("e(b)")
+					frame change `cframe'
+					frame drop `tframe'
+					mata: st_matrix("`sweights_h'",`sweights_h')
+					mat colnames `sweights_h' =  `learner_h_list'
+					mat score double `yhat_h' = `sweights_h' if `touse'
+					cap mata: mata drop `y_h_stacking_ss'
+					cap mata: mata drop `sweights_h'
+				}
 			}
 			else {
 				// poolstacking uses stacking CV predictions, stored in a mata struct
-				tempname tframe y_stacking_cv y_h_stacking_cv
 				qui frame pwf
 				local cframe `r(currentframe)'
 				frame create `tframe'

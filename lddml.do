@@ -42,7 +42,7 @@ struct eStruct {
 	real scalar						nlearners		// number of learners
 	real scalar						lieflag			// =1 if LIE spec with two estimation strings etc.
 	real scalar						ateflag			// =1 if treatment variable in ATE/LATE
-	real scalar						pystackedmulti	// =#learner if pystacked with multiple learners
+	real scalar						pystackedmulti	// =#learners if pystacked with multiple learners
 	class AssociativeArray scalar	lrnAA			// AssociativeArray with all learners //
 													// (keys=vtilde,object)
 	class AssociativeArray scalar	resAA			// AssociativeArray with all learner results //
