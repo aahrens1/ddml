@@ -458,9 +458,11 @@ program _ddml_estimate_single, eclass sortpreserve
 	di as text "y-E[y|X]" _col(11) "= " as res "`e(y)'" _c
 	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
 	if "`e(model)'"~="fiv" {
-		di as text "D-" _c
+		di as text "D-E[D|X]" _col(11)  "= " as res "`e(d)'"
 	}
-	di as text "E[D|X,Z]" _col(11)  "= " as res "`e(d)'"
+	else {
+		di as text "E[D|X,Z]" _col(11)  "= " as res "`e(d)'"
+	}
 	if "`e(model)'" == "iv" {
 		di as text "Z-E[Z|X]" _col(11) "= " as res "`e(z)'"
 	}
@@ -1994,9 +1996,11 @@ program define replay_estimate, eclass
 	di as text "y-E[y|X]" _col(11) "= " as res "y-`e(y_m)'" _c
 	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
 	if "`e(model)'"~="fiv" {
-		di as text "D-" _c
+		di as text "D-E[D|X]" _col(11) "= " _c
 	}
-	di as text "E[D|X,Z]" _col(11) "= " _c
+	else {
+		di as text "E[D|X,Z]" _col(11) "= " _c
+	}
 	local numeqnD : word count `e(d_m)'
 	forvalues i=1/`numeqnD' {
 		local Dtilde : word `i' of `e(d_m)' {
