@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 21jan2023}{...}
+{* *! version 21mar2023}{...}
 {hline}
 {cmd:help crossfit}{right: v1.2}
 {hline}
@@ -9,9 +9,8 @@
 
 {pstd}
 {opt crossfit} fits a supervised machine learner on K-1 folds
-and returns the out-of-sample predicted values (or residuals) for the holdout fold.
-This is done iteratively to obtain out-of-sample ("cross-fitted") fitted values (or residuals)
-for the whole sample.
+and returns the out-of-sample predicted values for the holdout fold.
+This is done iteratively to obtain out-of-sample ("cross-fitted") fitted values for the whole sample.
 
 {p 8 14 2}
 {cmd:crossfit} , 
@@ -44,9 +43,6 @@ Name of the new variable to be created;
 the resample number is appended to the end of the variable name.
 Note that if the variable (including the resample number) already exists, it is overwritten.
 {p_end}
-{synopt:{opt resid}}
-Create residuals (prediction errors); default is predicted values of outcome variable.
-{p_end}
 {synopt:{opt kfolds(integer)}}
 Number of randomly drawn folds; ignored if {opt foldvar(varlist)} is specified; default=5.
 {p_end}
@@ -75,10 +71,10 @@ Variable type of the variable to be created. Defaults to {it:double}.
 
 {pstd}
 {opt crossfit} fits a supervised machine learner on K-1 folds
-and returns the out-of-sample predicted values or residuals for the holdout fold.
+and returns the out-of-sample predicted values for the holdout fold.
 This process is repeated so that each fold serves once as the holdout fold
-for which predictions or residuals are created.
-At the end of the cross-fitting, a full set of predictions or residuals is available
+for which predictions are created.
+At the end of the cross-fitting, a full set of predictions is available
 in the new variable specified by the {opt generate} option.
 The "supervised machine learner" can be any Stata estimator
 that supports standard postestimation prediction.
@@ -96,14 +92,14 @@ meaning that the procedure is applied repeatedly
 using multiple fold variables that indicate different fold splits.
 This can be done via the {opt reps} option,
 or by providing multiple user-defined fold variables.
-The resample number is appended to the generated predictions/residuals.
+The resample number is appended to the generated predictions.
 {p_end}
 
 {pstd}
 The output of {opt crossfit} can be seen as the intermediate step
 of standard K-fold cross-validation.
 In a typical cross-validation exercise, a search is conducted across a range of specifications (e.g. values for a tuning parameter).
-The prediction errors (residuals) for the holdout folds are assembled for each specification,
+The prediction errors for the holdout folds are assembled for each specification,
 and the specification with the best prediction performance (e.g. smallest mean squared prediction error) is chosen.
 A simple example of how to use {opt crossfit} to do this is below.
 {p_end}
@@ -134,18 +130,18 @@ See {help ddml##compatibility:here}.
 {pstd}A simple example of 3-fold cross-validation with 5 resamples using {opt crossfit}.
 The example uses {opt lasso2} from {opt lassopack}; click on {stata "ssc install lassopack"} to install.
 We estimate using the following values of the lambda parameter: 2000, 1000, 500, 250.
-Each time we call {opt crossfit} to obtain the residuals (prediction errors).
+Each time we call {opt crossfit} to obtain the predicted values.
 These could be used after cross-fitting to calculate the MSPE (mean squared prediction error),
 but the MSPE is one of the returned results of {opt crossfit} so we just report that.
 The specification that minimizes the MSPE for all 5 resamples is lambda=250.
 {p_end}
-{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(2000)) gen(ehat2000) resid kfolds(3) reps(5)"}{p_end}
+{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(2000)) gen(yhat2000) kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "mat list r(mse_list)"}{p_end}
-{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(1000)) gen(ehat1000) resid kfolds(3) reps(5)"}{p_end}
+{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(1000)) gen(yhat1000) kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "mat list r(mse_list)"}{p_end}
-{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(500)) gen(ehat500) resid kfolds(3) reps(5)"}{p_end}
+{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(500)) gen(yhat500) kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "mat list r(mse_list)"}{p_end}
-{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(250)) gen(ehat250) resid kfolds(3) reps(5)"}{p_end}
+{phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(250)) gen(yhat250) kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "mat list r(mse_list)"}{p_end}
 
 

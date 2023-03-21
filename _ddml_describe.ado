@@ -229,7 +229,13 @@ prog define desc_learners
 	
 	mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 	mata: st_local("vtlist",invtokens(`eqn'.vtlist))
-	mata: st_local("ssvname",invtokens(`eqn'.shortstack))
+	mata: st_local("shortstack",invtokens(`eqn'.shortstack))
+	** indicator for short-stacking
+	local ssflag	= "`shortstack'"~=""
+	** indicator for standard stacking
+	mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
+//	if `nostdflag'	local vtlist `shortstack'_ss
+
 	local firstrow = 1
 	foreach vtilde in `vtlist' {
 		if `showcmd' {
@@ -310,12 +316,12 @@ prog define desc_learners
 			}
 		}
 	}
-	if "`ssvname'"~="" & `crossfitted' & ~`showcmd' {
+	if `crossfitted' & ~`showcmd' {
 		if `pairs'==0 {
 			forvalues m=1/`nreps' {
 				tempname mse_folds
-				mata: st_local("mse", strofreal(return_result_item(`eqn',"`ssvname'_ss","MSE","`m'")))
-				mata: st_matrix("`mse_folds'", return_result_item(`eqn',"`ssvname'_ss","MSE_folds","`m'"))
+				mata: st_local("mse", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE","`m'")))
+				mata: st_matrix("`mse_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE_folds","`m'"))
 				di as res _col(12) "shortstack" _c
 				di _col(26) %2.0f `m' _c
 				di _col(34) %8.2f `mse' _c
@@ -327,8 +333,8 @@ prog define desc_learners
 			if `heqn' {
 				forvalues m=1/`nreps' {
 					tempname mse_h_folds
-					mata: st_local("mse_h", strofreal(return_result_item(`eqn',"`ssvname'_ss","MSE_h","`m'")))
-					mata: st_matrix("`mse_h_folds'", return_result_item(`eqn',"`ssvname'_ss","MSE_h_folds","`m'"))
+					mata: st_local("mse_h", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE_h","`m'")))
+					mata: st_matrix("`mse_h_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE_h_folds","`m'"))
 					di as res _col(12) "shortstack_h" _c
 					di _col(26) %2.0f `m' _c
 					di _col(34) %8.2f `mse_h' _c
@@ -342,10 +348,10 @@ prog define desc_learners
 		else {
 			forvalues m=1/`nreps' {
 				tempname mse0_h_folds mse1_h_folds
-				mata: st_local("mse0", strofreal(return_result_item(`eqn',"`ssvname'_ss","MSE0","`m'")))
-				mata: st_local("mse1", strofreal(return_result_item(`eqn',"`ssvname'_ss","MSE1","`m'")))
-				mata: st_matrix("`mse0_folds'", return_result_item(`eqn',"`ssvname'_ss","MSE0_folds","`m'"))
-				mata: st_matrix("`mse1_folds'", return_result_item(`eqn',"`ssvname'_ss","MSE1_folds","`m'"))
+				mata: st_local("mse0", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE0","`m'")))
+				mata: st_local("mse1", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE1","`m'")))
+				mata: st_matrix("`mse0_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE0_folds","`m'"))
+				mata: st_matrix("`mse1_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE1_folds","`m'"))
 				forvalues i=0/1 {
 					local lrnabbrev = abbrev("`vtilde'",10)
 					di as res _col(12) "shortstack" _c

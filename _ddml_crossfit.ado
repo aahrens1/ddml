@@ -16,8 +16,6 @@ program _ddml_crossfit, eclass sortpreserve
 							*						///
 							]
 
-	// no checks included yet
-	
 	local debugflag		= "`debug'"~=""
 	if "`noisily'"==""	local qui qui
 	
@@ -87,10 +85,14 @@ program _ddml_crossfit, eclass sortpreserve
 	// used to track minimum number of learners in an equation; must be >1 for short/pool stacking
 	mata: st_local("minlearners", strofreal(`eqn'.nlearners))
 	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+	// flag indicates pystacked does no standard stacking
+	mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+	local nostackflag	=0
+	if `nostdstack'		local nostackflag=1
 	local allpsm = 1
 	if `pystackedmulti'	local minlearners=`pystackedmulti'
 	else				local allpsm=0
-	
+
 	// will always be a D eqn
 	`qui' di as text "D equations (`numeqnD'): `nameD'"
 	foreach var of varlist `nameD' {
@@ -102,9 +104,11 @@ program _ddml_crossfit, eclass sortpreserve
 		// update minlearners
 		mata: st_local("numlnrD", strofreal(`eqn'.nlearners))
 		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-		if `pystackedmulti'	local numlnrD=`pystackedmulti'
-		else				local allpsm=0
-		if `numlnrD'<`minlearners' local minlearners `numlnrD'
+		mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+		if `pystackedmulti'			local numlnrD=`pystackedmulti'
+		else						local allpsm=0
+		if `numlnrD'<`minlearners'	local minlearners=`numlnrD'
+		if `nostdstack'				local nostackflag=1
 	}
 	
 	// Z eqn exists for late, iv, fiv models
@@ -119,9 +123,11 @@ program _ddml_crossfit, eclass sortpreserve
 			// update minlearners
 			mata: st_local("numlnrZ", strofreal(`eqn'.nlearners))
 			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-			if `pystackedmulti'	local numlnrZ=`pystackedmulti'
-			else				local allpsm=0
-			if `numlnrZ'<`minlearners' local minlearners `numlnrZ'
+			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+			if `pystackedmulti'			local numlnrZ=`pystackedmulti'
+			else						local allpsm=0
+			if `numlnrZ'<`minlearners'	local minlearners `numlnrZ'
+			if `nostdstack'				local nostackflag=1
 		}
 	}
 
@@ -137,7 +143,7 @@ program _ddml_crossfit, eclass sortpreserve
 		local poolstack
 	}
 	// pooled-stacking requires pystacked multilearner in all equations
-	if `psflag' & ~`allpsm' {
+	if `psflag' & (~`allpsm' | `nostackflag') {
 		di as text "`poolstack requires a single use of pystacked with multiple learners in all equations; option ignored"
 		mata: `mname'.psflag = 0
 		local psflag=0
@@ -288,14 +294,20 @@ program create_sample_indicators
 	local numeqnZ	: word count `nameZ'
 	
 	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+	mata: st_local("shortstack", `eqn'.shortstack)
+	mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
+	if `nostdstack'	local vtlistY `shortstack'_ss
 	
 	local lieflag = 0
 	if `numeqnD' {
 		foreach var of varlist `nameD' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
+			mata: st_local("shortstack", `eqn'.shortstack)
+			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
+			if `nostdstack'	local vtlistD `shortstack'_ss
 			local Dt_list `Dt_list' `vtlistD'
 		}
 	}
@@ -304,10 +316,13 @@ program create_sample_indicators
 		foreach var of varlist `nameD' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
+			mata: st_local("shortstack", `eqn'.shortstack)
+			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			foreach vn in `vtlistD' {
 				local vtlistD_h `vtlistD_h' `vn'_h
 			}
+			if `nostdstack'	local vtlistD_h `shortstack'_h_ss
 			local DHt_list `DHt_list' `vtlistD_h'
 		}
 	}
@@ -315,7 +330,10 @@ program create_sample_indicators
 	if `numeqnZ' {
 		foreach var of varlist `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			mata: st_local("shortstack", `eqn'.shortstack)
+			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
+			if `nostdstack'	local vtlistZ `shortstack'_ss
 			local Zt_list `Zt_list' `vtlistZ'
 		}
 	}

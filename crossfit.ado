@@ -146,7 +146,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 							reps(integer 1)			/// ignored if foldvars provided
 							firstrep(integer 1)		/// add reps starting with m=firstrep
 							NORANDOM				/// first fold ID uses obs in existing order
-							resid					/// return residuals (prediction errors); default is predicted values
 							treatvar(varname)		/// 1 or 0 RHS variable; relevant for interactive model only
 													/// if omitted then default is additive model
 							NOIsily					///
@@ -171,19 +170,21 @@ program define _crossfit_pystacked, rclass sortpreserve
 	mata: st_local("poolstack", `ename'.poolstack)
 	mata: st_local("lieflag", strofreal(`ename'.lieflag))
 
+	** indicator for interactive model
+	local tvflag	= "`treatvar'"~=""
 	** indicator for short-stacking
 	local ssflag	= "`shortstack'"~=""
 	** indicator for pooled-stacking
 	local psflag	= "`poolstack'"~=""
-	** indicator for interactive model
-	local tvflag	= "`treatvar'"~=""
-	** indicator for residuals vs predicted values
-	local residflag	= "`resid'"~=""
-
-	// LIE => we want predicted values not resids
-	if `lieflag' & `residflag' {
-		di as res "resid option ignored"
-		local residflag=0
+	** indicator for standard stacking
+	mata: st_local("stdflag", strofreal(1-`ename'.nostdstack))
+	if `psflag' & ~`stdflag' {
+		di as res "pooled stacking requires standard stacking; poolstack option ignored"
+		local psflag = 0
+	}
+	if ~`stdflag' & ~`ssflag' {
+		di as err "error - nostd setting requires short-stacking"
+		exit 198
 	}
 	
 	if "`noisily'"=="" {
@@ -288,7 +289,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 	tempname y_stacking_cv y_stacking_cv0 y_stacking_cv1 d_xz_stack_cv dhat_x_stack_cv d_dhat_j_insample
 	
 	// notes:
-	// `vtilde': name for fitted variable (predicted value or residual).
+	// `vtilde': name for fitted variable (predicted value)
 	// `vhat_k': OOS (crossfit) stacked predicted values for fold k.
 	// `vhat1_k', `vhat0_k': as above for TV.
 	// `vhat': OOS (crossfit) stacked predicted values, for all folds; filled when looping over folds. tempvar.
@@ -296,10 +297,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 	// `vtilde'_`m': `vhat' or `vres' using user-provided varname.
 	// `vtilde'_L`j'_`m': OOS (crossfit) predicted values, by learner. m is resample j is base learner number.
 	// `vtilde_list': list of `vtilde'_L`j'_`m' for j=1,2,...; reset for each m loop.
-	// not (yet?) implemented - making resid option apply to `vtilde'_L`j'_`m'
 	// `stacking_p_cv'[1,2,...]: in-sample CV predicted values of base learners; saved in mata for poolstacking.
 	// `stacking_p'[1,2,...]: predicted values of base learners, in-sample and OOS; OOS => `vtilde'_L`j'_`m'.
-	// `shortstack': name for shortstacked fitted variable (predicted value or residual).
+	// `shortstack': name for shortstacked fitted variable (predicted value).
 	// `shortstack'_ss_`m': shortstacked fitted variable of D for resample m; not a tempvar.
 	// `shortstack'_h_ss_`m': shortstacked fitted variable of Dhat for resample m; not a tempvar.
 	// `hhat_k': OOS (crossfit) stacked predicted values for Dhat (Step II) for fold K.
@@ -372,12 +372,10 @@ program define _crossfit_pystacked, rclass sortpreserve
 			}
 		}  
 		else if `tvflag' & ~`lieflag' { // case 2
-			tempvar vhat0 vres0
-			tempvar vhat1 vres1
+			tempvar vhat0
+			tempvar vhat1
 			qui gen `vtype' `vhat0'=.
-			qui gen `vtype' `vres0'=.
 			qui gen `vtype' `vhat1'=.
-			qui gen `vtype' `vres1'=.
 			// base learner predicted values
 			// not tempvars; name based on `vtilde' macro; used for poolstacking
 			forvalues j=1/`nlearners' {
@@ -411,7 +409,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 			di as err "internal crossfit error"
 			exit 198
 		}
-		
 	
 		// will save pystacked weights and MSEs
 		tempname pysw pysw0 pysw1 pyswh
@@ -447,40 +444,49 @@ program define _crossfit_pystacked, rclass sortpreserve
 				assert "`e(cmd)'"=="pystacked"
 				assert e(mcount)>1 & e(mcount)<.
 				
-				// save pystacked weights and MSEs
-				qui pystacked, table(rmspe)		// create rmspe matrix
-				if (`k'==1) {
-					mat `pysw' = e(weights)
-					mat `pysm_temp' = e(rmspe)
-					mat `pysm' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-					mata: st_replacematrix("`pysm'",st_matrix("`pysm'"):^2)
-				}
-				else {
-					mat `pysw_temp' = e(weights)
-					mat `pysw' = (`pysw',`pysw_temp')
-					mat `pysm_temp' = e(rmspe)
-					mat `pysm_temp' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-					mata: st_replacematrix("`pysm_temp'",st_matrix("`pysm_temp'"):^2)
-					mat `pysm' = (`pysm',`pysm_temp')
-				}
-	
-				// get fitted values and residuals for kth fold	
-				qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
-				// get base learner predicted values
-				tempvar stacking_p_cv stacking_p
-				// in-sample CV base learner predicted values
-				qui predict double `stacking_p_cv', basexb cv
+				// pystacked complains if data change after estimation and before predict
+				// so do all predict commands first
+				
+				// always save crossfit base learner predicted values
 				// OOS (crossfit) base learner predicted values
+				tempvar stacking_p
 				qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
+				
+				if `stdflag' {
+					// get fitted values for kth fold	
+					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
+					// in-sample CV base learner predicted values
+					tempvar stacking_p_cv
+					qui predict double `stacking_p_cv', basexb cv
+					
+					// save pystacked weights and MSEs
+					qui pystacked, table(rmspe)		// create rmspe matrix
+					if (`k'==1) {
+						mat `pysw' = e(weights)
+						mat `pysm_temp' = e(rmspe)
+						mat `pysm' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+						mata: st_replacematrix("`pysm'",st_matrix("`pysm'"):^2)
+					}
+					else {
+						mat `pysw_temp' = e(weights)
+						mat `pysw' = (`pysw',`pysw_temp')
+						mat `pysm_temp' = e(rmspe)
+						mat `pysm_temp' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+						mata: st_replacematrix("`pysm_temp'",st_matrix("`pysm_temp'"):^2)
+						mat `pysm' = (`pysm',`pysm_temp')
+					}
+				}
+				
+				// always save crossfit base learner predicted values
 				// OOS (crossfit) base learner predicted values
 				forvalues j=1/`nlearners' {
 					qui replace `vtilde'_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
 				}
-	
-				// get stacked out-of-sample predicted values
-				qui replace `vhat' = `vhat_k' if `fid'==`k' & `touse'
-				qui replace `vres' = `vname' - `vhat_k' if `fid'==`k' & `touse'
-
+				if `stdflag' {
+					// get stacked out-of-sample predicted values
+					qui replace `vhat' = `vhat_k' if `fid'==`k' & `touse'
+					qui replace `vres' = `vname' - `vhat_k' if `fid'==`k' & `touse'
+				}
 				if `psflag' {				
 					// in-sample CV base learner predicted values
 					// accumulated in mata along with corresponding values of dep var
@@ -543,7 +549,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 	
 				// get stacked out-of-sample predicted values
 				qui replace `vhat1' = `vhat1_k' if `fid'==`k' & `touse'
-				qui replace `vres1' = `vname' - `vhat1_k' if `fid'==`k' & `touse'
 				
 				if `psflag' {
 					// in-sample CV base learner predicted values
@@ -610,7 +615,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				
 				// get stacked out-of-sample predicted values
 				qui replace `vhat0' = `vhat0_k' if `fid'==`k' & `touse'
-				qui replace `vres0' = `vname' - `vhat0_k' if `fid'==`k' & `touse'
 				
 				// in-sample CV base learner predicted values
 				// accumulated in mata along with corresponding values of dep var
@@ -797,10 +801,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `ssw' = e(b)
 				cap drop `shortstack'_ss_`m'
 				mat score `vtype' `shortstack'_ss_`m' = `ssw' if `touse'
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `shortstack'_ss_`m' = `vname' - `shortstack'_ss_`m'
-				}
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 				`qui' di
@@ -811,10 +811,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `ssw1' = e(b)
 				cap drop `shortstack'_ss1_`m'
 				mat score `vtype' `shortstack'_ss1_`m' = `ssw1' if `touse'
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `shortstack'_ss1_`m' = `vname' - `shortstack'_ss1_`m'
-				}
 				// treatvar == 0
 				`qui' di
 				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=0):"
@@ -824,10 +820,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `ssw0' = e(b)
 				cap drop `shortstack'_ss0_`m'
 				mat score `vtype' `shortstack'_ss0_`m' = `ssw0' if `touse'
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `shortstack'_ss0_`m' = `vname' - `shortstack'_ss0_`m'
-				}
 			}
 			else if `lieflag' {
 				// apply short-stacking to cross-fitted (out-of-sample) predicted values of E[D|XZ]
@@ -839,6 +831,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `ssw'= e(b)
 				cap drop `shortstack'_ss_`m'
 				mat score `vtype' `shortstack'_ss_`m' = `ssw' if `touse'
+				
 				if `pystacked_h_flag' {
 					// apply short-stacking to in-sample predicted values of E[D|XZ]=D^
 					tempname tframe
@@ -894,10 +887,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat colnames `psw' =  `vtilde_list'
 				cap drop `poolstack'_ps_`m'
 				mat score `vtype' `poolstack'_ps_`m' = `psw' if `touse'
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `poolstack'_ps_`m' = `vname' - `poolstack'_ps_`m'
-				}
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 			
@@ -920,10 +909,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat colnames `psw1' = `vtilde1_list'
 				cap drop `poolstack'_ps1_`m'
 				mat score `vtype' `poolstack'_ps1_`m' = `psw1' if `touse'
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `poolstack'_ps1_`m' = `vname' - `poolstack'_ps1_`m'
-				}
 
 				// treatvar=0
 				tempname tframe
@@ -944,10 +929,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat colnames `psw0' =  `vtilde0_list'
 				cap drop `poolstack'_ps0_`m'
 				mat score `vtype' `poolstack'_ps0_`m' = `psw0' if `touse'
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `poolstack'_ps0_`m' = `vname' - `poolstack'_ps0_`m'
-				}
 			
 			}
 			else if `lieflag' {
@@ -969,10 +950,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat colnames `psw' =  `vtilde_list'
 				cap drop `poolstack'_ps_`m'
 				mat score `vtype' `poolstack'_ps_`m' = `psw' if `touse'
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `poolstack'_ps_`m' = `vname' - `poolstack'_ps_`m'
-				}
+				
 				if `pystacked_h_flag' {
 					frame change `tframe'
 					// clear Step I data
@@ -991,10 +969,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mat colnames `psw' =  `r(varlist)'
 					cap drop `poolstack'_h_ps_`m'
 					mat score `vtype' `poolstack'_h_ps_`m' = `psw' if `touse'
-					if `residflag' {
-						// vtilde is the residual
-						qui replace `poolstack'_h_ps_`m' = `vname' - `poolstack'_ps_`m'
-					}
 				}
 				else {
 					frame drop `tframe'
@@ -1006,13 +980,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 			di as text "...completed pooled-stacking" _c
 		}
 		
-		// residualize pystacked base learners (linear models)
-		// use general foreach to allow for an empty list
-		if `residflag' {
-			foreach v in `vtilde_list' `vtilde_h_list' {
-				qui replace `v' = `vname' - `v'
-			}
-		}
 		************************************************************************************
 
 		***************************** ESTIMATION COMPLETE *********************************
@@ -1024,20 +991,13 @@ program define _crossfit_pystacked, rclass sortpreserve
 		if ~`tvflag' & ~`lieflag' {
 	
 			cap drop `vtilde'_`m'
-			if "`resid'"=="" {
-				// vtilde is predicted values
+			// vtilde is predicted values
+			if `stdflag' {
 				qui gen `vtype' `vtilde'_`m' = `vhat'
 				qui label var `vtilde'_`m' "Predicted values cond. exp. of `vname' using `cmd'"
-				if `ssflag' qui label var `shortstack'_ss_`m' "Predicted values cond. exp. of `vname' using shortstacking"
-				if `psflag' qui label var `poolstack'_ps_`m' "Predicted values cond. exp. of `vname' using poolstacking"
 			}
-			else {
-				// vtilde is residuals
-				qui gen `vtype' `vtilde'_`m' = `vres'
-				qui label var `vtilde'_`m' "Residuals cond. exp. of `vname' using `cmd'"
-				if `ssflag' qui label var `shortstack'_ss_`m' "Residuals cond. exp. of `vname' using shortstacking"
-				if `psflag' qui label var `poolstack'_ps_`m' "Residuals cond. exp. of `vname' using poolstacking"
-			}
+			if `ssflag' qui label var `shortstack'_ss_`m' "Predicted values cond. exp. of `vname' using shortstacking"
+			if `psflag' qui label var `poolstack'_ps_`m' "Predicted values cond. exp. of `vname' using poolstacking"
 			forvalues j=1/`nlearners' {
 				qui label var `vtilde'_L`j'_`m' "Predicted values cond. exp. of `vname' using base learner `j'"
 			}
@@ -1074,37 +1034,24 @@ program define _crossfit_pystacked, rclass sortpreserve
 			
 			mata: add_learner_item(`ename',"`vtilde'","stack_base_est","`base_est'")
 			mata: add_learner_item(`ename',"`vtilde'","stack_final_est","`stack_final_est'")
-			// only one learner so it's the opt			
-			local mse_opt		= `mse'
-			mata: add_learner_item(`ename',"opt","`m'","`vtilde'")
+			// only one learner so it's the opt; set opt="" if no std stacking
+			if `stdflag'	mata: add_learner_item(`ename',"opt","`m'","`vtilde'")
+			else			mata: add_learner_item(`ename',"opt","`m'","")
 			
 		}
 		else if `tvflag' & ~`lieflag' {
 		
 			cap drop `vtilde'0_`m'
 			cap drop `vtilde'1_`m'
-			if "`resid'"=="" {
-				// vtilde is predicted values
-				qui gen `vtype' `vtilde'0_`m' = `vhat0'
-				qui gen `vtype' `vtilde'1_`m' = `vhat1'
-				qui label var `vtilde'0_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using `cmd'"
-				qui label var `vtilde'1_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using `cmd'"
-				if `ssflag' qui label var `shortstack'_ss0_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==0 using shortstacking"
-				if `ssflag' qui label var `shortstack'_ss1_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==1 using shortstacking"
-				if `psflag' qui label var `poolstack'_ps0_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==0 using poolstacking"
-				if `psflag' qui label var `poolstack'_ps1_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==1 using poolstacking"
-			}
-			else {
-				// vtilde is residuals
-				qui gen `vtype' `vtilde'0_`m' = `vres0'
-				qui gen `vtype' `vtilde'1_`m' = `vres1'
-				qui label var `vtilde'0_`m' "Residuals cond. exp. of `vname' given `treatvar'==0 using `cmd'"
-				qui label var `vtilde'1_`m' "Residuals cond. exp. of `vname' given `treatvar'==1 using `cmd'"
-				if `ssflag' qui label var `shortstack'_ss0_`m'  "Residuals cond. exp. of `vname' given `treatvar'==0 using shortstacking"
-				if `ssflag' qui label var `shortstack'_ss1_`m'  "Residuals cond. exp. of `vname' given `treatvar'==1 using shortstacking"
-				if `psflag' qui label var `poolstack'_ps0_`m'  "Residuals cond. exp. of `vname' given `treatvar'==0 using poolstacking"
-				if `psflag' qui label var `poolstack'_ps1_`m'  "Residuals cond. exp. of `vname' given `treatvar'==1 using poolstacking"
-			}
+			// vtilde is predicted values
+			qui gen `vtype' `vtilde'0_`m' = `vhat0'
+			qui gen `vtype' `vtilde'1_`m' = `vhat1'
+			qui label var `vtilde'0_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using `cmd'"
+			qui label var `vtilde'1_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using `cmd'"
+			if `ssflag' qui label var `shortstack'_ss0_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==0 using shortstacking"
+			if `ssflag' qui label var `shortstack'_ss1_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==1 using shortstacking"
+			if `psflag' qui label var `poolstack'_ps0_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==0 using poolstacking"
+			if `psflag' qui label var `poolstack'_ps1_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==1 using poolstacking"
 			forvalues j=1/`nlearners' {
 				qui label var `vtilde'0_L`j'_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using base learner `j'"
 				qui label var `vtilde'1_L`j'_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using base learner `j'"
@@ -1244,9 +1191,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 			mata: add_learner_item(`ename',"`vtilde'","stack_final_est",  "`stack_final_est'")
 			mata: add_learner_item(`ename',"`vtilde'","stack_final_est_h","`stack_final_est_h'")
 			// optimal D and H
-			local mse_opt		= `mse'
 			mata: add_learner_item(`ename',"opt","`m'","`vtilde'")
-			local mse_h_opt		= `mse_h'
 			mata: add_learner_item(`ename',"opt_h","`m'","`vtilde'_h")
 		}
 
@@ -1605,7 +1550,6 @@ program define _crossfit_other, rclass sortpreserve
 							reps(integer 1)			/// ignored if foldvars provided
 							firstrep(integer 1)		/// add reps starting with m=firstrep
 							NORANDOM				/// first fold ID uses obs in existing order
-							resid					/// return residuals (prediction errors); default is predicted values
 							treatvar(varname)		/// 1 or 0 RHS variable; relevant for interactive model only
 													/// if omitted then default is additive model
 							NOIsily					///
@@ -1631,14 +1575,6 @@ program define _crossfit_other, rclass sortpreserve
 	local ssflag	= "`shortstack'"~=""
 	** indicator for interactive model
 	local tvflag	= "`treatvar'"~=""
-	** indicator for residuals vs predicted values
-	local residflag	= "`resid'"~=""
-
-	// LIE => we want predicted values not resids
-	if `lieflag' & `residflag' {
-		di as res "resid option ignored"
-		local resid = 0
-	}
 	
 	if "`noisily'"=="" {
 		local qui quietly
@@ -1826,7 +1762,7 @@ program define _crossfit_other, rclass sortpreserve
 						local cmd : word 1 of `est_main'
 					}
 					
-					// get fitted values and residuals for kth fold	
+					// get fitted values for kth fold	
 					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
 		
 					// get predicted values
@@ -1951,14 +1887,11 @@ program define _crossfit_other, rclass sortpreserve
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'_ss_`m' = `vtemp'
 					
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `shortstack'_ss_`m' = `vname' - `shortstack'_ss_`m'
-				}
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 				local vhats1 
 				local vhats0
+				
 				// treatvar == 1
 				forvalues j=1/`nlearners' {
 					local vhats1 `vhats1' `vhat1`j''
@@ -1973,10 +1906,6 @@ program define _crossfit_other, rclass sortpreserve
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'_ss1_`m'=`vtemp'
 					
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `shortstack'_ss1_`m' = `vname' - `shortstack'_ss1_`m'
-				}
 				// treatvar == 0
 				forvalues j=1/`nlearners' {
 					local vhats0 `vhats0' `vhat0`j''
@@ -1991,10 +1920,6 @@ program define _crossfit_other, rclass sortpreserve
 				qui predict `vtype' `vtemp'
 				qui replace `shortstack'_ss0_`m'=`vtemp'
 		
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `shortstack'_ss0_`m' = `vname' - `shortstack'_ss0_`m'
-				}
 			}
 			else if `lieflag' {
 				// apply short-stacking to cross-fitted (out-of-sample) predicted values of E[D|XZ]
@@ -2087,22 +2012,10 @@ program define _crossfit_other, rclass sortpreserve
 			
 			if ~`tvflag' & ~`lieflag' { // case 1
 				qui replace `shortstack'_ss_`m' = `vhat1'
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `shortstack'_ss_`m' = `vname' - `shortstack'_ss_`m'
-				}
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 				qui replace `shortstack'_ss1_`m'=`vhat11'
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `shortstack'_ss1_`m' = `vname' - `shortstack'_ss1_`m' if `treatvar'==1
-				}
 				qui replace `shortstack'_ss0_`m'=`vhat01'
-				if `residflag' {
-					// vtilde is the residual
-					qui replace `shortstack'_ss0_`m' = `vname' - `shortstack'_ss0_`m' if `treatvar'==0
-				}
 			}
 			else if `lieflag' {
 				qui replace `shortstack'_ss_`m'=`dhat1'
@@ -2133,16 +2046,9 @@ program define _crossfit_other, rclass sortpreserve
 			if ~`tvflag' & ~`lieflag' {
 		
 				cap drop `vtilde'_`m'
-				if "`resid'"=="" {
-					// vtilde is predicted values
-					qui gen `vtype' `vtilde'_`m' = `vhat`j''
-					qui label var `vtilde'_`m' "Predicted values cond. exp. of `vname' using `cmd'"
-				}
-				else {
-					// vtilde is residuals
-					qui gen `vtype' `vtilde'_`m' = `vres`j''
-					qui label var `vtilde'_`m' "Residuals cond. exp. of `vname' using `cmd'"
-				}
+				// vtilde is predicted values
+				qui gen `vtype' `vtilde'_`m' = `vhat`j''
+				qui label var `vtilde'_`m' "Predicted values cond. exp. of `vname' using `cmd'"
 		
 				// calculate and return mspe and sample size
 				tempvar vres_sq
@@ -2185,20 +2091,11 @@ program define _crossfit_other, rclass sortpreserve
 			
 				cap drop `vtilde'0_`m'
 				cap drop `vtilde'1_`m'
-				if "`resid'"=="" {
-					// vtilde is predicted values
-					qui gen `vtype' `vtilde'0_`m' = `vhat0`j''
-					qui gen `vtype' `vtilde'1_`m' = `vhat1`j''
-					qui label var `vtilde'0_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using `cmd'"
-					qui label var `vtilde'1_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using `cmd'"
-				}
-				else {
-					// vtilde is residuals
-					qui gen `vtype' `vtilde'0_`m' = `vres0`j''
-					qui gen `vtype' `vtilde'1_`m' = `vres1`j''
-					qui label var `vtilde'0_`m' "Residuals cond. exp. of `vname' given `treatvar'==0 using `cmd'"
-					qui label var `vtilde'1_`m' "Residuals cond. exp. of `vname' given `treatvar'==1 using `cmd'"
-				}
+				// vtilde is predicted values
+				qui gen `vtype' `vtilde'0_`m' = `vhat0`j''
+				qui gen `vtype' `vtilde'1_`m' = `vhat1`j''
+				qui label var `vtilde'0_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using `cmd'"
+				qui label var `vtilde'1_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using `cmd'"
 		
 				// calculate and return mspe and sample size
 				tempvar vres0_sq vres1_sq

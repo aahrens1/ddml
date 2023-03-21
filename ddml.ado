@@ -54,6 +54,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 						REPlace					///
 						cmdname(name)			///
 						NOIsily					///
+						NOSTDSTACK				/// pystacked only - don't generate a stacked learner
 						/* NOPrefix */ 			/// don't add model name as prefix (disabled - interferes with save/use option)
 						*						///
 						]
@@ -304,6 +305,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 								posof(`posof')		///
 								estring(`eqn')		///
 								cmdname(`cmdname')	///
+								`nostdstack'		///
 								`noisily'
 			
 		}
@@ -417,8 +419,9 @@ program define add_eqn_to_model, rclass
 							estring(string asis)	/// names of estimation strings
 													/// need asis option in case it includes strings
 							posof(integer 0)		/// position of vname in name list; =0 if a new vname (new eqn)
-							NOIsily					///
 							cmdname(name)			///
+							NOSTDSTACK				/// pystacked only - don't create a stacked learner
+							NOIsily					/// 
 							*						///
 							]
 
@@ -580,6 +583,9 @@ program define add_eqn_to_model, rclass
 			`qui' di as text "adding pystacked multilearner..."
 		}
 	}
+	
+	// misc
+	if "`nostdstack'"~=""	mata: `eqn'.nostdstack = 1
 	
 	`qui' di as text "number of ddml learners = " as res `nlearners'
 	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))

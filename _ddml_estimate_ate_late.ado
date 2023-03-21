@@ -11,17 +11,18 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								d0(varname)			/// 
 								d1(varname)			/// 
 								z(varname)			///
-								shortstack			///
-								poolstack			///
+								shortstack			/// re-short-stack
+								poolstack			/// re-pool-stack
+								finalest(name)		/// relevant only for re-stacking
 								* ]
 
 	if "`shortstack'"~="" {
 		// restack
-		_ddml_estimate_stacking `anything' `if' `in', ss `options'
+		_ddml_estimate_stacking `anything' `if' `in', ss finalest(`finalest') `options'
 	}
 	if "`poolstack'"~="" {
 		// restack
-		_ddml_estimate_stacking `anything' `if' `in', ps `options'
+		_ddml_estimate_stacking `anything' `if' `in', ps finalest(`finalest') `options'
 	}
 	if "`y0'`y1'`d'`d0'`d1'`z'"=="" {
 		// main program for estimation
@@ -599,7 +600,7 @@ program _ddml_estimate_main
 								trim(real 0.01)		///
 								debug				///
 								noisily				///
-								* ]
+								]
 	
 	if "`debug'`noisily'"==""	local qui qui
 	
@@ -657,6 +658,11 @@ program _ddml_estimate_main
 	
 	// number of possible combos; if only one spec, will replace "mse" label
 	mata: st_local("poss_combos",strofreal(return_ncombos(`mname')))
+	
+	if `doallcombos' & (`poss_combos'==1) {
+		di as text "only one possible combination of specifications; allcombos option ignored"
+		local doallcombos = 0
+	}
 		
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
@@ -680,16 +686,33 @@ program _ddml_estimate_main
 		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
 		exit 198
 	}
+
+	// stdflag=1 if pystacked standard stacking is the only learner for all vars
+	// numspecflag=1 unless there is no numbered (i.e. not ss or ps) spec - possible with pystacked and only shortstacking
+	local stdflag		= 1
+	local numspecflag	= 1
+	foreach vname in `nameY' `nameD' `nameZ' {
+			mata: `eqn' = (`mname'.eqnAA).get("`vname'")
+			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+			local stdflag		= `stdflag' & `pystackedmulti'
+			local numspecflag	= `numspecflag' & (`nostdstack'==0)
+	}
 	
-	// default spec is ss if available, otherwise mse if ncombos>1, otherwise 1 since ncombos=1
-	if "`spec'"=="" & `ssflag' {
-		local spec "ss"
-	}
-	else if "`spec'"=="" & `ncombos'>1 {
-		local spec "mse"
-	}
-	else if "`spec'"=="" {
-		local spec 1
+	// default specs, in order/if available: ss, ps, mse if ncombos>1, otherwise 1 since ncombos=1
+	if "`spec'"=="" {
+		if `ssflag' {
+			local spec "ss"
+		}
+		else if "`spec'"=="" & `poss_combos'>1 {
+			local spec "mse"
+		}
+		else if `stdflag' {
+			local spec st
+		}
+		else if "`spec'"=="" {
+			local spec 1
+		}
 	}
 	
 	// allowed forms of spec and rep
@@ -708,7 +731,7 @@ program _ddml_estimate_main
 	}
 	
 	// checks
-	if "`spec'"~="ss" & "`spec'"~="ps" & "`spec'"~="mse" & real("`spec'")==. {
+	if "`spec'"~="ss" & "`spec'"~="ps" & "`spec'"~="mse" & "`spec'"~="st" & real("`spec'")==. {
 		di as err "error - invalid spec(`spec')"
 		exit 198
 	}
@@ -800,23 +823,29 @@ program _ddml_estimate_main
 	else if `poss_combos'>1 {
 		local msetext	"min-mse "
 		local MSEtext	"Min MSE "
+		local sttext
+		local STtext
 		local spectext	mse
-		local otext		mse
+	}
+	else if `stdflag' {
+		local msetext
+		local MSEtext
+		local sttext	"stacking "
+		local STtext	"Stacking "
+		local spectext	st
 	}
 	else {
 		local msetext
 		local MSEtext
-		local spectext		1
-		local otext			1
-		// if only one combo, enter allcombos code so estimation gets numbered
-		local doallcombos	=1
+		local sttext
+		local STtext
+		local spectext	1
 	}
 
 	************* ESTIMATE ************
 	
 	if `estimated'==0 {
 		// enter if no estimates exist
-
 		// Loop over resamples and estimate/save the min mse and ss model for each
 		forvalues m=1/`nreps' {
 		
@@ -850,19 +879,21 @@ program _ddml_estimate_main
 			}
 
 			// code works for both ATE and LATE
-			local title "`MSEtext'DDML model`stext' (`teffect')"
-			`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
-				yvar(`nameY') dvar(`nameD') zvar(`nameZ')				///
-				y0tilde(`Y0opt') y1tilde(`Y1opt')						///
-				dtilde(`Dopt') d0tilde(`D0opt') d1tilde(`D1opt')		///
-				ztilde(`Zopt')											///
-				spec(`spectext') rep(`m')								///
-				mname(`mname')											///
-				title(`title')											///
-				trim(`trim')											///
-				vce(`vce')												///
-				te(`teffect')
-			
+			// estimate optimal (or only numbered) spec for this rep
+			if `numspecflag' {
+				local title "`STtext'`MSEtext'DDML model`stext' (`teffect')"
+				`qui' estimate_and_store if `mname'_sample_`m' & `touse',	///
+					yvar(`nameY') dvar(`nameD') zvar(`nameZ')				///
+					y0tilde(`Y0opt') y1tilde(`Y1opt')						///
+					dtilde(`Dopt') d0tilde(`D0opt') d1tilde(`D1opt')		///
+					ztilde(`Zopt')											///
+					spec(`spectext') rep(`m')								///
+					mname(`mname')											///
+					title(`title')											///
+					trim(`trim')											///
+					vce(`vce')												///
+					te(`teffect')
+			}
 			// estimate shortstack for this rep
 			if `ssflag' {
 				// code works for both ATE and LATE
@@ -902,10 +933,13 @@ program _ddml_estimate_main
 		// have looped over reps to get each optimal model and shortstack per rep
 		// now aggregate over reps to get mean/median
 		if `nreps' > 1 {
-			local title "Mean over `nreps' `msetext'resamples (`teffect')"
-			`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(mn) title(`title') vce(`vce') te(`teffect')
-			local title "Median over `nreps' `msetext'resamples (`teffect')"
- 			`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(md) title(`title') vce(`vce') te(`teffect')
+			// numbered/stacking estimates
+			if `numspecflag' {
+				local title "Mean over `nreps' `sttext'`msetext'resamples (`teffect')"
+				`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(mn) title(`title') vce(`vce') te(`teffect')
+				local title "Median over `nreps' `sttext'`msetext'resamples (`teffect')"
+ 				`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(md) title(`title') vce(`vce') te(`teffect')
+ 			}
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean over `nreps' resamples) (`teffect')"
@@ -1238,40 +1272,42 @@ program _ddml_estimate_main
 			}
 			else {
 				// only mse/ss specs available/reported
-				`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`m')
-				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
-				mat `btemp' = e(b)
-				mat `Vtemp' = e(V)
-				local specrep "`: di %4s "`otext'" %3.0f `m''"
-				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') notable replay
-				di %6s "{`rcmd':`specrep'}" _c
-				mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
-				mata: st_local("yt0",return_learner_item(`eqn',"opt0","`m'"))
-				di as res %14s abbrev("`yt0'",13) _c
-				mata: st_local("yt1",return_learner_item(`eqn',"opt1","`m'"))
-				di as res %14s abbrev("`yt1'",13) _c
-				if `ateflag' {
-					mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
-					mata: st_local("dt",return_learner_item(`eqn',"opt","`m'"))
-					di as res %14s "`dt'" _c
+				if `numspecflag' {
+					`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`m')
+					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+					mat `btemp' = e(b)
+					mat `Vtemp' = e(V)
+					local specrep "`: di %4s "`spectext'" %3.0f `m''"
+					local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') notable replay
+					di %6s "{`rcmd':`specrep'}" _c
+					mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+					mata: st_local("yt0",return_learner_item(`eqn',"opt0","`m'"))
+					di as res %14s abbrev("`yt0'",13) _c
+					mata: st_local("yt1",return_learner_item(`eqn',"opt1","`m'"))
+					di as res %14s abbrev("`yt1'",13) _c
+					if `ateflag' {
+						mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
+						mata: st_local("dt",return_learner_item(`eqn',"opt","`m'"))
+						di as res %14s "`dt'" _c
+					}
+					else {
+						mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
+						mata: st_local("dt0",return_learner_item(`eqn',"opt0","`m'"))
+						di as res %14s abbrev("`dt0'",13) _c
+						mata: st_local("dt1",return_learner_item(`eqn',"opt1","`m'"))
+						di as res %14s abbrev("`dt1'",13) _c
+					
+					}
+					di as res %10.3f el(`btemp',1,1) _c
+					local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
+					di as res %10s "`pse'" _c
+					if ~`ateflag' {
+						mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
+						mata: st_local("zt",return_learner_item(`eqn',"opt","`m'"))
+						di as res %14s abbrev("`zt'",13) _c
+					}
+					di
 				}
-				else {
-					mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
-					mata: st_local("dt0",return_learner_item(`eqn',"opt0","`m'"))
-					di as res %14s abbrev("`dt0'",13) _c
-					mata: st_local("dt1",return_learner_item(`eqn',"opt1","`m'"))
-					di as res %14s abbrev("`dt1'",13) _c
-				
-				}
-				di as res %10.3f el(`btemp',1,1) _c
-				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-				di as res %10s "`pse'" _c
-				if ~`ateflag' {
-					mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
-					mata: st_local("zt",return_learner_item(`eqn',"opt","`m'"))
-					di as res %14s abbrev("`zt'",13) _c
-				}
-				di
 			}
 
 			if `ssflag' {
@@ -1349,26 +1385,29 @@ program _ddml_estimate_main
 		}
 		di
 		foreach medmean in mn md {
-			`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`medmean')
-			tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
-			mat `btemp' = e(b)
-			mat `Vtemp' = e(V)
-			local specrep "`: di %4s "mse" %3s "`medmean'"'"
-			local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable replay
-			di %6s "{`rcmd':`specrep'}" _c
-			di as res %14s "[min-mse]" _c
-			di as res %14s "[mse]" _c
-			di as res %14s "[mse]" _c
-			if ~`ateflag' {
+			** mean and median over mse
+			if `numspecflag' {
+				`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`medmean')
+				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+				mat `btemp' = e(b)
+				mat `Vtemp' = e(V)
+				local specrep "`: di %4s "mse" %3s "`medmean'"'"
+				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable replay
+				di %6s "{`rcmd':`specrep'}" _c
+				di as res %14s "[min-mse]" _c
 				di as res %14s "[mse]" _c
-			}
-			di as res %10.3f el(`btemp',1,1) _c
-			local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-			di as res %10s "`pse'" _c
-			if ~`ateflag' {
 				di as res %14s "[mse]" _c
+				if ~`ateflag' {
+					di as res %14s "[mse]" _c
+				}
+				di as res %10.3f el(`btemp',1,1) _c
+				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
+				di as res %10s "`pse'" _c
+				if ~`ateflag' {
+					di as res %14s "[mse]" _c
+				}
+				di
 			}
-			di
 			if `ssflag' {
 				`qui' replay_estimate, mname(`mname') spec(ss) rep(`medmean')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
@@ -1427,7 +1466,9 @@ program _ddml_estimate_main
 	else if `psflag' {
 		local specdisp ps
 	}
-	// reach this point if only 1 spec and numbered, or mult specs and numbered, or 1 spec and MSE
+	else if `stdflag' {
+		local specdisp st
+	}
 	else if `poss_combos'==1 {
 		local specdisp 1
 	}
@@ -1466,7 +1507,6 @@ program _ddml_estimate_main
 	foreach obj in `eqn' `nmat' `bmat' `semat' {
 		cap mata: mata drop `obj'
 	}
-
 
 end
 

@@ -51,10 +51,10 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	local pyflag	= "`pystacked'`pystacked_y'`pystacked_d'`pystacked_z'"~=""
 	local ssflag	= "`shortstack'"~=""
 	local psflag	= "`poolstack'"~=""
-	local stdsflag	= "`stdstack'"~=""
+	local stdflag	= "`stdstack'"~=""
 	// if no stacking specified, shortstack
-	if ~`ssflag' & ~`psflag' & ~`stdsflag' {
-		local ssflag		= 1
+	if ~`ssflag' & ~`psflag' & ~`stdflag' {
+		local ssflag		=1
 		local shortstack	shortstack
 	}
 
@@ -114,8 +114,10 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 				if !`hascomma'	local `opt' ``opt'' ,
 			}
 			// if no standard or pooled stacking, use voting to avoid unnecessary stacking CV steps
-			if `stdsflag'==0 & `psflag'==0 {
+			// and use nostdstack option so that voting predicted values aren't created
+			if `stdflag'==0 & `psflag'==0 {
 				local `opt' ``opt'' voting
+				local nostdstack nostdstack
 			}
 		}
 	}
@@ -202,27 +204,27 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	*** IV-HD
 	if ("`model'"=="fiv") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):						///
+		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype') `nostdstack':		///
 			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
-		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'):	///
+		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype') `nostdstack':	///
 			`dcmd' `dendog' `xctrl' `exexog' `dcmdoptions' `cmdoptions'
-		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'):	///
+		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype') `nostdstack':	///
 			`dhcmd' {D} `xctrl' `dhcmdoptions' `cmdoptions'
 	} 
 
 	*** IV 
 	else if ("`model'"=="iv") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):	///
+		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype') `nostdstack':	///
 			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
 		local j = 1
 		foreach d of varlist `dendog' {
-			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'):	///
+			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype') `nostdstack':	///
 				`dcmd' `d' `xctrl' `dcmdoptions' `cmdoptions'
 			local j = `j' + 1
 		}
 		local j = 1
 		foreach z of varlist `exexog' {
-			`qui' ddml E[Z|X], mname(`mname') vname(`z') predopt(`zpredopt') vtype(`zvtype'):	///
+			`qui' ddml E[Z|X], mname(`mname') vname(`z') predopt(`zpredopt') vtype(`zvtype') `nostdstack':	///
 				`zcmd' `z' `xctrl' `zcmdoptions' `cmdoptions'
 			local j = `j' + 1
 		}
@@ -230,21 +232,21 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	*** late / interactive IV
 	else if ("`model'"=="late"|"`model'"=="interactiveiv") {
-		`qui' ddml E[Y|Z,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):	///
+		`qui' ddml E[Y|Z,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype') `nostdstack':	///
 			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
-		`qui' ddml E[D|Z,X], mname(`mname') vname(`dendog') predopt(`dpredopt') vtype(`dvtype'):	///
+		`qui' ddml E[D|Z,X], mname(`mname') vname(`dendog') predopt(`dpredopt') vtype(`dvtype') `nostdstack':	///
 			`dcmd' `dendog' `xctrl' `dcmdoptions' `cmdoptions'
-		`qui' ddml E[Z|X], mname(`mname') vname(`exexog') predopt(`zpredopt') vtype(`zvtype'):		///
+		`qui' ddml E[Z|X], mname(`mname') vname(`exexog') predopt(`zpredopt') vtype(`zvtype') `nostdstack':		///
 			`zcmd' `exexog' `xctrl' `zcmdoptions' `cmdoptions'
 	}
 
 	*** partial linear model
 	else if ("`model'"=="partial") {
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):		///
+		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype') `nostdstack':		///
 			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
 		local j = 1
 		foreach d of varlist `dexog' {
-			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'):		///
+			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype') `nostdstack':		///
 				`dcmd' `d' `xctrl' `dcmdoptions' `cmdoptions'
 			local j = `j' + 1
 		}
@@ -252,9 +254,9 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	*** interactive model
 	else if ("`model'"=="interactive") {
-		`qui' ddml E[Y|D,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):	///
+		`qui' ddml E[Y|D,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype') `nostdstack':	///
 			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
-		`qui' ddml E[D|X], mname(`mname') vname(`dexog') predopt(`dpredopt') vtype(`dvtype'):		///
+		`qui' ddml E[D|X], mname(`mname') vname(`dexog') predopt(`dpredopt') vtype(`dvtype') `nostdstack':		///
 			`dcmd' `dexog' `xctrl' `dcmdoptions' `cmdoptions'
 	}	
 		
