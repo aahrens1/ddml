@@ -43,6 +43,7 @@ struct eStruct {
 	real scalar						lieflag			// =1 if LIE spec with two estimation strings etc.
 	real scalar						ateflag			// =1 if treatment variable in ATE/LATE
 	real scalar						pystackedmulti	// =#learners if pystacked with multiple learners
+	real scalar						nostdstack		// =1 if pystacked should not stack
 	class AssociativeArray scalar	lrnAA			// AssociativeArray with all learners //
 													// (keys=vtilde,object)
 	class AssociativeArray scalar	resAA			// AssociativeArray with all learner results //
@@ -64,6 +65,7 @@ struct eStruct init_eStruct()
 	m.lieflag			= 0
 	m.ateflag			= 0
 	m.pystackedmulti	= 0
+	m.nostdstack		= 0
 	
 	(m.lrnAA).reinit("string",2)
 	(m.resAA).reinit("string",3)
