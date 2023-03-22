@@ -294,7 +294,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 	// `vhat1_k', `vhat0_k': as above for TV.
 	// `vhat': OOS (crossfit) stacked predicted values, for all folds; filled when looping over folds. tempvar.
 	// `vres': OOS (crossfit) stacked residuals, for all folds; filled when looping over folds. tempvar.
-	// `vtilde'_`m': `vhat' or `vres' using user-provided varname.
+	// `vtilde'_`m': `vhat' using user-provided varname.
 	// `vtilde'_L`j'_`m': OOS (crossfit) predicted values, by learner. m is resample j is base learner number.
 	// `vtilde_list': list of `vtilde'_L`j'_`m' for j=1,2,...; reset for each m loop.
 	// `stacking_p_cv'[1,2,...]: in-sample CV predicted values of base learners; saved in mata for poolstacking.
@@ -363,7 +363,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 		if ~`tvflag' & ~`lieflag' { // case 1
 			tempvar vhat vres
 			qui gen `vtype' `vhat'=.
-			qui gen `vtype' `vres'=.
 			// base learner predicted values
 			// not tempvars; name based on `vtilde' macro; used for poolstacking
 			forvalues j=1/`nlearners' {
@@ -445,7 +444,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				assert e(mcount)>1 & e(mcount)<.
 				
 				// pystacked complains if data change after estimation and before predict
-				// so do all predict commands first
+				// so make sure all predict commands are done first
 				
 				// always save crossfit base learner predicted values
 				// OOS (crossfit) base learner predicted values
@@ -455,10 +454,11 @@ program define _crossfit_pystacked, rclass sortpreserve
 				if `stdflag' {
 					// get fitted values for kth fold	
 					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
-					// in-sample CV base learner predicted values
-					tempvar stacking_p_cv
-					qui predict double `stacking_p_cv', basexb cv
-					
+					// in-sample CV base learner predicted values (for poolstacking)
+					if `psflag' {
+						tempvar stacking_p_cv
+						qui predict double `stacking_p_cv', basexb cv
+					}
 					// save pystacked weights and MSEs
 					qui pystacked, table(rmspe)		// create rmspe matrix
 					if (`k'==1) {
@@ -477,15 +477,13 @@ program define _crossfit_pystacked, rclass sortpreserve
 					}
 				}
 				
-				// always save crossfit base learner predicted values
-				// OOS (crossfit) base learner predicted values
+				// rename OOS (crossfit) base learner predicted values
 				forvalues j=1/`nlearners' {
 					qui replace `vtilde'_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
 				}
 				if `stdflag' {
 					// get stacked out-of-sample predicted values
 					qui replace `vhat' = `vhat_k' if `fid'==`k' & `touse'
-					qui replace `vres' = `vname' - `vhat_k' if `fid'==`k' & `touse'
 				}
 				if `psflag' {				
 					// in-sample CV base learner predicted values
@@ -517,39 +515,48 @@ program define _crossfit_pystacked, rclass sortpreserve
 				assert "`e(cmd)'"=="pystacked"
 				assert e(mcount)>1 & e(mcount)<.
 				
-				// save pystacked weights and MSEs if #learners>1
-				qui pystacked, table(rmspe)		// create rmspe matrix
-				if (`k'==1) {
-					mat `pysw1' = e(weights)
-					mat `pysm1_temp' = e(rmspe)
-					mat `pysm1' = `pysm1_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-					mata: st_replacematrix("`pysm1'",st_matrix("`pysm1'"):^2)
-				}
-				else {
-					mat `pysw1_temp' = e(weights)
-					mat `pysw1' = (`pysw1',`pysw1_temp')
-					mat `pysm1_temp' = e(rmspe)
-					mat `pysm1_temp' = `pysm1_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-					mata: st_replacematrix("`pysm1_temp'",st_matrix("`pysm1_temp'"):^2)
-					mat `pysm1' = (`pysm1',`pysm1_temp')
-				}
-	
-				// get fitted values for kth fold	
-				qui predict `vtype' `vhat1_k' if `fid'==`k' & `touse'
-				// get base learner predicted values
-				tempvar stacking_p_cv stacking_p
-				// in-sample CV base learner predicted values
-				qui predict double `stacking_p_cv', basexb cv
+				// pystacked complains if data change after estimation and before predict
+				// so make sure all predict commands are done first
+				
+				// always save crossfit base learner predicted values
 				// OOS (crossfit) base learner predicted values
+				tempvar stacking_p
 				qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
-				// OOS (crossfit) base learner predicted values
+				
+				if `stdflag' {
+					// get fitted values for kth fold	
+					qui predict `vtype' `vhat1_k' if `fid'==`k' & `touse'
+					// in-sample CV base learner predicted values (for poolstacking)
+					if `psflag' {
+						tempvar stacking_p_cv
+						qui predict double `stacking_p_cv', basexb cv
+					}
+					// save pystacked weights and MSEs if #learners>1
+					qui pystacked, table(rmspe)		// create rmspe matrix
+					if (`k'==1) {
+						mat `pysw1' = e(weights)
+						mat `pysm1_temp' = e(rmspe)
+						mat `pysm1' = `pysm1_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+						mata: st_replacematrix("`pysm1'",st_matrix("`pysm1'"):^2)
+					}
+					else {
+						mat `pysw1_temp' = e(weights)
+						mat `pysw1' = (`pysw1',`pysw1_temp')
+						mat `pysm1_temp' = e(rmspe)
+						mat `pysm1_temp' = `pysm1_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+						mata: st_replacematrix("`pysm1_temp'",st_matrix("`pysm1_temp'"):^2)
+						mat `pysm1' = (`pysm1',`pysm1_temp')
+					}
+				}
+				
+				// rename OOS (crossfit) base learner predicted values
 				forvalues j=1/`nlearners' {
 					qui replace `vtilde'1_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
 				}
-	
-				// get stacked out-of-sample predicted values
-				qui replace `vhat1' = `vhat1_k' if `fid'==`k' & `touse'
-				
+				if `stdflag' {
+					// get stacked out-of-sample predicted values
+					qui replace `vhat1' = `vhat1_k' if `fid'==`k' & `touse'
+				}
 				if `psflag' {
 					// in-sample CV base learner predicted values
 					// accumulated in mata along with corresponding values of dep var
@@ -580,42 +587,52 @@ program define _crossfit_pystacked, rclass sortpreserve
 					local base_est `e(base_est)'
 					local stack_final_est `e(finalest)'
 		
-					// save pystacked weights and MSEs if #learners>1
-					if e(mcount)>1 & e(mcount)<. {
-						qui pystacked, table(rmspe)		// create rmspe matrix
-						if (`k'==1) {
-							mat `pysw0' = e(weights)
-							mat `pysm0_temp' = e(rmspe)
-							mat `pysm0' = `pysm0_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-							mata: st_replacematrix("`pysm0'",st_matrix("`pysm0'"):^2)
+					// pystacked complains if data change after estimation and before predict
+					// so make sure all predict commands are done first
+				
+					// always save crossfit base learner predicted values
+					// OOS (crossfit) base learner predicted values
+					tempvar stacking_p
+					qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
+
+					if `stdflag' {
+						// get fitted values for kth fold	
+						qui predict `vtype' `vhat0_k' if `fid'==`k' & `touse'
+						if `psflag' {
+							// in-sample CV base learner predicted values (for poolstacking)
+							tempvar stacking_p_cv
+							qui predict double `stacking_p_cv', basexb cv
 						}
-						else {
-							mat `pysw0_temp' = e(weights)
-							mat `pysw0' = (`pysw0',`pysw0_temp')
-							mat `pysm0_temp' = e(rmspe)
-							mat `pysm0_temp' = `pysm0_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-							mata: st_replacematrix("`pysm0_temp'",st_matrix("`pysm0_temp'"):^2)
-							mat `pysm0' = (`pysm0',`pysm0_temp')
+						// save pystacked weights and MSEs if #learners>1
+						if e(mcount)>1 & e(mcount)<. {
+							qui pystacked, table(rmspe)		// create rmspe matrix
+							if (`k'==1) {
+								mat `pysw0' = e(weights)
+								mat `pysm0_temp' = e(rmspe)
+								mat `pysm0' = `pysm0_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+								mata: st_replacematrix("`pysm0'",st_matrix("`pysm0'"):^2)
+							}
+							else {
+								mat `pysw0_temp' = e(weights)
+								mat `pysw0' = (`pysw0',`pysw0_temp')
+								mat `pysm0_temp' = e(rmspe)
+								mat `pysm0_temp' = `pysm0_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+								mata: st_replacematrix("`pysm0_temp'",st_matrix("`pysm0_temp'"):^2)
+								mat `pysm0' = (`pysm0',`pysm0_temp')
+							}
 						}
 					}
 
-					// get fitted values for kth fold	
-					qui predict `vtype' `vhat0_k' if `fid'==`k' & `touse'
-					// get base learner predicted values
-					tempvar stacking_p_cv stacking_p
-					// in-sample CV base learner predicted values
-					qui predict double `stacking_p_cv', basexb cv
-					// OOS (crossfit) base learner predicted values
-					qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
-					// OOS (crossfit) base learner predicted values
+					// rename OOS (crossfit) base learner predicted values
 					forvalues j=1/`nlearners' {
 						qui replace `vtilde'0_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
 					}
 				}
 				
-				// get stacked out-of-sample predicted values
-				qui replace `vhat0' = `vhat0_k' if `fid'==`k' & `touse'
-				
+				if `stdflag' {
+					// get stacked out-of-sample predicted values
+					qui replace `vhat0' = `vhat0_k' if `fid'==`k' & `touse'
+				}
 				// in-sample CV base learner predicted values
 				// accumulated in mata along with corresponding values of dep var
 				if `psflag' {
@@ -990,50 +1007,51 @@ program define _crossfit_pystacked, rclass sortpreserve
 		// vtilde, mspe, etc.
 		if ~`tvflag' & ~`lieflag' {
 	
-			cap drop `vtilde'_`m'
-			// vtilde is predicted values
-			if `stdflag' {
-				qui gen `vtype' `vtilde'_`m' = `vhat'
-				qui label var `vtilde'_`m' "Predicted values cond. exp. of `vname' using `cmd'"
-			}
-			if `ssflag' qui label var `shortstack'_ss_`m' "Predicted values cond. exp. of `vname' using shortstacking"
-			if `psflag' qui label var `poolstack'_ps_`m' "Predicted values cond. exp. of `vname' using poolstacking"
+			// alway label learner predicted values
 			forvalues j=1/`nlearners' {
 				qui label var `vtilde'_L`j'_`m' "Predicted values cond. exp. of `vname' using base learner `j'"
 			}
+			
+			// save results relating to stacked learner if it exists
+			if `stdflag' {
+			
+				// vtilde has fitted values
+				cap drop `vtilde'_`m'
+				qui gen `vtype' `vtilde'_`m' = `vhat'
+				qui label var `vtilde'_`m' "Predicted values cond. exp. of `vname' using `cmd'"
+				tempvar vres_sq
+				qui gen double `vres_sq' = (`vname' - `vhat')^2 if `touse'
 	
-			// calculate and return mspe and sample size
-			tempvar vres_sq
-			qui gen double `vres_sq' = `vres'^2 if `touse'
-
-			// additive-type model
-			qui sum `vres_sq' if `touse', meanonly
-			local mse			= r(mean)
-			local N				= r(N)
-			tempname mse_folds N_folds
-			forvalues k = 1(1)`kfolds' {
-				qui sum `vres_sq' if `touse' & `fid'==`k', meanonly
-				mat `mse_folds' = (nullmat(`mse_folds'), r(mean))
-				qui count if `touse' & `fid'==`k' & `vres_sq'<.
-				mat `N_folds' = (nullmat(`N_folds'), r(N))
+				// additive-type model
+				qui sum `vres_sq' if `touse', meanonly
+				local mse			= r(mean)
+				local N				= r(N)
+				tempname mse_folds N_folds
+				forvalues k = 1(1)`kfolds' {
+					qui sum `vres_sq' if `touse' & `fid'==`k', meanonly
+					mat `mse_folds' = (nullmat(`mse_folds'), r(mean))
+					qui count if `touse' & `fid'==`k' & `vres_sq'<.
+					mat `N_folds' = (nullmat(`N_folds'), r(N))
+				}
+			
+				mat `mse_list'			= (nullmat(`mse_list') \ `mse')
+				mat `N_list'			= (nullmat(`N_list') \ `N')
+				mat `mse_folds_list'	= (nullmat(`mse_folds_list') \ `mse_folds')
+				mat `N_folds_list'		= (nullmat(`N_folds_list')\ `N_folds')
+			
+				mata: add_result_item(`ename',"`vtilde'","N",         "`m'", `N')
+				mata: add_result_item(`ename',"`vtilde'","N_folds",   "`m'", st_matrix("`N_folds'"))
+				mata: add_result_item(`ename',"`vtilde'","MSE",       "`m'", `mse')
+				mata: add_result_item(`ename',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
+				
+				// weights and MSEs will be missing values if #learners=1
+				mata: add_result_item(`ename',"`vtilde'","stack_weights",   "`m'", st_matrix("`pysw'"))
+				mata: add_result_item(`ename',"`vtilde'","stack_MSEs",      "`m'", st_matrix("`pysm'"))
+				
+				mata: add_learner_item(`ename',"`vtilde'","stack_base_est","`base_est'")
+				mata: add_learner_item(`ename',"`vtilde'","stack_final_est","`stack_final_est'")
 			}
-		
-			mat `mse_list'			= (nullmat(`mse_list') \ `mse')
-			mat `N_list'			= (nullmat(`N_list') \ `N')
-			mat `mse_folds_list'	= (nullmat(`mse_folds_list') \ `mse_folds')
-			mat `N_folds_list'		= (nullmat(`N_folds_list')\ `N_folds')
-		
-			mata: add_result_item(`ename',"`vtilde'","N",         "`m'", `N')
-			mata: add_result_item(`ename',"`vtilde'","N_folds",   "`m'", st_matrix("`N_folds'"))
-			mata: add_result_item(`ename',"`vtilde'","MSE",       "`m'", `mse')
-			mata: add_result_item(`ename',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
 			
-			// weights and MSEs will be missing values if #learners=1
-			mata: add_result_item(`ename',"`vtilde'","stack_weights",   "`m'", st_matrix("`pysw'"))
-			mata: add_result_item(`ename',"`vtilde'","stack_MSEs",      "`m'", st_matrix("`pysm'"))
-			
-			mata: add_learner_item(`ename',"`vtilde'","stack_base_est","`base_est'")
-			mata: add_learner_item(`ename',"`vtilde'","stack_final_est","`stack_final_est'")
 			// only one learner so it's the opt; set opt="" if no std stacking
 			if `stdflag'	mata: add_learner_item(`ename',"opt","`m'","`vtilde'")
 			else			mata: add_learner_item(`ename',"opt","`m'","")
@@ -1041,76 +1059,79 @@ program define _crossfit_pystacked, rclass sortpreserve
 		}
 		else if `tvflag' & ~`lieflag' {
 		
-			cap drop `vtilde'0_`m'
-			cap drop `vtilde'1_`m'
-			// vtilde is predicted values
-			qui gen `vtype' `vtilde'0_`m' = `vhat0'
-			qui gen `vtype' `vtilde'1_`m' = `vhat1'
-			qui label var `vtilde'0_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using `cmd'"
-			qui label var `vtilde'1_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using `cmd'"
-			if `ssflag' qui label var `shortstack'_ss0_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==0 using shortstacking"
-			if `ssflag' qui label var `shortstack'_ss1_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==1 using shortstacking"
-			if `psflag' qui label var `poolstack'_ps0_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==0 using poolstacking"
-			if `psflag' qui label var `poolstack'_ps1_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==1 using poolstacking"
+			// always label learner predicted values
 			forvalues j=1/`nlearners' {
 				qui label var `vtilde'0_L`j'_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using base learner `j'"
 				qui label var `vtilde'1_L`j'_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using base learner `j'"
 			}
+			
+			// save results relating to stacked learner if it exists
+			if `stdflag' {
+			
+				cap drop `vtilde'0_`m'
+				cap drop `vtilde'1_`m'
+				// vtilde is predicted values
+				qui gen `vtype' `vtilde'0_`m' = `vhat0'
+				qui gen `vtype' `vtilde'1_`m' = `vhat1'
+				qui label var `vtilde'0_`m' "Predicted values cond. exp. of `vname' given `treatvar'==0 using `cmd'"
+				qui label var `vtilde'1_`m' "Predicted values cond. exp. of `vname' given `treatvar'==1 using `cmd'"
+				// calculate and return mspe and sample size
+				tempvar vres0_sq vres1_sq
+				// vtilde has fitted values
+				qui gen double `vres0_sq' = (`vname' - `vhat0')^2 if `treatvar' == 0 & `touse'
+				qui gen double `vres1_sq' = (`vname' - `vhat1')^2 if `treatvar' == 1 & `touse'
+		
+				// interactive-type model, return mse separately for treatvar =0 and =1
+				qui sum `vres0_sq' if `treatvar' == 0 & `touse', meanonly
+				local mse0			= r(mean)
+				local N0			= r(N)
+				qui sum `vres1_sq' if `treatvar' == 1 & `touse', meanonly
+				local mse1			= r(mean)
+				local N1			= r(N)
+				local N				= `N0'+`N1'
+				tempname mse0_folds N0_folds mse1_folds N1_folds
+				forvalues k = 1(1)`kfolds' {
+					qui sum `vres0_sq' if `treatvar' == 0 & `touse' & `fid'==`k', meanonly
+					mat `mse0_folds' = (nullmat(`mse0_folds'), r(mean))
+					qui sum `vres1_sq' if `treatvar' == 1 & `touse' & `fid'==`k', meanonly
+					mat `mse1_folds' = (nullmat(`mse1_folds'), r(mean))
+					qui count if `treatvar' == 0 & `touse' & `fid'==`k' & `vres0_sq'<.
+					mat `N0_folds' = (nullmat(`N0_folds'), r(N))
+					qui count if `treatvar' == 1 & `touse' & `fid'==`k' & `vres1_sq'<.
+					mat `N1_folds' = (nullmat(`N1_folds'), r(N))
+				}
 	
-			// calculate and return mspe and sample size
-			tempvar vres0_sq vres1_sq
-			// vtilde has fitted values
-			qui gen double `vres0_sq' = (`vname' - `vhat0')^2 if `treatvar' == 0 & `touse'
-			qui gen double `vres1_sq' = (`vname' - `vhat1')^2 if `treatvar' == 1 & `touse'
+				mat `mse0_list'			= (nullmat(`mse0_list') \ `mse0')
+				mat `N0_list'			= (nullmat(`N0_list') \ `N0')
+				mat `mse0_folds_list'	= (nullmat(`mse0_folds_list') \ `mse0_folds')
+				mat `N0_folds_list'		= (nullmat(`N0_folds_list')\ `N0_folds')
+				
+				mat `mse1_list'			= (nullmat(`mse1_list') \ `mse1')
+				mat `N1_list'			= (nullmat(`N1_list') \ `N1')
+				mat `mse1_folds_list'	= (nullmat(`mse1_folds_list') \ `mse1_folds')
+				mat `N1_folds_list'		= (nullmat(`N1_folds_list')\ `N1_folds')
 	
-			// interactive-type model, return mse separately for treatvar =0 and =1
-			qui sum `vres0_sq' if `treatvar' == 0 & `touse', meanonly
-			local mse0			= r(mean)
-			local N0			= r(N)
-			qui sum `vres1_sq' if `treatvar' == 1 & `touse', meanonly
-			local mse1			= r(mean)
-			local N1			= r(N)
-			local N				= `N0'+`N1'
-			tempname mse0_folds N0_folds mse1_folds N1_folds
-			forvalues k = 1(1)`kfolds' {
-				qui sum `vres0_sq' if `treatvar' == 0 & `touse' & `fid'==`k', meanonly
-				mat `mse0_folds' = (nullmat(`mse0_folds'), r(mean))
-				qui sum `vres1_sq' if `treatvar' == 1 & `touse' & `fid'==`k', meanonly
-				mat `mse1_folds' = (nullmat(`mse1_folds'), r(mean))
-				qui count if `treatvar' == 0 & `touse' & `fid'==`k' & `vres0_sq'<.
-				mat `N0_folds' = (nullmat(`N0_folds'), r(N))
-				qui count if `treatvar' == 1 & `touse' & `fid'==`k' & `vres1_sq'<.
-				mat `N1_folds' = (nullmat(`N1_folds'), r(N))
-			}
-
-			mat `mse0_list'			= (nullmat(`mse0_list') \ `mse0')
-			mat `N0_list'			= (nullmat(`N0_list') \ `N0')
-			mat `mse0_folds_list'	= (nullmat(`mse0_folds_list') \ `mse0_folds')
-			mat `N0_folds_list'		= (nullmat(`N0_folds_list')\ `N0_folds')
-			
-			mat `mse1_list'			= (nullmat(`mse1_list') \ `mse1')
-			mat `N1_list'			= (nullmat(`N1_list') \ `N1')
-			mat `mse1_folds_list'	= (nullmat(`mse1_folds_list') \ `mse1_folds')
-			mat `N1_folds_list'		= (nullmat(`N1_folds_list')\ `N1_folds')
-
-			forvalues t=0/1 {
-				mata: add_result_item(`ename',"`vtilde'","N`t'",         "`m'", `N`t'')
-				mata: add_result_item(`ename',"`vtilde'","N`t'_folds",   "`m'", st_matrix("`N`t'_folds'"))
-				mata: add_result_item(`ename',"`vtilde'","MSE`t'",       "`m'", `mse`t'')
-				mata: add_result_item(`ename',"`vtilde'","MSE`t'_folds", "`m'", st_matrix("`mse`t'_folds'"))
+				forvalues t=0/1 {
+					mata: add_result_item(`ename',"`vtilde'","N`t'",         "`m'", `N`t'')
+					mata: add_result_item(`ename',"`vtilde'","N`t'_folds",   "`m'", st_matrix("`N`t'_folds'"))
+					mata: add_result_item(`ename',"`vtilde'","MSE`t'",       "`m'", `mse`t'')
+					mata: add_result_item(`ename',"`vtilde'","MSE`t'_folds", "`m'", st_matrix("`mse`t'_folds'"))
+				}
+				
+				// weights and MSEs will be missing values if #learners=1
+				mata: add_result_item(`ename',"`vtilde'","stack_weights0","`m'", st_matrix("`pysw0'"))
+				mata: add_result_item(`ename',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1'"))
+				mata: add_result_item(`ename',"`vtilde'","stack_MSEs0","`m'",    st_matrix("`pysm0'"))
+				mata: add_result_item(`ename',"`vtilde'","stack_MSEs1","`m'",    st_matrix("`pysm1'"))
+				
+				mata: add_learner_item(`ename',"`vtilde'","stack_base_est","`base_est'")
+				mata: add_learner_item(`ename',"`vtilde'","stack_final_est","`stack_final_est'")
 			}
 			
-			// weights and MSEs will be missing values if #learners=1
-			mata: add_result_item(`ename',"`vtilde'","stack_weights0","`m'", st_matrix("`pysw0'"))
-			mata: add_result_item(`ename',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1'"))
-			mata: add_result_item(`ename',"`vtilde'","stack_MSEs0","`m'",    st_matrix("`pysm0'"))
-			mata: add_result_item(`ename',"`vtilde'","stack_MSEs1","`m'",    st_matrix("`pysm1'"))
-			
-			mata: add_learner_item(`ename',"`vtilde'","stack_base_est","`base_est'")
-			mata: add_learner_item(`ename',"`vtilde'","stack_final_est","`stack_final_est'")
+			// only one learner so it's the opt; set opt="" if no std stacking
 			forvalues t=0/1 {
-				local mse`t'_opt		= `mse`t''
-				mata: add_learner_item(`ename',"opt`t'","`m'","`vtilde'")
+				if `stdflag'	mata: add_learner_item(`ename',"opt`t'","`m'","`vtilde'")
+				else			mata: add_learner_item(`ename',"opt`t'","`m'","")
 			}
 		}
 		else if `lieflag' {
@@ -1200,6 +1221,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 		if `ssflag' {
 			if ~`tvflag' & ~`lieflag' {	// case 1
 		
+				label var `shortstack'_ss_`m' "Predicted values cond. exp. of `vname' using shortstacking"
 				// calculate and return mspe and sample size
 				tempvar vres_sq
 				// shortstack macros have fitted values
@@ -1232,6 +1254,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2
 			
+				label var `shortstack'_ss0_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==0 using shortstacking"
+				label var `shortstack'_ss1_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==1 using shortstacking"
 				// calculate and return mspe and sample size
 				tempvar vres0_sq vres1_sq
 				// shortstack macros have fitted values
@@ -1339,6 +1363,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 		if `psflag' {
 			if ~`tvflag' & ~`lieflag' {	// case 1
 		
+				label var `poolstack'_ps_`m' "Predicted values cond. exp. of `vname' using poolstacking"
 				// calculate and return mspe and sample size
 				tempvar vres_sq
 				// poolstack macros have fitted values
@@ -1373,6 +1398,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2
 			
+				label var `poolstack'_ps0_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==0 using poolstacking"
+				label var `poolstack'_ps1_`m'  "Predicted values cond. exp. of `vname' given `treatvar'==1 using poolstacking"
 				// calculate and return mspe and sample size
 				tempvar vres0_sq vres1_sq
 				// poolstack macros have fitted values

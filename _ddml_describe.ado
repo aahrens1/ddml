@@ -233,8 +233,8 @@ prog define desc_learners
 	** indicator for short-stacking
 	local ssflag	= "`shortstack'"~=""
 	** indicator for standard stacking
-	mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
-//	if `nostdflag'	local vtlist `shortstack'_ss
+	mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+	local stdflag = 1-`nostdstack'
 
 	local firstrow = 1
 	foreach vtilde in `vtlist' {
@@ -251,7 +251,7 @@ prog define desc_learners
 				di as res _col(15) "est cmd: `estring'"
 			}
 		}
-		else if `crossfitted' {
+		else if `crossfitted' & `stdflag' {
 			if `pairs'==0 {
 				forvalues m=1/`nreps' {
 					tempname mse_folds
@@ -300,7 +300,7 @@ prog define desc_learners
 			mata: st_local("estring_h", return_learner_item(`eqn',"`vtilde'","estring_h"))
 			di as res _col(15) "est cmd (H): `estring_h'"
 		}
-		else if `heqn' & `crossfitted' {
+		else if `heqn' & `crossfitted' & `stdflag' {
 			forvalues m=1/`nreps' {
 				tempname mse_h_folds
 				mata: st_local("mse_h", strofreal(return_result_item(`eqn',"`vtilde'","MSE_h","`m'")))
@@ -347,7 +347,7 @@ prog define desc_learners
 		}
 		else {
 			forvalues m=1/`nreps' {
-				tempname mse0_h_folds mse1_h_folds
+				tempname mse0_folds mse1_folds
 				mata: st_local("mse0", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE0","`m'")))
 				mata: st_local("mse1", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE1","`m'")))
 				mata: st_matrix("`mse0_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE0_folds","`m'"))

@@ -144,7 +144,7 @@ program _ddml_crossfit, eclass sortpreserve
 	}
 	// pooled-stacking requires pystacked multilearner in all equations
 	if `psflag' & (~`allpsm' | `nostackflag') {
-		di as text "`poolstack requires a single use of pystacked with multiple learners in all equations; option ignored"
+		di as text "poolstack requires a single use of pystacked with multiple learners in all equations; option ignored"
 		mata: `mname'.psflag = 0
 		local psflag=0
 		local poolstack
@@ -166,9 +166,9 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 		
 		// shortstack and poolstack variable names
-		if `ssflag'		mata: `eqn'.shortstack = "`nameY'"				
+		if `ssflag'		mata: `eqn'.shortstack = "`nameY'"
 		else			mata: `eqn'.shortstack = ""
-		if `psflag'		mata: `eqn'.poolstack = "`nameY'"				
+		if `psflag'		mata: `eqn'.poolstack = "`nameY'"
 		else			mata: `eqn'.poolstack = ""
 	
 		// set/clear treatvar macro
