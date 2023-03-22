@@ -48,7 +48,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	mata: s_ivparse("`anything'")
 	** indicators for pystacked and stacking methods
-	local pyflag	= "`pystacked'`pystacked_y'`pystacked_d'`pystacked_z'"~=""
+	local pyflag	= "`pystacked'`pystacked_y'`pystacked_d'`pystacked_z'"~="" | "`cmd'`ycmd'`dcmd'`zcmd'"==""
 	local ssflag	= "`shortstack'"~=""
 	local psflag	= "`poolstack'"~=""
 	local stdflag	= "`stdstack'"~=""
@@ -79,7 +79,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 
 	if "`robust'"!=""	local vce robust
 	if "`cluster'"~=""	local vce cluster `cluster'
-	if "`vverbose'"=="" local qui qui
+	if "`verbose'"=="" local qui qui
 	if "`yvtype'"=="" local yvtype `vtype'
 	if "`dvtype'"=="" local dvtype `vtype'
 	if "`zvtype'"=="" local zvtype `vtype'
@@ -116,7 +116,8 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 			// if no standard or pooled stacking, use voting to avoid unnecessary stacking CV steps
 			// and use nostdstack option so that voting predicted values aren't created
 			if `stdflag'==0 & `psflag'==0 {
-				local `opt' ``opt'' voting
+				// votetype is ignored if type=reg; relevant only for type=class
+				local `opt' ``opt'' voting votetype(soft)
 				local nostdstack nostdstack
 			}
 		}
