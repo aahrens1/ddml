@@ -105,6 +105,7 @@ struct mStruct {
 	real scalar						ycounter		// counter for default y learners
 	real scalar						dcounter		// counter for default d learners
 	real scalar						zcounter		// counter for default z learners
+	real scalar						allpystackedmulti	// =1 if all eqns to use pystacked-specific code/features
 }
 
 struct mStruct init_mStruct()
@@ -112,21 +113,22 @@ struct mStruct init_mStruct()
 
 	struct mStruct scalar	m
 	
-	m.model			= ""
-	m.id			= J(0,1,.)
-	m.nreps			= 0
-	m.ncombos		= 0
-	m.kfolds		= 0
-	m.nameY			= ""
-	m.nameD			= J(1,0,"")
-	m.nameZ			= J(1,0,"")
-	m.ssflag		= 0
-	m.psflag		= 0
-	m.fclustvar		= ""
-	m.strDatavars	= ""
-	m.matDatavars	= J(0,0,.)
-	m.crossfitted	= 0
-	m.estimated		= 0
+	m.model				= ""
+	m.id				= J(0,1,.)
+	m.nreps				= 0
+	m.ncombos			= 0
+	m.kfolds			= 0
+	m.nameY				= ""
+	m.nameD				= J(1,0,"")
+	m.nameZ				= J(1,0,"")
+	m.ssflag			= 0
+	m.psflag			= 0
+	m.fclustvar			= ""
+	m.strDatavars		= ""
+	m.matDatavars		= J(0,0,.)
+	m.crossfitted		= 0
+	m.estimated			= 0
+	m.allpystackedmulti	= 0
 	
 	(m.eqnAA).reinit("string",1)
 	(m.eqnAA).notfound(NULL)
