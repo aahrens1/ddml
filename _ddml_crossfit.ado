@@ -7,12 +7,13 @@ program _ddml_crossfit, eclass sortpreserve
 
 	syntax [anything] ,								/// 
 							[						///
-							NOIsily					///
 							debug					/// 
 							mname(name)				///
 							shortstack				///
 							poolstack				///
+							NOIsily					///
 							Verbose 				///
+							crossfitother			/// force use of general (not-pystacked-specific) code
 							*						///
 							]
 
@@ -77,6 +78,14 @@ program _ddml_crossfit, eclass sortpreserve
 	
 	// equations and learners
 	
+	// will be set to zero if any eqn doesn't use pystacked, or if any
+	// equation has pystacked with a single learner, or if model=fiv
+	// controls whether crossfit uses pystacked-specific or general code
+	local allpystackedmulti=1
+	
+	// if model is LIE, every eqn goes to general crossfit code
+	if "`model'"=="fiv"	local allpystackedmulti=0
+	
 	// will always be a Y eqn
 	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
@@ -85,6 +94,8 @@ program _ddml_crossfit, eclass sortpreserve
 	// used to track minimum number of learners in an equation; must be >1 for short/pool stacking
 	mata: st_local("minlearners", strofreal(`eqn'.nlearners))
 	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+	// if model is LIE, pystacked is treated as a single learner
+	if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
 	// flag indicates pystacked does no standard stacking
 	mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
 	local nostackflag	=0
@@ -92,6 +103,10 @@ program _ddml_crossfit, eclass sortpreserve
 	local allpsm = 1
 	if `pystackedmulti'	local minlearners=`pystackedmulti'
 	else				local allpsm=0
+	
+	// if pystackedmulti=0, not pystacked so every eqn goes to general crossfit code
+	// if pystackedmulti=1, pystacked with 1 learner so every eqn goes to general crossfit code
+	if `pystackedmulti'<=1	local allpystackedmulti=0
 
 	// will always be a D eqn
 	`qui' di as text "D equations (`numeqnD'): `nameD'"
@@ -104,11 +119,16 @@ program _ddml_crossfit, eclass sortpreserve
 		// update minlearners
 		mata: st_local("numlnrD", strofreal(`eqn'.nlearners))
 		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+		// if model is LIE, pystacked is treated as a single learner
+		if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
 		mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
 		if `pystackedmulti'			local numlnrD=`pystackedmulti'
 		else						local allpsm=0
 		if `numlnrD'<`minlearners'	local minlearners=`numlnrD'
 		if `nostdstack'				local nostackflag=1
+		// if pystackedmulti=0, not pystacked so every eqn goes to general crossfit code
+		// if pystackedmulti=1, pystacked with 1 learner so every eqn goes to general crossfit code
+		if `pystackedmulti'<=1		local allpystackedmulti=0
 	}
 	
 	// Z eqn exists for late, iv, fiv models
@@ -123,11 +143,16 @@ program _ddml_crossfit, eclass sortpreserve
 			// update minlearners
 			mata: st_local("numlnrZ", strofreal(`eqn'.nlearners))
 			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+			// if model is LIE, pystacked is treated as a single learner
+			if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
 			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
 			if `pystackedmulti'			local numlnrZ=`pystackedmulti'
 			else						local allpsm=0
 			if `numlnrZ'<`minlearners'	local minlearners `numlnrZ'
 			if `nostdstack'				local nostackflag=1
+			// if pystackedmulti=0, not pystacked so every eqn goes to general crossfit code
+			// if pystackedmulti=1, pystacked with 1 learner so every eqn goes to general crossfit code
+			if `pystackedmulti'<=1		local allpystackedmulti=0
 		}
 	}
 
@@ -149,7 +174,16 @@ program _ddml_crossfit, eclass sortpreserve
 		local psflag=0
 		local poolstack
 	}
-	
+	// update allpystackedmulti
+	if `allpystackedmulti' & "`crossfitother'"=="" {
+		mata: `mname'.allpystackedmulti = 1
+		`qui' di as text "crossfitting all eqns will use pystacked-specific code"
+	}
+	else {
+		local allpystackedmulti = 0
+		mata: `mname'.allpystackedmulti = 0
+		`qui' di as text "crossfitting all eqns will use general (not pystacked-specific) code"
+	}
 	// update model struct flags for shortstacking and poolstacking
 	if `ssflag'		mata: `mname'.ssflag = 1
 	else 			mata: `mname'.ssflag = 0
@@ -192,6 +226,7 @@ program _ddml_crossfit, eclass sortpreserve
 
 		crossfit if `touse',						///
 			ename(`eqn') noreplace					///
+			pystackedmulti(`allpystackedmulti')		///
 			foldvar(`fidlist')						///
 			firstrep(`firstrep')					///
 			treatvar(`treatvar')					///
@@ -225,6 +260,7 @@ program _ddml_crossfit, eclass sortpreserve
 				// All learners for each D eqn
 				crossfit if `touse',						///
 					ename(`eqn') noreplace					///
+					pystackedmulti(`allpystackedmulti')		///
 					foldvar(`fidlist')						///
 					firstrep(`firstrep')					///
 					treatvar(`treatvar')					///
@@ -247,6 +283,7 @@ program _ddml_crossfit, eclass sortpreserve
 				// All learners for each Z eqn
 				crossfit if `touse',						///
 					ename(`eqn') noreplace					///
+					pystackedmulti(`allpystackedmulti')		///
 					foldvar(`fidlist')						///
 					firstrep(`firstrep')					///
 					`noisily' `options'
