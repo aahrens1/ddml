@@ -356,10 +356,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				qui gen `vtype' `vtilde'1_L`j'_`m' = .
 			}
 		}
-		else {
-			di as err "internal crossfit error"
-			exit 198
-		}
 	
 		// will save pystacked weights and MSEs
 		tempname pysw pysw0 pysw1
@@ -634,10 +630,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `ssw0' = e(b)
 				cap drop `shortstack'_ss0_`m'
 				mat score `vtype' `shortstack'_ss0_`m' = `ssw0' if `touse'
-			}
-			else {
-				di as err "internal crossfit error"
-				exit 198
 			}
 		}
 	
