@@ -205,7 +205,41 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	ddml init `model', kfolds(`kfolds') reps(`reps') cluster(`cluster') `tabfold' foldvar(`foldvar')
 
 	*** IV-HD
-	if ("`model'"=="fiv") {
+	if ("`model'"=="fiv") & `pyflag' {
+		// special treatment for pystacked - split into separate pystacked calls
+		// Y eqn spec
+		`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions' noestimate
+		forvalues m=1/`e(mcount)' {
+			di "Y learner `m':"
+			local globalopt `e(globalopt)'
+			local globalremove noestimate
+			local globalopt : list globalopt - globalremove
+			ddml E[Y|X], mname(`mname') vname(`depvar') learner(Y`m'_`e(method`m')') predopt(`ypredopt') vtype(`yvtype') `nostdstack':		///
+				pystacked `e(depvar)' `e(xvars`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
+		}
+		// D eqn spec
+		`dcmd' `dendog' `xctrl' `exexog' `dcmdoptions' `cmdoptions' noestimate
+		forvalues m=1/`e(mcount)' {
+			di "D learner `m':"
+			local globalopt `e(globalopt)'
+			local globalremove noestimate
+			local globalopt : list globalopt - globalremove
+			ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D`m'_`e(method`m')') predopt(`dpredopt') vtype(`dvtype') `nostdstack':		///
+				pystacked `e(depvar)' `e(xvars`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
+		}
+		// DH eqn spec
+		`dcmd' `dendog' `xctrl' `dhcmdoptions' `cmdoptions' noestimate
+		forvalues m=1/`e(mcount)' {
+			di "D learner `m':"
+			local globalopt `e(globalopt)'
+			local globalremove noestimate
+			local globalopt : list globalopt - globalremove
+			ddml E[D|X], mname(`mname') vname(`dendog') learner(D`m'_`e(method`m')') predopt(`dpredopt') vtype(`dvtype') `nostdstack':		///
+				pystacked {D} `e(xvars`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
+		}
+	}
+	else if ("`model'"=="fiv") {
+	// non-pystacked
 		ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype') `nostdstack':		///
 			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
 		ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype') `nostdstack':	///
