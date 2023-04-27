@@ -878,6 +878,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mata: add_result_item(`ename',"`shortstack'_ss","MSE",          "`m'", `mse')
 				mata: add_result_item(`ename',"`shortstack'_ss","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
 				mata: add_result_item(`ename',"`shortstack'_ss","ss_weights",   "`m'", st_matrix("`ssw'"))
+				// save base estimator list with rest of shortstack results
+				mata: add_learner_item(`ename',"`shortstack'_ss","stack_base_est","`base_est'")
 				// final estimator used to stack is a learner item
 				mata: add_learner_item(`ename',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
 			}
@@ -928,6 +930,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mata: add_result_item(`ename',"`shortstack'_ss","MSE`t'_folds",     "`m'", st_matrix("`mse`t'_folds'"))
 					mata: add_result_item(`ename',"`shortstack'_ss","ss_weights`t'",    "`m'", st_matrix("`ssw`t''"))
 				}
+				// save base estimator list with rest of shortstack results
+				mata: add_learner_item(`ename',"`shortstack'_ss","stack_base_est","`base_est'")
 				// final estimator used to stack is a learner item
 				mata: add_learner_item(`ename',"`shortstack'_ss","ss_final_est", "`ssfinalest'")
 			}

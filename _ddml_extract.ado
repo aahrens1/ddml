@@ -462,8 +462,8 @@ function shortstack_extract(								///
 	rmatlist = J(1,0,"")
 
 	if (eqn.pystackedmulti) {
-		// shortstacking of pystacked base learners
-		vtlist = tokens((eqn.lrnAA).get((invtokens(eqn.vtlist),"stack_base_est")))
+		// shortstacking of pystacked base learners; stored with key = shortstack variable name
+		vtlist = tokens((eqn.lrnAA).get(((eqn.shortstack + "_ss"),"stack_base_est")))
 		nlearners=eqn.pystackedmulti
 	}
 	else {
