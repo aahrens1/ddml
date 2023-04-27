@@ -499,8 +499,10 @@ program define add_eqn_to_model, rclass
 	local est_options `options'
 	if "`cmdname'"=="" local cmdname: word 1 of `est_main'
 	if "`subcmd'"=="dheq" {
-		mata: st_local("lieflag",strofreal(`eqn'.lieflag))
-		if ("`lieflag'"=="1") di as text "Replacing existing learner `vtilde'_h..."
+		// next line is an error if cmd_h hasn't been stored yet
+		cap mata: return_learner_item(`eqn',"`vtilde'","cmd_h")
+		// so if it's not an error it's a replacement of an existing eqn spec
+		if (_rc==0) di as text "Replacing existing learner `vtilde'_h..."
 		mata: add_learner_item(`eqn',"`vtilde'","cmd_h","`cmdname'")
 		mata: add_learner_item(`eqn',"`vtilde'","estring_h","`0'")
 		mata: add_learner_item(`eqn',"`vtilde'","est_main_h","`est_main'")
