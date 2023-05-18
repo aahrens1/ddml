@@ -88,6 +88,14 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if "`dpredopt'"=="" local dpredopt `predopt'
 	if "`zpredopt'"=="" local zpredopt `predopt'
 	
+	if "`foldvar'"!="" {
+		local foldvar foldvar(`foldvar')
+		local kfolds
+	}
+	else if "`kfolds'"!="" {
+		local kfolds kfolds(`kfolds')
+	}
+
 	if `pyflag' {
 		local ycmd		pystacked
 		local dcmd		pystacked
@@ -202,7 +210,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	if "`mname'"=="" local mname m0		
 
 	*** estimation
-	ddml init `model', kfolds(`kfolds') reps(`reps') cluster(`cluster') `tabfold' foldvar(`foldvar')
+	ddml init `model', `kfolds' reps(`reps') cluster(`cluster') `tabfold' `foldvar'
 
 	*** IV-HD
 	if ("`model'"=="fiv") & `pyflag' {
