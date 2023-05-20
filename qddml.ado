@@ -223,7 +223,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 			local globalremove noestimate
 			local globalopt : list globalopt - globalremove
 			ddml E[Y|X], mname(`mname') vname(`depvar') learner(Y`m'_`e(method`m')') predopt(`ypredopt') vtype(`yvtype') `nostdstack':		///
-				pystacked `e(depvar)' `e(xvars`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
+				pystacked `e(depvar)' `e(xvars_o`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
 		}
 		// D eqn spec
 		`dcmd' `dendog' `xctrl' `exexog' `dcmdoptions' `cmdoptions' noestimate
@@ -233,7 +233,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 			local globalremove noestimate
 			local globalopt : list globalopt - globalremove
 			ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D`m'_`e(method`m')') predopt(`dpredopt') vtype(`dvtype') `nostdstack':		///
-				pystacked `e(depvar)' `e(xvars`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
+				pystacked `e(depvar)' `e(xvars_o`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
 		}
 		// DH eqn spec
 		`dcmd' `dendog' `xctrl' `dhcmdoptions' `cmdoptions' noestimate
@@ -243,7 +243,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 			local globalremove noestimate
 			local globalopt : list globalopt - globalremove
 			ddml E[D|X], mname(`mname') vname(`dendog') learner(D`m'_`e(method`m')') predopt(`dpredopt') vtype(`dvtype') `nostdstack':		///
-				pystacked {D} `e(xvars`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
+				pystacked {D} `e(xvars_o`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
 		}
 	}
 	else if ("`model'"=="fiv") {
