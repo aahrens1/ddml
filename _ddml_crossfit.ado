@@ -1,10 +1,10 @@
 *! ddml v1.2
-*! last edited: 21 feb 2023
+*! last edited: 8 june 2023
 *! authors: aa/ms
 
 *** ddml cross-fitting
 program _ddml_crossfit, eclass sortpreserve
-
+	version 16
 	syntax [anything] ,								/// 
 							[						///
 							debug					/// 
@@ -200,9 +200,9 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 		
 		// shortstack and poolstack variable names
-		if `ssflag'		mata: `eqn'.shortstack = "`nameY'"
+		if `ssflag'		mata: `eqn'.shortstack = "Y_`nameY'"
 		else			mata: `eqn'.shortstack = ""
-		if `psflag'		mata: `eqn'.poolstack = "`nameY'"
+		if `psflag'		mata: `eqn'.poolstack = "Y_`nameY'"
 		else			mata: `eqn'.poolstack = ""
 	
 		// set/clear treatvar macro
@@ -248,9 +248,9 @@ program _ddml_crossfit, eclass sortpreserve
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
 				mata: st_local("numlnrD",strofreal(cols(`eqn'.vtlist)))
 				// shortstack and poolstack variable names
-				if `ssflag'		mata: `eqn'.shortstack = "`var'"				
+				if `ssflag'		mata: `eqn'.shortstack = "D_`var'"				
 				else			mata: `eqn'.shortstack = ""
-				if `psflag'		mata: `eqn'.poolstack = "`var'"				
+				if `psflag'		mata: `eqn'.poolstack = "D_`var'"				
 				else			mata: `eqn'.poolstack = ""
 				if ("`model'"=="partial") di as text "Cross-fitting E[D|X] equation: `var'"
 				if ("`model'"=="late") di as text "Cross-fitting E[D|X,Z] equation: `var'"
@@ -315,7 +315,7 @@ end
 // creates sample indicators and leaves them in memory
 // same naming as main sample variable but with a _m resample subscript
 program create_sample_indicators
-
+	version 16
 	syntax [anything], mname(name)
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
@@ -382,6 +382,7 @@ program create_sample_indicators
 		
 		cap drop `mname'_sample_`m' 
 		qui gen byte `mname'_sample_`m' = `mname'_sample
+		label var `mname'_sample_`m' "Sample indicator for rep `m'"
 				
 		// Y
 		if "`model'"=="interactive" | "`model'"=="late" {
@@ -427,7 +428,7 @@ program create_sample_indicators
 end
 
 program report_debugging
-
+	version 16
 	syntax name(name=mname), [ fidlist(varlist) ]
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
