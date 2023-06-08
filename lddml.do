@@ -10,13 +10,12 @@ local pwd `c(pwd)'
 * ms:
 cap cd "C:\LocalStore\ecomes\Documents\GitHub\ddml"
 
-
 * Locals used in whichddml; set when compiled
 local stata_version `c(stata_version)'
 local born_date `c(born_date)'
 local current_date `c(current_date)'
 
-version 14
+version 16
 mata:
 mata clear
 
@@ -31,6 +30,8 @@ st_global("s(stata_born_date)","`born_date'")
 st_global("s(stata_version)","`stata_version'")
 st_global("s(compiled_date)","`current_date")
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 // uniquely identified by vname = dep var in the equation
 // equation structure: one for E[y|x], E[d|x] etc
@@ -86,7 +87,6 @@ void clear_equation_results(struct eStruct e)
 // ddml model structure
 struct mStruct {
 	string scalar					model			// model; partial, iv, late, etc
-	real colvector					id				// id variable (name in Stata will be modelname_id)
 	real scalar						nreps			// number of resamplings
 	real scalar						ncombos			// number of possible specifications (=0 if not yet estimated)
 	real scalar						kfolds			// number of crossfitting folds
@@ -114,7 +114,6 @@ struct mStruct init_mStruct()
 	struct mStruct scalar	m
 	
 	m.model				= ""
-	m.id				= J(0,1,.)
 	m.nreps				= 0
 	m.ncombos			= 0
 	m.kfolds			= 0
@@ -280,8 +279,133 @@ transmorphic check_spec(							///
 
 }
 
+transmorphic model_chars(struct mStruct m)
+{
+	
+   	struct eStruct scalar	e
+	
+	// will be set to zero if LIE or any eqn is not pystackedmulti
+	allpystackedmulti				= 1
 
-mata mlib create lddml, /* dir(PERSONAL) */ replace
+	numeqnD							= cols(m.nameD)
+	numeqnZ							= cols(m.nameZ)
+	
+	st_global("r(model)",			m.model)
+	st_numscalar("r(crossfitted)",	m.crossfitted)
+	st_numscalar("r(estimated)",	m.estimated)
+	st_numscalar("r(ncombos)",		m.ncombos)
+	st_numscalar("r(kfolds)",		m.kfolds)
+	st_numscalar("r(nreps)",		m.nreps)
+	st_global("r(nameY)",			m.nameY)
+	st_global("r(nameD)",			invtokens(m.nameD))
+	st_global("r(nameZ)",			invtokens(m.nameZ))
+	st_numscalar("r(numeqnD)",		numeqnD)
+	st_numscalar("r(numeqnZ)",		numeqnZ)
+	
+	// LIE model not supported by pystacked-specific code
+	if (m.model=="fiv") {
+		allpystackedmulti			= 0
+	}
+
+	// Y eqns
+	e = (m.eqnAA).get(m.nameY)
+	numlrnY							= cols(e.vtlist)
+	st_global("r(vtlistY)",			invtokens(e.vtlist))
+	st_numscalar("r(numlrnY)",		numlrnY)
+	// pystacked as only learner
+	if (numlrnY==1) {
+		est_main					= return_learner_item(e,e.vtlist,"est_main")
+		est_options					= return_learner_item(e,e.vtlist,"est_options")
+		if ((tokens(est_main)[1]=="pystacked") & (e.pystackedmulti>0)) {
+			st_numscalar("r(numpslrnY)", e.pystackedmulti)
+		}
+		else if (tokens(est_main)[1]=="pystacked") {
+			st_numscalar("r(numpslearnY)", 1)
+			// if not pystacked, goes to general code
+			// if pystacked with one learner, goes to general code
+			allpystackedmulti			= 0
+		}
+		else {
+			st_numscalar("r(numpslrnY)", 0)
+			// if not pystacked, goes to general code
+			// if pystacked with one learner, goes to general code
+			allpystackedmulti			= 0
+		}
+	}
+	else {
+		st_numscalar("r(numpslrnY)", 0)
+		// if not pystacked, goes to general code
+		// if pystacked with one learner, goes to general code
+		allpystackedmulti			= 0
+	}
+
+	// D eqns
+	for (i=1;i<=cols(m.nameD);i++) {
+		e = (m.eqnAA).get(m.nameD[1,i])
+		numlrnD										= cols(e.vtlist)
+		st_global("r(vtlistD"+strofreal(i)+")",		invtokens(e.vtlist))
+		st_numscalar("r(numlrnD"+strofreal(i)+")",	numlrnD)
+		// pystacked as only learner
+		if (numlrnD==1) {
+			est_main					= return_learner_item(e,e.vtlist,"est_main")
+			est_options					= return_learner_item(e,e.vtlist,"est_options")
+			if ((tokens(est_main)[1]=="pystacked") & (e.pystackedmulti>0)) {
+				st_numscalar("r(numpslrnD"+strofreal(i)+")", e.pystackedmulti)
+			}
+			else if (tokens(est_main)[1]=="pystacked") {
+				st_numscalar("r(numpslearnD"+strofreal(i)+")", 1)
+				// single pystacked learner, goes to general code
+				allpystackedmulti		= 0
+			}
+			else {
+				st_numscalar("r(numpslrnD"+strofreal(i)+")", 0)
+				// non-pystacked learner, goes to general code
+				allpystackedmulti		= 0
+			}
+		}
+		else {
+			// multiple learners, goes to general code
+			allpystackedmulti			= 0
+		}
+	}
+	
+	// Z eqns; if none, nothing returned
+	for (i=1;i<=numeqnZ;i++) {
+		e = (m.eqnAA).get(m.nameZ[1,i])
+		numlrnZ										= cols(e.vtlist)
+		st_global("r(vtlistZ"+strofreal(i)+")",		invtokens(e.vtlist))
+		st_numscalar("r(numlrnZ"+strofreal(i)+")",	numlrnZ)
+		// pystacked as only learner
+		if (numlrnZ==1) {
+			est_main					= return_learner_item(e,e.vtlist,"est_main")
+			est_options					= return_learner_item(e,e.vtlist,"est_options")
+			if ((tokens(est_main)[1]=="pystacked") & (e.pystackedmulti>0)) {
+				st_numscalar("r(numpslrnZ"+strofreal(i)+")", e.pystackedmulti)
+			}
+			else if (tokens(est_main)[1]=="pystacked") {
+				st_numscalar("r(numpslearnZ"+strofreal(i)+")", 1)
+				// single pystacked learner, goes to general code
+				allpystackedmulti		= 0
+			}
+			else {
+				st_numscalar("r(numpslrnZ"+strofreal(i)+")", 0)
+				// non-pystacked learner, goes to general code
+				allpystackedmulti		= 0
+			}
+		}
+		else {
+			// multiple learners, goes to general code
+			allpystackedmulti			= 0
+		}
+	}
+	
+	st_numscalar("r(allpystackedmulti)",	allpystackedmulti)
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+mata mlib create lddml, replace
 mata mlib add lddml *()
 mata mlib index
 mata describe using lddml
