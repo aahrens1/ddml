@@ -1,20 +1,20 @@
 *! ddml v1.2
-*! last edited: 21 jan 2023
+*! last edited: 8 june 2023
 *! authors: aa/ms
 
 program define _ddml_describe
-
+	version 16
 	syntax name(name=mname), [LEARNers CROSSfit ESTimates SAMple all *]
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
 	mata: `eqn' = init_eStruct()
 	
-	local all		= "`all'"~=""
-	local lflag		= "`learners'"~=""	| `all'
-	local cflag		= "`crossfit'"~=""	| `all'
-	local eflag		= "`estimates'"~=""	| `all'
-	local sflag		= "`sample'"~=""	| `all'
+	local allflag	= "`all'"~=""
+	local lflag		= "`learners'"~=""	| `allflag'
+	local cflag		= "`crossfit'"~=""	| `allflag'
+	local eflag		= "`estimates'"~=""	| `allflag'
+	local sflag		= "`sample'"~=""	| `allflag'
 	
 	mata: st_local("model",`mname'.model)
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))	// flag for crossfitting results available
@@ -76,12 +76,15 @@ program define _ddml_describe
 	if "`model'"=="late" | "`model'"=="fiv" {
 		local comboD `comboD' `comboD'
 	}
-	di as text "Specifications:" _col(25) as res `comboY' `comboD' `comboZ' " possible specs" _c
-	if `nreps' > 1 {
-		di as res " * " `nreps' " crossfit splits = " `comboY' `comboD' `comboZ' * `nreps'
-	}
-	else {
-		di
+	
+	if `allflag' {
+		di as text "Specifications:" _col(25) as res `comboY' `comboD' `comboZ' " possible specs" _c
+		if `nreps' > 1 {
+			di as res " * " `nreps' " crossfit splits = " `comboY' `comboD' `comboZ' * `nreps'
+		}
+		else {
+			di
+		}
 	}
 	
 	// sample and folds in detail
@@ -226,12 +229,14 @@ prog define desc_learners
 		di
 	}
 	
-	
 	mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 	mata: st_local("vtlist",invtokens(`eqn'.vtlist))
 	mata: st_local("shortstack",invtokens(`eqn'.shortstack))
+	mata: st_local("poolstack",invtokens(`eqn'.poolstack))
 	** indicator for short-stacking
 	local ssflag	= "`shortstack'"~=""
+	** indicator for pooled-stacking
+	local psflag	= "`poolstack'"~=""
 	** indicator for standard stacking
 	mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
 	local stdflag = 1-`nostdstack'
@@ -316,56 +321,113 @@ prog define desc_learners
 			}
 		}
 	}
-	if `crossfitted' & ~`showcmd' {
-		if `pairs'==0 {
-			forvalues m=1/`nreps' {
-				tempname mse_folds
-				mata: st_local("mse", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE","`m'")))
-				mata: st_matrix("`mse_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE_folds","`m'"))
-				di as res _col(12) "shortstack" _c
-				di _col(26) %2.0f `m' _c
-				di _col(34) %8.2f `mse' _c
-				forvalues k=1/`kfolds' {
-					di "  " %8.2f el(`mse_folds',1,`k') _c
-				}
-				di
-			}
-			if `heqn' {
+	
+	if `ssflag' {
+		if `crossfitted' & ~`showcmd' {
+			if `pairs'==0 {
 				forvalues m=1/`nreps' {
-					tempname mse_h_folds
-					mata: st_local("mse_h", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE_h","`m'")))
-					mata: st_matrix("`mse_h_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE_h_folds","`m'"))
-					di as res _col(12) "shortstack_h" _c
-					di _col(26) %2.0f `m' _c
-					di _col(34) %8.2f `mse_h' _c
-					forvalues k=1/`kfolds' {
-						di "  " %8.2f el(`mse_h_folds',1,`k') _c
-					}
-					di
-				}
-			}
-		}
-		else {
-			forvalues m=1/`nreps' {
-				tempname mse0_folds mse1_folds
-				mata: st_local("mse0", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE0","`m'")))
-				mata: st_local("mse1", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE1","`m'")))
-				mata: st_matrix("`mse0_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE0_folds","`m'"))
-				mata: st_matrix("`mse1_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE1_folds","`m'"))
-				forvalues i=0/1 {
-					local lrnabbrev = abbrev("`vtilde'",10)
+					tempname mse_folds
+					mata: st_local("mse", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE","`m'")))
+					mata: st_matrix("`mse_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE_folds","`m'"))
 					di as res _col(12) "shortstack" _c
 					di _col(26) %2.0f `m' _c
-					di _col(31) %2.0f `i' _c
-					di _col(34) %8.2f `mse`i'' _c
+					di _col(34) %8.2f `mse' _c
 					forvalues k=1/`kfolds' {
-						di "  " %8.2f el(`mse`i'_folds',1,`k') _c
+						di "  " %8.2f el(`mse_folds',1,`k') _c
 					}
 					di
+				}
+				if `heqn' {
+					forvalues m=1/`nreps' {
+						tempname mse_h_folds
+						mata: st_local("mse_h", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE_h","`m'")))
+						mata: st_matrix("`mse_h_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE_h_folds","`m'"))
+						di as res _col(12) "shortstack_h" _c
+						di _col(26) %2.0f `m' _c
+						di _col(34) %8.2f `mse_h' _c
+						forvalues k=1/`kfolds' {
+							di "  " %8.2f el(`mse_h_folds',1,`k') _c
+						}
+						di
+					}
+				}
+			}
+			else {
+				forvalues m=1/`nreps' {
+					tempname mse0_folds mse1_folds
+					mata: st_local("mse0", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE0","`m'")))
+					mata: st_local("mse1", strofreal(return_result_item(`eqn',"`shortstack'_ss","MSE1","`m'")))
+					mata: st_matrix("`mse0_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE0_folds","`m'"))
+					mata: st_matrix("`mse1_folds'", return_result_item(`eqn',"`shortstack'_ss","MSE1_folds","`m'"))
+					forvalues i=0/1 {
+						local lrnabbrev = abbrev("`vtilde'",10)
+						di as res _col(12) "shortstack" _c
+						di _col(26) %2.0f `m' _c
+						di _col(31) %2.0f `i' _c
+						di _col(34) %8.2f `mse`i'' _c
+						forvalues k=1/`kfolds' {
+							di "  " %8.2f el(`mse`i'_folds',1,`k') _c
+						}
+						di
+					}
 				}
 			}
 		}
 	}
+
+	if `psflag' {
+		if `crossfitted' & ~`showcmd' {
+			if `pairs'==0 {
+				forvalues m=1/`nreps' {
+					tempname mse_folds
+					mata: st_local("mse", strofreal(return_result_item(`eqn',"`poolstack'_ss","MSE","`m'")))
+					mata: st_matrix("`mse_folds'", return_result_item(`eqn',"`poolstack'_ss","MSE_folds","`m'"))
+					di as res _col(12) "poolstack" _c
+					di _col(26) %2.0f `m' _c
+					di _col(34) %8.2f `mse' _c
+					forvalues k=1/`kfolds' {
+						di "  " %8.2f el(`mse_folds',1,`k') _c
+					}
+					di
+				}
+				if `heqn' {
+					forvalues m=1/`nreps' {
+						tempname mse_h_folds
+						mata: st_local("mse_h", strofreal(return_result_item(`eqn',"`poolstack'_ss","MSE_h","`m'")))
+						mata: st_matrix("`mse_h_folds'", return_result_item(`eqn',"`poolstack'_ss","MSE_h_folds","`m'"))
+						di as res _col(12) "poolstack_h" _c
+						di _col(26) %2.0f `m' _c
+						di _col(34) %8.2f `mse_h' _c
+						forvalues k=1/`kfolds' {
+							di "  " %8.2f el(`mse_h_folds',1,`k') _c
+						}
+						di
+					}
+				}
+			}
+			else {
+				forvalues m=1/`nreps' {
+					tempname mse0_folds mse1_folds
+					mata: st_local("mse0", strofreal(return_result_item(`eqn',"`poolstack'_ss","MSE0","`m'")))
+					mata: st_local("mse1", strofreal(return_result_item(`eqn',"`poolstack'_ss","MSE1","`m'")))
+					mata: st_matrix("`mse0_folds'", return_result_item(`eqn',"`poolstack'_ss","MSE0_folds","`m'"))
+					mata: st_matrix("`mse1_folds'", return_result_item(`eqn',"`poolstack'_ss","MSE1_folds","`m'"))
+					forvalues i=0/1 {
+						local lrnabbrev = abbrev("`vtilde'",10)
+						di as res _col(12) "poolstack" _c
+						di _col(26) %2.0f `m' _c
+						di _col(31) %2.0f `i' _c
+						di _col(34) %8.2f `mse`i'' _c
+						forvalues k=1/`kfolds' {
+							di "  " %8.2f el(`mse`i'_folds',1,`k') _c
+						}
+						di
+					}
+				}
+			}
+		}
+	}
+	
 	// clear this global from Mata
 	mata: mata drop `eqn'
 	
