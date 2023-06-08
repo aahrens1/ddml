@@ -1,8 +1,9 @@
 *! ddml v1.2
-*! last edited: 20 feb 2023
+*! last edited: 8 june 2023
 *! authors: aa/ms
 
 program _ddml_nnls
+	version 16
     syntax [anything] [if] [in] [aw fw iw] , [ stata SE VERBose * ]
 
     local dostata = "`stata'"~=""
@@ -41,7 +42,7 @@ end
 
 program _ddml_nnls_stata, eclass sortpreserve
 
-    version 13
+    version 16
     syntax varlist(numeric min=2)            ///
         [if] [in] [aw fw iw] [,              /// 
                                     VERBose  ///
