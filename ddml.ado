@@ -1,18 +1,10 @@
 *! ddml v1.2
-*! last edited: 21 feb 2023
+*! last edited: 8 june 2023
 *! authors: aa/ms
-
-* notes:
-* e.command		= tokens(estcmd)[1,1] fails if command string starts with a prefix e.g. capture
-* check for incompatible y variables disabled - can't accommodate prefixes e.g. capture
-* spin off init code into a subroutine?
-* init code current calls _ddml_sample to set fold var, kfolds, etc. Allow options with init?
-
-// (no)prefix option not implemented; prefixes not added (where prefix = `model'_)
 
 program ddml	// no class - some subcommands are eclass, some are rclass
 
-	version 14
+	version 16
 	local lversion 0.5
 	
 	if replay() {
@@ -30,11 +22,24 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 	
 		local allargs `0'
 		
-		// split into before/after :
-		tokenize "`allargs'", parse(":")
-		local maincmd `1'
-		macro shift 2
-		local eqn `*'
+		// ddml estimate, overlap, crossfit, describe don't use ":"
+		tokenize `"`allargs'"', parse(",")
+		if		"`1'"=="crossfit"		///
+			|	"`1'"=="estimate"		///
+			|	"`1'"=="describe"		///
+			|	"`1'"=="sample"			///
+			|	"`1'"=="extract"		///
+			|	"`1'"=="overlap"		///
+			{
+				local maincmd `allargs'
+			}
+		else {
+			// split into before/after :
+			tokenize "`allargs'", parse(":")
+			local maincmd `1'
+			macro shift 2
+			local eqn `*'
+		}
 		
 		// parse first part using syntax
 		local 0 "`maincmd'"
@@ -148,14 +153,12 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			if "`model'"=="interactiveiv" local model late
 				
 			mata: `mname'=init_mStruct()
-			cap drop `mname'_id
-			qui gen double `mname'_id	= _n
-			mata: `mname'.id			= st_data(., "`mname'_id")
 			// create and store sample indicator; initialized so all obs are used
 			cap drop `mname'_sample
 			// in case total sample limited by if or in:
 			marksample touse
 			qui gen byte `mname'_sample = `touse'
+			label var `mname'_sample "Sample indicator (0/1)"
 			if "`fcluster'"~="" {
 				// fold cluster variable; can be real (missing=.) or string (missing="")
 				cap replace `mname'_sample = 0 if `fcluster'==.			// real
@@ -407,7 +410,7 @@ prog define check_mname
 end
 
 program define add_eqn_to_model, rclass
-
+	version 16
 	syntax [anything],								/// 
 							mname(name)				/// name of mata struct with model
 							vname(varname)			/// name of dep var in equation (to be orthogonalized)
@@ -631,6 +634,7 @@ program define add_eqn_to_model, rclass
 end
 
 program define _ddml_version, eclass
+	version 16
 	syntax , version(string)
 	
 	di as text "`version'"
