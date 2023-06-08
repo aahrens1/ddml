@@ -1,8 +1,9 @@
 *! ddml v1.2
-*! last edited: 27 feb 2023
+*! last edited: 8 june 2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
+	version 16
 	syntax [anything] [if] [in] ,					/// 
 								[					///
 								y(varname)			/// for estimating by hand...
@@ -34,6 +35,7 @@ end
 
 // (re-)stack
 program _ddml_estimate_stacking, eclass sortpreserve
+	version 16
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
 								ss					///
@@ -103,7 +105,6 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		local vtlist	`vtildeY'
 	}
 	else {
-		di as err "error - restacking of `nameY' requires pystacked to be the sole learner"
 		local stackflag	= 0
 	}
 
@@ -118,7 +119,6 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			local vtlist	`vtlist' `vtilde'
 		}
 		else {
-			di as err "error - restacking of `vname' requires pystacked to be the sole learner"
 			local stackflag	= 0
 		}
 	}
@@ -201,7 +201,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			if `newstack' {
 				cap drop ``typestack''_`ts'_`m'
 				qui gen double ``typestack''_`ts'_`m' = `yhat'
-				label var ``typestack''_`ts'_`m' "Predicted values cond. exp. of `vname' using `typestack'ing"
+				label var ``typestack''_`ts'_`m' "Pred. values E[`vname'|X] using `typestack'ing"
 			}
 			else {
 				if "`noisily'"~="" {
@@ -239,6 +239,7 @@ end
 
 // utility for stacking results
 program get_stack_stats, rclass
+	version 16
 	syntax [anything] [if] [in] , [ kfolds(integer 2) fid(varname) vname(varname) vhat(varname) ]
 	
 	marksample touse
@@ -271,6 +272,7 @@ end
 
 // a single user-specified estimation
 program _ddml_estimate_single, eclass sortpreserve
+	version 16
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
 								y(varname)			/// for estimating by hand...
@@ -419,6 +421,7 @@ end
 
 // main estimation program
 program _ddml_estimate_main
+	version 16
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
 								ROBust				///
@@ -596,34 +599,50 @@ program _ddml_estimate_main
 
 	// shortstack and poolstack names
 	if `ssflag' {
-		local Yss `nameY'_ss
+		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+		mata: st_local("shortstack", `eqn'.shortstack)
+		local Yss `shortstack'_ss
 		foreach var in `nameD' {
-			local Dss `Dss' `var'_ss
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			mata: st_local("shortstack", `eqn'.shortstack)
+			local Dss `Dss' `shortstack'_ss
 		}
 		if `fivflag' {
 			foreach var in `nameD' {
-				local Zss `Zss' `var'_h_ss
+				mata: `eqn' = (`mname'.eqnAA).get("`var'")
+				mata: st_local("shortstack", `eqn'.shortstack)
+				local Zss `Zss' `shortstack'_h_ss
 			}
 		}
 		else {
 			foreach var in `nameZ' {
-				local Zss `Zss' `var'_ss
+				mata: `eqn' = (`mname'.eqnAA).get("`var'")
+				mata: st_local("shortstack", `eqn'.shortstack)
+				local Zss `Zss' `shortstack'_ss
 			}
 		}
 	}
 	if `psflag' {
-		local Yps `nameY'_ps
+		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+		mata: st_local("poolstack", `eqn'.poolstack)
+		local Yps `poolstack'_ps
 		foreach var in `nameD' {
-			local Dps `Dps' `var'_ps
+			mata: `eqn' = (`mname'.eqnAA).get("`var'")
+			mata: st_local("poolstack", `eqn'.poolstack)
+			local Dps `Dps' `poolstack'_ps
 		}
 		if `fivflag' {
 			foreach var in `nameD' {
-				local Zps `Zps' `var'_h_ps
+				mata: `eqn' = (`mname'.eqnAA).get("`var'")
+				mata: st_local("poolstack", `eqn'.poolstack)
+				local Zps `Zps' `poolstack'_h_ps
 			}
 		}
 		else {
 			foreach var in `nameZ' {
-				local Zps `Zps' `var'_ps
+				mata: `eqn' = (`mname'.eqnAA).get("`var'")
+				mata: st_local("poolstack", `eqn'.poolstack)
+				local Zps `Zps' `poolstack'_ps
 			}
 		}
 	}
@@ -916,6 +935,8 @@ program _ddml_estimate_main
 	
 	// optional table of results
 	if `tableflag' {
+		di
+		ddml describe, mname(`mname')
 		di
 		di as text "DDML estimation results:"
 		di as text "spec  r" %14s "Y learner" _c
@@ -1272,6 +1293,7 @@ end
 
 // adds model name prefixes to list of varnames
 program define add_prefix, sclass
+	version 16
 	syntax [anything] , prefix(name)
 
 	// anything is a list of to-be-varnames that need prefix added to them
@@ -1284,6 +1306,7 @@ end
 
 // adds rep number suffixes to list of varnames
 program define add_suffix, sclass
+	version 16
 	syntax [anything] , suffix(name)
 
 	// anything is a list of to-be-varnames that need suffix added to them
@@ -1295,7 +1318,7 @@ program define add_suffix, sclass
 end
 
 program define _ddml_make_varlists, rclass
-
+	version 16
 	syntax [anything], mname(name)
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
@@ -1395,6 +1418,7 @@ end
 
 // does OLS/IV and reports with substitute yname and dnames
 program define estimate_and_store, eclass
+	version 16
 	syntax [anything] [if] [in] , [				///
 				y(name) yname(name)				/// predicted var, original var
 				d(namelist) dnames(namelist)	/// predicted var, original var
@@ -1629,6 +1653,7 @@ end
 
 // estimates and stores mean/median estimates across resamples
 program define medmean_and_store, eclass
+	version 16
 	syntax [anything] [if] [in] , [								///
 				mname(name)										///
 				spec(string)									///
@@ -1884,6 +1909,7 @@ end
 
 // replays stored estimate
 program define replay_estimate, eclass
+	version 16
 	syntax [anything] [if] [in] , [								///
 				mname(name)										///
 				spec(string)									///
@@ -1927,7 +1953,7 @@ program define replay_estimate, eclass
 	matrix rownames `V' = `dnames' `consname'
 	
 	tempvar esample
-	cap gen `esample' = `mname'_sample_`rep'
+	cap gen byte `esample' = `mname'_sample_`rep'
 	if _rc>0 {
 		// sample variable doesn't exist; ignore
 		local esample
