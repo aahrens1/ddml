@@ -1,9 +1,9 @@
 *! ddml v1.2
-*! last edited: 21 feb 2023
+*! last edited: 8 june 2023
 *! authors: aa/ms
 
 program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that respect clustering
-	version 13
+	version 16
 
 	syntax [if] [in] , mname(name) [				///
 							foldvar(varlist)		/// optional list of variables indicating folds, one per rep
@@ -133,11 +133,11 @@ program _ddml_sample, sortpreserve					//  sortpreserve needed for fold IDs that
 			qui egen `tag' = tag(`fclustid') if `mname'_sample
 			if `m'==1 & "`norandom'"~="" {
 				qui gen `uni' = _n if `mname'_sample & `tag'
-				local labtext "(original order)"
+				local labtext "Fold ID (original order), rep `m'"
 			}
 			else {
 				qui gen double `uni' = runiform() if `mname'_sample & `tag'
-				local labtext "(randomly generated)"
+				local labtext "Fold ID (randomly generated) rep `m'"
 			}
 			qui cumul `uni' if `mname'_sample, gen(`cuni')
 			// create equal-sized folds (#obs or #cluster)
