@@ -511,7 +511,7 @@ program define add_eqn_to_model, rclass
 		mata: add_learner_item(`eqn',"`vtilde'","est_main_h","`est_main'")
 		mata: add_learner_item(`eqn',"`vtilde'","est_options_h","`est_options'")
 		mata: add_learner_item(`eqn',"`vtilde'","predopt_h","`predopt'")
-		mata: add_learner_item(`eqn',"`vtilde'","vtype_h","`vtype'")
+		mata: add_learner_item(`eqn',"`vtilde'","vtype","`vtype'")
 		mata: `eqn'.lieflag = 1
 	}
 	else {

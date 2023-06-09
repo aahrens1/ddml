@@ -16,7 +16,6 @@ program define crossfit, rclass sortpreserve
 							vtilde(namelist)			/// name(s) of fitted variable(s)
 							Generate(namelist)			/// synonym for vtilde
 							vtype(string)				/// datatype of fitted variable; default=double
-							vtype_h(string)				/// datatype of fitted variable; default=double
 							shortstack(name)			/// for interactive use
 							poolstack(name)				/// for interactive use
 							predopt(string asis)		/// undocumented
@@ -52,8 +51,6 @@ program define crossfit, rclass sortpreserve
 		*** variable type
 		if "`vtype'"==""		local vtype double
 		if "`vtype'"=="none"	local vtype
-		if "`vtype_h'"==""		local vtype_h double
-		if "`vtype_h'"=="none"	local vtype_h
 	
 		mata: `eqn_info' = init_eStruct()
 		initialize_eqn_info,										///
@@ -65,7 +62,6 @@ program define crossfit, rclass sortpreserve
 							estring(`estring')						///
 							estringh(`estringh')					///
 							vtype(`vtype')							///
-							vtype_h(`vtype_h')						///
 							predopt(`predopt')					 	///
 							`noisily'
 		local nlearners = r(nlearners)
@@ -1195,11 +1191,9 @@ program define _crossfit_other, rclass sortpreserve
 				qui gen double `shortstack'_ss_`m'=.
 			}
 			forvalues j=1/`nlearners' {
-				local vtilde : word `j' of `vtlist'
-				mata: st_local("vtype", return_learner_item(`ename',"`vtilde'","vtype"))
 				tempvar vhat`j' vres`j'
-				qui gen `vtype' `vhat`j''=.
-				qui gen `vtype' `vres`j''=.
+				qui gen double `vhat`j''=.
+				qui gen double `vres`j''=.
 			}
 		}  
 		else if `tvflag' & ~`lieflag' { // case 2
@@ -1212,28 +1206,28 @@ program define _crossfit_other, rclass sortpreserve
 			forvalues j=1/`nlearners' {
 				tempvar vhat0`j' vres0`j'
 				tempvar vhat1`j' vres1`j'
-				qui gen `vtype' `vhat0`j''=.
-				qui gen `vtype' `vres0`j''=.	
-				qui gen `vtype' `vhat1`j''=.
-				qui gen `vtype' `vres1`j''=.	
+				qui gen double `vhat0`j''=.
+				qui gen double `vres0`j''=.	
+				qui gen double `vhat1`j''=.
+				qui gen double `vres1`j''=.	
 			}
 		}
 		else if `lieflag' { // case 3
 			// out-of-sample predicted values for E[D|XZ] 
 			forvalues j=1/`nlearners' {
 				tempvar dhat`j'
-				qui gen `vtype' `dhat`j''=.  // using learner i
+				qui gen double `dhat`j''=.  // using learner i
 			}
 			// out-of-sample predicted values for E[D|X] 
 			forvalues j=1/`nlearners' {
 				tempvar hhat`j'
-				qui gen `vtype' `hhat`j''=.  // using learner i in both steps
+				qui gen double `hhat`j''=.  // using learner i in both steps
 			}
 			// predicted values for E[D|ZX] for each k & learner i
 			forvalues k=1/`kfolds' {
 				forvalues j=1/`nlearners' {
 					tempvar dhat_`j'_`k'
-					qui gen `vtype' `dhat_`j'_`k''=.
+					qui gen double `dhat_`j'_`k''=.
 				}
 			}
 			if `ssflag' { // with short-stacking
@@ -1286,7 +1280,6 @@ program define _crossfit_other, rclass sortpreserve
 					mata: st_local("est_main_h", return_learner_item(`ename',"`vtilde'","est_main_h"))
 					mata: st_local("est_options_h", return_learner_item(`ename',"`vtilde'","est_options_h"))
 					mata: st_local("predopt_h",return_learner_item(`ename',"`vtilde'","predopt_h"))
-					mata: st_local("vtype_h",return_learner_item(`ename',"`vtilde'","vtype_h"))			
 				}
 				
 				if ~`tvflag' & ~`lieflag' { // case 1
@@ -1302,7 +1295,7 @@ program define _crossfit_other, rclass sortpreserve
 					}
 					
 					// get fitted values for kth fold	
-					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
+					qui predict double `vhat_k' if `fid'==`k' & `touse', `predopt'
 		
 					// get predicted values
 					qui replace `vhat`j'' = `vhat_k' if `fid'==`k' & `touse'
@@ -1324,7 +1317,7 @@ program define _crossfit_other, rclass sortpreserve
 		
 					// get fitted values for kth fold	
 					tempvar vhat_k
-					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
+					qui predict double `vhat_k' if `fid'==`k' & `touse', `predopt'
 					qui replace `vhat1`j'' = `vhat_k' if `fid'==`k' & `touse'
 					qui replace `vres1`j'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
 		
@@ -1337,7 +1330,7 @@ program define _crossfit_other, rclass sortpreserve
 					if (`r(N)'==0 & "`allowallzero'"!="") {
 						// get fitted values for kth fold	
 						tempvar vhat_k	
-						`qui' gen `vhat_k'=10e-12  if `fid'==`k' & `touse' 	
+						`qui' gen double `vhat_k'=10e-12  if `fid'==`k' & `touse' 	
 					} 
 					else {
 						// estimate excluding kth fold
@@ -1345,7 +1338,7 @@ program define _crossfit_other, rclass sortpreserve
 			
 						// get fitted values for kth fold	
 						tempvar vhat_k
-						qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'					
+						qui predict double `vhat_k' if `fid'==`k' & `touse', `predopt'					
 
 					}
 					qui replace `vhat0`j'' = `vhat_k' if `fid'==`k' & `touse'
@@ -1368,7 +1361,7 @@ program define _crossfit_other, rclass sortpreserve
 					}
 		
 					// get fitted values (in and out of sample)
-					qui predict `vtype' `vhat_k' if `touse', `predopt'
+					qui predict double `vhat_k' if `touse', `predopt'
 		
 					// get *combined* out-of-sample predicted values
 					qui replace `dhat`j'' = `vhat_k' if `fid'==`k' & `touse'
@@ -1386,7 +1379,7 @@ program define _crossfit_other, rclass sortpreserve
 					local cmd_h `e(cmd)'
 		
 					// get fitted values  
-					qui predict `vtype' `vtil_k' if `touse', `predopt_h'
+					qui predict double `vtil_k' if `touse', `predopt_h'
 		
 					// get *combined* out-of-sample predicted values
 					qui replace `hhat`j'' = `vtil_k' if `fid'==`k' & `touse'
@@ -1497,7 +1490,7 @@ program define _crossfit_other, rclass sortpreserve
 						mata: st_local("est_main_h", return_learner_item(`ename',"`vtilde'","est_main_h"))
 						mata: st_local("est_options_h", return_learner_item(`ename',"`vtilde'","est_options_h"))
 						mata: st_local("predopt_h",return_learner_item(`ename',"`vtilde'","predopt_h"))
-						mata: st_local("vtype_h",return_learner_item(`ename',"`vtilde'","vtype_h"))				
+						mata: st_local("vtype",return_learner_item(`ename',"`vtilde'","vtype"))				
 	
 						// replace {D}-placeholder in estimation string with variable name
 						local est_main_h_k = subinstr("`est_main_h'","{D}","`dhat_isSS_`k''",1)
@@ -1697,10 +1690,9 @@ program define _crossfit_other, rclass sortpreserve
 				cap drop `vtilde'_h_`m'
 				
 				mata: st_local("vtype", return_learner_item(`ename',"`vtilde'","vtype"))
-				mata: st_local("vtype_h", return_learner_item(`ename',"`vtilde'_h","vtype"))
 				qui gen `vtype' `vtilde'_`m' = `dhat`j''
 				qui label var `vtilde'_`m' "Pred. values E[`vname'|X,Z], rep `m'"
-				qui gen `vtype_h' `vtilde'_h_`m' = `hhat`j''
+				qui gen `vtype' `vtilde'_h_`m' = `hhat`j''
 				qui label var `vtilde'_h_`m' "Pred. values E[`vtilde'|X], rep `m'"
 
 				// calculate and return mspe and sample size
@@ -2010,7 +2002,6 @@ program define initialize_eqn_info, rclass
 							estringh(string asis)	/// names of LIE estimation strings
 													/// need asis option in case it includes strings
 							vtype(string)			///
-							vtype_h(string)			///
 							predopt(string asis)	///
 							NOIsily					///
 							]
@@ -2037,7 +2028,7 @@ program define initialize_eqn_info, rclass
 	mata: `ename'.poolstack = "`poolstack'"		// may be empty string
 		
 	if "`estringh'"~="" {
-		parse_estring, vtlist(`vtlist') ename(`ename') estring(`estringh') h vtype_h(`vtype_h') predopt(`predopt') `noisily'
+		parse_estring, vtlist(`vtlist') ename(`ename') estring(`estringh') h vtype(`vtype') predopt(`predopt') `noisily'
 		mata: `ename'.lieflag = 1
 	}
 	
@@ -2068,7 +2059,6 @@ program define parse_estring, rclass
 													/// need asis option in case it includes strings
 							h						/// indicates LIE eqn
 							vtype(string)			///
-							vtype_h(string)			///
 							predopt(string asis)	///
 							NOIsily					///
 							]
@@ -2137,7 +2127,7 @@ program define parse_estring, rclass
 			mata: add_learner_item(`ename',"`vtilde'","est_main_h","`est_main'")
 			mata: add_learner_item(`ename',"`vtilde'","est_options_h","`est_options'")
 			mata: add_learner_item(`ename',"`vtilde'","predopt_h","`predopt'")
-			mata: add_learner_item(`ename',"`vtilde'","vtype_h","`vtype_h'")
+			mata: add_learner_item(`ename',"`vtilde'","vtype","`vtype'")
 		}
 
 		if "`2'"~="|" & "`3'"~="|" {
