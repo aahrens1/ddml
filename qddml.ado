@@ -1,8 +1,11 @@
 *! ddml v1.2
-*! last edited: 21 feb 2023
+*! last edited: 8 june 2023
 *! authors: aa/ms
 
 program define qddml, eclass					//  sortpreserve handled in _ivlasso
+
+	version 16
+	
 	syntax [anything] [if] [in] [aw pw],		/// note no "/" after pw
 		Model(name)								///
 		[										///
@@ -46,7 +49,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		atet 									///
 		ateu									///
 		]
-
+	
 	mata: s_ivparse("`anything'")
 	** indicators for pystacked and stacking methods
 	local pyflag	= "`pystacked'`pystacked_y'`pystacked_d'`pystacked_z'"~="" | "`cmd'`ycmd'`dcmd'`zcmd'"==""
