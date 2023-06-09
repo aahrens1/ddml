@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_late.log
   log type:  text
- opened on:   8 Jun 2023, 22:26:20
+ opened on:   9 Jun 2023, 13:51:02
 
 . 
 . which ddml
@@ -384,20 +384,36 @@ E[Z|X]       = assignmt_ss_1
 ------------------------------------------------------------------------------
 
 
+. ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+
+Poolstack DDML model (sample=1) (LATE)
+E[y|X,D=0]   = Y_lnearnings_ps0_1                  Number of obs   =      4404
+E[y|X,D=1]   = Y_lnearnings_ps1_1
+E[D|X,Z=0]   = D_training_ps0_1
+E[D|X,Z=1]   = D_training_ps1_1
+E[Z|X]       = assignmt_ps_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    training |  -.0029965   .0015717    -1.91   0.057    -.0060769    .0000839
+------------------------------------------------------------------------------
+
+
 . 
 . *** append, estimate, replay
 . ddml sample, append(1)
 
-. ddml crossfit, shortstack
+. ddml crossfit, shortstack poolstack
 Cross-fitting E[y|X,Z] equation: lnearnings
 Resample 3...
-Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
 Cross-fitting E[D|X,Z] equation: training
 Resample 3...
-Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
 Cross-fitting E[Z|X]: assignmt
 Resample 3...
-Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
 
 . ddml estimate
 
@@ -414,16 +430,21 @@ DDML estimation results (LATE):
 spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE     Z learner
   st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.003  ( 0.002)  Z1_pystacked
   ss  1  [shortstack]          [ss]          [ss]          [ss]    -0.003  ( 0.002)          [ss]
+  ps  1   [poolstack]          [ps]          [ps]          [ps]    -0.003  ( 0.002)          [ps]
   st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001  ( 0.002)  Z1_pystacked
   ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.001  ( 0.002)          [ss]
+  ps  2   [poolstack]          [ps]          [ps]          [ps]    -0.001  ( 0.002)          [ps]
   st  3  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002  ( 0.002)  Z1_pystacked
   ss  3  [shortstack]          [ss]          [ss]          [ss]    -0.002  ( 0.002)          [ss]
+  ps  3   [poolstack]          [ps]          [ps]          [ps]    -0.002  ( 0.002)          [ps]
 
 Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE     Z learner
  mse mn     [min-mse]         [mse]         [mse]         [mse]    -0.002  ( 0.002)         [mse]
   ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002  ( 0.002)          [ss]
+  ps mn   [poolstack]          [ps]          [ps]          [ps]    -0.002  ( 0.002)          [ps]
  mse md     [min-mse]         [mse]         [mse]         [mse]    -0.002  ( 0.002)         [mse]
   ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002  ( 0.002)          [ss]
+  ps md   [poolstack]          [ps]          [ps]          [ps]    -0.002  ( 0.002)          [ps]
 
 Shortstack DDML model (median over 3 resamples) (LATE)
 E[y|X,D=0]   = Y_lnearnings_ss0                    Number of obs   =      4404
@@ -582,6 +603,76 @@ E[Z|X]       = assignmt_ss
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
     training     -0.0020   -0.0030   -0.0030   -0.0024   -0.0005   -0.0005
+
+. ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+
+Poolstack DDML model (sample=1) (LATE)
+E[y|X,D=0]   = Y_lnearnings_ps0_1                  Number of obs   =      4404
+E[y|X,D=1]   = Y_lnearnings_ps1_1
+E[D|X,Z=0]   = D_training_ps0_1
+E[D|X,Z=1]   = D_training_ps1_1
+E[Z|X]       = assignmt_ps_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    training |  -.0029965   .0015717    -1.91   0.057    -.0060769    .0000839
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(ps) rep(2) replay notable
+
+Poolstack DDML model (sample=2) (LATE)
+E[y|X,D=0]   = Y_lnearnings_ps0_2                  Number of obs   =      4404
+E[y|X,D=1]   = Y_lnearnings_ps1_2
+E[D|X,Z=0]   = D_training_ps0_2
+E[D|X,Z=1]   = D_training_ps1_2
+E[Z|X]       = assignmt_ps_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    training |   -.000572   .0017019    -0.34   0.737    -.0039078    .0027637
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(ps) rep(mn) replay notable
+
+Poolstack DDML model (mean over 3 resamples) (LATE)
+E[y|X,D=0]   = Y_lnearnings_ps0                    Number of obs   =      4404
+E[y|X,D=1]   = Y_lnearnings_ps1
+E[D|X,Z=0]   = D_training_ps0
+E[D|X,Z=1]   = D_training_ps1
+E[Z|X]       = assignmt_ps
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019915   .0018475    -1.08   0.281    -.0056126    .0016295
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0020   -0.0030   -0.0030   -0.0024   -0.0006   -0.0006
+
+. ddml estimate, mname(m0) spec(ps) rep(md) replay notable
+
+Poolstack DDML model (median over 3 resamples) (LATE)
+E[y|X,D=0]   = Y_lnearnings_ps0                    Number of obs   =      4404
+E[y|X,D=1]   = Y_lnearnings_ps1
+E[D|X,Z=0]   = D_training_ps0
+E[D|X,Z=1]   = D_training_ps1
+E[Z|X]       = assignmt_ps
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    training |   -.002406   .0016789    -1.43   0.152    -.0056966    .0008846
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0020   -0.0030   -0.0030   -0.0024   -0.0006   -0.0006
 
 . 
 . *** multiple learners, no SS
@@ -1423,7 +1514,7 @@ E[Z|X]       = assignmt_ss_1
 
 
 . *** allcombos
-. ddml estimate, allcombos shortstack
+. ddml estimate, allcombos
 
 
 Model:                  late, crossfit folds k=2, resamples r=2
@@ -1858,7 +1949,7 @@ Summary over 3 resamples:
     training     -0.0006   -0.0014   -0.0014   -0.0006    0.0001    0.0001
 
 . *** allcombos
-. ddml estimate, allcombos shortstack
+. ddml estimate, allcombos
 
 
 Model:                  late, crossfit folds k=2, resamples r=3
@@ -2452,5 +2543,5 @@ Summary over 2 resamples:
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_late.log
   log type:  text
- closed on:   8 Jun 2023, 22:30:17
+ closed on:   9 Jun 2023, 13:54:39
 -------------------------------------------------------------------------------------------------------------------------------------------

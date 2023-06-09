@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial.log
   log type:  text
- opened on:   8 Jun 2023, 21:41:32
+ opened on:   9 Jun 2023, 13:38:43
 
 . 
 . which ddml
@@ -239,7 +239,7 @@ Summary over 3 resamples:
       democ1     -0.0010   -0.0118   -0.0118   -0.0100    0.0189    0.0189
 
 . 
-. *** pystacked, SS
+. *** pystacked, SS and PS
 . 
 . *** initialise ddml and select model; 
 . ddml init partial, kfolds(2) reps(2)
@@ -348,19 +348,34 @@ D-E[D|X]  = D1-D_avexpr_ss_1 D2-D_democ1_ss_1
 ------------------------------------------------------------------------------
 
 
+. ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+
+Poolstack DDML model (sample=1)
+y-E[y|X]  = y-Y_logpgp95_ps_1                      Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ps_1 D2-D_democ1_ps_1 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2214394   .0530153     4.18   0.000     .1175313    .3253475
+      democ1 |    .023608   .0199683     1.18   0.237    -.0155292    .0627452
+       _cons |  -.0438825   .0715958    -0.61   0.540    -.1842076    .0964426
+------------------------------------------------------------------------------
+
+
 . *** append, estimate, replay
 . ddml sample, append(1)
 
-. ddml crossfit, shortstack
+. ddml crossfit, shortstack poolstack
 Cross-fitting E[y|X] equation: logpgp95
 Resample 3...
-Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
 Cross-fitting E[D|X] equation: avexpr
 Resample 3...
-Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
 Cross-fitting E[D|X] equation: democ1
 Resample 3...
-Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
 
 . ddml estimate
 
@@ -376,16 +391,21 @@ DDML estimation results:
 spec  r     Y learner     D learner         b        SE     D learner         b        SE
   st  1  Y1_pystacked  D1_pystacked     0.270  ( 0.053)  D2_pystacked     0.009  ( 0.017)
   ss  1  [shortstack]          [ss]     0.249  ( 0.055)          [ss]     0.022  ( 0.019)
+  ps  1   [poolstack]          [ps]     0.221  ( 0.054)          [ps]     0.024  ( 0.020)
   st  2  Y1_pystacked  D1_pystacked     0.231  ( 0.057)  D2_pystacked     0.006  ( 0.029)
   ss  2  [shortstack]          [ss]     0.308  ( 0.051)          [ss]     0.004  ( 0.020)
+  ps  2   [poolstack]          [ps]     0.297  ( 0.067)          [ps]     0.016  ( 0.028)
   st  3  Y1_pystacked  D1_pystacked     0.326  ( 0.051)  D2_pystacked    -0.002  ( 0.022)
   ss  3  [shortstack]          [ss]     0.284  ( 0.061)          [ss]     0.004  ( 0.024)
+  ps  3   [poolstack]          [ps]     0.351  ( 0.055)          [ps]     0.010  ( 0.024)
 
 Mean/med    Y learner     D learner         b        SE     D learner         b        SE
   st mn     [min-mse]         [mse]     0.276  ( 0.064)         [mse]     0.004  ( 0.022)
   ss mn  [shortstack]          [ss]     0.280  ( 0.061)          [ss]     0.010  ( 0.023)
+  ps mn   [poolstack]          [ps]     0.290  ( 0.077)          [ps]     0.016  ( 0.024)
   st md     [min-mse]         [mse]     0.270  ( 0.070)         [mse]     0.006  ( 0.024)
   ss md  [shortstack]          [ss]     0.284  ( 0.061)          [ss]     0.004  ( 0.024)
+  ps md   [poolstack]          [ps]     0.297  ( 0.077)          [ps]     0.016  ( 0.025)
 
 Shortstack DDML model (median over 3 resamples)
 y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
@@ -526,6 +546,68 @@ Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
       avexpr      0.2804    0.2488    0.2488    0.2843    0.3081    0.3081
       democ1      0.0098    0.0038    0.0038    0.0041    0.0217    0.0217
+
+. ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+
+Poolstack DDML model (sample=1)
+y-E[y|X]  = y-Y_logpgp95_ps_1                      Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ps_1 D2-D_democ1_ps_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2214394   .0540903     4.09   0.000     .1154243    .3274544
+      democ1 |    .023608   .0196117     1.20   0.229    -.0148302    .0620462
+       _cons |  -.0438825   .0754797    -0.58   0.561    -.1918201    .1040551
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(ps) rep(2) replay notable
+
+Poolstack DDML model (sample=2)
+y-E[y|X]  = y-Y_logpgp95_ps_2                      Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ps_2 D2-D_democ1_ps_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2969078   .0670759     4.43   0.000     .1654415    .4283741
+      democ1 |   .0158033    .027585     0.57   0.567    -.0382623     .069869
+       _cons |  -.0135837    .107834    -0.13   0.900    -.2249344    .1977671
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(ps) rep(mn) replay notable
+
+Poolstack DDML model (mean over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ps                        Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ps D2-D_democ1_ps 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2896595   .0774998     3.74   0.000     .1377627    .4415563
+      democ1 |   .0164904   .0239059     0.69   0.490    -.0303643     .063345
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2897    0.2214    0.2214    0.2969    0.3506    0.3506
+      democ1      0.0165    0.0101    0.0101    0.0158    0.0236    0.0236
+
+. ddml estimate, mname(m0) spec(ps) rep(md) replay notable
+
+Poolstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ps                        Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ps D2-D_democ1_ps 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2969078   .0770199     3.85   0.000     .1459515    .4478641
+      democ1 |   .0158033   .0245332     0.64   0.519    -.0322809    .0638876
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2897    0.2214    0.2214    0.2969    0.3506    0.3506
+      democ1      0.0165    0.0101    0.0101    0.0158    0.0236    0.0236
 
 . 
 . *** multiple learners, no SS
@@ -1052,7 +1134,7 @@ D-E[D|X]  = D1-D_avexpr_ss_1
 
 
 . *** allcombos
-. ddml estimate, allcombos shortstack
+. ddml estimate, allcombos
 
 
 Model:                  partial, crossfit folds k=2, resamples r=2
@@ -1317,7 +1399,7 @@ Summary over 3 resamples:
       avexpr      0.1963    0.1537    0.1537    0.1689    0.2662    0.2662
 
 . *** allcombos
-. ddml estimate, allcombos shortstack
+. ddml estimate, allcombos
 
 
 Model:                  partial, crossfit folds k=2, resamples r=3
@@ -1575,5 +1657,5 @@ Summary over 3 resamples:
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial.log
   log type:  text
- closed on:   8 Jun 2023, 21:43:04
+ closed on:   9 Jun 2023, 13:40:12
 -------------------------------------------------------------------------------------------------------------------------------------------

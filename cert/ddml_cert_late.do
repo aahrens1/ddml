@@ -69,10 +69,11 @@ ddml estimate
 *** replay
 ddml estimate, mname(m0) spec(st) rep(1) replay notable
 ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+ddml estimate, mname(m0) spec(ps) rep(1) replay notable
 
 *** append, estimate, replay
 ddml sample, append(1)
-ddml crossfit, shortstack
+ddml crossfit, shortstack poolstack
 ddml estimate
 *** replay
 ddml estimate, mname(m0) spec(st) rep(1) replay notable
@@ -83,6 +84,10 @@ ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 ddml estimate, mname(m0) spec(ss) rep(2) replay notable
 ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
 ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+ddml estimate, mname(m0) spec(ps) rep(2) replay notable
+ddml estimate, mname(m0) spec(ps) rep(mn) replay notable
+ddml estimate, mname(m0) spec(ps) rep(md) replay notable
 
 *** multiple learners, no SS
 
@@ -135,7 +140,7 @@ ddml estimate
 ddml estimate, mname(m0) spec(mse) rep(1) replay notable
 ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 *** allcombos
-ddml estimate, allcombos shortstack
+ddml estimate, allcombos
 forvalues i=1/8 {
     ddml estimate, mname(m0) spec(`i') rep(1) replay notable
 }
@@ -153,7 +158,7 @@ ddml estimate, mname(m0) spec(ss) rep(2) replay notable
 ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
 ddml estimate, mname(m0) spec(ss) rep(md) replay notable
 *** allcombos
-ddml estimate, allcombos shortstack
+ddml estimate, allcombos
 forvalues i=1/8 {
     forvalues r=1/2 {
 		ddml estimate, mname(m0) spec(`i') rep(`r') replay notable
