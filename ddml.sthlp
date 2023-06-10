@@ -141,7 +141,7 @@ or by {opt append} and the cross-fit fold identifiers in {opt foldvar(varlist)}:
 {pstd}
 Export results in csv format:
 
-{p 8 14}{cmd:ddml export} [ using filename , {opt mname(name)}{bind: ]}
+{p 8 14}{cmd:ddml export} [ using filename , {opt mname(name)} {opt addvars(varlist)} {bind: ]}
 
 {pstd}
 Retrieve information from {cmd:ddml}:
@@ -307,6 +307,9 @@ used in combination with {opt spec()} and {opt rep()} to display and return esti
 {synoptline}
 {synopt:{opt mname(name)}}
 name of the DDML model. Defaults to {it:m0}.
+{p_end}
+{synopt:{opt addvars(varlist)}}
+additional Stata variables to include with {opt ddml} variables when using {it:ddml export}.
 {p_end}
 {synopt:{opt replist(numlist)}}
 (overlap plots) list of crossfitting resamples to plot. Defaults to all.
