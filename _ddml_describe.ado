@@ -18,7 +18,8 @@ program define _ddml_describe
 	
 	mata: st_local("model",`mname'.model)
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))	// flag for crossfitting results available
-	mata: st_local("ncombos",strofreal(`mname'.ncombos))			// flag for estimation results available
+	mata: st_local("estimated",strofreal(`mname'.estimated))		// flag for estimation results available
+	mata: st_local("ncombos",strofreal(`mname'.ncombos))
 	mata: st_local("kfolds",strofreal(`mname'.kfolds))
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 	mata: st_local("nameY",`mname'.nameY)
@@ -163,13 +164,13 @@ program define _ddml_describe
 	}
 	
 	// estimate results in detail
-	if `eflag' & ("`model'"=="interactive" | "`model'"=="late") & `ncombos' {
+	if `eflag' & ("`model'"=="interactive" | "`model'"=="late") & `estimated' {
 		di
-		_ddml_estimate_ate_late `mname', `options' results
+		_ddml_estimate_ate_late `mname', `options' replay
 	}
-	else if `eflag' & `ncombos' {
+	else if `eflag' & `estimated' {
 		di
-		_ddml_estimate_linear `mname', `options' results
+		_ddml_estimate_linear `mname', `options' replay
 	}
 	else if `eflag' {
 		di
