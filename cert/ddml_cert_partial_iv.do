@@ -28,7 +28,8 @@ set seed 123
 global Y logpgp95
 global X edes1975 temp* humid* steplow-oilres
 global D avexpr  
-global Z lat_abst logem4
+global Z1 lat_abst
+global Z2 logem4
 
 *** pystacked, no SS
 
@@ -36,7 +37,8 @@ global Z lat_abst logem4
 ddml init iv, kfolds(2) reps(2)
 ddml E[Y|X]: pystacked $Y $X , type(reg)
 ddml E[D|X]: pystacked $D $X , type(reg)
-ddml E[Z|X]: pystacked $Z $X , type(reg)
+ddml E[Z|X]: pystacked $Z1 $X , type(reg)
+ddml E[Z|X]: pystacked $Z2 $X , type(reg)
 ddml crossfit
 ddml estimate, robust
 *** replay
@@ -57,7 +59,8 @@ ddml estimate, mname(m0) spec(st) rep(md) replay notable
 ddml init iv, kfolds(2) reps(2)
 ddml E[Y|X]: pystacked $Y $X , type(reg)
 ddml E[D|X]: pystacked $D $X , type(reg)
-ddml E[Z|X]: pystacked $Z $X , type(reg)
+ddml E[Z|X]: pystacked $Z1 $X , type(reg)
+ddml E[Z|X]: pystacked $Z2 $X , type(reg)
 ddml crossfit, shortstack poolstack
 *** estimation of parameter of interest
 ddml estimate, robust
@@ -89,8 +92,8 @@ ddml E[Y|X]: pystacked $Y $X , type(reg)
 ddml E[Y|X]: reg $Y $X
 ddml E[D|X]: pystacked $D $X , type(reg)
 ddml E[D|X]: reg $D $X
-ddml E[Z|X]: pystacked $Z $X , type(reg)
-ddml E[Z|X]: reg $Z $X
+ddml E[Z|X]: pystacked $Z1 $X , type(reg)
+ddml E[Z|X]: reg $Z1 $X
 ddml crossfit
 ddml estimate, robust
 ddml estimate, mname(m0) spec(mse) rep(1) replay notable
@@ -123,8 +126,8 @@ ddml E[Y|X]: pystacked $Y $X , type(reg)
 ddml E[Y|X]: reg $Y $X
 ddml E[D|X]: pystacked $D $X , type(reg)
 ddml E[D|X]: reg $D $X
-ddml E[Z|X]: pystacked $Z $X , type(reg)
-ddml E[Z|X]: reg $Z $X
+ddml E[Z|X]: pystacked $Z1 $X , type(reg)
+ddml E[Z|X]: reg $Z1 $X
 ddml crossfit, shortstack
 ddml estimate, robust
 ddml estimate, mname(m0) spec(mse) rep(1) replay notable
