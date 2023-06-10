@@ -281,7 +281,6 @@ transmorphic check_spec(							///
 
 transmorphic model_chars(struct mStruct m)
 {
-	
    	struct eStruct scalar	e
 	
 	// will be set to zero if LIE or any eqn is not pystackedmulti
@@ -309,8 +308,27 @@ transmorphic model_chars(struct mStruct m)
 
 	// Y eqns
 	e = (m.eqnAA).get(m.nameY)
+	shortstack						= e.shortstack
+	poolstack						= e.poolstack
 	numlrnY							= cols(e.vtlist)
-	st_global("r(vtlistY)",			invtokens(e.vtlist))
+	vtlistY							= invtokens(e.vtlist)
+	if (shortstack~="") {
+	    vtlistY = vtlistY + " " + shortstack + "_ss"
+	}
+	if (poolstack~="") {
+	    vtlistY = vtlistY + " " + poolstack + "_ps"
+	}
+	if ((m.model=="interactive") | (m.model=="late")) {
+	    vtlistY01 = ""
+	    vtlistY_tk = tokens(vtlistY)
+		numvt = cols(vtlistY_tk)
+		for (j=1;j<=numvt;j++) {
+			vtlistY01 = vtlistY01 + " " + vtlistY_tk[j] + "0"
+			vtlistY01 = vtlistY01 + " " + vtlistY_tk[j] + "1"
+		}
+		vtlistY = strtrim(vtlistY01)
+	}
+	st_global("r(Y)",vtlistY)
 	st_numscalar("r(numlrnY)",		numlrnY)
 	// pystacked as only learner
 	if (numlrnY==1) {
@@ -331,6 +349,19 @@ transmorphic model_chars(struct mStruct m)
 			// if pystacked with one learner, goes to general code
 			allpystackedmulti			= 0
 		}
+		if ((e.pystackedmulti>0) & (m.model~="fiv")) {
+		    vtlistY_L = ""
+		    for (j=1;j<=e.pystackedmulti;j++) {
+				if ((m.model=="interactive") | (m.model=="late")) {
+					vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "0_L" + strofreal(j)
+					vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "1_L" + strofreal(j)
+				}
+				else {
+					vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "_L" + strofreal(j)
+				}
+			}
+			st_global("r(Y_L)", strtrim(vtlistY_L))
+		}
 	}
 	else {
 		st_numscalar("r(numpslrnY)", 0)
@@ -342,8 +373,36 @@ transmorphic model_chars(struct mStruct m)
 	// D eqns
 	for (i=1;i<=cols(m.nameD);i++) {
 		e = (m.eqnAA).get(m.nameD[1,i])
-		numlrnD										= cols(e.vtlist)
-		st_global("r(vtlistD"+strofreal(i)+")",		invtokens(e.vtlist))
+		shortstack						= e.shortstack
+		poolstack						= e.poolstack
+		numlrnD							= cols(e.vtlist)
+		vtlistD							= invtokens(e.vtlist)
+		if (shortstack~="") {
+			vtlistD = vtlistD + " " + shortstack + "_ss"
+		}
+		if (poolstack~="") {
+			vtlistD = vtlistD + " " + poolstack + "_ps"
+		}
+		if (m.model=="late") {
+			vtlistD01 = ""
+			vtlistD_tk = tokens(vtlistD)
+			numvt = cols(vtlistD_tk)
+			for (j=1;j<=numvt;j++) {
+				vtlistD01 = vtlistD01 + " " + vtlistD_tk[j] + "0"
+				vtlistD01 = vtlistD01 + " " + vtlistD_tk[j] + "1"
+			}
+			vtlistD = strtrim(vtlistD01)
+		}
+		st_global("r(D"+strofreal(i)+")",vtlistD)
+		if (m.model=="fiv") {
+		    vtlistDh = ""
+		    vtlistD_tk = tokens(vtlistD)
+			numvt = cols(vtlistD_tk)
+			for (j=1;j<=numvt;j++) {
+				vtlistDh = vtlistDh + " " + vtlistD_tk[j] + "_h"
+			}
+			st_global("r(D"+strofreal(i)+"_h)",strtrim(vtlistDh))
+		}
 		st_numscalar("r(numlrnD"+strofreal(i)+")",	numlrnD)
 		// pystacked as only learner
 		if (numlrnD==1) {
@@ -362,6 +421,19 @@ transmorphic model_chars(struct mStruct m)
 				// non-pystacked learner, goes to general code
 				allpystackedmulti		= 0
 			}
+			if ((e.pystackedmulti>0) & (m.model~="fiv")) {
+				vtlistD_L = ""
+				for (j=1;j<=e.pystackedmulti;j++) {
+					if (m.model=="late") {
+						vtlistD_L = vtlistD_L + " " + invtokens(e.vtlist) + "0_L" + strofreal(j)
+						vtlistD_L = vtlistD_L + " " + invtokens(e.vtlist) + "1_L" + strofreal(j)
+					}
+					else {
+						vtlistD_L = vtlistD_L + " " + invtokens(e.vtlist) + "_L" + strofreal(j)
+					}
+				}
+				st_global("r(D"+strofreal(i)+"_L)", strtrim(vtlistD_L))
+			}
 		}
 		else {
 			// multiple learners, goes to general code
@@ -372,8 +444,17 @@ transmorphic model_chars(struct mStruct m)
 	// Z eqns; if none, nothing returned
 	for (i=1;i<=numeqnZ;i++) {
 		e = (m.eqnAA).get(m.nameZ[1,i])
+		shortstack						= e.shortstack
+		poolstack						= e.poolstack
 		numlrnZ										= cols(e.vtlist)
-		st_global("r(vtlistZ"+strofreal(i)+")",		invtokens(e.vtlist))
+		vtlistZ							= invtokens(e.vtlist)
+		if (shortstack~="") {
+			vtlistZ = vtlistZ + " " + shortstack + "_ss"
+		}
+		if (poolstack~="") {
+			vtlistZ = vtlistZ + " " + poolstack + "_ps"
+		}
+		st_global("r(Z"+strofreal(i)+")",vtlistZ)
 		st_numscalar("r(numlrnZ"+strofreal(i)+")",	numlrnZ)
 		// pystacked as only learner
 		if (numlrnZ==1) {
@@ -391,6 +472,13 @@ transmorphic model_chars(struct mStruct m)
 				st_numscalar("r(numpslrnZ"+strofreal(i)+")", 0)
 				// non-pystacked learner, goes to general code
 				allpystackedmulti		= 0
+			}
+			if ((e.pystackedmulti>0) & (m.model~="fiv")) {
+				vtlistZ_L = ""
+				for (j=1;j<=e.pystackedmulti;j++) {
+					vtlistZ_L = vtlistZ_L + " " + invtokens(e.vtlist) + "_L" + strofreal(j)
+				}
+				st_global("r(Z"+strofreal(i)+"_L)", strtrim(vtlistZ_L))
 			}
 		}
 		else {
