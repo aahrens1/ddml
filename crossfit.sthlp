@@ -104,6 +104,17 @@ and the specification with the best prediction performance (e.g. smallest mean s
 A simple example of how to use {opt crossfit} to do this is below.
 {p_end}
 
+{pstd}
+{opt crossfit} has integrated support for {opt pystacked} (see the help for {helpb pystacked} if installed).
+{helpb pystacked} is a front-end for the {browse "https://scikit-learn.org/stable/index.html":scikit-learn}
+implementation of stacking regression.
+Stacking is a way of combining multiple supervised
+machine learners (the "base" or "level-0" learners) into
+an ensemble or "meta" learner.
+When used in conjunction with {opt crossfit}, the predictions of the {helpb pystacked} base learners
+are generated along with the ensemble predicted values.
+{p_end}
+
 
 {marker compatibility}{...}
 {title:Compatible programs}
@@ -125,6 +136,11 @@ See {help ddml##compatibility:here}.
 
 {pstd}As above but using 5 resamples.{p_end}
 {phang2}. {stata "crossfit, estring(reg earnings $X) gen(yhat) kfolds(3) reps(5)"}{p_end}
+{phang2}. {stata "sum earnings yhat*"}{p_end}
+
+{pstd}As above but using {helpb pystacked}.
+The default base learners are OLS, CV-lasso and gradient boosting.{p_end}
+{phang2}. {stata "crossfit, estring(pystacked earnings $X) gen(yhat) kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "sum earnings yhat*"}{p_end}
 
 {pstd}A simple example of 3-fold cross-validation with 5 resamples using {opt crossfit}.
@@ -202,4 +218,4 @@ wiemann@uchicago.edu
 {title:Also see (if installed)}
 
 {pstd}
-Help: {helpb ddml}, {helpb qddml}, {helpb lasso2}, {helpb cvlasso}.{p_end}
+Help: {helpb ddml}, {helpb qddml}, {helpb pystacked}, {helpb lasso2}, {helpb cvlasso}.{p_end}
