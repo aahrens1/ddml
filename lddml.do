@@ -26,9 +26,9 @@ void whichddml()
 "compiled `current_date' under Stata " + "`stata_version'" + " born " + "`born_date'."
 "authors AA/MS"
 st_sclear()
-st_global("s(stata_born_date)","`born_date'")
-st_global("s(stata_version)","`stata_version'")
-st_global("s(compiled_date)","`current_date")
+st_global("r(stata_born_date)","`born_date'")
+st_global("r(stata_version)","`stata_version'")
+st_global("r(stata_compiled_date)","`current_date")
 }
 
 ////////////////////////////////////////////////////////////////////////////////
