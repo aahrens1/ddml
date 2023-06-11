@@ -2330,6 +2330,10 @@ class ConstrLSClassifier(ConstrLS):
     def predict_proba(self, X):
         return self.predict(X)
 
+class SingleBestClassifier(SingleBest):
+    _estimator_type="classifier"
+    def predict_proba(self, X):
+        return self.predict(X)
 
 end
 
