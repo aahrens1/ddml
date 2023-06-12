@@ -2232,7 +2232,7 @@ def py_get_stack_weights(yvar,xvars,touse,wvar,finalest,stype):
         fin_est = RidgeCV()
     elif finalest == "singlebest" and stype == "reg": 
         fin_est = SingleBest()
-    elif finalest == "singlebest" and type == "class": 
+    elif finalest == "singlebest" and stype == "class": 
         fin_est = SingleBestClassifier()
     elif finalest == "ols" and stype == "class": 
         fin_est = LinearRegressionClassifier()    
