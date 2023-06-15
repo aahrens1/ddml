@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 21jan2023}{...}
+{* *! version 15jun2023}{...}
 {hline}
 {cmd:help ddml extract}{right: v1.2}
 {hline}
@@ -16,7 +16,7 @@ Please check the {helpb ddml extract##examples:examples} provided at the end of 
 {marker syntax}{...}
 {title:Syntax}
 
-{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt detail} {opt ename(name)} {opt vname(varname)}
+{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)}
 {opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)} {opt subkey2(string)}{bind: ]}
 
 {pstd}
@@ -50,16 +50,22 @@ Saves extracted objects as Stata r(.) macros (default is to leave as Mata object
 {synoptset 20}{...}
 {synopthdr:show options}
 {synoptline}
+{synopt:{opt show(stweights)}}
+Extracts standard stacking ({opt pystacked}) weights.
+{p_end}
+{synopt:{opt show(ssweights)}}
+Extracts {opt shortstack} weights.
+{p_end}
+{synopt:{opt show(sweights)}}
+Extracts {opt poolstack} weights.
+{p_end}
+{synopt:{opt show(weights)}}
+Extracts all available weights: standard, short-stacked, pool-stacked.
+{p_end}
 {synopt:{opt show(pystacked)}}
-Extracts {opt pystacked} weights and learner MSEs.
+Extracts detailed {opt pystacked} weights and learner MSEs, including a breakdown by cross-fit fold.
 The MSEs are cross-validation MSEs and correspond to the predictions used to obtain the stacking weights;
 see {helpb pystacked:help pystacked}.
-{p_end}
-{synopt:{opt detail}}
-({opt show(pystacked)} only) Extract detailed {opt pystacked} weights and learner MSEs by cross-fit fold.
-{p_end}
-{synopt:{opt show(shortstack)}}
-Extracts {opt shortstack} weights.
 {p_end}
 {synopt:{opt show(mse)}}
 Extracts OOS MSEs by crossfitting fold.
@@ -115,21 +121,22 @@ The model name is the default name "m0".
 {phang2}. {stata "global rfhigh max_features(5) min_samples_leaf(10) max_samples(.7)"}{p_end}
 {phang2}. {stata "ddml E[Y|X], learner(Y_m1): pystacked net_tfa $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf) opt($rflow) || method(rf) opt($rfhigh), type(reg)"}{p_end}
 {phang2}. {stata "ddml E[D|X], learner(D_m1): pystacked e401 $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf) opt($rflow) || method(rf) opt($rfhigh), type(reg)"}{p_end}
-{pstd}Cross-fitting and estimation.{p_end}
-{phang2}. {stata "ddml crossfit"}{p_end}
+{pstd}Cross-fitting and estimation. Also request short-stacked ensembles.{p_end}
+{phang2}. {stata "ddml crossfit, shortstack"}{p_end}
 {phang2}. {stata "ddml estimate, robust"}{p_end}
 
 {pstd}{ul:{opt show} option examples}{p_end}
 
-{pstd}{opt show} option examples: examine the learner weights and MSEs reported by {cmd:pystacked}, MSEs by fold, and sample sizes by fold.{p_end}
-{phang2}. {stata "ddml extract, show(pystacked)"}{p_end}
-{phang2}. {stata "ddml extract, show(mse)"}{p_end}
-{phang2}. {stata "ddml extract, show(n)"}{p_end}
+{pstd}{opt show} option examples: report standard (pystacked) and short-stacked weights.
+Standard stacking weights displayed here are mean weigths across cross-fit folds.{p_end}
+{phang2}. {stata "ddml extract, show(stweights)"}{p_end}
+{phang2}. {stata "ddml extract, show(ssweights)"}{p_end}
 {pstd}{opt show} option leaves results in r(.) macros.{p_end}
+{phang2}. {stata "mat list r(Y_net_tfa_ss)"}{p_end}
+{phang2}. {stata "mat list r(D_e401_ss)"}{p_end}
+
+{pstd}{opt show} option examples: examine the learner weights and MSEs by fold reported by {cmd:pystacked}.{p_end}
 {phang2}. {stata "ddml extract, show(pystacked)"}{p_end}
-{phang2}. {stata "mat list r(Y_m1_w)"}{p_end}
-{phang2}. {stata "ddml extract, show(mse)"}{p_end}
-{phang2}. {stata "mat list r(e401_mse)"}{p_end}
 
 {pstd}{ul:List keys examples}{p_end}
 

@@ -151,7 +151,7 @@ Retrieve information from {cmd:ddml}:
 {opt subkey2(string)}{bind: ]}
 
 {pstd}
-{it:display_item} can be {it:mse}, {it:n}, {it:shortstack} or {it:pystacked}.
+{it:display_item} can be {it:stweights}, {it:ssweights}, {it:psweights}, {it:weights}, {it:mse}, {it:n}, or {it:pystacked}.
 {cmd:ddml} stores many internal results on associative arrays.
 These can be retrieved using the different key options.
 See {helpb ddml extract} for details.
@@ -550,9 +550,9 @@ short-stacking uses the (out-of-sample) cross-fitted predicted values.{p_end}
 {pstd}Finally, we estimate the coefficients of interest.{p_end}
 {phang2}. {stata "ddml estimate, robust"}{p_end}
 
-{pstd}Examine the stacking weights and MSEs reported by {cmd:pystacked} as well as the {opt ddml} short-stacking weights.{p_end}
-{phang2}. {stata "ddml extract, show(pystacked)"}{p_end}
-{phang2}. {stata "ddml extract, show(shortstack)"}{p_end}
+{pstd}Examine the standard ({cmd:pystacked}) stacking weights as well as the {opt ddml} short-stacking weights.{p_end}
+{phang2}. {stata "ddml extract, show(stweights)"}{p_end}
+{phang2}. {stata "ddml extract, show(ssweights)"}{p_end}
 
 {marker plm_ii}{...}
 {pstd}{ul:Partially linear model II - multiple learners with ddml.} 
@@ -669,8 +669,8 @@ This time we use the alternative simplified syntax supported by {helpb pystacked
 
 {pstd}Because we have used {pystacked as the single {opt ddml} learner,
 we can access the saved {opt pystacked} information.
-Here we use the {opt detail} option to get the stacking weights and MSEs by cross-fit fold:{p_end}
-{phang2}. {stata "ddml extract, show(pystacked) detail"}{p_end}
+Here we use the {opt pystacked} option to get the stacking weights and MSEs by cross-fit fold:{p_end}
+{phang2}. {stata "ddml extract, show(pystacked)"}{p_end}
 
 {marker pliv}{...}
 {pstd}{ul:Partially linear IV model.} 
