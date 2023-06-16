@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 21 feb 2023
+*! last edited: 8 june 2023
 *! authors: aa/ms
 
 program define _ddml_extract, rclass
@@ -9,8 +9,7 @@ program define _ddml_extract, rclass
 				mname(name)			/// ignored if ename(.) provided
 				ename(name)			///
 				vname(varname)		///
-				show(name)			/// pystacked, mse or n allowed
-				detail				///
+				show(name)			///
 				keys				///
 				key1(string)		///
 				key2(string)		///
@@ -32,7 +31,7 @@ program define _ddml_extract, rclass
 	// show macro can be lower or upper case; upper required below
 	local show = upper("`show'")
 	// syntax check
-	local showlist PYSTACKED MSE N SHORTSTACK POOLSTACK
+	local showlist PYSTACKED MSE N STWEIGHTS SSWEIGHTS PSWEIGHTS WEIGHTS
 	if "`show'"~="" {
 		local showok : list posof "`show'" in showlist
 		if `showok'==0 {
@@ -42,7 +41,6 @@ program define _ddml_extract, rclass
 	}
 	
 	local keysflag		= ("`keys'"~="")
-	local detailflag	= ("`detail'"~="")
 	
 	// "return clear" clears return(.) but not r(.); use this instead
 	mata : st_rclear()
@@ -51,11 +49,18 @@ program define _ddml_extract, rclass
 
 	if "`mname'"=="" {
 		mata: `mtemp' = init_mStruct()
-		mata: `obj' = m_ddml_extract("",`mtemp',"`ename'",`ename',`keysflag',"`show'",`detailflag',"`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
+		mata: `obj' = m_ddml_extract("",`mtemp',"`ename'",`ename',`keysflag',"`show'","`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
 	}
 	else if "`ename'"=="" {
 		mata: `etemp' = init_eStruct()
-		mata: `obj' = m_ddml_extract("`mname'",`mname',"",`etemp',`keysflag',"`show'",`detailflag',"`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
+		if "`show'"=="WEIGHTS" {
+			mata: `obj' = m_ddml_extract("`mname'",`mname',"",`etemp',`keysflag',"STWEIGHTS","`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
+			mata: `obj' = m_ddml_extract("`mname'",`mname',"",`etemp',`keysflag',"SSWEIGHTS","`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
+			mata: `obj' = m_ddml_extract("`mname'",`mname',"",`etemp',`keysflag',"PSWEIGHTS","`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
+		}
+		else {
+			mata: `obj' = m_ddml_extract("`mname'",`mname',"",`etemp',`keysflag',"`show'","`vname'","`key1'","`key2'","`key3'","`subkey1'","`subkey2'")
+		}
 	}
 	
 	if "`namelist'"=="" {
@@ -106,7 +111,6 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 									struct eStruct e,			///
 									real scalar keysflag,		///
 									string scalar show,			///
-									real scalar detailflag,		///
 									string scalar vname,		///
 									string scalar key1,			///
 									string scalar key2,			///
@@ -118,36 +122,33 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 	struct eStruct scalar eqn
 	class AssociativeArray scalar AA
 
-	if (show=="PYSTACKED") {
+	if (show=="STWEIGHTS") {
+		// detail flag controls the level of detail
+		detailflag=0
 		rmatlist = J(1,0,"")
 		vnames =(d.eqnAA).keys()
 		vnames = sort(vnames,(1::cols(vnames))')
 		for (i=1;i<=rows(vnames);i++) {
 			eqn = (d.eqnAA).get(vnames[i])
-			rmatlist = (rmatlist, pystacked_extract(d,eqn,vnames[i],"weights",detailflag))
-			rmatlist = (rmatlist, pystacked_extract(d,eqn,vnames[i],"MSEs",detailflag))
-		}
-		// rmatlist can be empty if pystacked called with a single learner
-		if (cols(rmatlist)>0) {
-			st_global("r(matlist)",invtokens(sort(rmatlist,1)))
+			// detailflag=0
+			pystacked_extract(d,eqn,vnames[i],"weights",0)
 		}
 	}
-	else if (show=="SHORTSTACK") {
+	else if (show=="SSWEIGHTS") {
 		rmatlist = J(1,0,"")
 		vnames =(d.eqnAA).keys()
 		vnames = sort(vnames,(1::cols(vnames))')
 		for (i=1;i<=rows(vnames);i++) {
 			eqn = (d.eqnAA).get(vnames[i])
 			if (eqn.shortstack~="") {
-				rmatlist = (rmatlist, shortstack_extract(d,eqn,vnames[i]))
+				shortstack_extract(d,eqn,vnames[i])
 			}
 			else {
-				printf("{res}error - short-stacked weights for %s not available\n",vnames[i])
+				printf("\n{res}error - short-stacked weights for %s not available\n",vnames[i])
 			}
 		}
-		st_global("r(matlist)",invtokens(sort(rmatlist,1)))
 	}
-	else if (show=="POOLSTACK") {
+	else if (show=="PSWEIGHTS") {
 		// enter only for pooled stacking of pystacked base learners
 		rmatlist = J(1,0,"")
 		vnames =(d.eqnAA).keys()
@@ -156,13 +157,24 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 		for (i=1;i<=rows(vnames);i++) {
 			eqn = (d.eqnAA).get(vnames[i])
 			if (eqn.poolstack~="") {
-				rmatlist = (rmatlist, poolstack_extract(d,eqn,vnames[i]))
+				poolstack_extract(d,eqn,vnames[i])
 			}
 			else {
-				printf("{res}error - pool-stacked weights for %s not available\n",vnames[i])
+				printf("\n{res}error - pool-stacked weights for %s not available\n",vnames[i])
 			}
 		}
-		st_global("r(matlist)",invtokens(sort(rmatlist,1)))
+	}
+	else if (show=="PYSTACKED") {
+		// detail flag controls the level of detail
+		detailflag=1
+		rmatlist = J(1,0,"")
+		vnames =(d.eqnAA).keys()
+		vnames = sort(vnames,(1::cols(vnames))')
+		for (i=1;i<=rows(vnames);i++) {
+			eqn = (d.eqnAA).get(vnames[i])
+			pystacked_extract(d,eqn,vnames[i],"weights",detailflag)
+			pystacked_extract(d,eqn,vnames[i],"MSEs",detailflag)
+		}
 	}
 	else if ((show=="MSE") | (show=="N")) {
 		rmatlist = J(1,0,"")
@@ -191,7 +203,7 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 						DZeq01 = (DZeq01 \ 1)
 					}
 					vt = vkeys[j,1]
-					if ((vkeys[j,2]=="MSE_h") | (vkeys[j,2]=="N_h")) {
+					if (vkeys[j,2]==(show+"_h")) {
 						vt = vt + "_h"
 					}
 					rvtilde = (rvtilde \ vt)
@@ -216,7 +228,7 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 				rmat = (rsmp, rmatmse, rmatmse_folds)
 				cstripe = ("rep" \ "full_sample")
 			}
-			rname = vnames[i]+"_mse"
+			rname = vnames[i]+"_"+strlower(show)
 			st_matrix("r("+rname+")",rmat)
 			rstripe = (J(rows(rmat),1,""), rvtilde)
 			st_matrixrowstripe("r("+rname+")",rstripe)
@@ -227,7 +239,6 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 			cstripe = (J(rows(cstripe),1,""), cstripe)
 			st_matrixcolstripe("r("+rname+")",cstripe)
 			rmatlist = (rmatlist, rname)
-			st_global("r(matlist)",invtokens(sort(rmatlist,1)))
 			display_mse(d, show, reqn, rvtilde, DZeq01, rsmp, rmatmse, rmatmse_folds)
 		}
 	}
@@ -349,11 +360,11 @@ function poolstack_extract(									///
 	if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
 		// base case - plm, plm IV, ATE D, LATE Z, LIE Y
 		// initialize
-		cstripe = "mean_weight"
+		cstripe = "learner" \ "mean_weight"
 		rmat = J(0,nlearners,.)
 		vnkey = eqn.poolstack + "_ps"
 		// final estimator
-		finalest = return_learner_item(eqn,vnkey,"ps_final_est")
+		final_est = return_learner_item(eqn,vnkey,"ps_final_est")
 		// weights
 		for (m=1;m<=nreps;m++) {
 			rrep = return_result_item(eqn,vnkey,"ps_weights",strofreal(m))
@@ -364,6 +375,8 @@ function poolstack_extract(									///
 		rmat = (mean(rmat) \ rmat)
 		// in output, rows are learners, columns are resamples
 		rmat = rmat'
+		// add learner number
+		rmat = runningsum(J(nlearners,1,1)) , rmat
 		cstripe = (J(rows(cstripe),1,""), cstripe)
 		rstripe = (J(rows(rstripe),1,""), rstripe)
 		st_matrix("r("+vnkey+")",rmat)
@@ -371,28 +384,37 @@ function poolstack_extract(									///
 		st_matrixrowstripe("r("+vnkey+")",rstripe)
 		rmatlist = (rmatlist, vnkey)
 		printf("\n{res}pool-stacked weights across resamples for %s\n",vname)
-		printf("{res}final stacking estimator: %s\n",finalest)
+		printf("{res}final stacking estimator: %s\n",final_est)
 		stata("mat list " + "r("+vnkey+"), noheader noblank")
+		// learner list
+		cstripe = ("" , "learner")
+		rstripe = vtlist'
+		rstripe = (J(rows(rstripe),1,""), rstripe)
+		rn = vnkey+"_learners"
+		st_matrix("r("+rn+")",(1::rows(vtlist')))
+		st_matrixcolstripe("r("+rn+")",cstripe)
+		st_matrixrowstripe("r("+rn+")",rstripe)
+		rmatlist = (rmatlist, rn)
 	}
 	else {
 		// LIE means D and Dhat so we need a column to indicate h=0/1
 		// ATE/LATE means we need a column for D or Z = 0/1
 		// initialize
 		if (eqn.lieflag==1) {
-			cstripe = ("h=0/1" \ "mean_weight")
+			cstripe = ("learner" \ "h=0/1" \ "mean_weight")
 		}
 		else if (d.model=="interactive") {
-			cstripe = ("D=0/1" \ "mean_weight")
+			cstripe = ("learner" \ "D=0/1" \ "mean_weight")
 		}
 		else {
-			cstripe = ("Z=0/1" \ "mean_weight")
+			cstripe = ("learner" \ "Z=0/1" \ "mean_weight")
 		}
 		rmat0 = J(0,nlearners,.)
 		rmat1 = J(0,nlearners,.)
 		vnkey = eqn.poolstack + "_ps"
 		vnkey_h = eqn.poolstack + "_h_ps"
 		// final estimator
-		finalest = return_learner_item(eqn,vnkey,"ps_final_est")
+		final_est = return_learner_item(eqn,vnkey,"ps_final_est")
 		for (m=1;m<=nreps;m++) {
 			if (eqn.lieflag==1) {
 				// D
@@ -419,6 +441,9 @@ function poolstack_extract(									///
 		// add h column
 		rmat0 = (J(rows(rmat0),1,0) , rmat0)
 		rmat1 = (J(rows(rmat1),1,1) , rmat1)
+		// add learner number
+		rmat0 = runningsum(J(nlearners,1,1)) , rmat0
+		rmat1 = runningsum(J(nlearners,1,1)) , rmat1
 		// combine
 		rmat = (rmat0 \ rmat1)
 		// add sort column to rmat
@@ -427,7 +452,7 @@ function poolstack_extract(									///
 		rmat = (lnum, rmat)
 		// sort rmat
 		// group by 0/1
-		rmat = sort(rmat, (2,1))
+		rmat = sort(rmat, (3,1))
 		// remove sort column
 		rmat = rmat[.,2..cols(rmat)]
 		cstripe = (J(rows(cstripe),1,""), cstripe)
@@ -444,10 +469,9 @@ function poolstack_extract(									///
 		st_matrixrowstripe("r("+vnkey+")",rstripe)
 		rmatlist = (rmatlist, vnkey)
 		printf("\n{res}pool-stacked weights across resamples for %s\n",vname)
-		printf("{res}final stacking estimator: %s\n",finalest)
+		printf("{res}final stacking estimator: %s\n",final_est)
 		stata("mat list " + "r("+vnkey+"), noheader noblank")
 	}
-	return(rmatlist)
 }
 
 
@@ -476,11 +500,11 @@ function shortstack_extract(								///
 	if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
 		// base case - plm, plm IV, ATE D, LATE Z, LIE Y
 		// initialize
-		cstripe = "mean_weight"
+		cstripe = "learner" \ "mean_weight"
 		rmat = J(0,nlearners,.)
 		vnkey = eqn.shortstack + "_ss"
 		// final estimator
-		finalest = return_learner_item(eqn,vnkey,"ss_final_est")
+		final_est = return_learner_item(eqn,vnkey,"ss_final_est")
 		// weights
 		for (m=1;m<=nreps;m++) {
 			rrep = return_result_item(eqn,vnkey,"ss_weights",strofreal(m))
@@ -491,6 +515,8 @@ function shortstack_extract(								///
 		rmat = (mean(rmat) \ rmat)
 		// in output, rows are learners, columns are resamples
 		rmat = rmat'
+		// add learner number
+		rmat = runningsum(J(nlearners,1,1)) , rmat
 		cstripe = (J(rows(cstripe),1,""), cstripe)
 		rstripe = (J(rows(rstripe),1,""), rstripe)
 		st_matrix("r("+vnkey+")",rmat)
@@ -498,7 +524,7 @@ function shortstack_extract(								///
 		st_matrixrowstripe("r("+vnkey+")",rstripe)
 		rmatlist = (rmatlist, vnkey)
 		printf("\n{res}short-stacked weights across resamples for %s\n",vname)
-		printf("{res}final stacking estimator: %s\n",finalest)
+		printf("{res}final stacking estimator: %s\n",final_est)
 		stata("mat list " + "r("+vnkey+"), noheader noblank")
 	}
 	else {
@@ -506,20 +532,20 @@ function shortstack_extract(								///
 		// ATE/LATE means we need a column for D or Z = 0/1
 		// initialize
 		if (eqn.lieflag==1) {
-			cstripe = ("h=0/1" \ "mean_weight")
+			cstripe = ("learner" \ "h=0/1" \ "mean_weight")
 		}
 		else if (d.model=="interactive") {
-			cstripe = ("D=0/1" \ "mean_weight")
+			cstripe = ("learner" \ "D=0/1" \ "mean_weight")
 		}
 		else {
-			cstripe = ("Z=0/1" \ "mean_weight")
+			cstripe = ("learner" \ "Z=0/1" \ "mean_weight")
 		}
 		rmat0 = J(0,nlearners,.)
 		rmat1 = J(0,nlearners,.)
 		vnkey = eqn.shortstack + "_ss"
 		vnkey_h = eqn.shortstack + "_h_ss"
 		// final estimator
-		finalest = return_learner_item(eqn,vnkey,"ss_final_est")
+		final_est = return_learner_item(eqn,vnkey,"ss_final_est")
 		for (m=1;m<=nreps;m++) {
 			if (eqn.lieflag==1) {
 				// D
@@ -546,6 +572,9 @@ function shortstack_extract(								///
 		// add h column
 		rmat0 = (J(rows(rmat0),1,0) , rmat0)
 		rmat1 = (J(rows(rmat1),1,1) , rmat1)
+		// add learner number
+		rmat0 = runningsum(J(nlearners,1,1)) , rmat0
+		rmat1 = runningsum(J(nlearners,1,1)) , rmat1
 		// combine
 		rmat = (rmat0 \ rmat1)
 		// add sort column to rmat
@@ -554,7 +583,7 @@ function shortstack_extract(								///
 		rmat = (lnum, rmat)
 		// sort rmat
 		// group by 0/1
-		rmat = sort(rmat, (2,1))
+		rmat = sort(rmat, (3,1))
 		// remove sort column
 		rmat = rmat[.,2..cols(rmat)]
 		cstripe = (J(rows(cstripe),1,""), cstripe)
@@ -571,10 +600,19 @@ function shortstack_extract(								///
 		st_matrixrowstripe("r("+vnkey+")",rstripe)
 		rmatlist = (rmatlist, vnkey)
 		printf("\n{res}short-stacked weights across resamples for %s\n",vname)
-		printf("{res}final stacking estimator: %s\n",finalest)
+		printf("{res}final stacking estimator: %s\n",final_est)
 		stata("mat list " + "r("+vnkey+"), noheader noblank")
 	}
-	return(rmatlist)
+	// learner list
+	cstripe = ("" , "learner")
+	rstripe = vtlist'
+	rstripe = (J(rows(rstripe),1,""), rstripe)
+	rn = vnkey+"_learners"
+	st_matrix("r("+rn+")",(1::rows(vtlist')))
+	st_matrixcolstripe("r("+rn+")",cstripe)
+	st_matrixrowstripe("r("+rn+")",rstripe)
+	rmatlist = (rmatlist, rn)
+
 }
 
 
@@ -587,6 +625,7 @@ function pystacked_extract(									///
 								)
 {
 	
+	nreps = d.nreps
 	// kstrings = key string, "weights" or "MSEs"
 	// kabbrev = "_w" or "_m"
 	// kstring = key string minus s at the end
@@ -653,10 +692,12 @@ function pystacked_extract(									///
 				if ((hflag==0) | (hflag==.)) {
 					base_est = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_base_est")))'
 					rstripe = rstripe \ base_est
+					final_est = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_final_est")))'
 				}
 				else {
 					base_est_h = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_base_est_h")))'
 					rstripe = rstripe \ base_est_h
+					final_est = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_final_est_h")))'
 				}
 				if (rmat~=J(0,0,.)) {
 					// col 1 is learner number, col 2 is treatment/hflag (if needed), col 3 is rep number (in AA as string)
@@ -676,51 +717,59 @@ function pystacked_extract(									///
 			
 		// process if any stacking weights encountered
 		if (rows(rmat_all) > 0) {
-			// rmat_all has full set of weights for all learners
-			if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
-				cstripe = ("learner" \ "resample")
-			}
-			else if (eqn.lieflag==1) {
-				cstripe = ("learner" \ "h" \ "resample")
-			}
-			else if (d.model=="interactive") {
-				cstripe = ("learner" \ "D=0/1" \ "resample")
-			}
-			else {
-				cstripe = ("learner" \ "Z=0/1" \ "resample")
-			}
-			for (ff=1;ff<=d.kfolds;ff++) {
-				cstripe = cstripe \ ("fold_"+strofreal(ff))
-			}
-			cstripe = (J(rows(cstripe),1,""), cstripe)
-			rstripe = (J(rows(rstripe),1,""), rstripe)
-			rn = rname + kabbrev
-			st_matrix("r("+rn+")",rmat_all)
-			st_matrixcolstripe("r("+rn+")",cstripe)
-			st_matrixrowstripe("r("+rn+")",rstripe)
-			rmatlist = (rmatlist, rn)
 			if (detailflag) {
+				// rmat_all has full set of weights for all learners
+				if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+					cstripe = ("learner" \ "resample")
+				}
+				else if (eqn.lieflag==1) {
+					cstripe = ("learner" \ "h" \ "resample")
+				}
+				else if (d.model=="interactive") {
+					cstripe = ("learner" \ "D=0/1" \ "resample")
+				}
+				else {
+					cstripe = ("learner" \ "Z=0/1" \ "resample")
+				}
+				for (ff=1;ff<=d.kfolds;ff++) {
+					cstripe = cstripe \ ("fold_"+strofreal(ff))
+				}
+				cstripe = (J(rows(cstripe),1,""), cstripe)
+				rstripe = (J(rows(rstripe),1,""), rstripe)
+				rn = rname + kabbrev
+				st_matrix("r("+rn+")",rmat_all)
+				st_matrixcolstripe("r("+rn+")",cstripe)
+				st_matrixrowstripe("r("+rn+")",rstripe)
+				rmatlist = (rmatlist, rn)
 				printf("\n{res}pystacked "+kstrings+" for %s (%s)\n",rname,vname)
 				stata("mat list " + "r("+rn+"), noheader noblank")
 			}
 
-			// learner means across resamples
+			// learner means across resamples/folds
 			if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
-
 				// one mean per learner
-				rmean_all = J(rows(base_est),2,.)
+				rmean_all = J(rows(base_est),(2+nreps),.)
 				for (ll=1;ll<=rows(base_est);ll++) {
 					rmean_all[ll,1] = ll
 					rlearner = select(rmat_all,rmat_all[.,1]:==ll)
+					// mean across all folds and resamples
 					rmean_all[ll,2] = mean(mean(rlearner[.,(3,cols(rlearner))]')')
+					// mean across folds by resample
+					rmean_all[ll,(3..(2+nreps))] = mean(rlearner[.,(3,cols(rlearner))]')
 				}
-				cstripe = (("" , "learner") \ ("" , ("mean_"+kstring)))
+
+				cstripe = ( "learner" \  ("mean_"+kstring))
+				for (m=1;m<=nreps;m++) {
+					cstripe = (cstripe \ ("rep_"+strofreal(m)))
+				}
+				cstripe = (J(rows(cstripe),1,""), cstripe)
 				rstripe = (J(rows(base_est),1,""), base_est)
 				rn = rname+kabbrev+"_mn"
 				st_matrix("r("+rn+")",rmean_all)
 				st_matrixcolstripe("r("+rn+")",cstripe)
 				st_matrixrowstripe("r("+rn+")",rstripe)
-				printf("\n{res}mean pystacked "+kstrings+" across folds/resamples for %s (%s)\n",rname,vname)
+				printf("\n{res}mean stacking "+kstrings+" across folds/resamples for %s (%s)\n",rname,vname)
+				printf("{res}final stacking estimator: %s\n",final_est)
 				stata("mat list " + "r("+rn+"), noheader noblank")
 			}
 			else {
@@ -752,7 +801,8 @@ function pystacked_extract(									///
 				st_matrix("r("+rn+")",rmean_all)
 				st_matrixcolstripe("r("+rn+")",cstripe)
 				st_matrixrowstripe("r("+rn+")",rstripe)
-				printf("\n{res}mean pystacked " + kstrings + " across folds/resamples for %s (%s)\n",rname,vname)
+				printf("\n{res}mean stacking " + kstrings + " across folds/resamples for %s (%s)\n",rname,vname)
+				printf("{res}final stacking estimator: %s\n",final_est)
 				stata("mat list " + "r("+rn+"), noheader noblank")
 			}
 			
@@ -764,36 +814,38 @@ function pystacked_extract(									///
 			st_matrixcolstripe("r("+rn+")",cstripe)
 			st_matrixrowstripe("r("+rn+")",rstripe)
 			rmatlist = (rmatlist, rn)
+			
 			// rmat_ll will have weights separately for each learner
-			for (ll=1;ll<=rows(base_est);ll++) {
-				
-				svec = rmat_all[.,1] :== ll
-				rmat_ll = select(rmat_all,svec)
-				rmat_ll = rmat_ll[.,(2::cols(rmat_ll))]
-				if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
-					cstripe = ("resample")
-				}
-				else if (eqn.lieflag==1) {
-					cstripe = ("h=0/1" \ "resample")
-				}
-				else if (d.model=="interactive") {
-					cstripe = ("D=0/1" \ "resample")
-				}
-				else {
-					cstripe = ("Z=0/1" \ "resample")
-				}
-				for (ff=1;ff<=d.kfolds;ff++) {
-					cstripe = cstripe \ ("fold_"+strofreal(ff))
+			if (detailflag) {
+				for (ll=1;ll<=rows(base_est);ll++) {
+					
+					svec = rmat_all[.,1] :== ll
+					rmat_ll = select(rmat_all,svec)
+					rmat_ll = rmat_ll[.,(2::cols(rmat_ll))]
+					if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+						cstripe = ("resample")
 					}
-				cstripe = (J(rows(cstripe),1,""), cstripe)
-				rn = rname+"_L"+strofreal(ll)+kabbrev
-				st_matrix("r("+rn+")",rmat_ll)
-				st_matrixcolstripe("r("+rn+")",cstripe)
-				rmatlist = (rmatlist, rn)
+					else if (eqn.lieflag==1) {
+						cstripe = ("h=0/1" \ "resample")
+					}
+					else if (d.model=="interactive") {
+						cstripe = ("D=0/1" \ "resample")
+					}
+					else {
+						cstripe = ("Z=0/1" \ "resample")
+					}
+					for (ff=1;ff<=d.kfolds;ff++) {
+						cstripe = cstripe \ ("fold_"+strofreal(ff))
+						}
+					cstripe = (J(rows(cstripe),1,""), cstripe)
+					rn = rname+"_L"+strofreal(ll)+kabbrev
+					st_matrix("r("+rn+")",rmat_ll)
+					st_matrixcolstripe("r("+rn+")",cstripe)
+					rmatlist = (rmatlist, rn)
+				}
 			}
 		}
 	}
-	return(rmatlist)
 }
 
 void display_mse(												///
