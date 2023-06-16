@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_misc.log
   log type:  text
- opened on:  10 Jun 2023, 14:10:09
+ opened on:  16 Jun 2023, 11:48:15
 
 . 
 . which ddml
@@ -14,7 +14,7 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 . mata: whichddml()
   
   Mata library for ddml and related programs,
-  compiled 10 Jun 2023 under Stata 16.1 born 14 Jun 2022.
+  compiled 11 Jun 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
 . 
@@ -774,87 +774,170 @@ Summary over 2 resamples:
 . // ddml extract - basic usage with show(.) option
 . ddml extract, show(pystacked)
 
-mean pystacked weights across folds/resamples for D1_pystacked (avexpr)
-               learner  mean_weight
-      ols            1    .00140131
-  lassocv            2    .28576716
-gradboost            3    .71283154
+pystacked weights for D1_pystacked (avexpr)
+             learner   resample     fold_1     fold_2
+      ols          1          1          0  .00560523
+  lassocv          2          1  .72267672  .08089808
+gradboost          3          1  .27732328   .9134967
+      ols          1          2          0  1.387e-16
+  lassocv          2          2          0  .33949383
+gradboost          3          2          1  .66050617
 
-mean pystacked MSEs across folds/resamples for D1_pystacked (avexpr)
-             learner   mean_MSE
-      ols          1  872.14544
-  lassocv          2  4.3419045
-gradboost          3  2.0210718
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00140131    .00280261    6.934e-17
+  lassocv            2    .28576716     .4017874    .16974691
+gradboost            3    .71283154    .59540999    .83025309
 
-mean pystacked weights across folds/resamples for D2_pystacked (democ1)
-               learner  mean_weight
-      ols            1    .02636474
-  lassocv            2     .7850615
-gradboost            3    .18857376
+pystacked MSEs for D1_pystacked (avexpr)
+             learner   resample     fold_1     fold_2
+      ols          1          1  3342.1993  46.883109
+  lassocv          2          1   1.762697  3.0561659
+gradboost          3          1  2.3542335  1.6840424
+      ols          1          2  47.723679  51.775728
+  lassocv          2          2  9.5454712  3.0032839
+gradboost          3          2  1.3204138  2.7255973
 
-mean pystacked MSEs across folds/resamples for D2_pystacked (democ1)
-             learner   mean_MSE
-      ols          1  11351.683
-  lassocv          2  17.337797
-gradboost          3  24.682072
+mean stacking MSEs across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+      ols          1  872.14544  1694.5412  49.749703
+  lassocv          2  4.3419045  2.4094314  6.2743776
+gradboost          3  2.0210718   2.019138  2.0230056
 
-mean pystacked weights across folds/resamples for Y1_pystacked (logpgp95)
-               learner  mean_weight
-      ols            1    .00313891
-  lassocv            2    .52368043
-gradboost            3    .47318065
+pystacked weights for D2_pystacked (democ1)
+             learner   resample     fold_1     fold_2
+      ols          1          1  .00320111   .0161794
+  lassocv          2          1  .38689165   .9838206
+gradboost          3          1  .60990724  2.473e-16
+      ols          1          2  .08607844          0
+  lassocv          2          2  .91392156   .8556122
+gradboost          3          2  5.399e-17   .1443878
 
-mean pystacked MSEs across folds/resamples for Y1_pystacked (logpgp95)
-             learner   mean_MSE
-      ols          1  74.360622
-  lassocv          2  .70024135
-gradboost          3  .83108955
+mean stacking weights across folds/resamples for D2_pystacked (democ1)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .02636474    .00969026    .04303922
+  lassocv            2     .7850615    .68535612    .88476688
+gradboost            3    .18857376    .30495362     .0721939
 
-. ddml extract, show(shortstack)
+pystacked MSEs for D2_pystacked (democ1)
+             learner   resample     fold_1     fold_2
+      ols          1          1  25300.931  1527.1676
+  lassocv          2          1  22.780826  15.758888
+gradboost          3          1  20.570067   37.54885
+      ols          1          2  121.61783  18457.017
+  lassocv          2          2  14.831203  15.980269
+gradboost          3          2  21.694314  18.915058
+
+mean stacking MSEs across folds/resamples for D2_pystacked (democ1)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+      ols          1  11351.683  13414.049  9289.3172
+  lassocv          2  17.337797  19.269857  15.405736
+gradboost          3  24.682072  29.059459  20.304686
+
+pystacked weights for Y1_pystacked (logpgp95)
+             learner   resample     fold_1     fold_2
+      ols          1          1          0  .01255566
+  lassocv          2          1  .48376241  .55356266
+gradboost          3          1  .51623759  .43388168
+      ols          1          2  8.478e-17  5.292e-17
+  lassocv          2          2  .22615352  .83124313
+gradboost          3          2  .77384648  .16875687
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00313891    .00627783    6.885e-17
+  lassocv            2    .52368043    .51866254    .52869833
+gradboost            3    .47318065    .47505964    .47130167
+
+pystacked MSEs for Y1_pystacked (logpgp95)
+             learner   resample     fold_1     fold_2
+      ols          1          1  213.40321  37.470047
+  lassocv          2          1  .62727419  .65150955
+gradboost          3          1   .5928581   .7490161
+      ols          1          2   26.67299  19.896244
+  lassocv          2          2  .61601782  .90616383
+gradboost          3          2  .49478041  1.4877036
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+      ols          1  74.360622  125.43663  23.284617
+  lassocv          2  .70024135  .63939187  .76109082
+gradboost          3  .83108955   .6709371  .99124201
+
+. ddml extract, show(stweights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00140131    .00280261    6.934e-17
+  lassocv            2    .28576716     .4017874    .16974691
+gradboost            3    .71283154    .59540999    .83025309
+
+mean stacking weights across folds/resamples for D2_pystacked (democ1)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .02636474    .00969026    .04303922
+  lassocv            2     .7850615    .68535612    .88476688
+gradboost            3    .18857376    .30495362     .0721939
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00313891    .00627783    6.885e-17
+  lassocv            2    .52368043    .51866254    .52869833
+gradboost            3    .47318065    .47505964    .47130167
+
+. ddml extract, show(ssweights)
 
 short-stacked weights across resamples for avexpr
 final stacking estimator: nnls1
-           mean_weight        rep_1        rep_2
-      ols    2.757e-16            0    5.515e-16
-  lassocv    .86244096    .79599418    .92888773
-gradboost    .13755904    .20400582    .07111227
+               learner  mean_weight        rep_1        rep_2
+      ols            1    2.757e-16            0    5.515e-16
+  lassocv            2    .86244096    .79599418    .92888773
+gradboost            3    .13755904    .20400582    .07111227
 
 short-stacked weights across resamples for democ1
 final stacking estimator: nnls1
-           mean_weight        rep_1        rep_2
-      ols    .00371161    8.774e-16    .00742321
-  lassocv    .80588778    .61919878    .99257679
-gradboost    .19040061    .38080122            0
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00371161    8.774e-16    .00742321
+  lassocv            2    .80588778    .61919878    .99257679
+gradboost            3    .19040061    .38080122            0
 
 short-stacked weights across resamples for logpgp95
 final stacking estimator: nnls1
-           mean_weight        rep_1        rep_2
-      ols    .03877087    1.603e-16    .07754173
-  lassocv    .38816673    .46763541    .30869806
-gradboost     .5730624    .53236459    .61376021
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .03877087    1.603e-16    .07754173
+  lassocv            2    .38816673    .46763541    .30869806
+gradboost            3     .5730624    .53236459    .61376021
 
-. ddml extract, show(poolstack)
+. ddml extract, show(psweights)
 
 pool-stacked weights across resamples for avexpr
 final stacking estimator: nnls1
-           mean_weight        rep_1        rep_2
-      ols    6.951e-15    2.144e-15    1.176e-14
-  lassocv    .18398072    .36370545    .00425599
-gradboost    .81601928    .63629455    .99574401
+               learner  mean_weight        rep_1        rep_2
+      ols            1    6.951e-15    2.144e-15    1.176e-14
+  lassocv            2    .18398072    .36370545    .00425599
+gradboost            3    .81601928    .63629455    .99574401
 
 pool-stacked weights across resamples for democ1
 final stacking estimator: nnls1
-           mean_weight        rep_1        rep_2
-      ols    .00175924    .00315091    .00036757
-  lassocv    .92849767     .8573629    .99963243
-gradboost    .06974309    .13948619    6.939e-18
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00175924    .00315091    .00036757
+  lassocv            2    .92849767     .8573629    .99963243
+gradboost            3    .06974309    .13948619    6.939e-18
 
 pool-stacked weights across resamples for logpgp95
 final stacking estimator: nnls1
-           mean_weight        rep_1        rep_2
-      ols    1.416e-17    7.011e-18    2.130e-17
-  lassocv    .63679187    .56398871    .70959503
-gradboost    .36320813    .43601129    .29040497
+               learner  mean_weight        rep_1        rep_2
+      ols            1    1.416e-17    7.011e-18    2.130e-17
+  lassocv            2    .63679187    .56398871    .70959503
+gradboost            3    .36320813    .43601129    .29040497
 
 . ddml extract, show(mse)
 
@@ -947,7 +1030,7 @@ Sample sizes for logpgp95:
 
 . // AA with estimation results for spec st, resample 1
 . mata: (m0.estAA).get(("st","1"))
-  0x379f21d0
+  0x53337690
 
 . mata: AA_e2_r1 = (m0.estAA).get(("st","1"))
 
@@ -1105,7 +1188,7 @@ AA keys for eqn avexpr.resAA:
 . ddml extract avexpr_eqn, vname(avexpr)
 
 . mata: avexpr_eqn
-  0x37a0aa70
+  0x37a04d10
 
 . mata: avexpr_eqn.vname
   avexpr
@@ -1902,5 +1985,5 @@ file cert_ddml_export.csv saved
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_misc.log
   log type:  text
- closed on:  10 Jun 2023, 14:12:59
+ closed on:  16 Jun 2023, 11:51:16
 -------------------------------------------------------------------------------------------------------------------------------------------

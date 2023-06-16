@@ -100,8 +100,9 @@ ddml estimate, robust
 
 // ddml extract - basic usage with show(.) option
 ddml extract, show(pystacked)
-ddml extract, show(shortstack)
-ddml extract, show(poolstack)
+ddml extract, show(stweights)
+ddml extract, show(ssweights)
+ddml extract, show(psweights)
 ddml extract, show(mse)
 ddml extract, show(n)
 
