@@ -27,6 +27,9 @@ where {it:model} is either {it:partial}, {it:iv}, {it:interactive}, {it:fiv}, {i
 where {it:eq} is the conditional expectation to be estimated (e.g., {it:E[Y|X]})
 and {it:command} is a supported supervised ML program.
 
+{pstd}
+{opt ddml sample} adds cross-fitting repetitions to an existing and possibly already-estimated model.
+
 
 {marker syntax}{...}
 {title:Syntax}
@@ -59,6 +62,13 @@ See {helpb ddml##compatibility:supported programs}.
 Note: Options before ":" and after the first comma refer to {cmd:ddml}. 
 Options that come after ":" and the final comma refer to the estimation command. 
 {p_end}
+
+{p 8 14}{cmd:ddml sample} [ , {opt append}[{cmd:(}{it:integer}{cmd:)}] {opt foldvar(varlist)} {bind: ]}
+
+{pstd}
+adds cross-fitting repetitions to an existing and possibly already-estimated model,
+where the additional repetitions is indicated either by {opt append(#)}
+or by {opt append} and the cross-fit fold identifiers in {opt foldvar(varlist)}.
 
 
 {synoptset 20}{...}
@@ -94,7 +104,7 @@ prints a table with frequency of observations by fold.
 {pstd}
 
 {synoptset 20}{...}
-{synopthdr:Equation options}
+{synopthdr:equation options}
 {synoptline}
 {synopt:{opt mname(name)}}
 name of the DDML model. Defaults to {it:m0}.
@@ -116,6 +126,25 @@ optional name of the variable to be created.
 (rarely used) {cmd:predict} option to be used to get predicted values. 
 Typical values could be {opt xb} or {opt pr}. Default is 
 blank. 
+{p_end}
+{synoptline}
+{p2colreset}{...}
+{pstd}
+
+{synoptset 20}{...}
+{synopthdr:sample options}
+{synoptline}
+{synopt:{opt mname(name)}}
+name of the DDML model. Defaults to {it:m0}.
+{p_end}
+{synopt:{opt append(#)}}
+number of additional resamples to cross-fit.
+{p_end}
+{synopt:{opt append}}
+when no number of resamples to append is provided, this is based on the list fold IDs in {opt foldvar(varlist)}.
+{p_end}
+{synopt:{opt foldvar(varlist)}}
+integer variable with user-specified cross-fitting folds (one per cross-fitting repetition).
 {p_end}
 {synoptline}
 {p2colreset}{...}
