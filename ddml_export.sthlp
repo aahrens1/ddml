@@ -1,10 +1,10 @@
 {smcl}
-{* *! version 15jun2023}{...}
+{* *! version 16jun2023}{...}
 {hline}
-{cmd:help ddml overlap}{right: v1.2}
+{cmd:help ddml export}{right: v1.2}
 {hline}
 
-{title:ddml overlap commands for Double Debiased Machine Learning}
+{title:ddml export utility for Double Debiased Machine Learning}
 
 {p2colset 5 19 21 2}{...}
 {p2col:{hi: ddml} {hline 2}}Stata package for Double Debiased Machine Learning{p_end}
@@ -19,55 +19,30 @@ binary or continous treatment variables and endogeneity, high-dimensional
 controls and/or instrumental variables. 
 
 {pstd}
-{cmd:ddml overlap} reports overlap plots following estimation of the {opt ddml} { {it:interactive} and {it:interactiveiv} models.
-One overlap (line) plot of propensity scores is reported for each treatment variable learner;
-by default, propensity scores for all crossfit samples are plotted.
-Overlap plots for the treatment variables are combined using {helpb graph combine}.
+{opt ddml export} saves the estimated conditional expectations, cross-fold identifers, etc.
+to a CSV file.
 
 {marker syntax}{...}
 {title:Syntax}
 
-{p 8 14}{cmd:ddml overlap} [ {opt mname(name)} {opt replist(numlist)} {opt pslist(namelist)} {opt n(integer)} {opt kernel(name)}
-{opt name(name [, replace])} {opt title(string)} {opt subtitle(string)} {opt lopt0(string)}
-{opt lopt1(string)}{bind: ]}
+{p 8 14}{cmd:ddml export}
+[using {it:filename} , {opt mname(name)}
+{opt addvars(varlist)}
 
 {synoptset 20}{...}
-{synopthdr:Options}
+{synopthdr:options}
 {synoptline}
 {synopt:{opt mname(name)}}
-name of the DDML model. Defaults to {it:m0}.
+name of the DDML model. Allows to run multiple DDML
+models simultaneously. Defaults to {it:m0}.
 {p_end}
-{synopt:{opt replist(numlist)}}
-list of crossfitting resamples to plot. Defaults to all.
-{p_end}
-{synopt:{opt pslist(namelist)}}
-varnames of propensity scores to plot (excluding the resample number). Defaults to all.
-{p_end}
-{synopt:{opt n(integer)}}
-see {helpb teffects overlap}.
-{p_end}
-{synopt:{opt kernel(name)}}
-see {helpb teffects overlap}.
-{p_end}
-{synopt:{opt name(name)}}
-see {helpb graph combine}.
-{p_end}
-{synopt:{opt title(string)}}
-see {helpb graph combine}.
-{p_end}
-{synopt:{opt subtitle(string)}}
-see {helpb graph combine}.
-{p_end}
-{synopt:{opt lopt0(string)}}
-options for line plot of untreated; default is solid/navy; see {helpb line}.
-{p_end}
-{synopt:{opt lopt0(string)}}
-options for line plot of treated; default is short dash/dark orange; see {helpb line}.
+{synopt:{opt addvars(varlist)}}
+additional Stata variables to include with {opt ddml} variables.
 {p_end}
 {synoptline}
-
 {p2colreset}{...}
 {pstd}
+
 
 {title:Examples}
 

@@ -1,10 +1,10 @@
 {smcl}
 {* *! version 15jun2023}{...}
 {hline}
-{cmd:help ddml}{right: v1.2}
+{cmd:help ddml init, ddml eq, ddml sample}{right: v1.2}
 {hline}
 
-{title:Title}
+{title:ddml init, eq and sample commands for Double Debiased Machine Learning}
 
 {p2colset 5 19 21 2}{...}
 {p2col:{hi: ddml} {hline 2}}Stata package for Double Debiased Machine Learning{p_end}

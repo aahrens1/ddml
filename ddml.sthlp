@@ -4,7 +4,7 @@
 {cmd:help ddml}{right: v1.2}
 {hline}
 
-{title:Title}
+{title:ddml - Stata package for Double Debiased Machine Learning}
 
 {p2colset 5 19 21 2}{...}
 {p2col:{hi: ddml} {hline 2}}Stata package for Double Debiased Machine Learning{p_end}
@@ -26,18 +26,13 @@ which uses a simplified one-line syntax,
 but offers less flexibility.
 
 {pstd}
-{opt qddml} relies on {helpb crossfit}, which can be used as a standalone
-program.
+{opt ddml} and {opt qddml} rely on {helpb crossfit}, which can be used as a standalone program.
 
-{pstd}
-Please check the {helpb ddml##examples:examples} provided at the end of the help file.
 
 {title:Contents}
-{p 2}{help ddml##syntax:Syntax}{p_end}
-{p 4}{help ddml##steps:Main steps}{p_end}
-{p 4}{help ddml##auxiliary:Auxiliary sub-programs}{p_end}
-{p 2}{help ddml##options:Options}{p_end}
-{p 2}{help ddml##models:Models}{p_end}
+
+{p 2}{help ddml##help:Links to detailed help files}{p_end}
+{p 2}{help ddml##overview:Overview of main steps}{p_end}
 {p 2}{help ddml##compatibility:Compatible programs}{p_end}
 {p 4}{help ddml##general:General}{p_end}
 {p 4}{help ddml##pystacked:pystacked integration}{p_end}
@@ -52,13 +47,36 @@ Please check the {helpb ddml##examples:examples} provided at the end of the help
 {p 2}{help ddml##references:References}{p_end}
 {p 2}{help ddml##installation:Installation}{p_end}
 
-{marker syntax}{...}
-{title:Syntax}
+
+{marker help}{...}
+{title:Follow links below to detailed help}
+
+{p 2}Help files: qddml{p_end}
+{p 4}{help qddml}: One-step DDML estimation using {help qddml}.{p_end}
+
+{p 2}Help files: main steps using {opt ddml}{p_end}
+{p 4}{help ddml init}: Initialize {opt ddml} and select model.{p_end}
+{p 4}{help ddml eq}: Add supervised ML programs for estimating conditional expectations.{p_end}
+{p 4}{help ddml crossfit}: Cross-fitting to estimate conditional expectations.{p_end}
+{p 4}{help ddml estimate}: Estimate causal model and report/post results.{p_end}
+
+{p 2}Help files: auxiliary programs{p_end}
+{p 4}{help ddml describe}: Report information about the model setup and/or results.{p_end}
+{p 4}{help ddml extract}: Report information about saved results e.g. stacking weigths.{p_end}
+{p 4}{help ddml sample}: Report information about the estimation sample, folds, etc.{p_end}
+{p 4}{help ddml export}: Save the {opt ddml} estimated conditional expectations to a csv file.{p_end}
+{p 4}{help ddml overlap}: (interactive models only) Generate overlap plots for propensity-score-based models{p_end}
+{p 4}{help crossfit}: Use {opt crossfit} as a standalone program for cross-fitting and cross-validation.{p_end}
+
 
 {pstd}
+Please check the {helpb ddml##examples:examples} provided at the end of the help file.
+
+
 {marker steps}{...}
-Estimation with {cmd:ddml}
-proceeds in four steps. 
+{title:Overview of main step when estimating with ddml}
+
+{pstd}Estimation with {cmd:ddml} proceeds in four steps. 
 
 {pstd}
 {ul:Step 1.} Initialize {cmd:ddml} and select model:
