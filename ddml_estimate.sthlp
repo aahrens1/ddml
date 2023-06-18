@@ -32,7 +32,8 @@ see the help files for details.
 {marker syntax}{...}
 {title:Syntax}
 
-{p 8 14}{cmd:ddml crossfit} [ , {opt mname(name)} {opt shortstack}{bind: ]} 
+{p 8 14}{cmd:ddml crossfit} [ , {opt mname(name)} {opt shortstack} {opt poolstack}
+{opt ssfinalest(name)} {opt psfinalest(name} {opt finalest(name)}{bind: ]} 
 
 {p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)} {opt atet} {opt ateu} {opt trim(real)}{bind: ]} 
 
@@ -48,9 +49,31 @@ see the help files for details.
 name of the DDML model. Defaults to {it:m0}.
 {p_end}
 {synopt:{opt shortstack}} asks for short-stacking to be used.
-Short-stacking runs constrained non-negative least squares on the
+Short-stacking uses the
 cross-fitted predicted values to obtain a weighted average
-of several base learners.
+of the multiple base learners.
+It is computationally faster (often much faster) than standard stacking
+available when {help pystacked} is used to specify the base learners
+{p_end}
+{synopt:{opt ssfinalest(name)}} specifies the estimator used
+to obtain the short-stacking weights; the default is constrained non-negative least squares.
+For the list of available final estimators, see the help for {help pystacked}.
+{p_end}
+{synopt:{opt poolstack}} is available as an alternative to standard stacking
+when {help pystacked} is used to specify the base learners.
+Pooled-stacking adds additional regularization
+by obtaining a single set of stacking weights
+from the full set of out-of-sample base learner predicted values
+(in contrast to {help pystacked}, which stacks each cross-fit fold separately).
+{p_end}
+{synopt:{opt psfinalest(name)}} specifies the estimator used
+to obtain the pooled-stacking weights; the default is constrained non-negative least squares.
+For the list of available final estimators, see the help for {help pystacked}.
+{p_end}
+{synopt:{opt finalest(name)}} sets the final estimator for both
+short-stacking and pooled-stacking.
+NB: to set the final estimator for standard stacking using {help pystacked},
+use the {help pystacked} {opt finalest} option when specifying the base learners using {help ddml eq}.
 {p_end}
 {synoptline}
 {p2colreset}{...}
@@ -105,7 +128,7 @@ select specification. This can either be the specification number, {it:mse} for 
 select resampling iteration. This can either be the cross-fit repetition number, {it:mn} for mean aggregation or {it:md} for median aggregation (the default).
 {p_end}
 {synopt:{opt allcombos}}
-estimates all possible specifications. By default, only the min-MSE (or short-stacking)
+estimates all possible specifications. By default, only the min-MSE, short-stacking or or pooled-stacking
 specification is estimated and displayed.
 {p_end}
 {synopt:{opt replay}}
@@ -118,7 +141,40 @@ used in combination with {opt spec()} and {opt rep()} to display and return esti
 
 {title:Examples}
 
-For examples of usage see {help ddml##examples:help ddml}.
+For more examples of usage see {help ddml##examples:help ddml}.
+
+{pstd}Note: the additional support provided by {opt ddml} for {helpb pystacked} (see {help ddml##pystacked:above})
+is available only if, as in this example, {help pystacked} is the only learner for each conditional expectation.
+Mutliple learners are provided to {help pystacked}, not directly to {opt ddml}.{p_end}
+
+{pstd}Preparation: load the data, define global macros, set the seed and initialize the model.{p_end}
+{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
+{phang2}. {stata "global Y net_tfa"}{p_end}
+{phang2}. {stata "global D e401"}{p_end}
+{phang2}. {stata "global X tw age inc fsize educ db marr twoearn pira hown"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+{phang2}. {stata "ddml init partial, kfolds(2) reps(2)"}{p_end}
+
+{pstd}Add supervised machine learners for estimating conditional expectations.
+For simplicity, we use {help pystacked}'s default learners: OLS, cross-validated lasso, and gradient boosting.{p_end}
+
+{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D $X"}{p_end}
+
+{pstd} Cross-fitting: The learners are iteratively fitted on the training data.
+In addition to the standard stacking done by {helpb pystacked},
+also request short-stacking and pooled-stacking to be done by {opt ddml}.{p_end}
+{phang2}. {stata "ddml crossfit, shortstack poolstack"}{p_end}
+
+{pstd}Estimate the coefficients of interest.
+Specify heteroskedastic-consistent SEs.{p_end}
+{phang2}. {stata "ddml estimate, robust"}{p_end}
+
+{pstd}Examine the standard ({cmd:pystacked}) stacking weights as well as
+the {opt ddml} short-stacking and pooled-stacking weights.{p_end}
+{phang2}. {stata "ddml extract, show(stweights)"}{p_end}
+{phang2}. {stata "ddml extract, show(ssweights)"}{p_end}
+{phang2}. {stata "ddml extract, show(psweights)"}{p_end}
 
 
 {marker references}{title:References}

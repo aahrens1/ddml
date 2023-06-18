@@ -17,11 +17,15 @@ machine learning as proposed in
 (Econometrics Journal, 2018). Five different models are supported, allowing for 
 binary or continous treatment variables and endogeneity, high-dimensional 
 controls and/or instrumental variables. 
-{opt ddml} supports a variety of different ML programs, including
-but not limited to {helpb lassopack} and {helpb pystacked}. 
 
 {pstd}
-The package includes the wrapper program {helpb qddml},
+{opt ddml} supports a variety of different ML programs, including
+but not limited to {helpb pystacked} and {helpb lassopack}. 
+{helpb pystacked} is the recommended way to specify multiple learners in {opt ddml},
+and {opt ddml} has integrated support for various features provided by {helpb pystacked}.
+
+{pstd}
+The {opt ddml} package includes the wrapper program {helpb qddml},
 which uses a simplified one-line syntax, 
 but offers less flexibility.
 
@@ -32,10 +36,8 @@ but offers less flexibility.
 {title:Contents}
 
 {p 2}{help ddml##help:Links to detailed help files}{p_end}
-{p 2}{help ddml##overview:Overview of main steps}{p_end}
-{p 2}{help ddml##compatibility:Compatible programs}{p_end}
-{p 4}{help ddml##general:General}{p_end}
-{p 4}{help ddml##pystacked:pystacked integration}{p_end}
+{p 2}{help ddml##overview:Overview of main steps to estimation using ddml}{p_end}
+{p 2}{help ddml##compatibility:Compatible programs and pystacked integration}{p_end}
 {p 2}{help ddml##examples:Examples}{p_end}
 {p 4}{help ddml##plm_i:Partially linear model I - multiple learners with pystacked}{p_end}
 {p 4}{help ddml##plm_ii:Partially linear model II - multiple learners with ddml}{p_end}
@@ -44,33 +46,30 @@ but offers less flexibility.
 {p 4}{help ddml##interactive:Interactive model - ATE and ATET estimation}{p_end}
 {p 4}{help ddml##late:Interactive IV model - LATE estimation}{p_end}
 {p 4}{help ddml##fiv:Flexible Partially Linear IV model}{p_end}
-{p 2}{help ddml##references:References}{p_end}
 {p 2}{help ddml##installation:Installation}{p_end}
+{p 2}{help ddml##references:References}{p_end}
 
 
 {marker help}{...}
 {title:Follow links below to detailed help}
 
+{p2colset 5 20 20 0}{...}
 {p 2}Help files: qddml{p_end}
-{p 4}{help qddml}: One-step DDML estimation using {help qddml}.{p_end}
+{p2col:{help qddml}} One-step DDML estimation using {help qddml}.{p_end}
 
 {p 2}Help files: main steps using {opt ddml}{p_end}
-{p 4}{help ddml init}: Initialize {opt ddml} and select model.{p_end}
-{p 4}{help ddml eq}: Add supervised ML programs for estimating conditional expectations.{p_end}
-{p 4}{help ddml crossfit}: Cross-fitting to estimate conditional expectations.{p_end}
-{p 4}{help ddml estimate}: Estimate causal model and report/post results.{p_end}
+{p2col:{help ddml init}} 1. Initialize {opt ddml} and select model.{p_end}
+{p2col:{help ddml eq}} 2. Add supervised ML programs for estimating conditional expectations.{p_end}
+{p2col:{help ddml crossfit}} 3. Cross-fitting to estimate conditional expectations.{p_end}
+{p2col:{help ddml estimate}} 4. Estimate causal model and report/post results.{p_end}
 
 {p 2}Help files: auxiliary programs{p_end}
-{p 4}{help ddml describe}: Report information about the model setup and/or results.{p_end}
-{p 4}{help ddml extract}: Report information about saved results e.g. stacking weigths.{p_end}
-{p 4}{help ddml sample}: Report information about the estimation sample, folds, etc.{p_end}
-{p 4}{help ddml export}: Save the {opt ddml} estimated conditional expectations to a csv file.{p_end}
-{p 4}{help ddml overlap}: (interactive models only) Generate overlap plots for propensity-score-based models{p_end}
-{p 4}{help crossfit}: Use {opt crossfit} as a standalone program for cross-fitting and cross-validation.{p_end}
-
-
-{pstd}
-Please check the {helpb ddml##examples:examples} provided at the end of the help file.
+{p2col:{help ddml describe}} Report information about the model setup and/or results.{p_end}
+{p2col:{help ddml extract}} Report information about saved results e.g. stacking weigths.{p_end}
+{p2col:{help ddml sample}} Report information about the estimation sample, folds, etc.{p_end}
+{p2col:{help ddml export}} Save the {opt ddml} estimated conditional expectations to a csv file.{p_end}
+{p2col:{help ddml overlap}} (interactive models only) Generate overlap plots for propensity-score-based models{p_end}
+{p2col:{help crossfit}} Use {opt crossfit} as a standalone program for cross-fitting and cross-validation.{p_end}
 
 
 {marker steps}{...}
@@ -137,32 +136,7 @@ added in Step 2.
 
 {pstd}
 {marker auxiliary}{...}
-{ul:Auxiliary sub-programs:}
-     
-{pstd} 
-Download latest {cmd:ddml} from Github:
-
-{p 8 14}{cmd:ddml update} 
-
-{pstd}
-Report information about {cmd:ddml} model:
-
-{p 8 14}{cmd:ddml desc} [ , {opt mname(name)} {opt learn:ers} {opt cross:fit} {opt est:imates} {opt sam:ple} {opt all}{bind: ]}
-
-{pstd}
-Add cross-fitting repetitions to an existing and possibly already-estimated model;
-the number of additional repetitions is indicated either by {opt append(#)}
-or by {opt append} and the cross-fit fold identifiers in {opt foldvar(varlist)}:
-
-{p 8 14}{cmd:ddml sample} [ , {opt append}[{cmd:(}{it:integer}{cmd:)}] {opt foldvar(varlist)} {bind: ]}
-
-{pstd}
-Export results in csv format:
-
-{p 8 14}{cmd:ddml export} [ using filename , {opt mname(name)} {opt addvars(varlist)} {bind: ]}
-
-{pstd}
-Retrieve information from {cmd:ddml}:
+{ul:Optional.} Retrieve information from {cmd:ddml}:
 
 {p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)}
 {opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)}
@@ -171,276 +145,11 @@ Retrieve information from {cmd:ddml}:
 {pstd}
 {it:display_item} can be {it:stweights}, {it:ssweights}, {it:psweights}, {it:weights}, {it:mse}, {it:n}, or {it:pystacked}.
 {cmd:ddml} stores many internal results on associative arrays.
-These can be retrieved using the different key options.
 See {helpb ddml extract} for details.
 
 {pstd}
-Drop the {cmd:ddml} estimation {it:mname} and all associated variables:
+For full details and further options, follow the links to the detailed help files {helpb ddml##help:above}.
 
-{p 8 14}{cmd:ddml drop} {it:mname}
-
-{pstd}
-Report overlap plots ({it:interactive} and {it:interactiveiv} models only):
-
-{p 8 14}{cmd:ddml overlap} [ {opt mname(name)} {opt replist(numlist)} {opt pslist(namelist)} {opt n(integer)} {opt kernel(name)}
-{opt name(name [, replace])} {opt title(string)} {opt subtitle(string)} {opt lopt0(string)}
-{opt lopt1(string)}{bind: ]}
-
-{pstd}One overlap (line) plot of propensity scores is reported for each treatment variable learner;
-by default, propensity scores for all crossfit samples are plotted.
-Overlap plots for the treatment variables are combined using {helpb graph combine}.
-
-{marker options}{...}
-{title:Options}
-
-{synoptset 20}{...}
-{synopthdr:init options}
-{synoptline}
-{synopt:{opt mname(name)}}
-name of the DDML model. Allows to run multiple DDML
-models simultaneously. Defaults to {it:m0}.
-{p_end}
-{synopt:{opt kfolds(integer)}}
-number of cross-fitting folds. The default is 5.
-{p_end}
-{synopt:{opt fcluster(varname)}}
-cluster identifiers for cluster randomization of random folds.
-{p_end}
-{synopt:{opt foldvar(varlist)}}
-integer variable with user-specified cross-fitting folds (one per cross-fitting repetition).
-{p_end}
-{synopt:{opt norandom}}
-use observations in existing order instead of randomizing before splitting into folds;
-if multiple resamples, applies to first resample only;
-ignored if user-defined fold variables are provided in {opt foldvar(varlist)}.
-{p_end}
-{synopt:{opt reps(integer)}}
-cross-fitting repetitions, i.e., how often the cross-fitting procedure is
-repeated on randomly generated folds. 
-{p_end}
-{synopt:{opt tabfold}}
-prints a table with frequency of observations by fold.
-{p_end}
-{synoptline}
-{p2colreset}{...}
-{pstd}
-
-{synoptset 20}{...}
-{synopthdr:Equation options}
-{synoptline}
-{synopt:{opt mname(name)}}
-name of the DDML model. Defaults to {it:m0}.
-{p_end}
-{synopt:{opt vname(varname)}}
-name of the dependent variable in the reduced form estimation. 
-This is usually inferred from the command line but is mandatory
-for the {it:fiv} model.
-{p_end}
-{synopt:{opt l:earner(varname)}}
-optional name of the variable to be created. 
-{p_end}
-{synopt:{opt vtype(string)}}
-optional variable type of the variable to be created. Defaults to {it:double}. 
-{it:none} can be used to leave the type field blank 
-(required when using {cmd:ddml} with {helpb rforest}.)
-{p_end}
-{synopt:{opt predopt(string)}}
-{cmd:predict} option to be used to get predicted values. 
-Typical values could be {opt xb} or {opt pr}. Default is 
-blank. 
-{p_end}
-{synoptline}
-{p2colreset}{...}
-{pstd}
-
-{synoptset 20}{...}
-{synopthdr:Cross-fitting}
-{synoptline}
-{synopt:{opt mname(name)}}
-name of the DDML model. Defaults to {it:m0}.
-{p_end}
-{synopt:{opt shortstack}} asks for short-stacking to be used.
-Short-stacking runs constrained non-negative least squares on the
-cross-fitted predicted values to obtain a weighted average
-of several base learners.
-{p_end}
-{synoptline}
-{p2colreset}{...}
-{pstd}
-
-{synoptset 20}{...}
-{synopthdr:Estimation}
-{synoptline}
-{synopt:{opt mname(name)}}
-name of the DDML model. Defaults to {it:m0}.
-{p_end}
-{synopt:{opt spec(integer/string)}}
-select specification. This can either be the specification number, {it:mse} for minimum-MSE specification (the default) or {it:ss} for short-stacking. 
-{p_end}
-{synopt:{opt rep(integer/string)}}
-select resampling iteration. This can either be the cross-fit repetition number, {it:mn} for mean aggregation or {it:md} for median aggregation (the default).
-{p_end}
-{synopt:{cmdab:r:obust}}
-report SEs that are robust to the
-presence of arbitrary heteroskedasticity.
-{p_end}
-{synopt:{opt cluster(varname)}}
-select cluster-robust variance-covariance estimator, e.g. {cmd:vce(hc3)} or {cmd:vce(cluster id)}.
-{p_end}
-{synopt:{opt vce(type)}}
-select variance-covariance estimator; see {helpb regress##vcetype:here}.
-{p_end}
-{synopt:{cmdab:noc:onstant}}
-suppress constant term ({it:partial}, {it:iv}, {it:fiv} models only). Since the residualized outcome 
-and treatment may not be exactly mean-zero in finite samples, {cmd:ddml} includes the constant by 
-default in the estimation stage of partially linear models.
-{p_end}
-{synopt:{cmdab:showc:onstant}}
-display constant term in summary estimation output table ({it:partial}, {it:iv}, {it:fiv} models only).
-{p_end}
-{synopt:{opt atet}}
-report average treatment effect of the treated (default is ATE).
-{p_end}
-{synopt:{opt ateu}}
-report average treatment effect of the untreated (default is ATE).
-{p_end}
-{synopt:{opt trim(real)}}
-trimming of propensity scores for the Interactive and Interactive IV models. The default is 0.01
-(that is, values below 0.01 and above 0.99 are set 
-to 0.01 and 0.99, respectively).
-{p_end}
-{synopt:{opt allcombos}}
-estimates all possible specifications. By default, only the min-MSE (or short-stacking)
-specification is estimated and displayed.
-{p_end}
-{synopt:{opt replay}}
-used in combination with {opt spec()} and {opt rep()} to display and return estimation results.
-{p_end}
-{synoptline}
-{p2colreset}{...}
-{pstd}
-
-{synoptset 20}{...}
-{synopthdr:Auxiliary}
-{synoptline}
-{synopt:{opt mname(name)}}
-name of the DDML model. Defaults to {it:m0}.
-{p_end}
-{synopt:{opt addvars(varlist)}}
-additional Stata variables to include with {opt ddml} variables when using {it:ddml export}.
-{p_end}
-{synopt:{opt replist(numlist)}}
-(overlap plots) list of crossfitting resamples to plot. Defaults to all.
-{p_end}
-{synopt:{opt pslist(namelist)}}
-(overlap plots) varnames of propensity scores to plot (excluding the resample number). Defaults to all.
-{p_end}
-{synopt:{opt n(integer)}}
-(overlap plots) see {helpb teffects overlap}.
-{p_end}
-{synopt:{opt kernel(name)}}
-(overlap plots) see {helpb teffects overlap}.
-{p_end}
-{synopt:{opt name(name)}}
-(overlap plots) see {helpb graph combine}.
-{p_end}
-{synopt:{opt title(string)}}
-(overlap plots) see {helpb graph combine}.
-{p_end}
-{synopt:{opt subtitle(string)}}
-(overlap plots) see {helpb graph combine}.
-{p_end}
-{synopt:{opt lopt0(string)}}
-(overlap plots) options for line plot of untreated; default is solid/navy; see {helpb line}.
-{p_end}
-{synopt:{opt lopt0(string)}}
-(overlap plots) options for line plot of treated; default is short dash/dark orange; see {helpb line}.
-{p_end}
-{synoptline}
-
-{p2colreset}{...}
-{pstd}
-
-{marker models}{...}
-{title:Models}
-
-{pstd}
-This section provides an overview of supported models. 
-
-{pstd}
-Throughout we use {it:Y} to denote the outcome variable, 
-{it:X} to denote confounders, 
-{it:Z} to denote instrumental variable(s), and
-{it:D} to denote the treatment variable(s) of interest.
-
-{pstd}
-{ul:Partially linear model} [{it:partial}]
-
-	Y = {it:a}.D + g(X) + U
-        D = m(X) + V
-
-{pstd}
-where the aim is to estimate {it:a} while controlling for X. To this end, 
-we estimate the conditional expectations
-E[Y|X] and E[D|X] using a supervised machine learner.
-
-{pstd}
-{ul:Interactive model} [{it:interactive}]
-
-	Y = g(X,D) + U
-        D = m(X) + V
-
-{pstd}
-which relaxes the assumption that X and D are separable. 
-D is a binary treatment variable. 
-We estimate the conditional expectations E[D|X], as well as 
-E[Y|X,D=0] and E[Y|X,D=1] (jointly added using {cmd:ddml E[Y|X,D]}).
-
-{pstd}
-{ul:Partially linear IV model} [{it:iv}]
-
-	Y = {it:a}.D + g(X) + U
-        Z = m(X) + V
-
-{pstd}
-where the aim is to estimate {it:a}. 
-We estimate the conditional expectations E[Y|X], 
-E[D|X] and E[Z|X] using a supervised machine
-learner.
-
-{pstd}
-{ul:Interactive IV model}  [{it:interactiveiv}]
-
-	Y = g(Z,X) + U
-        D = h(Z,X) + V
-        Z = m(X) + E
-
-{pstd}
-where the aim is to estimate the local average treatment effect.
-We estimate, using a supervised machine
-learner, the following conditional expectations:
-E[Y|X,Z=0] and E[Y|X,Z=1] (jointly added using {cmd:ddml E[Y|X,Z]});
-E[D|X,Z=0] and E[D|X,Z=1] (jointly added using {cmd:ddml E[D|X,Z]});
-E[Z|X].
-
-{pstd}
-{ul:Flexible Partially Liner IV model} [{it:fiv}]
-
-	Y = {it:a}.D + g(X) + U
-        D = m(Z) + g(X) + V 
-
-{pstd}
-where the estimand of interest is {it:a}. 
-We estimate the conditional expectations
-E[Y|X], 
-E[D^|X] and D^:=E[D|Z,X] using a supervised machine
-learner. The instrument is then formed as D^-E^[D^|X] where E^[D^|X] denotes
-the estimate of E[D^|X]. 
-
-{pstd}
-Note: "{D}" is a placeholder that is used because last step (estimation of E[D|X]) 
-uses the fitted values from estimating E[D|X,Z].
-Please see {helpb ddml##examples:example section below}.
 
 {marker compatibility}{...}
 {title:Compatible programs}
@@ -490,13 +199,14 @@ a meta learner.
 {pstd}{helpb pystacked} is the recommended way to specify multiple learners in {opt ddml}.
 {helpb pystacked} provides a fast way of estimating all the learners in a single call to one program,
 and {opt ddml} has integrated support for various features provided by {helpb pystacked}.
-{opt ddml} will store the predicted values of the specified base learners along with the combined ("stacked") predicted values.
+{opt ddml} will store the predicted values of the specified base learners as well as the combined ("stacked") predicted values.
 It also stores the stacking weights used by {help pystacked} along with the {opt ddml} short-stacking weights.
 
 {pstd}{bf:Important}: For these features to be available, {helpb pystacked} needs to be the only learner for each conditional expectation.
 Multiple learners must be specified in the call to {helpb pystacked}; see the examples below.
 {helpb pystacked} can be provided directly to {opt ddml} as one of several learners for a conditional expectation,
 but in this case the extra features for {helpb pystacked} will not be availabe.
+
 
 {marker examples}{...}
 {title:Examples}
@@ -847,6 +557,22 @@ Finally, we use the placeholder {cmd:{D}} in place of the dependent variable.
 {phang2}. {stata "gen Zopt = Dhat_pystacked_1 - Dhat_pystacked_h_1"}{p_end}
 {phang2}. {stata "ivreg Y1_pystacked_1 (Dtilde=Zopt), robust"}{p_end}
 
+
+{marker installation}{title:Installation}
+
+{pstd}
+To get the latest stable version of {cmd:ddml} from our website, 
+check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
+We update the stable website version more frequently than the SSC version.
+Alternatively, just use the {opt update} subcommand or click here: {stata "ddml update"}.
+
+{pstd}
+To verify that {cmd:ddml} is correctly installed, 
+click on or type {stata "whichpkg ddml"} 
+(which requires {helpb whichpkg} 
+to be installed; {stata "ssc install whichpkg"}).
+
+
 {marker references}{title:References}
 
 {pstd}
@@ -861,18 +587,6 @@ treatment and structural parameters.
 Wolpert, David H. Stacked generalization. {it:Neural networks} 5.2 (1992): 241-259.
 {browse "https://doi.org/10.1016/S0893-6080(05)80023-1"}
 
-{marker installation}{title:Installation}
-
-{pstd}
-To get the latest stable version of {cmd:ddml} from our website, 
-check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
-We update the stable website version more frequently than the SSC version.
-
-{pstd}
-To verify that {cmd:ddml} is correctly installed, 
-click on or type {stata "whichpkg ddml"} 
-(which requires {helpb whichpkg} 
-to be installed; {stata "ssc install whichpkg"}).
 
 {title:Authors}
 
@@ -891,6 +605,7 @@ m.e.schaffer@hw.ac.uk
 {pstd}
 Thomas Wiemann, University of Chicago, USA {break}
 wiemann@uchicago.edu
+
 
 {title:Also see (if installed)}
 
