@@ -2,7 +2,7 @@
 *! last edited: 8 june 2023
 *! authors: aa/ms
 
-program define qddml, eclass					//  sortpreserve handled in _ivlasso
+program define qddml, eclass sortpreserve
 
 	version 16
 	
