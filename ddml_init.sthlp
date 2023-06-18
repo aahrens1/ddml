@@ -161,7 +161,7 @@ Throughout we use {it:Y} to denote the outcome variable,
 {it:D} to denote the treatment variable(s) of interest.
 
 {pstd}
-{ul:Partially linear model} [{it:partial}]
+{ul:Partially-linear model} [{it:partial}]
 
 	Y = {it:a}.D + g(X) + U
         D = m(X) + V
@@ -184,7 +184,7 @@ We estimate the conditional expectations E[D|X], as well as
 E[Y|X,D=0] and E[Y|X,D=1] (jointly added using {cmd:ddml E[Y|X,D]}).
 
 {pstd}
-{ul:Partially linear IV model} [{it:iv}]
+{ul:Partially-linear IV model} [{it:iv}]
 
 	Y = {it:a}.D + g(X) + U
         Z = m(X) + V
@@ -211,7 +211,7 @@ E[D|X,Z=0] and E[D|X,Z=1] (jointly added using {cmd:ddml E[D|X,Z]});
 E[Z|X].
 
 {pstd}
-{ul:Flexible Partially Liner IV model} [{it:fiv}]
+{ul:Flexible partially-linear IV model} [{it:fiv}]
 
 	Y = {it:a}.D + g(X) + U
         D = m(Z) + g(X) + V 
@@ -231,7 +231,111 @@ uses the fitted values from estimating E[D|X,Z].
 
 {title:Examples}
 
-For examples of usage see {help ddml##examples:help ddml}.
+For more examples of usage see {help ddml##examples:help ddml}.
+See {help ddml estimate:help ddml estimate} for details of cross-fitting and estimation options.
+
+{pstd}Partially-linear model: load the data, define global macros, set the seed and initialize the model.
+Use 2-fold cross-fitting with two repetitions (resamples)
+Use {help pystacked}'s default learners as the supervised learners: OLS, cross-validated lasso, and gradient boosting.{p_end}
+{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
+{phang2}. {stata "global Y net_tfa"}{p_end}
+{phang2}. {stata "global D e401"}{p_end}
+{phang2}. {stata "global X tw age inc fsize educ db marr twoearn pira hown"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+{phang2}. {stata "ddml init partial, kfolds(2) reps(2)"}{p_end}
+{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D $X"}{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
+
+{pstd}Interactive model with 5 folds and 2 resamplings.
+We need to estimate the conditional expectations of E[Y|X,D=0], E[Y|X,D=1] and E[D|X].
+The first two conditional expectations are added jointly.
+Two supervised learners: linear regression and gradient boosted
+trees, stacked using {help pystacked}.
+We use {help pystacked}'s 2nd syntax and stack using the single-best learner
+(rather than the default constrained least squares).
+Note that we use gradient boosted regression trees for E[Y|X,D], but
+gradient boosted classification trees for E[D|X].
+{p_end}
+{phang2}. {stata "webuse cattaneo2, clear"}{p_end}
+{phang2}. {stata "global Y bweight"}{p_end}
+{phang2}. {stata "global D mbsmoke"}{p_end}
+{phang2}. {stata "global X prenatal1 mmarried fbaby mage medu"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+{phang2}. {stata "ddml init interactive, kfolds(5) reps(2)"}{p_end}
+{phang2}. {stata "ddml E[Y|X,D]: pystacked $Y $X || method(ols) || method(gradboost) || , type(reg) finalest(singlebest)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D $X || method(logit) || method(gradboost) || , type(class) finalest(singlebest)"}{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
+
+{pstd}Partially linear IV model.
+The model has three conditional expectations: 
+E[Y|X], E[D|X] and E[Z|X]. For each reduced form equation, we use two learners:
+OLS and random forest.
+To illustrate how {opt ddml} works with other packages,
+instead of a single call to {opt pystacked} specifying two base learners
+we specify Stata's {helpb regress} and {helpb rforest} by Zou and Schonlau as the two learners.
+We need to add the option {opt vtype(none)} for {helpb rforest} to 
+work with {cmd:ddml} since {helpb rforest}'s {cmd:predict} command doesn't
+support variable types.
+Since the data set is very small, we consider 30 cross-fitting folds.{p_end}
+{phang2}. {stata "use https://statalasso.github.io/dta/AJR.dta, clear"}{p_end}
+{phang2}. {stata "global Y logpgp95"}{p_end}
+{phang2}. {stata "global D avexpr"}{p_end}
+{phang2}. {stata "global Z logem4"}{p_end}
+{phang2}. {stata "global X lat_abst edes1975 avelf temp* humid* steplow-oilres"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+{phang2}. {stata "ddml init iv, kfolds(30)"}{p_end}
+{phang2}. {stata "ddml E[Y|X]: reg $Y $X"}{p_end}
+{phang2}. {stata "ddml E[Y|X], vtype(none): rforest $Y $X, type(reg)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: reg $D $X"}{p_end}
+{phang2}. {stata "ddml E[D|X], vtype(none): rforest $D $X, type(reg)"}{p_end}
+{phang2}. {stata "ddml E[Z|X]: reg $Z $X"}{p_end}
+{phang2}. {stata "ddml E[Z|X], vtype(none): rforest $Z $X, type(reg)"}{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
+
+{pstd}Interactive IV model--LATE estimation.
+We use {help pystacked} with two base learners for each reduced form equation.{p_end}
+{phang2}. {stata "use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta, clear"}{p_end}
+{phang2}. {stata "global Y earnings"}{p_end}
+{phang2}. {stata "global D training"}{p_end}
+{phang2}. {stata "global Z assignmt"}{p_end}
+{phang2}. {stata "global X sex age married black hispanic"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+{phang2}. {stata "ddml init interactiveiv, kfolds(5)"}{p_end}
+{phang2}. {stata "ddml E[Y|X,Z]: pystacked $Y c.($X)# #c($X), type(reg) m(ols lassocv)"}{p_end}
+{phang2}. {stata "ddml E[D|X,Z]: pystacked $D c.($X)# #c($X), type(class) m(logit lassocv)"}{p_end}
+{phang2}. {stata "ddml E[Z|X]: pystacked $Z c.($X)# #c($X), type(class) m(logit lassocv)"}{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
+
+{pstd}Flexible partially-linear IV model: first load the data, define global macros, set the seed and initialize the model.
+We add learners for E[Y|X] in the usual way. Here we use {helpb pystacked}'s default base learners.{p_end}
+{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear"}{p_end}
+{phang2}. {stata "global Y share"}{p_end}
+{phang2}. {stata "global D price"}{p_end}
+{phang2}. {stata "global X hpwt air mpd space"}{p_end}
+{phang2}. {stata "global Z sum*"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+{phang2}. {stata "ddml init fiv"}{p_end}
+{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg)"}{p_end}
+
+{pstd}Adding learners for E[D|Z,X] and E[D|X] in the Flexible Partially-Linear IV Model is different.
+The reason for this is that the estimation of E[D|X]
+depends on the estimation of E[D|X,Z].
+When adding learners for E[D|Z,X],
+we need to provide a name for each learners using {opt learner(name)}.
+When adding learners for E[D|X], we explicitly refer to the learner from 
+the previous step (e.g., {cmd:learner(Dhat_pystacked)}) and
+also provide the name of the treatment variable ({cmd:vname($D)}),
+and we use the placeholder {cmd:{D}} in place of the dependent variable. 
+{p_end}
+{phang2}. {stata "ddml E[D|Z,X], learner(Dhat_pystacked): pystacked $D $X $Z, type(reg)"}{p_end}
+{phang2}. {stata "ddml E[D|X], learner(Dhat_pystacked) vname($D): pystacked {D} $X, type(reg)"}{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
 
 
 {marker references}{title:References}

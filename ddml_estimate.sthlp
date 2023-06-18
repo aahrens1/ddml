@@ -142,6 +142,7 @@ used in combination with {opt spec()} and {opt rep()} to display and return esti
 {title:Examples}
 
 For more examples of usage see {help ddml##examples:help ddml}.
+See {help ddml init:help ddml init} for details of model initialization and learner specification options.
 
 {pstd}Note: the additional support provided by {opt ddml} for {helpb pystacked} (see {help ddml##pystacked:above})
 is available only if, as in this example, {help pystacked} is the only learner for each conditional expectation.
