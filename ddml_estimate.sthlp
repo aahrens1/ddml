@@ -33,7 +33,7 @@ see the help files for details.
 {title:Syntax}
 
 {p 8 14}{cmd:ddml crossfit} [ , {opt mname(name)} {opt shortstack} {opt poolstack}
-{opt ssfinalest(name)} {opt psfinalest(name} {opt finalest(name)}{bind: ]} 
+{opt ssfinalest(name)} {opt psfinalest(name}} {opt finalest(name)}{bind: ]} 
 
 {p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)} {opt atet} {opt ateu} {opt trim(real)}{bind: ]} 
 
