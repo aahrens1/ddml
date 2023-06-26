@@ -57,10 +57,11 @@ but offers less flexibility.
 {p 2}Help files: qddml{p_end}
 {p2col:{help qddml}} One-step DDML estimation using {help qddml}.{p_end}
 
-{p 2}Help files: main steps using {opt ddml}{p_end}
+{p 2}Help files: main steps in using {opt ddml}{p_end}
 {p2col:{help ddml overview}} Overview of main steps to estimation using ddml{p_end}
+{p2col:{help ddml stacking}} Overview of stacking in ddml and {help pystacked}{p_end}
 
-{p 2}Help files: detailed help files for using {opt ddml}{p_end}
+{p 2}Help files: detailed help files for main steps in using {opt ddml}{p_end}
 {p2col:{help ddml init}} 1. Initialize {opt ddml} and select model.{p_end}
 {p2col:{help ddml eq}} 2. Add supervised ML programs for estimating conditional expectations.{p_end}
 {p2col:{help ddml crossfit}} 3. Cross-fitting to estimate conditional expectations.{p_end}
