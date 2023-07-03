@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 16jun2023}{...}
+{* *! version 3jul2023}{...}
 {hline}
 {cmd:help ddml describe}{right: v1.2}
 {hline}
@@ -15,7 +15,7 @@
 machine learning as proposed in 
 {it:Double/debiased machine learning for treatment and structural parameters}
 (Econometrics Journal, 2018). Five different models are supported, allowing for 
-binary or continous treatment variables and endogeneity, high-dimensional 
+binary or continuous treatment variables and endogeneity, high-dimensional 
 controls and/or instrumental variables. 
 
 {pstd}
