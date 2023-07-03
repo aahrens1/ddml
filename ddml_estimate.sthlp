@@ -1,14 +1,10 @@
 {smcl}
-{* *! version 15jun2023}{...}
+{* *! version 3jul2023}{...}
 {hline}
 {cmd:help ddml crossfit, ddml estimate}{right: v1.2}
 {hline}
 
 {title:ddml crossfit and estimate commands for Double Debiased Machine Learning}
-
-{p2colset 5 19 21 2}{...}
-{p2col:{hi: ddml} {hline 2}}Stata package for Double Debiased Machine Learning{p_end}
-{p2colreset}{...}
 
 {pstd}
 {opt ddml} implements algorithms for causal inference aided by supervised
@@ -141,10 +137,11 @@ used in combination with {opt spec()} and {opt rep()} to display and return esti
 
 {title:Examples}
 
-For more examples of usage see {help ddml##examples:help ddml}.
+{pstd}
+For more examples of usage see the links via the main {help ddml##examples:ddml help file}.
 See {help ddml init:help ddml init} for details of model initialization and learner specification options.
 
-{pstd}Note: the additional support provided by {opt ddml} for {helpb pystacked} (see {help ddml##pystacked:above})
+{pstd}Note: the additional support provided by {opt ddml} for {helpb pystacked} (see {help ddml stacking:help ddml stacking})
 is available only if, as in this example, {help pystacked} is the only learner for each conditional expectation.
 Mutliple learners are provided to {help pystacked}, not directly to {opt ddml}.{p_end}
 
@@ -178,6 +175,14 @@ the {opt ddml} short-stacking and pooled-stacking weights.{p_end}
 {phang2}. {stata "ddml extract, show(psweights)"}{p_end}
 
 
+{marker installation}{title:Installation}
+
+{pstd}
+To get the latest stable version of {cmd:ddml} from our website, 
+check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
+We update the stable website version more frequently than the SSC version.
+
+
 {marker references}{title:References}
 
 {pstd}
@@ -192,18 +197,13 @@ treatment and structural parameters.
 Wolpert, David H. Stacked generalization. {it:Neural networks} 5.2 (1992): 241-259.
 {browse "https://doi.org/10.1016/S0893-6080(05)80023-1"}
 
-{marker installation}{title:Installation}
-
-{pstd}
-To get the latest stable version of {cmd:ddml} from our website, 
-check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
-We update the stable website version more frequently than the SSC version.
 
 {pstd}
 To verify that {cmd:ddml} is correctly installed, 
 click on or type {stata "whichpkg ddml"} 
 (which requires {helpb whichpkg} 
 to be installed; {stata "ssc install whichpkg"}).
+
 
 {title:Authors}
 
@@ -223,8 +223,9 @@ m.e.schaffer@hw.ac.uk
 Thomas Wiemann, University of Chicago, USA {break}
 wiemann@uchicago.edu
 
+
 {title:Also see (if installed)}
 
 {pstd}
-Help: {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
- {helpb pdslasso}, {helpb pystacked}.{p_end}
+Help: {helpb pystacked}, {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
+ {helpb pdslasso}.{p_end}

@@ -1,51 +1,31 @@
 {smcl}
-{* *! version 21feb2023}{...}
+{* *! version 3jul2023}{...}
 {hline}
-{cmd:help ddml}{right: v1.2}
+{cmd:help qddml}{right: v1.2}
 {hline}
 
-{title:Title}
-
-{p2colset 5 19 21 2}{...}
-{p2col:{hi: qddml} {hline 2}}Stata program for Double Debiased Machine Learning{p_end}
-{p2colreset}{...}
+{title:ddml, qddml - Stata package for Double Debiased Machine Learning}
 
 {pstd}
-{opt ddml} implements algorithms for causal inference aided by supervised
+{help ddml} implements algorithms for causal inference aided by supervised
 machine learning as proposed in 
 {it:Double/debiased machine learning for treatment and structural parameters}
 (Econometrics Journal, 2018). Five different models are supported, allowing for 
 binary or continous treatment variables and endogeneity, high-dimensional 
 controls and/or instrumental variables. 
-{opt ddml} supports a variety of different ML programs, including
-but not limited to {helpb lassopack} and {helpb pystacked}. 
+{help ddml} supports a variety of different ML programs, including
+but not limited to {help pystacked} and {help lassopack}. 
 
 {pstd}
-{opt qddml} is a wrapper program of {cmd:ddml}. It provides a convenient 
-one-line syntax with almost the full flexibility of {cmd:ddml}.
+{opt qddml} is a wrapper program for {help ddml}. It provides a convenient 
+one-line syntax with almost the full flexibility of {help ddml}.
 The main restriction of {cmd:qddml} is that it only allows to be used 
-with one machine learning program at the time, while {cmd:ddml} 
+with one machine learning program at the time, while {help ddml} 
 allow for multiple learners per reduced form equation.
 
 {pstd}
 {opt qddml} uses stacking regression ({helpb pystacked}) 
 as the default machine learning program. 
-
-{pstd}
-{opt qddml} relies on {helpb crossfit}, which can be used as a standalone
-program.
-
-{p 8 14 2}
-{cmd:qddml}
-{it:depvar} {it:regressors} [{cmd:(}{it:hd_controls}{cmd:)}]
-{cmd:(}{it:endog}{cmd:=}{it:instruments}{cmd:)}
-[{cmd:if} {it:exp}] [{cmd:in} {it:range}]
-{opt model(name)}
-{bind:[ {cmd:,}}
-{opt cmd(string)}
-{opt cmdopt(string)}
-{opt mname(string)}
-{opt ...} ]}
 
 {pstd}
 Since {opt qddml} uses {helpb pystacked} per default, 
@@ -62,9 +42,25 @@ you can still use {cmd:pystacked} with programs that don't rely on Python,
 e.g., using the option {opt cmd(rlasso)}.
 
 {pstd}
-Please check the {helpb qddml##examples:examples} provided at the end of the help file.
+Please check the {helpb qddml##examples:examples} provided at the end of this help file.
+
 
 {marker syntax}{...}
+{title:Syntax}
+
+{p 8 14 2}
+{cmd:qddml}
+{it:depvar} {it:regressors} [{cmd:(}{it:hd_controls}{cmd:)}]
+{cmd:(}{it:endog}{cmd:=}{it:instruments}{cmd:)}
+[{cmd:if} {it:exp}] [{cmd:in} {it:range}]
+{opt model(name)}
+{bind:[ {cmd:,}}
+{opt cmd(string)}
+{opt cmdopt(string)}
+{opt mname(string)}
+{bind:... ]}
+
+
 {title:Options}
 
 {synoptset 20}{...}
@@ -139,7 +135,7 @@ or {cmd:z} (setting the default for {it:Z}).
 {synopt:{opt *vtype(string)}}
 variable type of the variable to be created. Defaults to {it:double}. 
 {it:none} can be used to leave the type field blank 
-(this is required when using {cmd:ddml} with {helpb rforest}.)
+(this is required when using {help ddml} with {helpb rforest}.)
 The asterisk {cmd:*} can be replaced with either nothing 
 (setting the default for all reduced form equations), 
 {cmd:y} (setting the default for the conditional expectation of {it:Y}), 
@@ -166,17 +162,20 @@ show detailed output
 show even more output
 {p_end}
 
+
 {marker models}{...}
 {title:Models}
 
 {pstd} 
-See {helpb ddml##models:here}.
+See {helpb ddml##help:here}.
+
 
 {marker compatibility}{...}
 {title:Compatible programs}
 
 {pstd} 
 See {helpb ddml##compatibility:here}.
+
 
 {marker examples}{...}
 {title:Examples}
@@ -185,7 +184,7 @@ See {helpb ddml##compatibility:here}.
 Below we demonstrate the use of {cmd:qddml} for each of the 5 models supported. 
 Note that estimation models are chosen for demonstration purposes only and 
 kept simple to allow you to run the code quickly.
-Please also see the examples in the {helpb ddml##examples:ddml help file}
+Please also see the examples via the links in the {helpb ddml##examples:ddml help file}
 
 {pstd}{ul:Partially linear model.} 
 
@@ -228,7 +227,7 @@ Here we request display of the {helpb pystacked} stacking weights and MSEs.{p_en
 {pstd}Since the
 data set is very small, we consider 30 cross-fitting folds.{p_end} 
 {pstd}We need to add the option {opt vtype(none)} for {helpb rforest} to 
-work with {cmd:ddml} since {helpb rforests}'s {cmd:predict} command doesn't
+work with {help ddml} since {helpb rforests}'s {cmd:predict} command doesn't
 support variable types.{p_end}
 
 {phang2}. {stata "qddml $Y ($X) ($D=$Z), kfolds(30) model(iv) cmd(rforest) cmdopt(type(reg)) vtype(none) robust"}{p_end}
@@ -281,6 +280,21 @@ we can simply use {ddml estimate}.{p_end}
 but we now estimate the optimal instrument flexibly.{p_end}
 {phang2}. {stata "qddml $Y ($X) ($D=$Z), model(fiv)"}{p_end}
 
+
+{marker installation}{title:Installation}
+
+{pstd}
+To get the latest stable version of {help ddml} from our website, 
+check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
+We update the stable website version more frequently than the SSC version.
+
+{pstd}
+To verify that {help ddml} is correctly installed, 
+click on or type {stata "whichpkg ddml"} 
+(which requires {helpb whichpkg} 
+to be installed; {stata "ssc install whichpkg"}).
+
+
 {marker references}{title:References}
 
 {pstd}
@@ -290,18 +304,6 @@ Double/debiased machine learning for
 treatment and structural parameters. 
 {it:The Econometrics Journal}, 21: C1-C68. {browse "https://doi.org/10.1111/ectj.12097"}
 
-{marker installation}{title:Installation}
-
-{pstd}
-To get the latest stable version of {cmd:ddml} from our website, 
-check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
-We update the stable website version more frequently than the SSC version.
-
-{pstd}
-To verify that {cmd:ddml} is correctly installed, 
-click on or type {stata "whichpkg ddml"} 
-(which requires {helpb whichpkg} 
-to be installed; {stata "ssc install whichpkg"}).
 
 {title:Authors}
 
@@ -321,8 +323,9 @@ m.e.schaffer@hw.ac.uk
 Thomas Wiemann, University of Chicago, USA {break}
 wiemann@uchicago.edu
 
+
 {title:Also see (if installed)}
 
 {pstd}
-Help: {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
- {helpb pdslasso}, {helpb pystacked}.{p_end}
+Help: {helpb pystacked}, {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
+ {helpb pdslasso}.{p_end}

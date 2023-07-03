@@ -1,10 +1,10 @@
 {smcl}
 {* *! version 3jul2023}{...}
 {hline}
-{cmd:help ddml - overview}{right: v1.2}
+{cmd:help ddml partial}{right: v1.2}
 {hline}
 
-{title:ddml - Stata package for Double Debiased Machine Learning}
+{title:ddml - estimation examples for the partially-linear model in Double Debiased Machine Learning}
 
 {pstd}
 {opt ddml} implements algorithms for causal inference aided by supervised
@@ -12,99 +12,46 @@ machine learning as proposed in
 {it:Double/debiased machine learning for treatment and structural parameters}
 (Econometrics Journal, 2018). Five different models are supported, allowing for 
 binary or continous treatment variables and endogeneity, high-dimensional 
-controls and/or instrumental variables. 
+controls and/or instrumental variables.
 
 {pstd}
-For more detailed help for individual commands, links to specific {opt ddml} help files, and more examples of usage,
-see the main {help ddml:ddml help file}.
-
-
-{marker overview}{...}
-{title:Overview of main step when estimating with ddml}
-
-{pstd}Estimation with {cmd:ddml} proceeds in four steps. 
+{opt ddml} supports a variety of different ML programs, including
+but not limited to {helpb pystacked} and {helpb lassopack}. 
+{helpb pystacked} is the recommended way to specify multiple learners in {opt ddml},
+and {opt ddml} has integrated support for various features provided by {helpb pystacked}.
 
 {pstd}
-{ul:Step 1.} Initialize {cmd:ddml} and select model:
-
-{p 8 14}{cmd:ddml init}
-{it:model} [if] [in]
-[ , {opt mname(name)} {opt kfolds(integer)}
-{opt fcluster(varname)}
-{opt foldvar(varlist)} {opt reps(integer)} 
-{opt norandom} {opt tabfold} {opt vars(varlist)}{bind: ]}
+The {opt ddml} package also includes the wrapper program {helpb qddml},
+which uses a simplified one-line syntax, but offers less flexibility.
 
 {pstd}
-where {it:model} is either {it:partial}, {it:iv}, {it:interactive}, {it:fiv}, {it:interactiveiv};
-see {helpb ddml##models:model descriptions}.
+This help file illustrates usage of the {ul:partially-linear model}.
+For examples of other models,
+follow the links in the main {help ddml:ddml help file}.
 
 {pstd}
-{ul:Step 2.} Add supervised ML programs for estimating conditional expectations:
-
-{p 8 14}{cmd:ddml} {it:eq} 
-[ , {opt mname(name)} {opt vname(varname)} {opt l:earner(varname)}
-{opt vtype(string)}
-{opt predopt(string)}{bind: ] :}
-{it:command} {it:depvar} {it:vars} [ , {it:cmdopt}{bind: ]}
+We use {it:Y} to denote the outcome variable, 
+{it:X} to denote confounders, and
+{it:D} to denote the treatment variable(s) of interest.
 
 {pstd}
-where, depending on model chosen in Step 1,
-{it:eq} is either 
-{it:E[Y|X]} {it:E[Y|D,X]} {it:E[Y|X,Z]} {it:E[D|X]} {it:E[D|X,Z]} {it:E[Z|X]}.
-{it:command} is a supported supervised ML program (e.g. {helpb pystacked} or {helpb cvlasso}). 
-See {helpb ddml##compatibility:supported programs}.
+{ul:Partially-linear model} [{it:partial}]
+
+	Y = {it:a}.D + g(X) + U
+        D = m(X) + V
 
 {pstd}
-Note: Options before ":" and after the first comma refer to {cmd:ddml}. 
-Options that come after the final comma refer to the estimation command. 
-{p_end}
-
-{pstd}
-{ul:Step 3.} Cross-fitting:
-
-{p 8 14}{cmd:ddml crossfit} [ , {opt mname(name)} {opt shortstack}{bind: ]} 
-
-{pstd}
-This step implements the cross-fitting algorithm. Each learner is fitted iteratively on training folds and out-of-sample predicted values are obtained.
-
-{pstd}
-{ul:Step 4.} Estimate causal effects:
-
-{p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)} {opt atet} {opt ateu} {opt trim(real)}{bind: ]} 
-
-{pstd}
-The {cmd:ddml estimate} command returns treatment effect estimates for all combination of learners 
-added in Step 2.
-
-{pstd}
-{ul:Optional.} Report/post selected results:
-
-{p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {opt spec(integer or string)} {opt rep(integer or string)} {opt allcombos} {opt not:able} {opt replay} {bind: ]} 
-
-{pstd}
-{marker auxiliary}{...}
-{ul:Optional.} Retrieve information from {cmd:ddml}:
-
-{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)}
-{opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)}
-{opt subkey2(string)}{bind: ]}
-
-{pstd}
-{it:display_item} can be {it:stweights}, {it:ssweights}, {it:psweights}, {it:weights}, {it:mse}, {it:n}, or {it:pystacked}.
-{cmd:ddml} stores many internal results on associative arrays.
-See {helpb ddml extract} for details.
-
-{pstd}
-For full details and further options, follow the links to the detailed help files {helpb ddml##help:above}.
+where the aim is to estimate {it:a} while controlling for X. To this end, 
+we estimate the conditional expectations
+E[Y|X] and E[D|X] using a supervised machine learner.
 
 
 {marker examples}{...}
 {title:Examples}
 
 {pstd}
-Below we demonstrate the use of {cmd:ddml} for the Partially-linear model;
-see the main {help ddml:ddml help file} and the links therein for further examples.
-Note that estimation models are chosen for demonstration purposes only and
+Below we demonstrate the use of {cmd:ddml} for the partially-linear model. 
+Note that estimation models are chosen for demonstration purposes only and 
 kept simple to allow you to run the code quickly.
 
 {marker plm_i}{...}
@@ -254,6 +201,43 @@ or just describe them all with the {opt all} option:
 (if you have run the first example above).{p_end}
 {phang2}. {stata "ddml estimate, mname(m0) replay"}{p_end}
 
+{marker plm_iii}{...}
+{pstd}{ul:Partially linear model III. Multiple treatments.}
+
+{pstd}We can also run the partially linear model with multiple treatments. 
+In this simple example, we estimate the effect of both 401k elligibility 
+{cmd:e401} and education {cmd:educ}. 
+Note that we remove {cmd:educ} from the set of controls.
+We again use {helpb pystacked} as the single learner provided to {opt ddml};
+the two base learners, OLS and random forest, are provided via {opt pystacked}.
+This time we use the alternative simplified syntax supported by {helpb pystacked}.{p_end}
+{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
+{phang2}. {stata "global Y net_tfa"}{p_end}
+{phang2}. {stata "global D1 e401"}{p_end}
+{phang2}. {stata "global D2 educ"}{p_end}
+{phang2}. {stata "global X tw age inc fsize db marr twoearn pira hown"}{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+
+{pstd}Initialize the model.{p_end}
+{phang2}. {stata "ddml init partial, kfolds(2)"}{p_end}
+
+{pstd}Add learners. Note that we add leaners with both {cmd:$D1} and
+{cmd:$D2} as the dependent variable.{p_end}
+{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg) methods(ols rf)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D1 $X, type(reg) methods(ols rf)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D2 $X, type(reg) methods(ols rf)"}{p_end}
+
+{pstd}Cross-fitting.{p_end}
+{phang2}. {stata "ddml crossfit"}{p_end}
+
+{pstd}Estimation.{p_end}
+{phang2}. {stata "ddml estimate, robust"}{p_end}
+
+{pstd}Because we have used {help pystacked} as the single {opt ddml} learner,
+we can access the saved {opt pystacked} information.
+Here we use the {opt pystacked} option to get the stacking weights and MSEs by cross-fit fold:{p_end}
+{phang2}. {stata "ddml extract, show(pystacked)"}{p_end}
+
 
 {marker references}{title:References}
 
@@ -292,5 +276,5 @@ wiemann@uchicago.edu
 {title:Also see (if installed)}
 
 {pstd}
-Help: {helpb pystacked}, {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
- {helpb pdslasso}.{p_end}
+Help: {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
+ {helpb pdslasso}, {helpb pystacked}.{p_end}

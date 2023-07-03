@@ -1,14 +1,10 @@
 {smcl}
-{* *! version 15jun2023}{...}
+{* *! version 3jul2023}{...}
 {hline}
 {cmd:help ddml init, ddml eq, ddml sample}{right: v1.2}
 {hline}
 
 {title:ddml init, eq and sample commands for Double Debiased Machine Learning}
-
-{p2colset 5 19 21 2}{...}
-{p2col:{hi: ddml} {hline 2}}Stata package for Double Debiased Machine Learning{p_end}
-{p2colreset}{...}
 
 {pstd}
 {opt ddml} implements algorithms for causal inference aided by supervised
@@ -20,7 +16,7 @@ controls and/or instrumental variables.
 
 {pstd}
 {opt ddml init} {it:model} initializes the model,
-where {it:model} is either {it:partial}, {it:iv}, {it:interactive}, {it:fiv}, {it:interactiveiv}.
+where {it:model} is either {it:partial}, {it:iv}, {it:interactive}, {it:fiv}, or {it:interactiveiv}.
 
 {pstd}
 {cmd: ddml eq: command} adds supervised ML programs for estimating conditional expectations,
@@ -179,7 +175,9 @@ E[Y|X] and E[D|X] using a supervised machine learner.
 
 {pstd}
 which relaxes the assumption that X and D are separable. 
-D is a binary treatment variable. 
+D is a binary treatment variable,
+and we aim to estimate the average treatment effect (ATE)
+or average treatment effect on the treated (ATET).
 We estimate the conditional expectations E[D|X], as well as 
 E[Y|X,D=0] and E[Y|X,D=1] (jointly added using {cmd:ddml E[Y|X,D]}).
 
@@ -203,7 +201,7 @@ learner.
         Z = m(X) + E
 
 {pstd}
-where the aim is to estimate the local average treatment effect.
+where the aim is to estimate the local average treatment effect (LATE).
 We estimate, using a supervised machine
 learner, the following conditional expectations:
 E[Y|X,Z=0] and E[Y|X,Z=1] (jointly added using {cmd:ddml E[Y|X,Z]});
@@ -231,7 +229,8 @@ uses the fitted values from estimating E[D|X,Z].
 
 {title:Examples}
 
-For more examples of usage see {help ddml##examples:help ddml}.
+{pstd}
+For more examples of usage see the links via the main {help ddml##examples:ddml help file}.
 See {help ddml estimate:help ddml estimate} for details of cross-fitting and estimation options.
 
 {pstd}Partially-linear model: load the data, define global macros, set the seed and initialize the model.
@@ -321,7 +320,6 @@ We add learners for E[Y|X] in the usual way. Here we use {helpb pystacked}'s def
 {phang2}. {stata "set seed 42"}{p_end}
 {phang2}. {stata "ddml init fiv"}{p_end}
 {phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, type(reg)"}{p_end}
-
 {pstd}Adding learners for E[D|Z,X] and E[D|X] in the Flexible Partially-Linear IV Model is different.
 The reason for this is that the estimation of E[D|X]
 depends on the estimation of E[D|X,Z].
@@ -338,6 +336,20 @@ and we use the placeholder {cmd:{D}} in place of the dependent variable.
 {phang2}. {stata "ddml estimate"}{p_end}
 
 
+{marker installation}{title:Installation}
+
+{pstd}
+To get the latest stable version of {cmd:ddml} from our website, 
+check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
+We update the stable website version more frequently than the SSC version.
+
+{pstd}
+To verify that {cmd:ddml} is correctly installed, 
+click on or type {stata "whichpkg ddml"} 
+(which requires {helpb whichpkg} 
+to be installed; {stata "ssc install whichpkg"}).
+
+
 {marker references}{title:References}
 
 {pstd}
@@ -352,18 +364,6 @@ treatment and structural parameters.
 Wolpert, David H. Stacked generalization. {it:Neural networks} 5.2 (1992): 241-259.
 {browse "https://doi.org/10.1016/S0893-6080(05)80023-1"}
 
-{marker installation}{title:Installation}
-
-{pstd}
-To get the latest stable version of {cmd:ddml} from our website, 
-check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
-We update the stable website version more frequently than the SSC version.
-
-{pstd}
-To verify that {cmd:ddml} is correctly installed, 
-click on or type {stata "whichpkg ddml"} 
-(which requires {helpb whichpkg} 
-to be installed; {stata "ssc install whichpkg"}).
 
 {title:Authors}
 
@@ -383,8 +383,9 @@ m.e.schaffer@hw.ac.uk
 Thomas Wiemann, University of Chicago, USA {break}
 wiemann@uchicago.edu
 
+
 {title:Also see (if installed)}
 
 {pstd}
-Help: {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
- {helpb pdslasso}, {helpb pystacked}.{p_end}
+Help:  {helpb pystacked}, {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
+ {helpb pdslasso}.{p_end}

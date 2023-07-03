@@ -1,14 +1,10 @@
 {smcl}
-{* *! version 26jun2023}{...}
+{* *! version 3jul2023}{...}
 {hline}
 {cmd:help ddml stacking}{right: v1.2}
 {hline}
 
 {title:ddml - Stata package for Double Debiased Machine Learning}
-
-{p2colset 5 19 21 2}{...}
-{p2col:{hi: ddml} {hline 2}}Stata package for Double Debiased Machine Learning{p_end}
-{p2colreset}{...}
 
 {pstd}
 {opt ddml} implements algorithms for causal inference aided by supervised
@@ -85,7 +81,7 @@ Pooled stacking is a variant of standard stacking that implements additional reg
 via the {help ddml crossfit:cross-fitting} step of {opt ddml}.
 Pooled stacking is done once, after all cross-fitting has been done
 and a full set of all cross-validated OOS predictions has been obtained.
-This means that a single set of stacking weight is used to obtain all OOS cross-fit predictions.
+This means that a single set of stacking weights is used to obtain all OOS cross-fit predictions.
 This is in contrast to standard stacking and k-fold cross-fitting,
 where k different sets of stacking weights are estimated and used to obtain the k OOS cross-fit predictions.
 Pooled stacking is specified at the {help ddml crossfit} stage using the {opt poolstack} option.
@@ -96,7 +92,7 @@ and can be changed using the {opt psfinalest(estimator)} option.
 {title:Short-stacking}
 
 {pstd}
-Short-stacking is a form of stacking specific to double-debiased machine learning and cross-fitting.
+Short-stacking is a form of stacking specific to double debiased machine learning and cross-fitting.
 Short-stacking uses the cross-fitted predicted values to obtain
 the stacked (weighted average) of the multiple base learner predictions.
 It is computationally faster (often much faster) than
@@ -115,14 +111,15 @@ The weights used for standard stacking, pooled stacking and short-stacking
 can be inspected after estimation using {help ddml extract}
 with the {opt show(stweights)}, {opt show(psweights)} and/or {opt show(ssweights)}, respectively.
 In the case of standard stacking, the mean weights across cross-fit folds are displayed;
-to display all k standard stacking weights along with the separate learner MSEs,
+to display the standard stacking weights for all k folds along with the separate learner MSEs,
 use the {opt show(pystacked)} option.
 
 
 {marker examples}{...}
 {title:Examples}
 
-For more examples of usage see {help ddml##examples:help ddml}.
+{pstd}
+For more examples of usage see the links via the main {help ddml##examples:ddml help file}.
 See {help ddml init:help ddml init} for details of model initialization and learner specification options.
 
 {pstd}Note: the additional support provided by {opt ddml} for {helpb pystacked} (see {help ddml##pystacked:above})
