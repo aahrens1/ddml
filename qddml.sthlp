@@ -24,8 +24,9 @@ with one machine learning program at the time, while {help ddml}
 allow for multiple learners per reduced form equation.
 
 {pstd}
-{opt qddml} uses stacking regression ({helpb pystacked}) 
-as the default machine learning program. 
+{opt qddml} uses stacking regression implemented via {help pystacked}
+as the default machine learning program.
+{opt qddml} has various options specific to {help pystacked}; see below.
 
 {pstd}
 Since {opt qddml} uses {helpb pystacked} per default, 
@@ -87,11 +88,6 @@ integer variable with user-specified cross-fitting folds.
 number of re-sampling iterations, i.e., how often the cross-fitting procedure is
 repeated on randomly generated folds. 
 {p_end}
-{synopt:{opt shortstack}} asks for short-stacking to be used.
-Short-stacking runs contrained non-negative least squares on the
-cross-fitted predicted values to obtain a weighted average
-of several base learners.
-{p_end}
 {synopt:{cmdab:r:obust}}
 report SEs that are robust to the
 presence of arbitrary heteroskedasticity.
@@ -104,7 +100,64 @@ select cluster-robust variance-covariance estimator.
 {p_end}
 
 {synoptset 20}{...}
-{synopthdr:Learners}
+{synopthdr:Stacking}
+{synoptline}
+{synopt:{opt shortstack}} asks for short-stacking to be used.
+Short-stacking combines the cross-fitted predicted values
+to obtain a weighted average of several base learners.
+The default behavior of {opt qddml} is to report short-stacked results;
+the {opt shortstack} option is used when the user wants to report
+more than one type of stacking results.
+{p_end}
+{synopt:{opt ssfinalest(name)}}
+specified the final (ensemble) estimator used to combine
+the base learner short-stacked cross-fitted predicted values.
+The default is constrained non-negative least squares;
+for alternatives, see the choices available for standard stacking in {help pystacked}.
+{p_end}
+{synopt:{opt stdstack}} requests results based on standard stacking via {help pystacked}.
+Stacking is done k times when cross-fitting.
+Note that the final estimator for combining the base learner predicted values
+is set via the options provided directly to {help pystacked};
+the {help pystacked} default is constrained non-negative least squares.
+Standard stacking is available only in combination with {help pystacked}.
+{p_end}
+{synopt:{opt poolstack}} is an alternative to standard stacking via {help pystacked}.
+Pooled-stacking combines the out-of-sample predicted values of the {help pystacked}
+using a single final estimation and set of weights.
+{p_end}
+{synopt:{opt psfinalest(name)}}
+specified the final (ensemble) estimator used to combine
+the base learner cross-fitted predicted values when pooled-stacking.
+The default is constrained non-negative least squares;
+for alternatives, see the choices available for standard stacking in {help pystacked}.
+Pooled-stacking is available only in combination with {help pystacked}.
+{p_end}
+
+{pstd}
+For more on stacking, see {help ddml stacking:help ddml stacking}.
+{p_end}
+
+{synoptset 20}{...}
+{synopthdr:Learners - pystacked}
+{synoptline}
+{synopt:{opt pystacked(string)}}
+{help pystacked} options;
+applies to all estimated conditional expectations. 
+If no options are specified, {help pystacked}'s defaults are used.
+{p_end}
+{synopt:{opt pystacked_y(string)}}
+{help pystacked} options specific to the estimation of the conditional expectations of the outcome {it:Y}. 
+{p_end}
+{synopt:{opt pystacked_d(string)}}
+{help pystacked} options specific to the estimation of the conditional expectations of the treatment variable(s) {it:D}.
+{p_end}
+{synopt:{opt pystacked_z(string)}}
+{help pystacked} options specific to the estimation of the conditional expectations of instrumental variable(s) {it:Z}. 
+{p_end}
+
+{synoptset 20}{...}
+{synopthdr:Learners - other}
 {synoptline}
 {synopt:{opt cmd(string)}}
 ML program used for estimating conditional expectations. 
@@ -188,12 +241,11 @@ Please also see the examples via the links in the {helpb ddml##examples:ddml hel
 
 {pstd}{ul:Partially linear model.} 
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Preparations: we load the data and define global macros.{p_end}
 {phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
 {phang2}. {stata "global Y net_tfa"}{p_end}
 {phang2}. {stata "global D e401"}{p_end}
 {phang2}. {stata "global X tw age inc fsize educ db marr twoearn pira hown"}{p_end}
-{phang2}. {stata "set seed 42"}{p_end}
 
 {pstd}The options {cmd:model(partial)} selects the partially linear model
 and {cmd:kfolds(2)} selects two cross-fitting folds.
@@ -214,18 +266,46 @@ Here we request display of the {helpb pystacked} stacking weights and MSEs.{p_en
 
 {phang2}. {stata "ddml extract, show(pystacked)"}{p_end}
 
+{pstd}{ul:Equivalence of ddml and qddml.} 
+
+{pstd}Here we illustrate how to replicate the output of qddml using separate ddml command.
+Note that to guarantee exact replication, we need to set Stata's random-number seed
+and also specify two {help pystacked}-specific options.
+The {opt noshuffle} option is relevant to the cross-validation estimators supported by {help pystacked};
+it stops the data being shuffled before splitting into cross-validation folds.
+The {opt randomstate{int)} option is specific to the {help pystacked} random forest estimator;
+it controls the randomness of the bootstrap samples and sampling of features.
+We also need to ensure that we use the same cross-fold split in both estimations.
+{p_end}
+
+{pstd}We specify 5 base learners: OLS, cross-validated lasso and ridge, and two random forests.
+We will use the same specification for both conditional expectations E[Y|X} and E[D|X].{p_end}
+{phang2}. {stata "global rflow max_features(5) min_samples_leaf(1) max_samples(.7) random_state(0)"}{p_end}
+{phang2}. {stata "global rfhigh max_features(5) min_samples_leaf(10) max_samples(.7) random_state(0)"}{p_end}
+{phang2}. {stata "global psoptions method(ols lassocv ridgecv rf rf) cmdopt4($rflow) cmdopt5($rfhigh) type(reg) noshuffle"}{p_end}
+pstd}Estimation using {opt ddml}. Note that initialization also generates the (random) cross-fit split and identifier.{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+{phang2}. {stata "ddml init partial, kfolds(2)"}{p_end}
+{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X, $psoptions"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked $D $X, $psoptions"}{p_end}
+{pstd}Reset the seed prior to cross-fitting and estimation:{p_end}
+{phang2}. {stata "set seed 42"}{p_end}
+{pstd}Cross-fit and estimate:{p_end}
+{phang2}. {stata "ddml crossfit, shortstack"}{p_end}
+{phang2}. {stata "ddml estimate"}{p_end}
+{pstd}Estimation using {opt qddml}. Note that we re-use the same cross-fit split via the {opt foldvar(varname)} option.{p_end}
+{phang2}. {stata "qddml $Y $D ($X), mname(m1) model(partial) foldvar(m0_fid_1) pystacked($psoptions)"}{p_end}
+
 {pstd}{ul:Partially linear IV model.} 
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Preparations: we load the data and define global macros.{p_end}
 {phang2}. {stata "use https://statalasso.github.io/dta/AJR.dta, clear"}{p_end}
 {phang2}. {stata "global Y logpgp95"}{p_end}
 {phang2}. {stata "global D avexpr"}{p_end}
 {phang2}. {stata "global Z logem4"}{p_end}
 {phang2}. {stata "global X lat_abst edes1975 avelf temp* humid* steplow-oilres"}{p_end}
-{phang2}. {stata "set seed 42"}{p_end}
 
-{pstd}Since the
-data set is very small, we consider 30 cross-fitting folds.{p_end} 
+{pstd}Since the data set is very small, we consider 30 cross-fitting folds.{p_end} 
 {pstd}We need to add the option {opt vtype(none)} for {helpb rforest} to 
 work with {help ddml} since {helpb rforests}'s {cmd:predict} command doesn't
 support variable types.{p_end}
@@ -234,12 +314,11 @@ support variable types.{p_end}
 
 {pstd}{ul:Interactive model--ATE and ATET estimation.} 
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Preparations: we load the data and define global macros.{p_end}
 {phang2}. {stata "webuse cattaneo2, clear"}{p_end}
 {phang2}. {stata "global Y bweight"}{p_end}
 {phang2}. {stata "global D mbsmoke"}{p_end}
 {phang2}. {stata "global X mage prenatal1 mmarried fbaby mage medu"}{p_end}
-{phang2}. {stata "set seed 42"}{p_end}
 
 {pstd}
 Note that we use gradient boosted regression trees for E[Y|X,D] (see {opt ycmdopt()}),
@@ -256,25 +335,23 @@ we can simply use {ddml estimate}.{p_end}
 
 {pstd}{ul:Interactive IV model--LATE estimation.} 
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Preparations: we load the data and define global macros.{p_end}
 {phang2}. {stata "use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta,clear"}{p_end}
 {phang2}. {stata "global Y earnings"}{p_end}
 {phang2}. {stata "global D training"}{p_end}
 {phang2}. {stata "global Z assignmt"}{p_end}
 {phang2}. {stata "global X sex age married black hispanic"}{p_end}
-{phang2}. {stata "set seed 42"}{p_end}
 
 {phang2}. {stata "qddml $Y (c.($X)# #c($X)) ($D=$Z), kfolds(5) model(interactiveiv) cmd(pystacked) ycmdopt(type(reg) m(lassocv)) dcmdopt(type(class) m(lassocv)) zcmdopt(type(class) m(lassocv))"}{p_end}
 
 {pstd}{ul:Flexible Partially Linear IV model.} 
 
-{pstd}Preparations: we load the data, define global macros and set the seed.{p_end}
+{pstd}Preparations: we load the data and define global macros.{p_end}
 {phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear"}{p_end}
 {phang2}. {stata "global Y share"}{p_end}
 {phang2}. {stata "global D price"}{p_end}
 {phang2}. {stata "global X hpwt air mpd space"}{p_end}
 {phang2}. {stata "global Z sum*"}{p_end}
-{phang2}. {stata "set seed 42"}{p_end}
 
 {pstd}The syntax is the same as in the Partially Linear IV model, 
 but we now estimate the optimal instrument flexibly.{p_end}
