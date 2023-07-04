@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 8 june 2023
+*! last edited: 4 july 2023
 *! authors: aa/ms
 
 program define qddml, eclass sortpreserve
@@ -212,8 +212,8 @@ program define qddml, eclass sortpreserve
 	*** model name
 	if "`mname'"=="" local mname m0		
 
-	*** estimation
-	ddml init `model', `kfolds' reps(`reps') cluster(`cluster') `tabfold' `foldvar'
+	*** initialization
+	ddml init `model', mname(`mname') `kfolds' reps(`reps') cluster(`cluster') `tabfold' `foldvar'
 
 	*** IV-HD
 	if ("`model'"=="fiv") & `pyflag' {
