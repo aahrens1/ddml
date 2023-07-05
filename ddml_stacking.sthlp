@@ -85,6 +85,7 @@ This means that a single set of stacking weights is used to obtain all OOS cross
 This is in contrast to standard stacking and k-fold cross-fitting,
 where k different sets of stacking weights are estimated and used to obtain the k OOS cross-fit predictions.
 Pooled stacking is specified at the {help ddml crossfit} stage using the {opt poolstack} option.
+Pooled stacking is available only in conjunction with standard stacking.
 The default final estimator is the same as with {help pystacked},
 and can be changed using the {opt psfinalest(estimator)} option.
 

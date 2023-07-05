@@ -123,8 +123,9 @@ the {help pystacked} default is constrained non-negative least squares.
 Standard stacking is available only in combination with {help pystacked}.
 {p_end}
 {synopt:{opt poolstack}} is an alternative to standard stacking via {help pystacked}.
-Pooled-stacking combines the out-of-sample predicted values of the {help pystacked}
+Pooled stacking combines the out-of-sample predicted values of the {help pystacked}
 using a single final estimation and set of weights.
+Pooled stacking is available only in conjunction with standard stacking.
 {p_end}
 {synopt:{opt psfinalest(name)}}
 specified the final (ensemble) estimator used to combine

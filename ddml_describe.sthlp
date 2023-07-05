@@ -1,14 +1,10 @@
 {smcl}
-{* *! version 3jul2023}{...}
+{* *! version 4jul2023}{...}
 {hline}
 {cmd:help ddml describe}{right: v1.2}
 {hline}
 
 {title:ddml describe utility for Double Debiased Machine Learning}
-
-{p2colset 5 19 21 2}{...}
-{p2col:{hi: ddml} {hline 2}}Stata package for Double Debiased Machine Learning{p_end}
-{p2colreset}{...}
 
 {pstd}
 {opt ddml} implements algorithms for causal inference aided by supervised
