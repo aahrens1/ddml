@@ -1,5 +1,5 @@
 *! crossfit v0.6
-*! last edited: 8 june 2023
+*! last edited: 5 july 2023
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 
@@ -1295,7 +1295,7 @@ program define _crossfit_other, rclass sortpreserve
 					}
 					
 					// get fitted values for kth fold	
-					qui predict double `vhat_k' if `fid'==`k' & `touse', `predopt'
+					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
 		
 					// get predicted values
 					qui replace `vhat`j'' = `vhat_k' if `fid'==`k' & `touse'
@@ -1317,7 +1317,7 @@ program define _crossfit_other, rclass sortpreserve
 		
 					// get fitted values for kth fold	
 					tempvar vhat_k
-					qui predict double `vhat_k' if `fid'==`k' & `touse', `predopt'
+					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
 					qui replace `vhat1`j'' = `vhat_k' if `fid'==`k' & `touse'
 					qui replace `vres1`j'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
 		
@@ -1338,7 +1338,7 @@ program define _crossfit_other, rclass sortpreserve
 			
 						// get fitted values for kth fold	
 						tempvar vhat_k
-						qui predict double `vhat_k' if `fid'==`k' & `touse', `predopt'					
+						qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'					
 
 					}
 					qui replace `vhat0`j'' = `vhat_k' if `fid'==`k' & `touse'
@@ -1361,7 +1361,7 @@ program define _crossfit_other, rclass sortpreserve
 					}
 		
 					// get fitted values (in and out of sample)
-					qui predict double `vhat_k' if `touse', `predopt'
+					qui predict `vtype' `vhat_k' if `touse', `predopt'
 		
 					// get *combined* out-of-sample predicted values
 					qui replace `dhat`j'' = `vhat_k' if `fid'==`k' & `touse'
@@ -1379,7 +1379,7 @@ program define _crossfit_other, rclass sortpreserve
 					local cmd_h `e(cmd)'
 		
 					// get fitted values  
-					qui predict double `vtil_k' if `touse', `predopt_h'
+					qui predict `vtype' `vtil_k' if `touse', `predopt_h'
 		
 					// get *combined* out-of-sample predicted values
 					qui replace `hhat`j'' = `vtil_k' if `fid'==`k' & `touse'
