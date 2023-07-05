@@ -307,9 +307,9 @@ program define qddml, eclass sortpreserve
 			`dcmd' `dexog' `xctrl' `dcmdoptions' `cmdoptions'
 	}	
 		
-	ddml crossfit, `noisily' `shortstack' `poolstack' ssfinalest(`ssfinalest') psfinalest(`psfinalest')
-	if "`verbose'"!="" ddml desc
-	ddml estimate, vce(`vce') `atet' `ateu'
+	ddml crossfit, mname(`mname') `noisily' `shortstack' `poolstack' ssfinalest(`ssfinalest') psfinalest(`psfinalest')
+	if "`verbose'"!="" ddml desc, mname(`mname')
+	ddml estimate, mname(`mname') vce(`vce') `atet' `ateu'
 
 end 
 
