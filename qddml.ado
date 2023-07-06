@@ -48,6 +48,8 @@ program define qddml, eclass sortpreserve
 		psfinalest(name)						///
 		atet 									///
 		ateu									///
+		cfseed(integer 0)						/// currently undocumented - reset seed prior to crossfitting
+		eseed(integer 0)						/// currently undocumented - reset seed prior to estimation
 		]
 	
 	mata: s_ivparse("`anything'")
@@ -306,9 +308,13 @@ program define qddml, eclass sortpreserve
 		ddml E[D|X], mname(`mname') vname(`dexog') predopt(`dpredopt') vtype(`dvtype') `nostdstack':		///
 			`dcmd' `dexog' `xctrl' `dcmdoptions' `cmdoptions'
 	}	
-		
+	
+	// manual resetting of seed prior to cross-fitting
+	if `cfseed'			set seed `cfseed'
 	ddml crossfit, mname(`mname') `noisily' `shortstack' `poolstack' ssfinalest(`ssfinalest') psfinalest(`psfinalest')
-	if "`verbose'"!="" ddml desc, mname(`mname')
+	if "`verbose'"!=""	ddml desc, mname(`mname')
+	// manual resetting of seed prior to estimation
+	if `eseed'			set seed `eseed'
 	ddml estimate, mname(`mname') vce(`vce') `atet' `ateu'
 
 end 
