@@ -89,6 +89,13 @@ Pooled stacking is available only in conjunction with standard stacking.
 The default final estimator is the same as with {help pystacked},
 and can be changed using the {opt psfinalest(estimator)} option.
 
+{pstd}Note: all final estimators available with {help pystacked} are also available for pooled stacking.
+However, the current version of {help pystacked} generates the necessary cross-validated OOS predicted values
+only if the standard stacking final estimator used by {help pystacked}
+is either {opt nnls1} (the default), {opt ls1} or {opt singlebest}.
+Hence when using pooled stacking,
+the standard stacking final estimator specified with {help pystacked} needs to be one of these.
+
 
 {title:Short-stacking}
 
