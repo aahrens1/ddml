@@ -941,10 +941,12 @@ program _ddml_estimate_main
 		di as text "DDML estimation results:"
 		di as text "spec  r" %14s "Y learner" _c
 		forvalues j=1/`numeqnD' {
-			di as text %14s "D learner" %10s "b" %10s "SE" _c
+			// space after SE for the (.) enclosing the SE
+			di as text %14s "D learner" %10s "b" %11s "SE " _c
 		}
 		if `showconsflag' {
-			di as text %10s "_cons" %10s "SE" _c
+			// space after SE for the (.) enclosing the SE
+			di as text %10s "_cons" %11s "SE " _c
 		}
 		if "`model'"=="fiv" {
 			forvalues j=1/`numeqnD' {
@@ -975,24 +977,30 @@ program _ddml_estimate_main
 					local specrep "`: di %3.0f `i' %3.0f `m''"
 					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') notable replay `noconstant'
 					di %6s "{`rcmd':`specrep'}" _c
-					di as res %14s "`yt'" _c
+					di as res %14s abbrev("`yt'",13) _c
 					forvalues j=1/`numeqnD' {
 						local vt : word `j' of `dtlist'
 						mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
 						mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
-						di as res %14s "`vt'" _c
-						di as res %10.3f `b' _c
-						local pse (`: di %6.3f `se'')
-						di as res %10s "`pse'" _c
+						di as res %14s abbrev("`vt'",13) _c
+						// precede with a space
+						di as res " " %9.3f `b' _c
+						local se = strtrim("`: di %8.3f `se''")
+						local pse (`se')
+						// precede with a space
+						di as res " " %10s "`pse'" _c
 					}
 					if `showconsflag' {
 						// set j by hand; cons is in last column
 						local j = `numeqnD' + 1
 						mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
 						mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
-						di as res %10.3f `b' _c
-						local pse (`: di %6.3f `se'')
-						di as res %10s "`pse'" _c
+						// precede with a space
+						di as res " " %9.3f `b' _c
+						local se = strtrim("`: di %8.3f `se''")
+						local pse (`se')
+						// precede with a space
+						di as res " " %10s "`pse'" _c
 					}
 					forvalues j=1/`numeqnZ' {
 						local vt : word `j' of `ztlist'
@@ -1025,16 +1033,24 @@ program _ddml_estimate_main
 						mata: `eqn' = (`mname'.eqnAA).get("`dd'")
 						mata: st_local("vt",return_learner_item(`eqn',"opt","`m'"))
 						di as res %14s abbrev("`vt'",13) _c
-						di as res %10.3f el(`btemp',1,`j') _c
-						local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-						di as res %10s "`pse'" _c
+						// precede with a space
+						di as res " " %9.3f el(`btemp',1,`j') _c
+						local se = sqrt(el(`Vtemp',`j',`j'))
+						local se = strtrim("`: di %8.3f `se''")
+						local pse (`se')
+						// precede with a space
+						di as res " " %10s "`pse'" _c
 					}
 					if `showconsflag' {
 						// set j by hand; cons is in last column
 						local j = `numeqnD' + 1
-						di as res %10.3f el(`btemp',1,`j') _c
-						local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-						di as res %10s "`pse'" _c
+						// precede with a space
+						di as res " " %9.3f el(`btemp',1,`j') _c
+						local se = sqrt(el(`Vtemp',`j',`j'))
+						local se = strtrim("`: di %8.3f `se''")
+						local pse (`se')
+						// precede with a space
+						di as res " " %10s "`pse'" _c
 					}
 					forvalues j=1/`numeqnZ' {
 						local zz : word `j' of `nameZ'
@@ -1064,16 +1080,24 @@ program _ddml_estimate_main
 				di as res %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
 					di as res %14s "[ss]" _c
-					di as res %10.3f el(`btemp',1,`j') _c
-					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-					di as res %10s "`pse'" _c
+					// precede with a space
+					di as res " " %9.3f el(`btemp',1,`j') _c
+					local se = sqrt(el(`Vtemp',`j',`j'))
+					local se = strtrim("`: di %8.3f `se''")
+					local pse (`se')
+					// precede with a space
+					di as res " " %10s "`pse'" _c
 				}
 				if `showconsflag' {
 					// set j by hand; cons is in last column
 					local j = `numeqnD' + 1
-					di as res %10.3f el(`btemp',1,`j') _c
-					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-					di as res %10s "`pse'" _c
+					// precede with a space
+					di as res " " %9.3f el(`btemp',1,`j') _c
+					local se = sqrt(el(`Vtemp',`j',`j'))
+					local se = strtrim("`: di %8.3f `se''")
+					local pse (`se')
+					// precede with a space
+					di as res " " %10s "`pse'" _c
 				}
 				if "`model'"=="fiv" {
 					forvalues j=1/`numeqnD' {
@@ -1096,16 +1120,24 @@ program _ddml_estimate_main
 				di as res %14s "[poolstack]" _c
 				forvalues j=1/`numeqnD' {
 					di as res %14s "[ps]" _c
-					di as res %10.3f el(`btemp',1,`j') _c
-					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-					di as res %10s "`pse'" _c
+					// precede with a space
+					di as res " " %9.3f el(`btemp',1,`j') _c
+					local se = sqrt(el(`Vtemp',`j',`j'))
+					local se = strtrim("`: di %8.3f `se''")
+					local pse (`se')
+					// precede with a space
+					di as res " " %10s "`pse'" _c
 				}
 				if `showconsflag' {
 					// set j by hand; cons is in last column
 					local j = `numeqnD' + 1
-					di as res %10.3f el(`btemp',1,`j') _c
-					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-					di as res %10s "`pse'" _c
+					// precede with a space
+					di as res " " %9.3f el(`btemp',1,`j') _c
+					local se = sqrt(el(`Vtemp',`j',`j'))
+					local se = strtrim("`: di %8.3f `se''")
+					local pse (`se')
+					// precede with a space
+					di as res " " %10s "`pse'" _c
 				}
 				if "`model'"=="fiv" {
 					forvalues j=1/`numeqnD' {
@@ -1134,7 +1166,8 @@ program _ddml_estimate_main
 		di
 		di as text "Mean/med    Y learner" _c
 		forvalues j=1/`numeqnD' {
-			di as text %14s "D learner" %10s "b" %10s "SE" _c
+			// space after SE for the (.) enclosing the SE
+			di as text %14s "D learner" %10s "b" %11s "SE " _c
 		}
 		if "`model'"=="fiv" {
 			forvalues j=1/`numeqnD' {
@@ -1160,9 +1193,13 @@ program _ddml_estimate_main
 				di as res %14s "[min-mse]" _c
 				forvalues j=1/`numeqnD' {
 					di as res %14s "[mse]" _c
-					di as res %10.3f el(`btemp',1,`j') _c
-					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-					di as res %10s "`pse'" _c
+					// precede with a space
+					di as res " " %9.3f el(`btemp',1,`j') _c
+					local se = sqrt(el(`Vtemp',`j',`j'))
+					local se = strtrim("`: di %8.3f `se''")
+					local pse (`se')
+					// precede with a space
+					di as res " " %10s "`pse'" _c
 				}
 				if "`model'"=="fiv" {
 					forvalues j=1/`numeqnD' {
@@ -1187,9 +1224,13 @@ program _ddml_estimate_main
 				di as res %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
 					di as res %14s "[ss]" _c
-					di as res %10.3f el(`btemp',1,`j') _c
-					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-					di as res %10s "`pse'" _c
+					// precede with a space
+					di as res " " %9.3f el(`btemp',1,`j') _c
+					local se = sqrt(el(`Vtemp',`j',`j'))
+					local se = strtrim("`: di %8.3f `se''")
+					local pse (`se')
+					// precede with a space
+					di as res " " %10s "`pse'" _c
 				}
 				if "`model'"=="fiv" {
 					forvalues j=1/`numeqnD' {
@@ -1214,9 +1255,13 @@ program _ddml_estimate_main
 				di as res %14s "[poolstack]" _c
 				forvalues j=1/`numeqnD' {
 					di as res %14s "[ps]" _c
-					di as res %10.3f el(`btemp',1,`j') _c
-					local pse (`: di %6.3f sqrt(el(`Vtemp',`j',`j'))')
-					di as res %10s "`pse'" _c
+					// precede with a space
+					di as res " " %9.3f el(`btemp',1,`j') _c
+					local se = sqrt(el(`Vtemp',`j',`j'))
+					local se = strtrim("`: di %8.3f `se''")
+					local pse (`se')
+					// precede with a space
+					di as res " " %10s "`pse'" _c
 				}
 				if "`model'"=="fiv" {
 					forvalues j=1/`numeqnD' {
@@ -1272,14 +1317,15 @@ program _ddml_estimate_main
 		di as text %12s "D eqn" %10s "mean" %10s "min" %10s "p25" %10s "p50" %10s "p75" %10s "max"
 		local i 1
 		foreach vn in `dnames' {
-			di %12s as text "`vn'" _col(15) _c
+			di as text %12s abbrev("`vn'",11) _col(15) _c
 			qui sum `bhat'`i', detail
-			di as res %10.4f r(mean) _c
-			di as res %10.4f r(min) _c
-			di as res %10.4f r(p25) _c
-			di as res %10.4f r(p50) _c
-			di as res %10.4f r(p75) _c
-			di as res %10.4f r(max)
+			// intersperse with spaces
+			di as res " " %9.4f r(mean) _c
+			di as res " " %9.4f r(min) _c
+			di as res " " %9.4f r(p25) _c
+			di as res " " %9.4f r(p50) _c
+			di as res " " %9.4f r(p75) _c
+			di as res " " %9.4f r(max)
 			local ++i
 		}
 	}
