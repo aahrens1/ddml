@@ -44,7 +44,6 @@ struct eStruct {
 	real scalar						lieflag			// =1 if LIE spec with two estimation strings etc.
 	real scalar						ateflag			// =1 if treatment variable in ATE/LATE
 	real scalar						pystackedmulti	// =#learners if pystacked with multiple learners
-	real scalar						nostdstack		// =1 if pystacked should not stack
 	class AssociativeArray scalar	lrnAA			// AssociativeArray with all learners //
 													// (keys=vtilde,object)
 	class AssociativeArray scalar	resAA			// AssociativeArray with all learner results //
@@ -56,7 +55,6 @@ struct eStruct {
 struct eStruct init_eStruct()
 {
 	struct eStruct scalar	m
-//	class AssociativeArray scalar	A2, A3
 
 	m.vname				= ""
 	m.vtlist			= J(1,0,"")
@@ -66,7 +64,6 @@ struct eStruct init_eStruct()
 	m.lieflag			= 0
 	m.ateflag			= 0
 	m.pystackedmulti	= 0
-	m.nostdstack		= 0
 	
 	(m.lrnAA).reinit("string",2)
 	(m.resAA).reinit("string",3)
@@ -96,6 +93,7 @@ struct mStruct {
 	string colvector				nameD			// treatment variable(s)
 	string colvector				nameZ			// instrument(s)
 	string scalar					fclustvar		// name of fold cluster variable (="" if none)
+	real scalar						stdflag			// flag for standard stacking (default=1)
 	real scalar						ssflag			// flag for short-stacking
 	real scalar						psflag			// flag for pooled-stacking
 	string scalar					strDatavars		// string with expanded names of Stata variables
@@ -120,6 +118,7 @@ struct mStruct init_mStruct()
 	m.nameY				= ""
 	m.nameD				= J(1,0,"")
 	m.nameZ				= J(1,0,"")
+	m.stdflag			= 1			// will be set =0 if pystacked uses voting instead
 	m.ssflag			= 0
 	m.psflag			= 0
 	m.fclustvar			= ""
