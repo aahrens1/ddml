@@ -455,6 +455,7 @@ program _ddml_estimate_main
 	// remaining macro flags
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
+	mata: st_local("stdflag",strofreal(`mname'.stdflag))
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 	mata: st_local("psflag",strofreal(`mname'.psflag))
 	
@@ -528,17 +529,15 @@ program _ddml_estimate_main
 		exit 198
 	}
 
-	// stdflag=1 if pystacked standard stacking is the only learner for all vars
-	// numspecflag=1 unless there is no numbered (i.e. not ss or ps) spec - possible with pystacked and only shortstacking
-	local stdflag		= 1
-	local numspecflag	= 1
+	// numspecflag=1 unless there is no numbered (i.e. not numbers, ss or ps) spec
+	// possible with all pystacked and only shortstacking
+	local allpystackedmulti = 1
 	foreach vname in `nameY' `nameD' `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
-			local stdflag		= `stdflag' & `pystackedmulti'
-			local numspecflag	= `numspecflag' & (`nostdstack'==0)
-	}	
+			local allpystackedmulti = `allpystackedmulti' & `pystackedmulti'
+	}
+	local numspecflag	= (`allpystackedmulti'==0) | (`stdflag'==1) | (`psflag'==1)
 
 	// default specs, in order/if available: ss, ps, mse if ncombos>1, otherwise 1 since ncombos=1
 	if "`spec'"=="" {

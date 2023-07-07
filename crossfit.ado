@@ -1,5 +1,5 @@
 *! crossfit v0.6
-*! last edited: 5 july 2023
+*! last edited: 7 july 2023
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 
@@ -156,6 +156,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 							ssfinalest(name)		/// final estimator for short-stacking
 							psfinalest(name)		/// final estimator for pooled-stacking
 							finalest(name)			/// final estimator for both
+							NOSTDstack				/// no standard stacking - use psytacked+voting to get learners only
 							*						/// ignored options
 							]
 
@@ -186,14 +187,19 @@ program define _crossfit_pystacked, rclass sortpreserve
 	** indicator for pooled-stacking
 	local psflag	= "`poolstack'"~=""
 	** indicator for standard stacking
-	mata: st_local("stdflag", strofreal(1-`ename'.nostdstack))
+	local stdflag	= "`nostdstack'"==""
 	if `psflag' & ~`stdflag' {
 		di as res "pooled stacking requires standard stacking; poolstack option ignored"
 		local psflag = 0
 	}
 	if ~`stdflag' & ~`ssflag' {
-		di as err "error - nostd setting requires short-stacking"
+		di as err "error - pystacked integration requires using either standard and/or short-stacking"
 		exit 198
+	}
+	// pystacked option for voting instead of stacking
+	// votetype is ignored if type=reg; relevant only for type=class
+	if ~`stdflag' {
+		local nostdstackopt voting votetype(soft)
 	}
 	
 	if "`noisily'"=="" {
@@ -377,7 +383,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				}
 				
 				// estimate excluding kth fold
-				`qui' `est_main' if `fid'!=`k' & `touse', `est_options'
+				`qui' `est_main' if `fid'!=`k' & `touse', `est_options' `nostdstackopt'
 				`qui' di as text "N=" as res e(N)
 				local base_est `e(base_est)'
 				local stack_final_est `e(finalest)'
@@ -2230,6 +2236,10 @@ def py_get_stack_weights(yvar,xvars,touse,wvar,finalest,stype):
         fin_est = ConstrLS()
     elif finalest == "ridge" and stype == "reg": 
         fin_est = RidgeCV()
+    elif finalest == "avg" and stype == "reg": 
+        fin_est = AvgEstimator()
+    elif finalest == "avg" and stype == "class": 
+        fin_est = AvgClassifier()
     elif finalest == "singlebest" and stype == "reg": 
         fin_est = SingleBest()
     elif finalest == "singlebest" and stype == "class": 
@@ -2325,12 +2335,34 @@ class SingleBest(BaseEstimator):
         check_is_fitted(self, 'is_fitted_')
         return X[:,self.best]
 
+class AvgEstimator(BaseEstimator):
+    """
+    Avg of learners
+    """
+    _estimator_type="regressor"
+    def fit(self, X, y, w):
+        X, y = check_X_y(X, y, accept_sparse=True)
+        self.is_fitted_ = True
+        ncols = X.shape[1]
+        self.coef_ = np.repeat(1/ncols,ncols)
+        self.cvalid=X
+        return self
+    def predict(self, X):
+        X = check_array(X, accept_sparse=True)
+        check_is_fitted(self, 'is_fitted_')
+        return X.mean(axis=1)
+
 class ConstrLSClassifier(ConstrLS):
     _estimator_type="classifier"
     def predict_proba(self, X):
         return self.predict(X)
 
 class SingleBestClassifier(SingleBest):
+    _estimator_type="classifier"
+    def predict_proba(self, X):
+        return self.predict(X)
+
+class AvgClassifier(AvgEstimator):
     _estimator_type="classifier"
     def predict_proba(self, X):
         return self.predict(X)

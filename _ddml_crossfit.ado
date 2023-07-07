@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 8 june 2023
+*! last edited: 7 july 2023
 *! authors: aa/ms
 
 *** ddml cross-fitting
@@ -11,6 +11,7 @@ program _ddml_crossfit, eclass sortpreserve
 							mname(name)				///
 							shortstack				///
 							poolstack				///
+							NOSTDstack				/// no standard stacking (pystacked only); use voting to get learners
 							NOIsily					///
 							Verbose 				///
 							crossfitother			/// force use of general (not-pystacked-specific) code
@@ -42,6 +43,7 @@ program _ddml_crossfit, eclass sortpreserve
 	// set flags
 	local ssflag	= "`shortstack'"~=""
 	local psflag	= "`poolstack'"~=""
+	local stdflag	= "`nostdstack'"==""
 	
 	*** extract details of estimation
 	// model
@@ -96,11 +98,7 @@ program _ddml_crossfit, eclass sortpreserve
 	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
 	// if model is LIE, pystacked is treated as a single learner
 	if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
-	// flag indicates pystacked does no standard stacking
-	mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
-	local nostackflag	=0
-	if `nostdstack'		local nostackflag=1
-	local allpsm = 1
+	local allpsm		= 1
 	if `pystackedmulti'	local minlearners=`pystackedmulti'
 	else				local allpsm=0
 	
@@ -121,13 +119,10 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
 		// if model is LIE, pystacked is treated as a single learner
 		if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
-		mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+		// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
 		if `pystackedmulti'			local numlnrD=`pystackedmulti'
 		else						local allpsm=0
 		if `numlnrD'<`minlearners'	local minlearners=`numlnrD'
-		if `nostdstack'				local nostackflag=1
-		// if pystackedmulti=0, not pystacked so every eqn goes to general crossfit code
-		// if pystackedmulti=1, pystacked with 1 learner so every eqn goes to general crossfit code
 		if `pystackedmulti'<=1		local allpystackedmulti=0
 	}
 	
@@ -145,13 +140,10 @@ program _ddml_crossfit, eclass sortpreserve
 			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
 			// if model is LIE, pystacked is treated as a single learner
 			if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
-			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+			// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
 			if `pystackedmulti'			local numlnrZ=`pystackedmulti'
 			else						local allpsm=0
 			if `numlnrZ'<`minlearners'	local minlearners `numlnrZ'
-			if `nostdstack'				local nostackflag=1
-			// if pystackedmulti=0, not pystacked so every eqn goes to general crossfit code
-			// if pystackedmulti=1, pystacked with 1 learner so every eqn goes to general crossfit code
 			if `pystackedmulti'<=1		local allpystackedmulti=0
 		}
 	}
@@ -168,7 +160,7 @@ program _ddml_crossfit, eclass sortpreserve
 		local poolstack
 	}
 	// pooled-stacking requires pystacked multilearner in all equations
-	if `psflag' & (~`allpsm' | `nostackflag') {
+	if `psflag' & (~`allpsm' | ~`stdflag') {
 		di as text "poolstack requires a single use of pystacked with multiple learners in all equations; option ignored"
 		mata: `mname'.psflag = 0
 		local psflag=0
@@ -184,11 +176,13 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: `mname'.allpystackedmulti = 0
 		`qui' di as text "crossfitting all eqns will use general (not pystacked-specific) code"
 	}
-	// update model struct flags for shortstacking and poolstacking
-	if `ssflag'		mata: `mname'.ssflag = 1
-	else 			mata: `mname'.ssflag = 0
-	if `psflag' 	mata: `mname'.psflag = 1
-	else			mata: `mname'.psflag = 0
+	// update model struct flags for stacking
+	if `stdflag'	mata: `mname'.stdflag	= 1
+	else 			mata: `mname'.stdflag	= 0
+	if `ssflag'		mata: `mname'.ssflag	= 1
+	else 			mata: `mname'.ssflag	= 0
+	if `psflag' 	mata: `mname'.psflag	= 1
+	else			mata: `mname'.psflag	= 0
 	
 	if `debugflag' {
 		*** report estimates for full sample for debugging purposes
@@ -230,7 +224,7 @@ program _ddml_crossfit, eclass sortpreserve
 			foldvar(`fidlist')						///
 			firstrep(`firstrep')					///
 			treatvar(`treatvar')					///
-			`noisily' `options'
+			`options' `nostdstack' `noisily'
 		// resinsert into model struct AA with equations
 		mata: (`mname'.eqnAA).put("`nameY'",`eqn')
 
@@ -264,7 +258,7 @@ program _ddml_crossfit, eclass sortpreserve
 					foldvar(`fidlist')						///
 					firstrep(`firstrep')					///
 					treatvar(`treatvar')					///
-					`noisily' `options'						///
+					`options' `nostdstack' `noisily'		///
 					`allowallzero'
 				mata: (`mname'.eqnAA).put("`var'",`eqn')
 			}
@@ -286,13 +280,13 @@ program _ddml_crossfit, eclass sortpreserve
 					pystackedmulti(`allpystackedmulti')		///
 					foldvar(`fidlist')						///
 					firstrep(`firstrep')					///
-					`noisily' `options'
+					`options' `nostdstack' `noisily'
 				mata: (`mname'.eqnAA).put("`var'",`eqn')
 			}
 		}
 		
 		// create sample dfn variable by resample
-		create_sample_indicators, mname(`mname')
+		create_sample_indicators, mname(`mname') stdflag(`stdflag')
 		
 		// set flag on model struct
 		// reps=resamplings to be done, crossfitted=resamplings done so far
@@ -316,7 +310,7 @@ end
 // same naming as main sample variable but with a _m resample subscript
 program create_sample_indicators
 	version 16
-	syntax [anything], mname(name)
+	syntax [anything], mname(name) [ stdflag(integer 1) ]
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
@@ -332,9 +326,9 @@ program create_sample_indicators
 	
 	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 	mata: st_local("shortstack", `eqn'.shortstack)
-	mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+	// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
-	if `nostdstack'	local vtlistY `shortstack'_ss
+	if ~`stdflag'	local vtlistY `shortstack'_ss
 	
 	local lieflag = 0
 	if `numeqnD' {
@@ -342,9 +336,9 @@ program create_sample_indicators
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			mata: st_local("shortstack", `eqn'.shortstack)
-			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+			// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
-			if `nostdstack'	local vtlistD `shortstack'_ss
+			if ~`stdflag'	local vtlistD `shortstack'_ss
 			local Dt_list `Dt_list' `vtlistD'
 		}
 	}
@@ -354,12 +348,12 @@ program create_sample_indicators
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			mata: st_local("shortstack", `eqn'.shortstack)
-			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+			// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			foreach vn in `vtlistD' {
 				local vtlistD_h `vtlistD_h' `vn'_h
 			}
-			if `nostdstack'	local vtlistD_h `shortstack'_h_ss
+			if ~`stdflag'	local vtlistD_h `shortstack'_h_ss
 			local DHt_list `DHt_list' `vtlistD_h'
 		}
 	}
@@ -368,9 +362,9 @@ program create_sample_indicators
 		foreach var of varlist `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("shortstack", `eqn'.shortstack)
-			mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
+			// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
-			if `nostdstack'	local vtlistZ `shortstack'_ss
+			if ~`stdflag'	local vtlistZ `shortstack'_ss
 			local Zt_list `Zt_list' `vtlistZ'
 		}
 	}
