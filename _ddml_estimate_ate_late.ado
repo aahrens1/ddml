@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 8 june 2023
+*! last edited: 7 july 2023
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -1244,7 +1244,8 @@ program _ddml_estimate_main
 			di as text           %14s "D(0) learner" _c
 			di as text           %14s "D(1) learner" _c
 		}
-		di as text %10s "b" %10s "SE" _c
+		// space after SE for the (.) enclosing the SE
+		di as text %10s "b" %11s "SE " _c
 		if ~`ateflag' {
 			di as text           %14s "Z learner" _c
 		}
@@ -1265,23 +1266,26 @@ program _ddml_estimate_main
 					local specrep "`: di %3.0f `i' %3.0f `m''"
 					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') notable replay
 					di %6s "{`rcmd':`specrep'}" _c
-					di as res %14s "`yt0'" _c
-					di as res %14s "`yt1'" _c
+					di as res %14s abbrev("`yt0'",13) _c
+					di as res %14s abbrev("`yt1'",13) _c
 					if `ateflag' {
 						mata: st_local("dt",`nmat'[`i',3])
-						di as res %14s "`dt'" _c
+						di as res %14s abbrev("`dt'",13) _c
 					}
 					else {
 						mata: st_local("dt0",abbrev(`nmat'[`i',3],13))
 						mata: st_local("dt1",abbrev(`nmat'[`i',4],13))
-						di as res %14s "`dt0'" _c
-						di as res %14s "`dt1'" _c
+						di as res %14s abbrev("`dt0'",13) _c
+						di as res %14s abbrev("`dt1'",13) _c
 					}
 					mata: st_local("b",strofreal(`bmat'[(`m'-1)*`ncombos'+`i',`j']))
 					mata: st_local("se",strofreal(`semat'[(`m'-1)*`ncombos'+`i',`j']))
-					di as res %10.3f `b' _c
-					local pse (`: di %6.3f `se'')
-					di as res %10s "`pse'" _c
+					// precede with a space
+					di as res " " %9.3f `b' _c
+					local se = strtrim("`: di %8.3f `se''")
+					local pse (`se')
+					// precede with a space
+					di as res " " %10s "`pse'" _c
 					if ~`ateflag' {
 						mata: st_local("zt",abbrev(`nmat'[`i',5],13))
 						di as res %14s "`zt'" _c
@@ -1307,7 +1311,7 @@ program _ddml_estimate_main
 					if `ateflag' {
 						mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
 						mata: st_local("dt",return_learner_item(`eqn',"opt","`m'"))
-						di as res %14s "`dt'" _c
+						di as res %14s abbrev("`dt'",13) _c
 					}
 					else {
 						mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
@@ -1317,9 +1321,13 @@ program _ddml_estimate_main
 						di as res %14s abbrev("`dt1'",13) _c
 					
 					}
-					di as res %10.3f el(`btemp',1,1) _c
-					local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-					di as res %10s "`pse'" _c
+					// precede with a space
+					di as res " " %9.3f el(`btemp',1,1) _c
+					local se = sqrt(el(`Vtemp',1,1))
+					local se = strtrim("`: di %8.3f `se''")
+					local pse (`se')
+					// precede with a space
+					di as res " " %10s "`pse'" _c
 					if ~`ateflag' {
 						mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
 						mata: st_local("zt",return_learner_item(`eqn',"opt","`m'"))
@@ -1343,9 +1351,13 @@ program _ddml_estimate_main
 				if ~`ateflag' {
 					di as res %14s "[ss]" _c
 				}
-				di as res %10.3f el(`btemp',1,1) _c
-				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-				di as res %10s "`pse'" _c
+				// precede with a space
+				di as res " " %9.3f el(`btemp',1,1) _c
+				local se = sqrt(el(`Vtemp',1,1))
+				local se = strtrim("`: di %8.3f `se''")
+				local pse (`se')
+				// precede with a space
+				di as res " " %10s "`pse'" _c
 				if ~`ateflag' {
 					di as res %14s "[ss]" _c
 				}
@@ -1366,9 +1378,13 @@ program _ddml_estimate_main
 				if ~`ateflag' {
 					di as res %14s "[ps]" _c
 				}
-				di as res %10.3f el(`btemp',1,1) _c
-				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-				di as res %10s "`pse'" _c
+				// precede with a space
+				di as res " " %9.3f el(`btemp',1,1) _c
+				local se = sqrt(el(`Vtemp',1,1))
+				local se = strtrim("`: di %8.3f `se''")
+				local pse (`se')
+				// precede with a space
+				di as res " " %10s "`pse'" _c
 				if ~`ateflag' {
 					di as res %14s "[ps]" _c
 				}
@@ -1398,7 +1414,8 @@ program _ddml_estimate_main
 			di as text           %14s "D(0) learner" _c
 			di as text           %14s "D(1) learner" _c
 		}
-		di as text               %10s "b" %10s "SE" _c
+		// space after SE for the (.) enclosing the SE
+		di as text               %10s "b" %11s "SE " _c
 		if ~`ateflag' {
 			di as text           %14s "Z learner" _c
 		}
@@ -1419,9 +1436,13 @@ program _ddml_estimate_main
 				if ~`ateflag' {
 					di as res %14s "[mse]" _c
 				}
-				di as res %10.3f el(`btemp',1,1) _c
-				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-				di as res %10s "`pse'" _c
+				// precede with a space
+				di as res " " %9.3f el(`btemp',1,1) _c
+				local se = sqrt(el(`Vtemp',1,1))
+				local se = strtrim("`: di %8.3f `se''")
+				local pse (`se')
+				// precede with a space
+				di as res " " %10s "`pse'" _c
 				if ~`ateflag' {
 					di as res %14s "[mse]" _c
 				}
@@ -1441,9 +1462,13 @@ program _ddml_estimate_main
 				if ~`ateflag' {
 					di as res %14s "[ss]" _c
 				}
-				di as res %10.3f el(`btemp',1,1) _c
-				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-				di as res %10s "`pse'" _c
+				// precede with a space
+				di as res " " %9.3f el(`btemp',1,1) _c
+				local se = sqrt(el(`Vtemp',1,1))
+				local se = strtrim("`: di %8.3f `se''")
+				local pse (`se')
+				// precede with a space
+				di as res " " %10s "`pse'" _c
 				if ~`ateflag' {
 					di as res %14s "[ss]" _c
 				}
@@ -1463,9 +1488,13 @@ program _ddml_estimate_main
 				if ~`ateflag' {
 					di as res %14s "[ps]" _c
 				}
-				di as res %10.3f el(`btemp',1,1) _c
-				local pse (`: di %6.3f sqrt(el(`Vtemp',1,1))')
-				di as res %10s "`pse'" _c
+				// precede with a space
+				di as res " " %9.3f el(`btemp',1,1) _c
+				local se = sqrt(el(`Vtemp',1,1))
+				local se = strtrim("`: di %8.3f `se''")
+				local pse (`se')
+				// precede with a space
+				di as res " " %10s "`pse'" _c
 				if ~`ateflag' {
 					di as res %14s "[ps]" _c
 				}
@@ -1510,14 +1539,15 @@ program _ddml_estimate_main
 		di as text %12s "D eqn" %10s "mean" %10s "min" %10s "p25" %10s "p50" %10s "p75" %10s "max"
 		local i 1
 		foreach vn in `dnames' {
-			di %12s as text "`vn'" _col(15) _c
+			di as text %12s abbrev("`vn'",11) _col(15) _c
 			qui sum `bhat'`i', detail
-			di as res %10.4f r(mean) _c
-			di as res %10.4f r(min) _c
-			di as res %10.4f r(p25) _c
-			di as res %10.4f r(p50) _c
-			di as res %10.4f r(p75) _c
-			di as res %10.4f r(max)
+			// intersperse with spaces
+			di as res " " %9.4f r(mean) _c
+			di as res " " %9.4f r(min) _c
+			di as res " " %9.4f r(p25) _c
+			di as res " " %9.4f r(p50) _c
+			di as res " " %9.4f r(p75) _c
+			di as res " " %9.4f r(max)
 			local ++i
 		}
 	}
