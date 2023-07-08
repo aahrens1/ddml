@@ -138,6 +138,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 
 		mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 		mata: st_local("base_est",return_learner_item(`eqn',"`vtilde'","stack_base_est"))
+		mata: st_local("stype",return_learner_item(`eqn',"`vtilde'","stack_type"))
 		mata: st_local("etype",`eqn'.etype)
 		local nlearners : word count `base_est'
 		// check if previously stacked; required for poolstacking
@@ -178,7 +179,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			tempvar yhat
 			if `ssflag' {
 				// shortstacking uses crossfit predictions
-				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') if `touse'
+				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') stype(`stype') if `touse'
 				local finalest	`e(finalest)'
 				mat `sweights'	= e(b)
 				qui predict double `yhat'
@@ -193,7 +194,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				mata: `y_stacking_cv' = return_result_item(`eqn',"`poolstack'_ps","y_stacking_cv", "`m'")				
 				// touse ignored at weights stage
 				getmata (`fid' `vname' `learner_list')=`y_stacking_cv', force replace
-				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest')
+				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') stype(`stype')
 				mata: `sweights' = st_matrix("e(b)")
 				frame change `cframe'
 				frame drop `tframe'
@@ -2063,19 +2064,27 @@ program define replay_estimate, eclass
 		di as text "E[D|X,Z]" _col(11) "= " _c
 	}
 	local numeqnD : word count `e(d_m)'
-	forvalues i=1/`numeqnD' {
-		local Dtilde : word `i' of `e(d_m)' {
-		// all models except fiv residualize
-		if "`e(model)'"~="iv" di as res "D`i'-" _c
-		di as res "`Dtilde' " _c
+	if `numeqnD'==1 {
+		di as res "D-`e(d_m)' " _c
+	}
+	else {
+		forvalues i=1/`numeqnD' {
+			local Dtilde : word `i' of `e(d_m)' {
+			di as res "D`i'-`Dtilde' " _c
+		}
 	}
 	di
 	if "`e(model)'" == "iv" {
 		di as text "Z-E[Z|X]" _col(11) "= " _c
 		local numeqnZ : word count `e(z_m)'
-		forvalues i=1/`numeqnZ' {
-			local Ztilde : word `i' of `e(z_m)' {
-			di as res "Z`i'-`Ztilde' " _c
+		if `numeqnZ'==1 {
+			di as res "Z-`e(z_m)' " _c
+		}
+		else {
+			forvalues i=1/`numeqnZ' {
+				local Ztilde : word `i' of `e(z_m)' {
+				di as res "Z`i'-`Ztilde' " _c
+			}
 		}
 		di
 	}

@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 5 july 2023
+*! last edited: 8 july 2023
 *! authors: aa/ms
 
 program define _ddml_describe
@@ -203,6 +203,9 @@ prog define desc_learners
 	mata: st_local("model",`mname'.model)
 	mata: st_local("kfolds",strofreal(`mname'.kfolds))
 	mata: st_local("nreps",strofreal(`mname'.nreps))
+	mata: st_local("stdflag",strofreal(`mname'.stdflag))
+	mata: st_local("ssflag",strofreal(`mname'.ssflag))
+	mata: st_local("psflag",strofreal(`mname'.psflag))
 	
 	// used below to indicate set of crossfitting results to report
 	local pairs		= 0
@@ -239,13 +242,6 @@ prog define desc_learners
 	mata: st_local("vtlist",invtokens(`eqn'.vtlist))
 	mata: st_local("shortstack",invtokens(`eqn'.shortstack))
 	mata: st_local("poolstack",invtokens(`eqn'.poolstack))
-	** indicator for short-stacking
-	local ssflag	= "`shortstack'"~=""
-	** indicator for pooled-stacking
-	local psflag	= "`poolstack'"~=""
-	** indicator for standard stacking
-	mata: st_local("nostdstack", strofreal(`eqn'.nostdstack))
-	local stdflag = 1-`nostdstack'
 
 	local firstrow = 1
 	foreach vtilde in `vtlist' {

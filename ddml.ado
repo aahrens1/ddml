@@ -473,12 +473,15 @@ program define add_eqn_to_model, rclass
 		mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 	}
 	
-	// etype is Y, D or Z
+	// etype is Y, D, DH or Z
 	if "`subcmd'"=="yeq" {
 		mata: `eqn'.etype = "Y"
 	}
 	else if "`subcmd'"=="deq" {
 		mata: `eqn'.etype = "D"
+	}
+	else if "`subcmd'"=="dheq" {
+		mata: `eqn'.etype = "DH"
 	}
 	else if "`subcmd'"=="zeq" {
 		mata: `eqn'.etype = "Z"

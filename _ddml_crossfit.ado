@@ -151,7 +151,7 @@ program _ddml_crossfit, eclass sortpreserve
 	// check minlearners
 	// short-stacking and pooled-stacking require multiple learners in all equations
 	if (`ssflag' | `psflag') & `minlearners'==1 {
-		di as text "`shortstack' `poolstack' specified but must have multiple learners in all equations; option ignored"
+		di as text "`shortstack' `poolstack' requested but must have multiple learners in all equations; option ignored"
 		mata: `mname'.ssflag = 0
 		local ssflag=0
 		local shortstack
