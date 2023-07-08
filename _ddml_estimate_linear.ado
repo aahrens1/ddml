@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 7 july 2023
+*! last edited: 8 july 2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -440,6 +440,11 @@ program _ddml_estimate_main
 								]
 
 	if "`debug'`noisily'"==""	local qui qui
+
+	** standard errors
+	// local vce is the argument to the Stata option vce(.)
+	if "`robust'"!=""	local vce robust
+	if "`cluster'"~=""	local vce cluster `cluster'
 	
 	marksample touse
 	
@@ -518,25 +523,23 @@ program _ddml_estimate_main
 	local numeqnZ : word count `nameZ'
 	local ivflag	= "`model'"=="iv"
 	local fivflag	= "`model'"=="fiv"
-
-	** standard errors
-	// local vce is the argument to the Stata option vce(.)
-	if "`robust'"!=""	local vce robust
-	if "`cluster'"~=""	local vce cluster `cluster'
-	
-	if ~`crossfitted' {
-		di as err "ddml model not cross-fitted; call `ddml crossfit` first"
-		exit 198
-	}
-
-	// numspecflag=1 unless there is no numbered (i.e. not numbers, ss or ps) spec
-	// possible with all pystacked and only shortstacking
 	local allpystackedmulti = 1
 	foreach vname in `nameY' `nameD' `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
 			local allpystackedmulti = `allpystackedmulti' & `pystackedmulti'
 	}
+
+	// reset stdflag (standard stacking) and psflag (pooled stacking)
+	// if not all eqns are pystacked multi-learners
+	// nb: stdflag may also be 0 if pystacked is used with voting to get short-stacked only
+	if `allpystackedmulti'==0 {
+		local stdflag	=0
+		local psflag	=0
+	}
+
+	// numspecflag=1 unless there is no numbered (i.e. not numbers, ss or ps) spec
+	// possible with all pystacked and only shortstacking
 	local numspecflag	= (`allpystackedmulti'==0) | (`stdflag'==1) | (`psflag'==1)
 
 	// default specs, in order/if available: ss, ps, mse if ncombos>1, otherwise 1 since ncombos=1
