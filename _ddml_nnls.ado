@@ -204,7 +204,7 @@ program _ddml_nnls_python, eclass sortpreserve
 
 end
 
-version 16.0
+version 16
 python:
 
 import sfi
@@ -239,8 +239,14 @@ def py_get_stack_weights(yvar,xvars,touse,wvar,finalest,stype):
         fin_est = ConstrLS()
     elif finalest == "ridge" and stype == "reg": 
         fin_est = RidgeCV()
+    elif finalest == "avg" and stype == "reg": 
+        fin_est = AvgEstimator()
+    elif finalest == "avg" and stype == "class": 
+        fin_est = AvgClassifier()
     elif finalest == "singlebest" and stype == "reg": 
         fin_est = SingleBest()
+    elif finalest == "singlebest" and stype == "class": 
+        fin_est = SingleBestClassifier()
     elif finalest == "ols" and stype == "class": 
         fin_est = LinearRegressionClassifier()    
     elif finalest == "ols" and stype == "reg": 
@@ -332,11 +338,37 @@ class SingleBest(BaseEstimator):
         check_is_fitted(self, 'is_fitted_')
         return X[:,self.best]
 
+class AvgEstimator(BaseEstimator):
+    """
+    Avg of learners
+    """
+    _estimator_type="regressor"
+    def fit(self, X, y, w):
+        X, y = check_X_y(X, y, accept_sparse=True)
+        self.is_fitted_ = True
+        ncols = X.shape[1]
+        self.coef_ = np.repeat(1/ncols,ncols)
+        self.cvalid=X
+        return self
+    def predict(self, X):
+        X = check_array(X, accept_sparse=True)
+        check_is_fitted(self, 'is_fitted_')
+        return X.mean(axis=1)
+
 class ConstrLSClassifier(ConstrLS):
     _estimator_type="classifier"
     def predict_proba(self, X):
         return self.predict(X)
 
+class SingleBestClassifier(SingleBest):
+    _estimator_type="classifier"
+    def predict_proba(self, X):
+        return self.predict(X)
+
+class AvgClassifier(AvgEstimator):
+    _estimator_type="classifier"
+    def predict_proba(self, X):
+        return self.predict(X)
 
 end
 
