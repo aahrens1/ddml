@@ -13,16 +13,22 @@ program _ddml_estimate_linear, eclass sortpreserve
 								shortstack			/// re-short-stack
 								poolstack			/// re-pool-stack
 								finalest(name)		/// relevant only for re-stacking
+								ssfinalest(name)	///
+								psfinalest(name)	///
 								* ]
 
 	if "`shortstack'"~="" {
 		// restack
-		_ddml_estimate_stacking `anything' `if' `in', ss finalest(`finalest') `options'
+		if "`ssfinalest'"==""	local ssfinalest `finalest'
+		_ddml_estimate_stacking `anything' `if' `in', ss finalest(`ssfinalest') `options'
 	}
+	
 	if "`poolstack'"~="" {
 		// restack
-		_ddml_estimate_stacking `anything' `if' `in', ps finalest(`finalest') `options'
+		if "`psfinalest'"==""	local psfinalest `finalest'
+		_ddml_estimate_stacking `anything' `if' `in', ps finalest(`psfinalest') `options'
 	}
+	
 	if "`y'`d'`z'`dh'"=="" {
 		// main program for estimation
 		_ddml_estimate_main `anything' `if' `in', `options'
@@ -92,9 +98,6 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		exit 198
 	}
 	
-	// assume stacking available for all
-	local stackflag = 1
-	
 	// with pystacked, will always be a single vtilde and eqn struct for every variable
 	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 	// used for checking
@@ -105,7 +108,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		local vtlist	`vtildeY'
 	}
 	else {
-		local stackflag	= 0
+		di as err "error - restacking available only if pystacked is the only learner for each conditional expectation"
+		exit 198
 	}
 
 	// can be multiple D eqns for multiple D vars, and similarly for Z
@@ -119,7 +123,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			local vtlist	`vtlist' `vtilde'
 		}
 		else {
-			local stackflag	= 0
+			di as err "error - restacking available only if pystacked is the only learner for each conditional expectation"
+			exit 198
 		}
 	}
 
@@ -133,13 +138,14 @@ program _ddml_estimate_stacking, eclass sortpreserve
 
 		mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 		mata: st_local("base_est",return_learner_item(`eqn',"`vtilde'","stack_base_est"))
+		mata: st_local("etype",`eqn'.etype)
 		local nlearners : word count `base_est'
 		// check if previously stacked; required for poolstacking
 		if `ssflag' {
 			mata: st_local("shortstack", `eqn'.shortstack)
 			if "`shortstack'"=="" {
 				// not previously shortstacked, set local and struct field to default
-				local shortstack `vname'
+				local shortstack `etype'_`vname'
 				mata: `eqn'.shortstack = "`shortstack'"
 				local newstack 1
 			}
@@ -224,6 +230,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			mata: add_result_item(`eqn',"``typestack''_`ts'","`ts'_weights", "`m'", st_matrix("`sweights'"))
 			// final estimator used to stack is a learner item
 			mata: add_learner_item(`eqn',"``typestack''_`ts'","`ts'_final_est", "`finalest'")
+			// need base estimators as well
+			mata: add_learner_item(`eqn',"``typestack''_`ts'","stack_base_est", "`base_est'")
 			// replace updated eqn
 			mata: (`mname'.eqnAA).put("`vname'",`eqn')
 		}

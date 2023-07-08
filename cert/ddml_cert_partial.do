@@ -22,7 +22,7 @@ findfile pystacked.ado
 set seed 123
 
 ******************************************************************************** 
-**** Partially linear model.												 ***
+**** Partially-linear model													****
 ******************************************************************************** 
 
 global Y logpgp95
@@ -159,5 +159,116 @@ ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 ddml estimate, mname(m0) spec(ss) rep(2) replay notable
 ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
 ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+
+******************************************************************************** 
+**** Restacking with ddml estimate											****
+******************************************************************************** 
+
+// with pystacked:
+
+// setup
+set seed 123
+ddml init partial, kfolds(2) reps(1)
+ddml E[Y|X]: pystacked $Y $X , type(reg)
+ddml E[D|X]: pystacked $D1 $X , type(reg)
+
+// initial = std stack, shortstack, poolstack
+set seed 123
+ddml crossfit, shortstack poolstack
+ddml estimate
+ddml extract, show(weights)
+// restack shortstack
+ddml estimate, shortstack ssfinalest(singlebest)
+ddml extract, show(weights)
+mat ssw = r(Y_logpgp95_ss)
+assert el(ssw,1,2)==0
+assert el(ssw,2,2)==1
+assert el(ssw,3,2)==0
+// restack poolstack
+ddml estimate, poolstack psfinalest(singlebest)
+ddml extract, show(weights)
+mat psw = r(Y_logpgp95_ps)
+assert el(psw,1,2)==0
+assert el(psw,2,2)==0
+assert el(psw,3,2)==1
+
+// initial = std stack, shortstack, poolstack
+set seed 123
+ddml crossfit, shortstack poolstack
+ddml estimate
+ddml extract, show(weights)
+// restack shortstack + poolstack
+ddml estimate, shortstack ssfinalest(singlebest) poolstack psfinalest(singlebest)
+ddml extract, show(weights)
+mat ssw = r(Y_logpgp95_ss)
+assert el(ssw,1,2)==0
+assert el(ssw,2,2)==1
+assert el(ssw,3,2)==0
+mat psw = r(Y_logpgp95_ps)
+assert el(psw,1,2)==0
+assert el(psw,2,2)==0
+assert el(psw,3,2)==1
+
+// initial = std stack only
+set seed 123
+ddml crossfit
+ddml estimate
+ddml extract, show(weights)
+// restack - add shortstack
+ddml estimate, shortstack
+ddml extract, show(weights)
+
+// initial = std stack only
+set seed 123
+ddml crossfit
+ddml estimate
+ddml extract, show(weights)
+// restack - add shortstack
+ddml estimate, shortstack
+ddml extract, show(weights)
+
+// initial = std stack only
+set seed 123
+ddml crossfit
+ddml estimate
+ddml extract, show(weights)
+// restack - add shortstack with singlebest
+ddml estimate, shortstack ssfinalest(singlebest)
+ddml extract, show(weights)
+mat ssw = r(Y_logpgp95_ss)
+assert el(ssw,1,2)==0
+assert el(ssw,2,2)==1
+assert el(ssw,3,2)==0
+
+// initial = shortstack, no standard stack
+set seed 123
+ddml crossfit, shortstack nostdstack
+ddml estimate
+ddml extract, show(weights)
+// restack - shortstack with singlebest
+ddml estimate, shortstack ssfinalest(singlebest)
+ddml extract, show(weights)
+mat ssw = r(Y_logpgp95_ss)
+assert el(ssw,1,2)==0
+assert el(ssw,2,2)==1
+assert el(ssw,3,2)==0
+
+// without pystacked: not currently supported
+
+// setup
+set seed 123
+ddml init partial, kfolds(2) reps(1)
+ddml E[Y|X]: pystacked $Y $X , type(reg)
+ddml E[Y|X]: reg $Y $X
+ddml E[D|X]: pystacked $D1 $X , type(reg)
+ddml E[D|X]: reg $D1 $X
+
+// no shortstack
+set seed 123
+ddml crossfit
+ddml estimate, allcombos
+// restack - add shortstack
+cap noi ddml estimate, shortstack
+assert _rc==198
 
 log close
