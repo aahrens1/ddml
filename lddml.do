@@ -37,6 +37,7 @@ st_global("r(stata_compiled_date)","`current_date")
 // equation structure: one for E[y|x], E[d|x] etc
 struct eStruct {
 	string scalar					vname			// name of variable to be orthogonalized
+	string scalar					etype			// will be Y, D or Z
 	real matrix						vtlist			// list of orthogonalized (learner) variables
 	string scalar					shortstack		// name of shortstack variable
 	string scalar					poolstack		// name of poolstack variable
@@ -57,6 +58,7 @@ struct eStruct init_eStruct()
 	struct eStruct scalar	m
 
 	m.vname				= ""
+	m.etype				= ""
 	m.vtlist			= J(1,0,"")
 	m.shortstack		= ""
 	m.poolstack			= ""
