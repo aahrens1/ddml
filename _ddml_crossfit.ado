@@ -269,9 +269,9 @@ program _ddml_crossfit, eclass sortpreserve
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
 				mata: st_local("numlnrZ",strofreal(cols(`eqn'.vtlist)))
 				// shortstack and poolstack variable names
-				if `ssflag'		mata: `eqn'.shortstack = "`var'"				
+				if `ssflag'		mata: `eqn'.shortstack = "Z_`var'"				
 				else			mata: `eqn'.shortstack = ""
-				if `psflag'		mata: `eqn'.poolstack = "`var'"				
+				if `psflag'		mata: `eqn'.poolstack = "Z_`var'"				
 				else			mata: `eqn'.poolstack = ""
 				di as text "Cross-fitting E[Z|X]: `var'"
 				// All learners for each Z eqn
