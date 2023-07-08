@@ -28,7 +28,7 @@ findfile pystacked.ado
 set seed 123
 
 ********************************************************************************
-*** interactive model	 													 ***
+**** Interactive model	 													****
 ********************************************************************************
 
 global Y bweight
@@ -179,6 +179,118 @@ ddml overlap, name(triangle, replace)							///
 	title("Propensity score: triangle kernel")
 ddml overlap, kernel(epanechnikov) name(epanechnikov, replace)	///
 	title("Propensity score: epanechnikov kernel")
+
+******************************************************************************** 
+**** Restacking with ddml estimate											****
+******************************************************************************** 
+
+set seed 123
+ddml init interactive, kfolds(2)
+ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(ols gradboost)
+ddml E[D|X]: pystacked $D $X, type(class) method(logit gradboost)
+set seed 123
+
+// initial = std stack, shortstack, poolstack
+set seed 123
+ddml crossfit, shortstack poolstack
+ddml estimate
+// restack shortstack
+ddml estimate, shortstack ssfinalest(singlebest)
+ddml extract, show(weights)
+mat ssw = r(Y_bweight_ss)
+assert el(ssw,1,3)==1
+assert el(ssw,2,3)==0
+assert el(ssw,3,3)==1
+assert el(ssw,4,3)==0
+// restack poolstack
+ddml estimate, poolstack psfinalest(singlebest)
+ddml extract, show(weights)
+mat psw = r(Y_bweight_ps)
+assert el(psw,1,3)==1
+assert el(psw,2,3)==0
+assert el(psw,3,3)==1
+assert el(psw,4,3)==0
+
+// initial = std stack, shortstack, poolstack
+set seed 123
+ddml crossfit, shortstack poolstack
+ddml estimate
+// restack shortstack + poolstack
+ddml estimate, shortstack ssfinalest(singlebest) poolstack psfinalest(singlebest)
+ddml extract, show(weights)
+mat ssw = r(Y_bweight_ss)
+assert el(ssw,1,3)==1
+assert el(ssw,2,3)==0
+assert el(ssw,3,3)==1
+assert el(ssw,4,3)==0
+mat psw = r(Y_bweight_ps)
+assert el(psw,1,3)==1
+assert el(psw,2,3)==0
+assert el(psw,3,3)==1
+assert el(psw,4,3)==0
+
+// initial = std stack only
+set seed 123
+ddml crossfit
+ddml estimate
+ddml extract, show(weights)
+// restack - add shortstack
+ddml estimate, shortstack
+ddml extract, show(weights)
+
+// initial = std stack only
+set seed 123
+ddml crossfit
+ddml estimate
+ddml extract, show(weights)
+// restack - add shortstack
+ddml estimate, shortstack
+ddml extract, show(weights)
+
+// initial = std stack only
+set seed 123
+ddml crossfit
+ddml estimate
+ddml extract, show(weights)
+// restack - add shortstack with singlebest
+ddml estimate, shortstack ssfinalest(singlebest)
+ddml extract, show(weights)
+mat ssw = r(Y_bweight_ss)
+assert el(ssw,1,3)==1
+assert el(ssw,2,3)==0
+assert el(ssw,3,3)==1
+assert el(ssw,4,3)==0
+
+// initial = shortstack, no standard stack
+set seed 123
+ddml crossfit, shortstack nostdstack
+ddml estimate
+ddml extract, show(weights)
+// restack - shortstack with singlebest
+ddml estimate, shortstack ssfinalest(singlebest)
+ddml extract, show(weights)
+assert el(ssw,1,3)==1
+assert el(ssw,2,3)==0
+assert el(ssw,3,3)==1
+assert el(ssw,4,3)==0
+
+// without pystacked: not currently supported
+
+// setup
+set seed 123
+ddml init interactive, kfolds(2) reps(1)
+ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(ols gradboost)
+ddml E[Y|X,D]: reg $Y $X
+ddml E[D|X]: pystacked $D $X, type(class) method(logit gradboost)
+ddml E[D|X]: logit $D $X
+
+// no shortstack
+set seed 123
+ddml crossfit
+ddml estimate, allcombos
+// restack - add shortstack
+cap noi ddml estimate, shortstack
+assert _rc==198
 
 log close
 

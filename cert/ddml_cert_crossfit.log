@@ -1,26 +1,26 @@
--------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_crossfit.log
   log type:  text
- opened on:  10 Jun 2023, 18:50:19
+ opened on:   8 Jul 2023, 21:17:15
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 *! ddml v1.2
-*! last edited: 8 june 2023
+*! last edited: 8 july 2023
 *! authors: aa/ms
 
 . mata: whichddml()
   
   Mata library for ddml and related programs,
-  compiled 10 Jun 2023 under Stata 16.1 born 14 Jun 2022.
+  compiled 8 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
 . which crossfit
 C:\LocalStore\ecomes\Documents\GitHub\ddml\crossfit.ado
 *! crossfit v0.6
-*! last edited: 8 june 2023
+*! last edited: 8 july 2023
 *! authors: aa/ms
 
 . 
@@ -56,10 +56,10 @@ Cross-fitting fold 1 2 3 ...completed cross-fitting
     Variable |        Obs        Mean    Std. Dev.       Min        Max
 -------------+---------------------------------------------------------
     earnings |     11,204    15815.29    16767.05          0     155760
-   yhat_L1_1 |     11,204    15818.64    3775.302   5696.419   23859.58
-   yhat_L2_1 |     11,204    15818.64    3769.499   5721.687   23844.64
-   yhat_L3_1 |     11,204    15825.36    4483.934   1238.999   30272.49
-      yhat_1 |     11,204    15823.41    4166.367   3348.181    28575.5
+   yhat_L1_1 |     11,204     15812.1    3774.255   6123.432   23867.51
+   yhat_L2_1 |     11,204    15812.11    3768.449   6145.505   23851.63
+   yhat_L3_1 |     11,204    15810.33    4477.315   76.66996   31094.56
+      yhat_1 |     11,204    15810.67    4147.604   2560.435   28328.63
 
 . 
 . set seed 42
@@ -76,9 +76,9 @@ Cross-fitting fold 1 2 3 ...completed cross-fitting
     Variable |        Obs        Mean    Std. Dev.       Min        Max
 -------------+---------------------------------------------------------
     earnings |     11,204    15815.29    16767.05          0     155760
-   yhat_L1_1 |     11,204    15818.64    3775.302   5696.419   23859.58
-   yhat_L2_1 |     11,204    15818.64    3769.499   5721.687   23844.64
-   yhat_L3_1 |     11,204    15825.36    4483.934   1238.999   30272.49
+   yhat_L1_1 |     11,204     15812.1    3774.255   6123.432   23867.51
+   yhat_L2_1 |     11,204    15812.11    3768.449   6145.505   23851.63
+   yhat_L3_1 |     11,204    15810.33    4477.315   76.66996   31094.56
       yhat_1 |     11,204     15812.1    3774.255   6123.432   23867.51
 -------------+---------------------------------------------------------
       yhat_2 |     11,204    15817.76    3772.003   5660.687   24048.23
@@ -110,5 +110,5 @@ Cross-fitting fold 1 2 ...completed cross-fitting
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_crossfit.log
   log type:  text
- closed on:  10 Jun 2023, 18:50:29
--------------------------------------------------------------------------------------------------------------------------------------------
+ closed on:   8 Jul 2023, 21:17:26
+--------------------------------------------------------------------------------------------------------------------------

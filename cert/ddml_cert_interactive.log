@@ -1,20 +1,20 @@
--------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactive.log
   log type:  text
- opened on:   9 Jun 2023, 13:40:41
+ opened on:   8 Jul 2023, 21:14:45
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 *! ddml v1.2
-*! last edited: 8 june 2023
+*! last edited: 8 july 2023
 *! authors: aa/ms
 
 . mata: whichddml()
   
   Mata library for ddml and related programs,
-  compiled 8 Jun 2023 under Stata 16.1 born 14 Jun 2022.
+  compiled 8 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
 . 
@@ -31,7 +31,7 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 *! ddml v1.2
-*! last edited: 8 june 2023
+*! last edited: 8 july 2023
 *! authors: aa/ms
 
 . which pystacked
@@ -50,7 +50,8 @@ C:\LocalStore\ecomes\Documents\GitHub\pystacked/pystacked.ado
 
 . 
 . ********************************************************************************
-. *** interactive model                                                                                                            ***
+. **** Interactive model                                                                                                  
+>         ****
 . ********************************************************************************
 . 
 . global Y bweight
@@ -93,13 +94,13 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
-  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -562.078 (325.509)
-  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -261.191  (97.206)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -555.550  (328.298)
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -263.575  (102.062)
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -411.634 (226.610)
- mse md     [min-mse]         [mse]         [mse]  -411.634 (283.436)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -409.562  (225.695)
+ mse md     [min-mse]         [mse]         [mse]  -409.562  (283.567)
 
 Median over 2 stacking resamples (ATE)
 E[y|X,D=0]   = Y1_pystacked0                       Number of obs   =      1000
@@ -109,13 +110,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -411.6342   283.4356    -1.45   0.146    -967.1578    143.8894
+     mbsmoke |  -409.5623   283.5675    -1.44   0.149    -965.3443    146.2198
 ------------------------------------------------------------------------------
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -411.6342 -562.0776 -562.0776 -411.6342 -261.1908 -261.1908
+     mbsmoke   -409.5623 -555.5500 -555.5500 -409.5623 -263.5745 -263.5745
 
 . *** replay
 . ddml estimate, mname(m0) spec(st) rep(1) replay notable
@@ -128,9 +129,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -562.0776    325.509    -1.73   0.084    -1200.063    75.90823
+     mbsmoke |    -555.55    328.298    -1.69   0.091    -1199.002    87.90232
 ------------------------------------------------------------------------------
-Warning: 46 propensity scores trimmed to lower limit .01.
+Warning: 44 propensity scores trimmed to lower limit .01.
 
 
 . *** append, estimate, replay
@@ -154,14 +155,14 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
-  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -562.078 (325.509)
-  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -261.191  (97.206)
-  st  3  Y1_pystacked  Y1_pystacked  D1_pystacked  -504.597 (203.017)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -555.550  (328.298)
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -263.575  (102.062)
+  st  3  Y1_pystacked  Y1_pystacked  D1_pystacked  -129.568  (312.989)
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -442.622 (235.450)
- mse md     [min-mse]         [mse]         [mse]  -504.597 (262.098)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -316.231  (183.178)
+ mse md     [min-mse]         [mse]         [mse]  -263.575  (340.470)
 
 Median over 3 stacking resamples (ATE)
 E[y|X,D=0]   = Y1_pystacked0                       Number of obs   =      1000
@@ -171,13 +172,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -504.5969   262.0983    -1.93   0.054      -1018.3    9.106269
+     mbsmoke |  -263.5745   340.4701    -0.77   0.439    -930.8836    403.7346
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -442.6218 -562.0776 -562.0776 -504.5969 -261.1908 -261.1908
+     mbsmoke   -316.2309 -555.5500 -555.5500 -263.5745 -129.5682 -129.5682
 
 . *** replay
 . ddml estimate, mname(m0) spec(st) rep(1) replay notable
@@ -190,9 +191,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -562.0776    325.509    -1.73   0.084    -1200.063    75.90823
+     mbsmoke |    -555.55    328.298    -1.69   0.091    -1199.002    87.90232
 ------------------------------------------------------------------------------
-Warning: 46 propensity scores trimmed to lower limit .01.
+Warning: 44 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(st) rep(2) replay notable
@@ -205,9 +206,9 @@ E[D|X]       = D1_pystacked_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -261.1908   97.20584    -2.69   0.007    -451.7107   -70.67086
+     mbsmoke |  -263.5745   102.0617    -2.58   0.010    -463.6119   -63.53721
 ------------------------------------------------------------------------------
-Warning: 24 propensity scores trimmed to lower limit .01.
+Warning: 27 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(st) rep(mn) replay notable
@@ -220,13 +221,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -442.6218   235.4504    -1.88   0.060    -904.0961    18.85256
+     mbsmoke |  -316.2309   183.1781    -1.73   0.084    -675.2534    42.79152
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -442.6218 -562.0776 -562.0776 -504.5969 -261.1908 -261.1908
+     mbsmoke   -316.2309 -555.5500 -555.5500 -263.5745 -129.5682 -129.5682
 
 . ddml estimate, mname(m0) spec(st) rep(md) replay notable
 
@@ -238,13 +239,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -504.5969   262.0983    -1.93   0.054      -1018.3    9.106269
+     mbsmoke |  -263.5745   340.4701    -0.77   0.439    -930.8836    403.7346
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -442.6218 -562.0776 -562.0776 -504.5969 -261.1908 -261.1908
+     mbsmoke   -316.2309 -555.5500 -555.5500 -263.5745 -129.5682 -129.5682
 
 . 
 . *** pystacked, SS and PS
@@ -283,21 +284,21 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
-  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -261.488 (189.432)
-  ss  1  [shortstack]          [ss]          [ss]  -292.946 (190.054)
-  ps  1   [poolstack]          [ps]          [ps]  -249.593 (178.049)
-  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -174.915 (158.455)
-  ss  2  [shortstack]          [ss]          [ss]  -209.489 (135.515)
-  ps  2   [poolstack]          [ps]          [ps]  -183.243 (146.905)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -512.517  (208.921)
+  ss  1  [shortstack]          [ss]          [ss]  -481.690  (195.936)
+  ps  1   [poolstack]          [ps]          [ps]  -444.371  (168.050)
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -142.552  (423.153)
+  ss  2  [shortstack]          [ss]          [ss]     8.946  (378.747)
+  ps  2   [poolstack]          [ps]          [ps]  -149.540  (447.926)
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -218.202 (177.407)
-  ss mn  [shortstack]          [ss]          [ss]  -251.218 (162.062)
-  ps mn   [poolstack]          [ps]          [ps]  -216.418 (163.765)
- mse md     [min-mse]         [mse]         [mse]  -218.202 (179.917)
-  ss md  [shortstack]          [ss]          [ss]  -251.218 (170.246)
-  ps md   [poolstack]          [ps]          [ps]  -216.418 (166.559)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -327.535  (337.761)
+  ss mn  [shortstack]          [ss]          [ss]  -236.372  (364.472)
+  ps mn   [poolstack]          [ps]          [ps]  -296.956  (285.667)
+ mse md     [min-mse]         [mse]         [mse]  -327.535  (381.539)
+  ss md  [shortstack]          [ss]          [ss]  -236.372  (388.717)
+  ps md   [poolstack]          [ps]          [ps]  -296.956  (369.013)
 
 Shortstack DDML model (median over 2 resamples) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0                       Number of obs   =      1000
@@ -307,13 +308,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -251.2177   170.2456    -1.48   0.140     -584.893    82.45758
+     mbsmoke |  -236.3721   388.7173    -0.61   0.543    -998.2441    525.4999
 ------------------------------------------------------------------------------
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -251.2177 -292.9463 -292.9463 -251.2177 -209.4891 -209.4891
+     mbsmoke   -236.3721 -481.6904 -481.6904 -236.3721    8.9462    8.9462
 
 . *** replay
 . ddml estimate, mname(m0) spec(st) rep(1) replay notable
@@ -326,9 +327,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -261.4883   189.4317    -1.38   0.167    -632.7677     109.791
+     mbsmoke |  -512.5175   208.9214    -2.45   0.014    -921.9959   -103.0391
 ------------------------------------------------------------------------------
-Warning: 63 propensity scores trimmed to lower limit .01.
+Warning: 62 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
@@ -341,9 +342,9 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -292.9463   190.0535    -1.54   0.123    -665.4444    79.55182
+     mbsmoke |  -481.6904    195.936    -2.46   0.014    -865.7179   -97.66293
 ------------------------------------------------------------------------------
-Warning: 73 propensity scores trimmed to lower limit .01.
+Warning: 47 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ps) rep(1) replay notable
@@ -356,9 +357,9 @@ E[D|X]       = D_mbsmoke_ps_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -249.5927   178.0487    -1.40   0.161    -598.5618    99.37637
+     mbsmoke |  -444.3715   168.0503    -2.64   0.008    -773.7439    -114.999
 ------------------------------------------------------------------------------
-Warning: 68 propensity scores trimmed to lower limit .01.
+Warning: 54 propensity scores trimmed to lower limit .01.
 
 
 . 
@@ -383,24 +384,24 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
-  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -261.488 (189.432)
-  ss  1  [shortstack]          [ss]          [ss]  -292.946 (190.054)
-  ps  1   [poolstack]          [ps]          [ps]  -249.593 (178.049)
-  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -174.915 (158.455)
-  ss  2  [shortstack]          [ss]          [ss]  -209.489 (135.515)
-  ps  2   [poolstack]          [ps]          [ps]  -183.243 (146.905)
-  st  3  Y1_pystacked  Y1_pystacked  D1_pystacked  -423.623 (159.269)
-  ss  3  [shortstack]          [ss]          [ss]  -384.032 (148.861)
-  ps  3   [poolstack]          [ps]          [ps]  -401.189 (161.737)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -512.517  (208.921)
+  ss  1  [shortstack]          [ss]          [ss]  -481.690  (195.936)
+  ps  1   [poolstack]          [ps]          [ps]  -444.371  (168.050)
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -142.552  (423.153)
+  ss  2  [shortstack]          [ss]          [ss]     8.946  (378.747)
+  ps  2   [poolstack]          [ps]          [ps]  -149.540  (447.926)
+  st  3  Y1_pystacked  Y1_pystacked  D1_pystacked  -466.949  (271.612)
+  ss  3  [shortstack]          [ss]          [ss]  -426.577  (237.372)
+  ps  3   [poolstack]          [ps]          [ps]  -410.565  (228.494)
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -286.675 (197.843)
-  ss mn  [shortstack]          [ss]          [ss]  -295.489 (173.349)
-  ps mn   [poolstack]          [ps]          [ps]  -278.008 (184.978)
- mse md     [min-mse]         [mse]         [mse]  -261.488 (189.432)
-  ss md  [shortstack]          [ss]          [ss]  -292.946 (174.517)
-  ps md   [poolstack]          [ps]          [ps]  -249.593 (178.049)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -374.006  (304.535)
+  ss mn  [shortstack]          [ss]          [ss]  -299.774  (306.259)
+  ps mn   [poolstack]          [ps]          [ps]  -334.826  (254.374)
+ mse md     [min-mse]         [mse]         [mse]  -466.949  (271.612)
+  ss md  [shortstack]          [ss]          [ss]  -426.577  (237.372)
+  ps md   [poolstack]          [ps]          [ps]  -410.565  (228.494)
 
 Shortstack DDML model (median over 3 resamples) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0                       Number of obs   =      1000
@@ -410,13 +411,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -292.9463   174.5168    -1.68   0.093    -634.9929    49.10031
+     mbsmoke |  -426.5767   237.3719    -1.80   0.072     -891.817    38.66366
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -295.4890 -384.0315 -384.0315 -292.9463 -209.4891 -209.4891
+     mbsmoke   -299.7736 -481.6904 -481.6904 -426.5767    8.9462    8.9462
 
 . *** replay
 . ddml estimate, mname(m0) spec(st) rep(1) replay notable
@@ -429,9 +430,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -261.4883   189.4317    -1.38   0.167    -632.7677     109.791
+     mbsmoke |  -512.5175   208.9214    -2.45   0.014    -921.9959   -103.0391
 ------------------------------------------------------------------------------
-Warning: 63 propensity scores trimmed to lower limit .01.
+Warning: 62 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(st) rep(2) replay notable
@@ -444,9 +445,9 @@ E[D|X]       = D1_pystacked_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -174.9147   158.4553    -1.10   0.270    -485.4815    135.6521
+     mbsmoke |   -142.552   423.1527    -0.34   0.736     -971.916     686.812
 ------------------------------------------------------------------------------
-Warning: 51 propensity scores trimmed to lower limit .01.
+Warning: 121 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(st) rep(mn) replay notable
@@ -459,13 +460,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -286.6755   197.8425    -1.45   0.147    -674.4397    101.0887
+     mbsmoke |  -374.0062   304.5347    -1.23   0.219    -970.8832    222.8708
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -286.6755 -423.6234 -423.6234 -261.4883 -174.9147 -174.9147
+     mbsmoke   -374.0062 -512.5175 -512.5175 -466.9491 -142.5520 -142.5520
 
 . ddml estimate, mname(m0) spec(st) rep(md) replay notable
 
@@ -477,13 +478,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -261.4883   189.4317    -1.38   0.167    -632.7677     109.791
+     mbsmoke |  -466.9491   271.6116    -1.72   0.086     -999.298    65.39983
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -286.6755 -423.6234 -423.6234 -261.4883 -174.9147 -174.9147
+     mbsmoke   -374.0062 -512.5175 -512.5175 -466.9491 -142.5520 -142.5520
 
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 
@@ -495,9 +496,9 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -292.9463   190.0535    -1.54   0.123    -665.4444    79.55182
+     mbsmoke |  -481.6904    195.936    -2.46   0.014    -865.7179   -97.66293
 ------------------------------------------------------------------------------
-Warning: 73 propensity scores trimmed to lower limit .01.
+Warning: 47 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ss) rep(2) replay notable
@@ -510,9 +511,9 @@ E[D|X]       = D_mbsmoke_ss_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -209.4891   135.5147    -1.55   0.122     -475.093    56.11485
+     mbsmoke |   8.946172    378.747     0.02   0.981    -733.3844    751.2767
 ------------------------------------------------------------------------------
-Warning: 52 propensity scores trimmed to lower limit .01.
+Warning: 114 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
@@ -525,13 +526,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -295.489   173.3491    -1.70   0.088     -635.247     44.2691
+     mbsmoke |  -299.7736   306.2586    -0.98   0.328    -900.0295    300.4822
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -295.4890 -384.0315 -384.0315 -292.9463 -209.4891 -209.4891
+     mbsmoke   -299.7736 -481.6904 -481.6904 -426.5767    8.9462    8.9462
 
 . ddml estimate, mname(m0) spec(ss) rep(md) replay notable
 
@@ -543,13 +544,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -292.9463   174.5168    -1.68   0.093    -634.9929    49.10031
+     mbsmoke |  -426.5767   237.3719    -1.80   0.072     -891.817    38.66366
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -295.4890 -384.0315 -384.0315 -292.9463 -209.4891 -209.4891
+     mbsmoke   -299.7736 -481.6904 -481.6904 -426.5767    8.9462    8.9462
 
 . ddml estimate, mname(m0) spec(ps) rep(1) replay notable
 
@@ -561,9 +562,9 @@ E[D|X]       = D_mbsmoke_ps_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -249.5927   178.0487    -1.40   0.161    -598.5618    99.37637
+     mbsmoke |  -444.3715   168.0503    -2.64   0.008    -773.7439    -114.999
 ------------------------------------------------------------------------------
-Warning: 68 propensity scores trimmed to lower limit .01.
+Warning: 54 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ps) rep(2) replay notable
@@ -576,9 +577,9 @@ E[D|X]       = D_mbsmoke_ps_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -183.2433   146.9051    -1.25   0.212    -471.1719    104.6854
+     mbsmoke |  -149.5402   447.9261    -0.33   0.738    -1027.459    728.3789
 ------------------------------------------------------------------------------
-Warning: 47 propensity scores trimmed to lower limit .01.
+Warning: 117 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ps) rep(mn) replay notable
@@ -591,13 +592,13 @@ E[D|X]       = D_mbsmoke_ps
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -278.0083   184.9781    -1.50   0.133    -640.5587    84.54199
+     mbsmoke |  -334.8257   254.3738    -1.32   0.188    -833.3892    163.7377
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -278.0083 -401.1890 -401.1890 -249.5927 -183.2433 -183.2433
+     mbsmoke   -334.8257 -444.3715 -444.3715 -410.5655 -149.5402 -149.5402
 
 . ddml estimate, mname(m0) spec(ps) rep(md) replay notable
 
@@ -609,13 +610,13 @@ E[D|X]       = D_mbsmoke_ps
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -249.5927   178.0487    -1.40   0.161    -598.5618    99.37637
+     mbsmoke |  -410.5655   228.4938    -1.80   0.072     -858.405     37.2741
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -278.0083 -401.1890 -401.1890 -249.5927 -183.2433 -183.2433
+     mbsmoke   -334.8257 -444.3715 -444.3715 -410.5655 -149.5402 -149.5402
 
 . 
 . *** multiple learners, no SS
@@ -658,44 +659,44 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked D2_logit
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
- mse  1        Y2_reg  Y1_pystacked      D2_logit  -337.082 (638.390)
- mse  2  Y1_pystacked  Y1_pystacked      D2_logit  -478.161 (304.720)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse  1        Y2_reg        Y2_reg      D2_logit  -521.332  (201.344)
+ mse  2  Y1_pystacked        Y2_reg      D2_logit   -95.178  (189.533)
 mse = minimum MSE specification for that resample.
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -407.621 (397.685)
- mse md     [min-mse]         [mse]         [mse]  -407.621 (505.148)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -308.255  (289.083)
+ mse md     [min-mse]         [mse]         [mse]  -308.255  (289.193)
 
 Median over 2 min-mse resamples (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -407.6215   505.1475    -0.81   0.420    -1397.692    582.4495
+     mbsmoke |  -308.2549   289.1933    -1.07   0.286    -875.0634    258.5536
 ------------------------------------------------------------------------------
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -407.6215 -478.1610 -478.1610 -407.6215 -337.0819 -337.0819
+     mbsmoke   -308.2549 -521.3316 -521.3316 -308.2549  -95.1781  -95.1781
 
 . ddml estimate, mname(m0) spec(mse) rep(1) replay notable
 
 Min MSE DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y2_reg1_1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -337.0819   638.3905    -0.53   0.597    -1588.304    914.1404
+     mbsmoke |  -521.3316   201.3444    -2.59   0.010    -915.9595   -126.7038
 ------------------------------------------------------------------------------
-Warning: 78 propensity scores trimmed to lower limit .01.
+Warning: 48 propensity scores trimmed to lower limit .01.
 
 
 . *** allcombos
@@ -709,44 +710,44 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked D2_logit
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
-   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -325.814 (589.973)
-   2  1  Y1_pystacked  Y1_pystacked      D2_logit  -336.685 (638.364)
-   3  1  Y1_pystacked        Y2_reg  D1_pystacked  -175.193 (664.092)
-   4  1  Y1_pystacked        Y2_reg      D2_logit  -184.102 (718.703)
-   5  1        Y2_reg  Y1_pystacked  D1_pystacked  -326.622 (589.999)
-*  6  1        Y2_reg  Y1_pystacked      D2_logit  -337.082 (638.390)
-   7  1        Y2_reg        Y2_reg  D1_pystacked  -176.001 (664.116)
-   8  1        Y2_reg        Y2_reg      D2_logit  -184.500 (718.729)
-   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -551.307 (372.702)
-*  2  2  Y1_pystacked  Y1_pystacked      D2_logit  -478.161 (304.720)
-   3  2  Y1_pystacked        Y2_reg  D1_pystacked  -770.299 (545.232)
-   4  2  Y1_pystacked        Y2_reg      D2_logit  -669.588 (439.256)
-   5  2        Y2_reg  Y1_pystacked  D1_pystacked  -550.614 (372.692)
-   6  2        Y2_reg  Y1_pystacked      D2_logit  -477.717 (304.707)
-   7  2        Y2_reg        Y2_reg  D1_pystacked  -769.607 (545.218)
-   8  2        Y2_reg        Y2_reg      D2_logit  -669.144 (439.240)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -355.836  (161.251)
+   2  1  Y1_pystacked  Y1_pystacked      D2_logit  -383.287  (142.854)
+   3  1  Y1_pystacked        Y2_reg  D1_pystacked  -507.975  (205.668)
+   4  1  Y1_pystacked        Y2_reg      D2_logit  -521.540  (201.346)
+   5  1        Y2_reg  Y1_pystacked  D1_pystacked  -355.476  (161.252)
+   6  1        Y2_reg  Y1_pystacked      D2_logit  -383.078  (142.851)
+   7  1        Y2_reg        Y2_reg  D1_pystacked  -507.615  (205.667)
+*  8  1        Y2_reg        Y2_reg      D2_logit  -521.332  (201.344)
+   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked     3.649  (253.604)
+   2  2  Y1_pystacked  Y1_pystacked      D2_logit   -22.294  (249.471)
+   3  2  Y1_pystacked        Y2_reg  D1_pystacked   -69.292  (195.063)
+*  4  2  Y1_pystacked        Y2_reg      D2_logit   -95.178  (189.532)
+   5  2        Y2_reg  Y1_pystacked  D1_pystacked     3.501  (253.611)
+   6  2        Y2_reg  Y1_pystacked      D2_logit   -22.469  (249.478)
+   7  2        Y2_reg        Y2_reg  D1_pystacked   -69.440  (195.067)
+   8  2        Y2_reg        Y2_reg      D2_logit   -95.353  (189.537)
 * = minimum MSE specification for that resample.
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -407.621 (397.685)
- mse md     [min-mse]         [mse]         [mse]  -407.621 (505.148)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -308.255  (289.083)
+ mse md     [min-mse]         [mse]         [mse]  -308.255  (289.193)
 
 Median over 2 min-mse specifications (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -407.6215   505.1475    -0.81   0.420    -1397.692    582.4495
+     mbsmoke |  -308.2549   289.1933    -1.07   0.286    -875.0634    258.5536
 ------------------------------------------------------------------------------
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -407.6215 -478.1610 -478.1610 -407.6215 -337.0819 -337.0819
+     mbsmoke   -308.2549 -521.3316 -521.3316 -308.2549  -95.1781  -95.1781
 
 . forvalues i=1/8 {
   2.     ddml estimate, mname(m0) spec(`i') rep(1) replay notable
@@ -760,9 +761,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -325.8137   589.9735    -0.55   0.581     -1482.14    830.5131
+     mbsmoke |  -355.8358   161.2515    -2.21   0.027     -671.883   -39.78861
 ------------------------------------------------------------------------------
-Warning: 70 propensity scores trimmed to lower limit .01.
+Warning: 61 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 2 (sample=1) (ATE)
@@ -773,9 +774,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -336.6847   638.3638    -0.53   0.598    -1587.855    914.4853
+     mbsmoke |  -383.2868   142.8544    -2.68   0.007    -663.2763   -103.2972
 ------------------------------------------------------------------------------
-Warning: 78 propensity scores trimmed to lower limit .01.
+Warning: 48 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 3 (sample=1) (ATE)
@@ -786,9 +787,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -175.1927   664.0919    -0.26   0.792    -1476.789    1126.403
+     mbsmoke |  -507.9746   205.6682    -2.47   0.014    -911.0769   -104.8723
 ------------------------------------------------------------------------------
-Warning: 70 propensity scores trimmed to lower limit .01.
+Warning: 61 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 4 (sample=1) (ATE)
@@ -799,9 +800,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -184.1024   718.7029    -0.26   0.798    -1592.734    1224.529
+     mbsmoke |  -521.5403   201.3458    -2.59   0.010    -916.1707   -126.9099
 ------------------------------------------------------------------------------
-Warning: 78 propensity scores trimmed to lower limit .01.
+Warning: 48 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 5 (sample=1) (ATE)
@@ -812,12 +813,12 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -326.6223   589.9991    -0.55   0.580    -1482.999    829.7547
+     mbsmoke |  -355.4765   161.2523    -2.20   0.027    -671.5252   -39.42786
 ------------------------------------------------------------------------------
-Warning: 70 propensity scores trimmed to lower limit .01.
+Warning: 61 propensity scores trimmed to lower limit .01.
 
 
-Min MSE DDML model, specification 6 (sample=1) (ATE)
+DDML model, specification 6 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
 E[y|X,D=1]   = Y1_pystacked1_1
 E[D|X]       = D2_logit_1
@@ -825,9 +826,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -337.0819   638.3905    -0.53   0.597    -1588.304    914.1404
+     mbsmoke |  -383.0781   142.8515    -2.68   0.007    -663.0619   -103.0943
 ------------------------------------------------------------------------------
-Warning: 78 propensity scores trimmed to lower limit .01.
+Warning: 48 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 7 (sample=1) (ATE)
@@ -838,12 +839,12 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -176.0013   664.1162    -0.27   0.791    -1477.645    1125.643
+     mbsmoke |  -507.6153    205.667    -2.47   0.014    -910.7153   -104.5154
 ------------------------------------------------------------------------------
-Warning: 70 propensity scores trimmed to lower limit .01.
+Warning: 61 propensity scores trimmed to lower limit .01.
 
 
-DDML model, specification 8 (sample=1) (ATE)
+Min MSE DDML model, specification 8 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
 E[y|X,D=1]   = Y2_reg1_1
 E[D|X]       = D2_logit_1
@@ -851,9 +852,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -184.4996   718.7288    -0.26   0.797    -1593.182    1224.183
+     mbsmoke |  -521.3316   201.3444    -2.59   0.010    -915.9595   -126.7038
 ------------------------------------------------------------------------------
-Warning: 78 propensity scores trimmed to lower limit .01.
+Warning: 48 propensity scores trimmed to lower limit .01.
 
 
 . *** append, estimate, replay
@@ -877,97 +878,97 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked D2_logit
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
- mse  1        Y2_reg  Y1_pystacked      D2_logit  -337.082 (638.390)
- mse  2  Y1_pystacked  Y1_pystacked      D2_logit  -478.161 (304.720)
- mse  3  Y1_pystacked        Y2_reg      D2_logit  -817.623 (267.554)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse  1        Y2_reg        Y2_reg      D2_logit  -521.332  (201.344)
+ mse  2  Y1_pystacked        Y2_reg      D2_logit   -95.178  (189.533)
+ mse  3  Y1_pystacked        Y2_reg  D1_pystacked  -200.831  (159.200)
 mse = minimum MSE specification for that resample.
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -544.289 (393.846)
- mse md     [min-mse]         [mse]         [mse]  -478.161 (432.227)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -272.447  (228.572)
+ mse md     [min-mse]         [mse]         [mse]  -200.831  (216.991)
 
 Median over 3 min-mse resamples (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -478.161   432.2266    -1.11   0.269     -1325.31    368.9875
+     mbsmoke |  -200.8312   216.9911    -0.93   0.355     -626.126    224.4636
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -544.2887 -817.6233 -817.6233 -478.1610 -337.0819 -337.0819
+     mbsmoke   -272.4470 -521.3316 -521.3316 -200.8312  -95.1781  -95.1781
 
 . ddml estimate, mname(m0) spec(mse) rep(1) replay notable
 
 Min MSE DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y2_reg1_1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -337.0819   638.3905    -0.53   0.597    -1588.304    914.1404
+     mbsmoke |  -521.3316   201.3444    -2.59   0.010    -915.9595   -126.7038
 ------------------------------------------------------------------------------
-Warning: 78 propensity scores trimmed to lower limit .01.
+Warning: 48 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(mse) rep(2) replay notable
 
 Min MSE DDML model (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_2
+E[y|X,D=1]   = Y2_reg1_2
 E[D|X]       = D2_logit_2
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -478.161   304.7196    -1.57   0.117      -1075.4    119.0783
+     mbsmoke |  -95.17812   189.5325    -0.50   0.616     -466.655    276.2988
 ------------------------------------------------------------------------------
-Warning: 43 propensity scores trimmed to lower limit .01.
+Warning: 50 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
 
 Mean over 3 min-mse resamples (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -544.2887   393.8463    -1.38   0.167    -1316.213    227.6358
+     mbsmoke |   -272.447   228.5718    -1.19   0.233    -720.4394    175.5454
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -544.2887 -817.6233 -817.6233 -478.1610 -337.0819 -337.0819
+     mbsmoke   -272.4470 -521.3316 -521.3316 -200.8312  -95.1781  -95.1781
 
 . ddml estimate, mname(m0) spec(mse) rep(md) replay notable
 
 Median over 3 min-mse resamples (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -478.161   432.2266    -1.11   0.269     -1325.31    368.9875
+     mbsmoke |  -200.8312   216.9911    -0.93   0.355     -626.126    224.4636
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -544.2887 -817.6233 -817.6233 -478.1610 -337.0819 -337.0819
+     mbsmoke   -272.4470 -521.3316 -521.3316 -200.8312  -95.1781  -95.1781
 
 . *** allcombos
 . ddml estimate, allcombos
@@ -980,52 +981,52 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked D2_logit
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
-   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -325.814 (589.973)
-   2  1  Y1_pystacked  Y1_pystacked      D2_logit  -336.685 (638.364)
-   3  1  Y1_pystacked        Y2_reg  D1_pystacked  -175.193 (664.092)
-   4  1  Y1_pystacked        Y2_reg      D2_logit  -184.102 (718.703)
-   5  1        Y2_reg  Y1_pystacked  D1_pystacked  -326.622 (589.999)
-*  6  1        Y2_reg  Y1_pystacked      D2_logit  -337.082 (638.390)
-   7  1        Y2_reg        Y2_reg  D1_pystacked  -176.001 (664.116)
-   8  1        Y2_reg        Y2_reg      D2_logit  -184.500 (718.729)
-   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -551.307 (372.702)
-*  2  2  Y1_pystacked  Y1_pystacked      D2_logit  -478.161 (304.720)
-   3  2  Y1_pystacked        Y2_reg  D1_pystacked  -770.299 (545.232)
-   4  2  Y1_pystacked        Y2_reg      D2_logit  -669.588 (439.256)
-   5  2        Y2_reg  Y1_pystacked  D1_pystacked  -550.614 (372.692)
-   6  2        Y2_reg  Y1_pystacked      D2_logit  -477.717 (304.707)
-   7  2        Y2_reg        Y2_reg  D1_pystacked  -769.607 (545.218)
-   8  2        Y2_reg        Y2_reg      D2_logit  -669.144 (439.240)
-   1  3  Y1_pystacked  Y1_pystacked  D1_pystacked  -333.780 (135.504)
-   2  3  Y1_pystacked  Y1_pystacked      D2_logit  -424.079 (166.466)
-   3  3  Y1_pystacked        Y2_reg  D1_pystacked  -766.875 (263.500)
-*  4  3  Y1_pystacked        Y2_reg      D2_logit  -817.623 (267.554)
-   5  3        Y2_reg  Y1_pystacked  D1_pystacked  -332.519 (135.477)
-   6  3        Y2_reg  Y1_pystacked      D2_logit  -422.256 (166.421)
-   7  3        Y2_reg        Y2_reg  D1_pystacked  -765.614 (263.489)
-   8  3        Y2_reg        Y2_reg      D2_logit  -815.800 (267.524)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -355.836  (161.251)
+   2  1  Y1_pystacked  Y1_pystacked      D2_logit  -383.287  (142.854)
+   3  1  Y1_pystacked        Y2_reg  D1_pystacked  -507.975  (205.668)
+   4  1  Y1_pystacked        Y2_reg      D2_logit  -521.540  (201.346)
+   5  1        Y2_reg  Y1_pystacked  D1_pystacked  -355.476  (161.252)
+   6  1        Y2_reg  Y1_pystacked      D2_logit  -383.078  (142.851)
+   7  1        Y2_reg        Y2_reg  D1_pystacked  -507.615  (205.667)
+*  8  1        Y2_reg        Y2_reg      D2_logit  -521.332  (201.344)
+   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked     3.649  (253.604)
+   2  2  Y1_pystacked  Y1_pystacked      D2_logit   -22.294  (249.471)
+   3  2  Y1_pystacked        Y2_reg  D1_pystacked   -69.292  (195.063)
+*  4  2  Y1_pystacked        Y2_reg      D2_logit   -95.178  (189.532)
+   5  2        Y2_reg  Y1_pystacked  D1_pystacked     3.501  (253.611)
+   6  2        Y2_reg  Y1_pystacked      D2_logit   -22.469  (249.478)
+   7  2        Y2_reg        Y2_reg  D1_pystacked   -69.440  (195.067)
+   8  2        Y2_reg        Y2_reg      D2_logit   -95.353  (189.537)
+   1  3  Y1_pystacked  Y1_pystacked  D1_pystacked  -147.580  (178.967)
+   2  3  Y1_pystacked  Y1_pystacked      D2_logit  -171.661  (161.191)
+*  3  3  Y1_pystacked        Y2_reg  D1_pystacked  -200.831  (159.200)
+   4  3  Y1_pystacked        Y2_reg      D2_logit  -209.550  (137.843)
+   5  3        Y2_reg  Y1_pystacked  D1_pystacked  -147.806  (178.973)
+   6  3        Y2_reg  Y1_pystacked      D2_logit  -171.903  (161.198)
+   7  3        Y2_reg        Y2_reg  D1_pystacked  -201.057  (159.205)
+   8  3        Y2_reg        Y2_reg      D2_logit  -209.792  (137.848)
 * = minimum MSE specification for that resample.
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -544.289 (393.846)
- mse md     [min-mse]         [mse]         [mse]  -478.161 (432.227)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -272.447  (228.572)
+ mse md     [min-mse]         [mse]         [mse]  -200.831  (216.991)
 
 Median over 3 min-mse specifications (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -478.161   432.2266    -1.11   0.269     -1325.31    368.9875
+     mbsmoke |  -200.8312   216.9911    -0.93   0.355     -626.126    224.4636
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -544.2887 -817.6233 -817.6233 -478.1610 -337.0819 -337.0819
+     mbsmoke   -272.4470 -521.3316 -521.3316 -200.8312  -95.1781  -95.1781
 
 . forvalues i=1/4 {
   2.         forvalues r=1/2 {
@@ -1041,9 +1042,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -325.8137   589.9735    -0.55   0.581     -1482.14    830.5131
+     mbsmoke |  -355.8358   161.2515    -2.21   0.027     -671.883   -39.78861
 ------------------------------------------------------------------------------
-Warning: 70 propensity scores trimmed to lower limit .01.
+Warning: 61 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 1 (sample=2) (ATE)
@@ -1054,9 +1055,9 @@ E[D|X]       = D1_pystacked_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -551.307   372.7022    -1.48   0.139     -1281.79    179.1758
+     mbsmoke |   3.648714   253.6036     0.01   0.989    -493.4052    500.7026
 ------------------------------------------------------------------------------
-Warning: 37 propensity scores trimmed to lower limit .01.
+Warning: 46 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 2 (sample=1) (ATE)
@@ -1067,12 +1068,12 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -336.6847   638.3638    -0.53   0.598    -1587.855    914.4853
+     mbsmoke |  -383.2868   142.8544    -2.68   0.007    -663.2763   -103.2972
 ------------------------------------------------------------------------------
-Warning: 78 propensity scores trimmed to lower limit .01.
+Warning: 48 propensity scores trimmed to lower limit .01.
 
 
-Min MSE DDML model, specification 2 (sample=2) (ATE)
+DDML model, specification 2 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
 E[y|X,D=1]   = Y1_pystacked1_2
 E[D|X]       = D2_logit_2
@@ -1080,9 +1081,9 @@ E[D|X]       = D2_logit_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -478.161   304.7196    -1.57   0.117      -1075.4    119.0783
+     mbsmoke |  -22.29428   249.4713    -0.09   0.929     -511.249    466.6604
 ------------------------------------------------------------------------------
-Warning: 43 propensity scores trimmed to lower limit .01.
+Warning: 50 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 3 (sample=1) (ATE)
@@ -1093,9 +1094,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -175.1927   664.0919    -0.26   0.792    -1476.789    1126.403
+     mbsmoke |  -507.9746   205.6682    -2.47   0.014    -911.0769   -104.8723
 ------------------------------------------------------------------------------
-Warning: 70 propensity scores trimmed to lower limit .01.
+Warning: 61 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 3 (sample=2) (ATE)
@@ -1106,9 +1107,9 @@ E[D|X]       = D1_pystacked_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -770.2993   545.2318    -1.41   0.158    -1838.934    298.3353
+     mbsmoke |  -69.29208   195.0627    -0.36   0.722     -451.608    313.0238
 ------------------------------------------------------------------------------
-Warning: 37 propensity scores trimmed to lower limit .01.
+Warning: 46 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 4 (sample=1) (ATE)
@@ -1119,12 +1120,12 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -184.1024   718.7029    -0.26   0.798    -1592.734    1224.529
+     mbsmoke |  -521.5403   201.3458    -2.59   0.010    -916.1707   -126.9099
 ------------------------------------------------------------------------------
-Warning: 78 propensity scores trimmed to lower limit .01.
+Warning: 48 propensity scores trimmed to lower limit .01.
 
 
-DDML model, specification 4 (sample=2) (ATE)
+Min MSE DDML model, specification 4 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
 E[y|X,D=1]   = Y2_reg1_2
 E[D|X]       = D2_logit_2
@@ -1132,46 +1133,46 @@ E[D|X]       = D2_logit_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -669.5878   439.2558    -1.52   0.127    -1530.513    191.3379
+     mbsmoke |  -95.17812   189.5325    -0.50   0.616     -466.655    276.2988
 ------------------------------------------------------------------------------
-Warning: 43 propensity scores trimmed to lower limit .01.
+Warning: 50 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
 
 Mean over 3 min-mse specifications (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -544.2887   393.8463    -1.38   0.167    -1316.213    227.6358
+     mbsmoke |   -272.447   228.5718    -1.19   0.233    -720.4394    175.5454
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -544.2887 -817.6233 -817.6233 -478.1610 -337.0819 -337.0819
+     mbsmoke   -272.4470 -521.3316 -521.3316 -200.8312  -95.1781  -95.1781
 
 . ddml estimate, mname(m0) spec(mse) rep(md) replay notable
 
 Median over 3 min-mse specifications (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -478.161   432.2266    -1.11   0.269     -1325.31    368.9875
+     mbsmoke |  -200.8312   216.9911    -0.93   0.355     -626.126    224.4636
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -544.2887 -817.6233 -817.6233 -478.1610 -337.0819 -337.0819
+     mbsmoke   -272.4470 -521.3316 -521.3316 -200.8312  -95.1781  -95.1781
 
 . 
 . *** multiple learners, SS
@@ -1214,18 +1215,18 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked D2_logit
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
- mse  1  Y1_pystacked        Y2_reg  D1_pystacked   -10.508 (220.197)
-  ss  1  [shortstack]          [ss]          [ss]   -12.118 (223.890)
- mse  2        Y2_reg        Y2_reg  D1_pystacked  -268.041 (147.458)
-  ss  2  [shortstack]          [ss]          [ss]  -231.266 (139.427)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse  1  Y1_pystacked        Y2_reg  D1_pystacked  -398.092  (190.431)
+  ss  1  [shortstack]          [ss]          [ss]  -385.708  (188.724)
+ mse  2  Y1_pystacked        Y2_reg  D1_pystacked  -190.380  (138.098)
+  ss  2  [shortstack]          [ss]          [ss]  -193.189  (139.212)
 mse = minimum MSE specification for that resample.
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -139.275 (219.630)
-  ss mn  [shortstack]          [ss]          [ss]  -121.692 (204.349)
- mse md     [min-mse]         [mse]         [mse]  -139.275 (227.368)
-  ss md  [shortstack]          [ss]          [ss]  -121.692 (216.310)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -294.236  (191.133)
+  ss mn  [shortstack]          [ss]          [ss]  -289.449  (187.007)
+ mse md     [min-mse]         [mse]         [mse]  -294.236  (196.096)
+  ss md  [shortstack]          [ss]          [ss]  -289.449  (191.740)
 
 Shortstack DDML model (median over 2 resamples) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0                       Number of obs   =      1000
@@ -1235,13 +1236,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -121.6921   216.3097    -0.56   0.574    -545.6513    302.2671
+     mbsmoke |  -289.4486   191.7403    -1.51   0.131    -665.2526    86.35543
 ------------------------------------------------------------------------------
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -121.6921 -231.2661 -231.2661 -121.6921  -12.1182  -12.1182
+     mbsmoke   -289.4486 -385.7083 -385.7083 -289.4486 -193.1889 -193.1889
 
 . ddml estimate, mname(m0) spec(mse) rep(1) replay notable
 
@@ -1253,9 +1254,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -10.50821   220.1971    -0.05   0.962    -442.0866    421.0702
+     mbsmoke |  -398.0921   190.4307    -2.09   0.037    -771.3295    -24.8548
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
@@ -1268,9 +1269,9 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -12.11822   223.8904    -0.05   0.957    -450.9353    426.6988
+     mbsmoke |  -385.7083   188.7242    -2.04   0.041    -755.6009   -15.81573
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 71 propensity scores trimmed to lower limit .01.
 
 
 . *** allcombos
@@ -1284,32 +1285,32 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked D2_logit
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
-   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked   -20.987 (250.006)
-   2  1  Y1_pystacked  Y1_pystacked      D2_logit   -19.807 (245.503)
-*  3  1  Y1_pystacked        Y2_reg  D1_pystacked   -10.508 (220.197)
-   4  1  Y1_pystacked        Y2_reg      D2_logit   -28.446 (216.912)
-   5  1        Y2_reg  Y1_pystacked  D1_pystacked   -21.131 (250.003)
-   6  1        Y2_reg  Y1_pystacked      D2_logit   -19.989 (245.500)
-   7  1        Y2_reg        Y2_reg  D1_pystacked   -10.652 (220.195)
-   8  1        Y2_reg        Y2_reg      D2_logit   -28.628 (216.910)
-  ss  1  [shortstack]          [ss]          [ss]   -12.118 (223.890)
-   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -243.904 (147.946)
-   2  2  Y1_pystacked  Y1_pystacked      D2_logit  -189.975 (137.587)
-   3  2  Y1_pystacked        Y2_reg  D1_pystacked  -268.041 (147.458)
-   4  2  Y1_pystacked        Y2_reg      D2_logit  -210.974 (139.043)
-   5  2        Y2_reg  Y1_pystacked  D1_pystacked  -243.904 (147.946)
-   6  2        Y2_reg  Y1_pystacked      D2_logit  -189.975 (137.587)
-*  7  2        Y2_reg        Y2_reg  D1_pystacked  -268.041 (147.458)
-   8  2        Y2_reg        Y2_reg      D2_logit  -210.974 (139.043)
-  ss  2  [shortstack]          [ss]          [ss]  -231.266 (139.427)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -352.708  (191.870)
+   2  1  Y1_pystacked  Y1_pystacked      D2_logit  -443.348  (190.989)
+*  3  1  Y1_pystacked        Y2_reg  D1_pystacked  -398.092  (190.431)
+   4  1  Y1_pystacked        Y2_reg      D2_logit  -524.986  (248.655)
+   5  1        Y2_reg  Y1_pystacked  D1_pystacked  -352.827  (191.864)
+   6  1        Y2_reg  Y1_pystacked      D2_logit  -443.547  (190.982)
+   7  1        Y2_reg        Y2_reg  D1_pystacked  -398.212  (190.421)
+   8  1        Y2_reg        Y2_reg      D2_logit  -525.185  (248.647)
+  ss  1  [shortstack]          [ss]          [ss]  -385.708  (188.724)
+   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -213.368  (143.066)
+   2  2  Y1_pystacked  Y1_pystacked      D2_logit  -188.836  (145.060)
+*  3  2  Y1_pystacked        Y2_reg  D1_pystacked  -190.380  (138.098)
+   4  2  Y1_pystacked        Y2_reg      D2_logit  -160.319  (139.222)
+   5  2        Y2_reg  Y1_pystacked  D1_pystacked  -213.591  (143.077)
+   6  2        Y2_reg  Y1_pystacked      D2_logit  -188.925  (145.072)
+   7  2        Y2_reg        Y2_reg  D1_pystacked  -190.603  (138.112)
+   8  2        Y2_reg        Y2_reg      D2_logit  -160.408  (139.237)
+  ss  2  [shortstack]          [ss]          [ss]  -193.189  (139.212)
 * = minimum MSE specification for that resample.
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -139.275 (219.630)
-  ss mn  [shortstack]          [ss]          [ss]  -121.692 (204.349)
- mse md     [min-mse]         [mse]         [mse]  -139.275 (227.368)
-  ss md  [shortstack]          [ss]          [ss]  -121.692 (216.310)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -294.236  (191.133)
+  ss mn  [shortstack]          [ss]          [ss]  -289.449  (187.007)
+ mse md     [min-mse]         [mse]         [mse]  -294.236  (196.096)
+  ss md  [shortstack]          [ss]          [ss]  -289.449  (191.740)
 
 Shortstack DDML model (median over 2 resamples) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0                       Number of obs   =      1000
@@ -1319,13 +1320,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -121.6921   216.3097    -0.56   0.574    -545.6513    302.2671
+     mbsmoke |  -289.4486   191.7403    -1.51   0.131    -665.2526    86.35543
 ------------------------------------------------------------------------------
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -121.6921 -231.2661 -231.2661 -121.6921  -12.1182  -12.1182
+     mbsmoke   -289.4486 -385.7083 -385.7083 -289.4486 -193.1889 -193.1889
 
 . forvalues i=1/8 {
   2.     ddml estimate, mname(m0) spec(`i') rep(1) replay notable
@@ -1339,9 +1340,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -20.98672   250.0061    -0.08   0.933    -510.9897    469.0163
+     mbsmoke |  -352.7077   191.8701    -1.84   0.066    -728.7662    23.35083
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 2 (sample=1) (ATE)
@@ -1352,9 +1353,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -19.80725   245.5034    -0.08   0.936     -500.985    461.3705
+     mbsmoke |  -443.3482   190.9887    -2.32   0.020    -817.6791   -69.01727
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 58 propensity scores trimmed to lower limit .01.
 
 
 Min MSE DDML model, specification 3 (sample=1) (ATE)
@@ -1365,9 +1366,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -10.50821   220.1971    -0.05   0.962    -442.0866    421.0702
+     mbsmoke |  -398.0921   190.4307    -2.09   0.037    -771.3295    -24.8548
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 4 (sample=1) (ATE)
@@ -1378,9 +1379,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -28.44609   216.9124    -0.13   0.896    -453.5867    396.6945
+     mbsmoke |  -524.9863   248.6547    -2.11   0.035    -1012.341   -37.63208
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 58 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 5 (sample=1) (ATE)
@@ -1391,9 +1392,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -21.13084   250.0026    -0.08   0.933    -511.1269    468.8652
+     mbsmoke |  -352.8274   191.8644    -1.84   0.066    -728.8746    23.21987
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 6 (sample=1) (ATE)
@@ -1404,9 +1405,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -19.98945   245.5002    -0.08   0.935    -501.1609     461.182
+     mbsmoke |  -443.5471   190.9815    -2.32   0.020     -817.864    -69.2302
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 58 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 7 (sample=1) (ATE)
@@ -1417,9 +1418,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -10.65233   220.1947    -0.05   0.961     -442.226    420.9213
+     mbsmoke |  -398.2118   190.4205    -2.09   0.037    -771.4291   -24.99454
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 8 (sample=1) (ATE)
@@ -1430,9 +1431,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -28.6283   216.9104    -0.13   0.895    -453.7649    396.5083
+     mbsmoke |  -525.1852   248.6465    -2.11   0.035    -1012.524   -37.84696
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 58 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
@@ -1445,9 +1446,9 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -12.11822   223.8904    -0.05   0.957    -450.9353    426.6988
+     mbsmoke |  -385.7083   188.7242    -2.04   0.041    -755.6009   -15.81573
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 71 propensity scores trimmed to lower limit .01.
 
 
 . *** append, estimate, replay
@@ -1471,20 +1472,20 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked D2_logit
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
- mse  1  Y1_pystacked        Y2_reg  D1_pystacked   -10.508 (220.197)
-  ss  1  [shortstack]          [ss]          [ss]   -12.118 (223.890)
- mse  2        Y2_reg        Y2_reg  D1_pystacked  -268.041 (147.458)
-  ss  2  [shortstack]          [ss]          [ss]  -231.266 (139.427)
- mse  3        Y2_reg  Y1_pystacked      D2_logit  -285.707 (172.788)
-  ss  3  [shortstack]          [ss]          [ss]  -287.316 (175.410)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse  1  Y1_pystacked        Y2_reg  D1_pystacked  -398.092  (190.431)
+  ss  1  [shortstack]          [ss]          [ss]  -385.708  (188.724)
+ mse  2  Y1_pystacked        Y2_reg  D1_pystacked  -190.380  (138.098)
+  ss  2  [shortstack]          [ss]          [ss]  -193.189  (139.212)
+ mse  3  Y1_pystacked        Y2_reg  D1_pystacked  -291.386  (127.936)
+  ss  3  [shortstack]          [ss]          [ss]  -300.772  (128.897)
 mse = minimum MSE specification for that resample.
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -188.085 (202.130)
-  ss mn  [shortstack]          [ss]          [ss]  -176.900 (192.606)
- mse md     [min-mse]         [mse]         [mse]  -268.041 (173.689)
-  ss md  [shortstack]          [ss]          [ss]  -231.266 (184.148)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -293.286  (160.843)
+  ss mn  [shortstack]          [ss]          [ss]  -293.223  (160.367)
+ mse md     [min-mse]         [mse]         [mse]  -291.386  (171.094)
+  ss md  [shortstack]          [ss]          [ss]  -300.772  (175.938)
 
 Shortstack DDML model (median over 3 resamples) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0                       Number of obs   =      1000
@@ -1494,13 +1495,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -231.2661   184.1477    -1.26   0.209     -592.189    129.6569
+     mbsmoke |  -300.7724    175.938    -1.71   0.087    -645.6046    44.05982
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -176.9001 -287.3161 -287.3161 -231.2661  -12.1182  -12.1182
+     mbsmoke   -293.2232 -385.7083 -385.7083 -300.7724 -193.1889 -193.1889
 
 . ddml estimate, mname(m0) spec(mse) rep(1) replay notable
 
@@ -1512,24 +1513,24 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -10.50821   220.1971    -0.05   0.962    -442.0866    421.0702
+     mbsmoke |  -398.0921   190.4307    -2.09   0.037    -771.3295    -24.8548
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(mse) rep(2) replay notable
 
 Min MSE DDML model (sample=2) (ATE)
-E[y|X,D=0]   = Y2_reg0_2                           Number of obs   =      1000
+E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
 E[y|X,D=1]   = Y2_reg1_2
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -268.0412   147.4579    -1.82   0.069    -557.0535    20.97102
+     mbsmoke |  -190.3802    138.098    -1.38   0.168    -461.0473    80.28686
 ------------------------------------------------------------------------------
-Warning: 81 propensity scores trimmed to lower limit .01.
+Warning: 59 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
@@ -1542,13 +1543,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -188.0855   202.1303    -0.93   0.352    -584.2536    208.0827
+     mbsmoke |  -293.2862   160.8427    -1.82   0.068    -608.5321    21.95975
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -188.0855 -285.7070 -285.7070 -268.0413  -10.5082  -10.5082
+     mbsmoke   -293.2862 -398.0921 -398.0921 -291.3862 -190.3802 -190.3802
 
 . ddml estimate, mname(m0) spec(mse) rep(md) replay notable
 
@@ -1560,13 +1561,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -268.0412   173.6888    -1.54   0.123    -608.4651    72.38256
+     mbsmoke |  -291.3862   171.0943    -1.70   0.089    -626.7248    43.95247
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -188.0855 -285.7070 -285.7070 -268.0413  -10.5082  -10.5082
+     mbsmoke   -293.2862 -398.0921 -398.0921 -291.3862 -190.3802 -190.3802
 
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 
@@ -1578,9 +1579,9 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -12.11822   223.8904    -0.05   0.957    -450.9353    426.6988
+     mbsmoke |  -385.7083   188.7242    -2.04   0.041    -755.6009   -15.81573
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 71 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ss) rep(2) replay notable
@@ -1593,9 +1594,9 @@ E[D|X]       = D_mbsmoke_ss_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -231.2661   139.4273    -1.66   0.097    -504.5386    42.00645
+     mbsmoke |  -193.1889    139.212    -1.39   0.165    -466.0393    79.66161
 ------------------------------------------------------------------------------
-Warning: 89 propensity scores trimmed to lower limit .01.
+Warning: 68 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
@@ -1608,13 +1609,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -176.9001   192.6062    -0.92   0.358    -554.4013    200.6011
+     mbsmoke |  -293.2232    160.367    -1.83   0.067    -607.5368    21.09041
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -176.9001 -287.3161 -287.3161 -231.2661  -12.1182  -12.1182
+     mbsmoke   -293.2232 -385.7083 -385.7083 -300.7724 -193.1889 -193.1889
 
 . ddml estimate, mname(m0) spec(ss) rep(md) replay notable
 
@@ -1626,13 +1627,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -231.2661   184.1477    -1.26   0.209     -592.189    129.6569
+     mbsmoke |  -300.7724    175.938    -1.71   0.087    -645.6046    44.05982
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -176.9001 -287.3161 -287.3161 -231.2661  -12.1182  -12.1182
+     mbsmoke   -293.2232 -385.7083 -385.7083 -300.7724 -193.1889 -193.1889
 
 . *** allcombos
 . ddml estimate, allcombos
@@ -1645,41 +1646,41 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked D2_logit
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
-   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked   -20.987 (250.006)
-   2  1  Y1_pystacked  Y1_pystacked      D2_logit   -19.807 (245.503)
-*  3  1  Y1_pystacked        Y2_reg  D1_pystacked   -10.508 (220.197)
-   4  1  Y1_pystacked        Y2_reg      D2_logit   -28.446 (216.912)
-   5  1        Y2_reg  Y1_pystacked  D1_pystacked   -21.131 (250.003)
-   6  1        Y2_reg  Y1_pystacked      D2_logit   -19.989 (245.500)
-   7  1        Y2_reg        Y2_reg  D1_pystacked   -10.652 (220.195)
-   8  1        Y2_reg        Y2_reg      D2_logit   -28.628 (216.910)
-  ss  1  [shortstack]          [ss]          [ss]   -12.118 (223.890)
-   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -243.904 (147.946)
-   2  2  Y1_pystacked  Y1_pystacked      D2_logit  -189.975 (137.587)
-   3  2  Y1_pystacked        Y2_reg  D1_pystacked  -268.041 (147.458)
-   4  2  Y1_pystacked        Y2_reg      D2_logit  -210.974 (139.043)
-   5  2        Y2_reg  Y1_pystacked  D1_pystacked  -243.904 (147.946)
-   6  2        Y2_reg  Y1_pystacked      D2_logit  -189.975 (137.587)
-*  7  2        Y2_reg        Y2_reg  D1_pystacked  -268.041 (147.458)
-   8  2        Y2_reg        Y2_reg      D2_logit  -210.974 (139.043)
-  ss  2  [shortstack]          [ss]          [ss]  -231.266 (139.427)
-   1  3  Y1_pystacked  Y1_pystacked  D1_pystacked  -316.005 (211.526)
-   2  3  Y1_pystacked  Y1_pystacked      D2_logit  -286.002 (172.811)
-   3  3  Y1_pystacked        Y2_reg  D1_pystacked  -434.676 (304.723)
-   4  3  Y1_pystacked        Y2_reg      D2_logit  -356.622 (226.540)
-   5  3        Y2_reg  Y1_pystacked  D1_pystacked  -315.524 (211.503)
-*  6  3        Y2_reg  Y1_pystacked      D2_logit  -285.707 (172.788)
-   7  3        Y2_reg        Y2_reg  D1_pystacked  -434.195 (304.709)
-   8  3        Y2_reg        Y2_reg      D2_logit  -356.327 (226.528)
-  ss  3  [shortstack]          [ss]          [ss]  -287.316 (175.410)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -352.708  (191.870)
+   2  1  Y1_pystacked  Y1_pystacked      D2_logit  -443.348  (190.989)
+*  3  1  Y1_pystacked        Y2_reg  D1_pystacked  -398.092  (190.431)
+   4  1  Y1_pystacked        Y2_reg      D2_logit  -524.986  (248.655)
+   5  1        Y2_reg  Y1_pystacked  D1_pystacked  -352.827  (191.864)
+   6  1        Y2_reg  Y1_pystacked      D2_logit  -443.547  (190.982)
+   7  1        Y2_reg        Y2_reg  D1_pystacked  -398.212  (190.421)
+   8  1        Y2_reg        Y2_reg      D2_logit  -525.185  (248.647)
+  ss  1  [shortstack]          [ss]          [ss]  -385.708  (188.724)
+   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -213.368  (143.066)
+   2  2  Y1_pystacked  Y1_pystacked      D2_logit  -188.836  (145.060)
+*  3  2  Y1_pystacked        Y2_reg  D1_pystacked  -190.380  (138.098)
+   4  2  Y1_pystacked        Y2_reg      D2_logit  -160.319  (139.222)
+   5  2        Y2_reg  Y1_pystacked  D1_pystacked  -213.591  (143.077)
+   6  2        Y2_reg  Y1_pystacked      D2_logit  -188.925  (145.072)
+   7  2        Y2_reg        Y2_reg  D1_pystacked  -190.603  (138.112)
+   8  2        Y2_reg        Y2_reg      D2_logit  -160.408  (139.237)
+  ss  2  [shortstack]          [ss]          [ss]  -193.189  (139.212)
+   1  3  Y1_pystacked  Y1_pystacked  D1_pystacked  -205.469  (193.571)
+   2  3  Y1_pystacked  Y1_pystacked      D2_logit  -290.419  (188.218)
+*  3  3  Y1_pystacked        Y2_reg  D1_pystacked  -291.386  (127.936)
+   4  3  Y1_pystacked        Y2_reg      D2_logit  -441.287  (194.609)
+   5  3        Y2_reg  Y1_pystacked  D1_pystacked  -204.840  (193.592)
+   6  3        Y2_reg  Y1_pystacked      D2_logit  -289.792  (188.232)
+   7  3        Y2_reg        Y2_reg  D1_pystacked  -290.757  (127.951)
+   8  3        Y2_reg        Y2_reg      D2_logit  -440.660  (194.606)
+  ss  3  [shortstack]          [ss]          [ss]  -300.772  (128.897)
 * = minimum MSE specification for that resample.
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -188.085 (202.130)
-  ss mn  [shortstack]          [ss]          [ss]  -176.900 (192.606)
- mse md     [min-mse]         [mse]         [mse]  -268.041 (173.689)
-  ss md  [shortstack]          [ss]          [ss]  -231.266 (184.148)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -293.286  (160.843)
+  ss mn  [shortstack]          [ss]          [ss]  -293.223  (160.367)
+ mse md     [min-mse]         [mse]         [mse]  -291.386  (171.094)
+  ss md  [shortstack]          [ss]          [ss]  -300.772  (175.938)
 
 Shortstack DDML model (median over 3 resamples) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0                       Number of obs   =      1000
@@ -1689,13 +1690,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -231.2661   184.1477    -1.26   0.209     -592.189    129.6569
+     mbsmoke |  -300.7724    175.938    -1.71   0.087    -645.6046    44.05982
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -176.9001 -287.3161 -287.3161 -231.2661  -12.1182  -12.1182
+     mbsmoke   -293.2232 -385.7083 -385.7083 -300.7724 -193.1889 -193.1889
 
 . forvalues i=1/8 {
   2.     forvalues r=1/2 {
@@ -1711,9 +1712,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -20.98672   250.0061    -0.08   0.933    -510.9897    469.0163
+     mbsmoke |  -352.7077   191.8701    -1.84   0.066    -728.7662    23.35083
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 1 (sample=2) (ATE)
@@ -1724,9 +1725,9 @@ E[D|X]       = D1_pystacked_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -243.9036   147.9463    -1.65   0.099    -533.8731    46.06579
+     mbsmoke |  -213.3675   143.0663    -1.49   0.136    -493.7723    67.03723
 ------------------------------------------------------------------------------
-Warning: 81 propensity scores trimmed to lower limit .01.
+Warning: 59 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 2 (sample=1) (ATE)
@@ -1737,9 +1738,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -19.80725   245.5034    -0.08   0.936     -500.985    461.3705
+     mbsmoke |  -443.3482   190.9887    -2.32   0.020    -817.6791   -69.01727
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 58 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 2 (sample=2) (ATE)
@@ -1750,9 +1751,9 @@ E[D|X]       = D2_logit_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -189.9746   137.5867    -1.38   0.167    -459.6396    79.69046
+     mbsmoke |  -188.8357   145.0605    -1.30   0.193     -473.149    95.47754
 ------------------------------------------------------------------------------
-Warning: 93 propensity scores trimmed to lower limit .01.
+Warning: 76 propensity scores trimmed to lower limit .01.
 
 
 Min MSE DDML model, specification 3 (sample=1) (ATE)
@@ -1763,12 +1764,12 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -10.50821   220.1971    -0.05   0.962    -442.0866    421.0702
+     mbsmoke |  -398.0921   190.4307    -2.09   0.037    -771.3295    -24.8548
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
-DDML model, specification 3 (sample=2) (ATE)
+Min MSE DDML model, specification 3 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
 E[y|X,D=1]   = Y2_reg1_2
 E[D|X]       = D1_pystacked_2
@@ -1776,9 +1777,9 @@ E[D|X]       = D1_pystacked_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -268.0412   147.4579    -1.82   0.069    -557.0535    20.97102
+     mbsmoke |  -190.3802    138.098    -1.38   0.168    -461.0473    80.28686
 ------------------------------------------------------------------------------
-Warning: 81 propensity scores trimmed to lower limit .01.
+Warning: 59 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 4 (sample=1) (ATE)
@@ -1789,9 +1790,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -28.44609   216.9124    -0.13   0.896    -453.5867    396.6945
+     mbsmoke |  -524.9863   248.6547    -2.11   0.035    -1012.341   -37.63208
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 58 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 4 (sample=2) (ATE)
@@ -1802,9 +1803,9 @@ E[D|X]       = D2_logit_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -210.974   139.0433    -1.52   0.129    -483.4939    61.54585
+     mbsmoke |  -160.3189   139.2223    -1.15   0.250    -433.1897    112.5518
 ------------------------------------------------------------------------------
-Warning: 93 propensity scores trimmed to lower limit .01.
+Warning: 76 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 5 (sample=1) (ATE)
@@ -1815,9 +1816,9 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -21.13084   250.0026    -0.08   0.933    -511.1269    468.8652
+     mbsmoke |  -352.8274   191.8644    -1.84   0.066    -728.8746    23.21987
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 5 (sample=2) (ATE)
@@ -1828,9 +1829,9 @@ E[D|X]       = D1_pystacked_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -243.9036   147.9463    -1.65   0.099    -533.8731    46.06579
+     mbsmoke |  -213.5909   143.0773    -1.49   0.135    -494.0172    66.83544
 ------------------------------------------------------------------------------
-Warning: 81 propensity scores trimmed to lower limit .01.
+Warning: 59 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 6 (sample=1) (ATE)
@@ -1841,9 +1842,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -19.98945   245.5002    -0.08   0.935    -501.1609     461.182
+     mbsmoke |  -443.5471   190.9815    -2.32   0.020     -817.864    -69.2302
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 58 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 6 (sample=2) (ATE)
@@ -1854,9 +1855,9 @@ E[D|X]       = D2_logit_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -189.9746   137.5867    -1.38   0.167    -459.6396    79.69046
+     mbsmoke |  -188.9246   145.0724    -1.30   0.193    -473.2613    95.41207
 ------------------------------------------------------------------------------
-Warning: 93 propensity scores trimmed to lower limit .01.
+Warning: 76 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 7 (sample=1) (ATE)
@@ -1867,12 +1868,12 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -10.65233   220.1947    -0.05   0.961     -442.226    420.9213
+     mbsmoke |  -398.2118   190.4205    -2.09   0.037    -771.4291   -24.99454
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
-Min MSE DDML model, specification 7 (sample=2) (ATE)
+DDML model, specification 7 (sample=2) (ATE)
 E[y|X,D=0]   = Y2_reg0_2                           Number of obs   =      1000
 E[y|X,D=1]   = Y2_reg1_2
 E[D|X]       = D1_pystacked_2
@@ -1880,9 +1881,9 @@ E[D|X]       = D1_pystacked_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -268.0412   147.4579    -1.82   0.069    -557.0535    20.97102
+     mbsmoke |  -190.6035   138.1118    -1.38   0.168    -461.2978    80.09069
 ------------------------------------------------------------------------------
-Warning: 81 propensity scores trimmed to lower limit .01.
+Warning: 59 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 8 (sample=1) (ATE)
@@ -1893,9 +1894,9 @@ E[D|X]       = D2_logit_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -28.6283   216.9104    -0.13   0.895    -453.7649    396.5083
+     mbsmoke |  -525.1852   248.6465    -2.11   0.035    -1012.524   -37.84696
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 58 propensity scores trimmed to lower limit .01.
 
 
 DDML model, specification 8 (sample=2) (ATE)
@@ -1906,9 +1907,9 @@ E[D|X]       = D2_logit_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |   -210.974   139.0433    -1.52   0.129    -483.4939    61.54585
+     mbsmoke |  -160.4078   139.2366    -1.15   0.249    -433.3065    112.4909
 ------------------------------------------------------------------------------
-Warning: 93 propensity scores trimmed to lower limit .01.
+Warning: 76 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(mse) rep(1) replay notable
@@ -1921,24 +1922,24 @@ E[D|X]       = D1_pystacked_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -10.50821   220.1971    -0.05   0.962    -442.0866    421.0702
+     mbsmoke |  -398.0921   190.4307    -2.09   0.037    -771.3295    -24.8548
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 72 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(mse) rep(2) replay notable
 
-Min MSE DDML model, specification 7 (sample=2) (ATE)
-E[y|X,D=0]   = Y2_reg0_2                           Number of obs   =      1000
+Min MSE DDML model, specification 3 (sample=2) (ATE)
+E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
 E[y|X,D=1]   = Y2_reg1_2
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -268.0412   147.4579    -1.82   0.069    -557.0535    20.97102
+     mbsmoke |  -190.3802    138.098    -1.38   0.168    -461.0473    80.28686
 ------------------------------------------------------------------------------
-Warning: 81 propensity scores trimmed to lower limit .01.
+Warning: 59 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
@@ -1951,13 +1952,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -188.0855   202.1303    -0.93   0.352    -584.2536    208.0827
+     mbsmoke |  -293.2862   160.8427    -1.82   0.068    -608.5321    21.95975
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -188.0855 -285.7070 -285.7070 -268.0413  -10.5082  -10.5082
+     mbsmoke   -293.2862 -398.0921 -398.0921 -291.3862 -190.3802 -190.3802
 
 . ddml estimate, mname(m0) spec(mse) rep(md) replay notable
 
@@ -1969,13 +1970,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -268.0412   173.6888    -1.54   0.123    -608.4651    72.38256
+     mbsmoke |  -291.3862   171.0943    -1.70   0.089    -626.7248    43.95247
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -188.0855 -285.7070 -285.7070 -268.0413  -10.5082  -10.5082
+     mbsmoke   -293.2862 -398.0921 -398.0921 -291.3862 -190.3802 -190.3802
 
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 
@@ -1987,9 +1988,9 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -12.11822   223.8904    -0.05   0.957    -450.9353    426.6988
+     mbsmoke |  -385.7083   188.7242    -2.04   0.041    -755.6009   -15.81573
 ------------------------------------------------------------------------------
-Warning: 80 propensity scores trimmed to lower limit .01.
+Warning: 71 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ss) rep(2) replay notable
@@ -2002,9 +2003,9 @@ E[D|X]       = D_mbsmoke_ss_2
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -231.2661   139.4273    -1.66   0.097    -504.5386    42.00645
+     mbsmoke |  -193.1889    139.212    -1.39   0.165    -466.0393    79.66161
 ------------------------------------------------------------------------------
-Warning: 89 propensity scores trimmed to lower limit .01.
+Warning: 68 propensity scores trimmed to lower limit .01.
 
 
 . ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
@@ -2017,13 +2018,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -176.9001   192.6062    -0.92   0.358    -554.4013    200.6011
+     mbsmoke |  -293.2232    160.367    -1.83   0.067    -607.5368    21.09041
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -176.9001 -287.3161 -287.3161 -231.2661  -12.1182  -12.1182
+     mbsmoke   -293.2232 -385.7083 -385.7083 -300.7724 -193.1889 -193.1889
 
 . ddml estimate, mname(m0) spec(ss) rep(md) replay notable
 
@@ -2035,13 +2036,13 @@ E[D|X]       = D_mbsmoke_ss
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -231.2661   184.1477    -1.26   0.209     -592.189    129.6569
+     mbsmoke |  -300.7724    175.938    -1.71   0.087    -645.6046    44.05982
 ------------------------------------------------------------------------------
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -176.9001 -287.3161 -287.3161 -231.2661  -12.1182  -12.1182
+     mbsmoke   -293.2232 -385.7083 -385.7083 -300.7724 -193.1889 -193.1889
 
 . 
 . *** ddml overlap
@@ -2078,13 +2079,13 @@ D equations (1):        mbsmoke
  mbsmoke learners:      D1_pystacked
 
 DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
-  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -469.478 (280.260)
-  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -228.708 (463.450)
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -393.628  (355.419)
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -143.809  (197.009)
 
-Mean/med Y(0) learner  Y(1) learner     D learner         b        SE
- mse mn     [min-mse]         [mse]         [mse]  -349.093 (363.819)
- mse md     [min-mse]         [mse]         [mse]  -349.093 (401.445)
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]         [mse]         [mse]  -268.719  (280.478)
+ mse md     [min-mse]         [mse]         [mse]  -268.719  (313.321)
 
 Median over 2 stacking resamples (ATE)
 E[y|X,D=0]   = Y1_pystacked0                       Number of obs   =      1000
@@ -2094,13 +2095,13 @@ E[D|X]       = D1_pystacked
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -349.0929   401.4454    -0.87   0.385    -1135.911    437.7256
+     mbsmoke |  -268.7186   313.3212    -0.86   0.391    -882.8168    345.3796
 ------------------------------------------------------------------------------
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -349.0929 -469.4782 -469.4782 -349.0929 -228.7075 -228.7075
+     mbsmoke   -268.7186 -393.6282 -393.6282 -268.7186 -143.8091 -143.8091
 
 . ddml overlap
 
@@ -2115,9 +2116,935 @@ Summary over 2 resamples:
 >         title("Propensity score: epanechnikov kernel")
 
 . 
+. ******************************************************************************** 
+. **** Restacking with ddml estimate                                                                                      
+> ****
+. ******************************************************************************** 
+. 
+. set seed 123
+
+. ddml init interactive, kfolds(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(ols gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X]: pystacked $D $X, type(class) method(logit gradboost)
+Learner D1_pystacked added successfully.
+
+. set seed 123
+
+. 
+. // initial = std stack, shortstack, poolstack
+. set seed 123
+
+. ddml crossfit, shortstack poolstack
+Cross-fitting E[y|X,D] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. ddml estimate
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+  ss  1  [shortstack]          [ss]          [ss]  -423.301  (168.609)
+  ps  1   [poolstack]          [ps]          [ps]  -448.423  (189.609)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
+------------------------------------------------------------------------------
+Warning: 51 propensity scores trimmed to lower limit .01.
+
+
+. // restack shortstack
+. ddml estimate, shortstack ssfinalest(singlebest)
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+  ss  1  [shortstack]          [ss]          [ss]  -576.772  (320.037)
+  ps  1   [poolstack]          [ps]          [ps]  -448.423  (189.609)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -576.7724   320.0374    -1.80   0.072    -1204.034     50.4894
+------------------------------------------------------------------------------
+Warning: 52 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+short-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            1            1
+gradboost            2            1            0            0
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+pool-stacked weights across resamples for bweight
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .87556132    .87556132
+gradboost            2            0    .12443868    .12443868
+      ols            1            1    .48466133    .48466133
+gradboost            2            1    .51533867    .51533867
+
+pool-stacked weights across resamples for mbsmoke
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .82247991    .82247991
+gradboost            2    .17752009    .17752009
+
+. mat ssw = r(Y_bweight_ss)
+
+. assert el(ssw,1,3)==1
+
+. assert el(ssw,2,3)==0
+
+. assert el(ssw,3,3)==1
+
+. assert el(ssw,4,3)==0
+
+. // restack poolstack
+. ddml estimate, poolstack psfinalest(singlebest)
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+  ss  1  [shortstack]          [ss]          [ss]  -576.772  (320.037)
+  ps  1   [poolstack]          [ps]          [ps]  -323.535  (135.293)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -576.7724   320.0374    -1.80   0.072    -1204.034     50.4894
+------------------------------------------------------------------------------
+Warning: 52 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+short-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            1            1
+gradboost            2            1            0            0
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+pool-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            1            1
+gradboost            2            1            0            0
+
+pool-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+. mat psw = r(Y_bweight_ps)
+
+. assert el(psw,1,3)==1
+
+. assert el(psw,2,3)==0
+
+. assert el(psw,3,3)==1
+
+. assert el(psw,4,3)==0
+
+. 
+. // initial = std stack, shortstack, poolstack
+. set seed 123
+
+. ddml crossfit, shortstack poolstack
+Cross-fitting E[y|X,D] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. ddml estimate
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+  ss  1  [shortstack]          [ss]          [ss]  -423.301  (168.609)
+  ps  1   [poolstack]          [ps]          [ps]  -448.423  (189.609)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
+------------------------------------------------------------------------------
+Warning: 51 propensity scores trimmed to lower limit .01.
+
+
+. // restack shortstack + poolstack
+. ddml estimate, shortstack ssfinalest(singlebest) poolstack psfinalest(singlebest)
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+  ss  1  [shortstack]          [ss]          [ss]  -576.772  (320.037)
+  ps  1   [poolstack]          [ps]          [ps]  -323.535  (135.293)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -576.7724   320.0374    -1.80   0.072    -1204.034     50.4894
+------------------------------------------------------------------------------
+Warning: 52 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+short-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            1            1
+gradboost            2            1            0            0
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+pool-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            1            1
+gradboost            2            1            0            0
+
+pool-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+. mat ssw = r(Y_bweight_ss)
+
+. assert el(ssw,1,3)==1
+
+. assert el(ssw,2,3)==0
+
+. assert el(ssw,3,3)==1
+
+. assert el(ssw,4,3)==0
+
+. mat psw = r(Y_bweight_ps)
+
+. assert el(psw,1,3)==1
+
+. assert el(psw,2,3)==0
+
+. assert el(psw,3,3)==1
+
+. assert el(psw,4,3)==0
+
+. 
+. // initial = std stack only
+. set seed 123
+
+. ddml crossfit
+Cross-fitting E[y|X,D] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+
+Stacking DDML model (ATE)
+E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y1_pystacked1_1
+E[D|X]       = D1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -511.5722   257.7553    -1.98   0.047    -1016.763   -6.381136
+------------------------------------------------------------------------------
+Warning: 46 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+error - short-stacked weights for bweight not available
+
+error - short-stacked weights for mbsmoke not available
+
+error - pool-stacked weights for bweight not available
+
+error - pool-stacked weights for mbsmoke not available
+
+. // restack - add shortstack
+. ddml estimate, shortstack
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+  ss  1  [shortstack]          [ss]          [ss]  -499.221  (237.412)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -499.2209   237.4124    -2.10   0.035    -964.5407   -33.90118
+------------------------------------------------------------------------------
+Warning: 51 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+short-stacked weights across resamples for bweight
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .94753478    .94753478
+gradboost            2            0    .05246522    .05246522
+      ols            1            1    .94753478    .94753478
+gradboost            2            1    .05246522    .05246522
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .94753478    .94753478
+gradboost            2    .05246522    .05246522
+
+error - pool-stacked weights for bweight not available
+
+error - pool-stacked weights for mbsmoke not available
+
+. 
+. // initial = std stack only
+. set seed 123
+
+. ddml crossfit
+Cross-fitting E[y|X,D] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+
+Stacking DDML model (ATE)
+E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y1_pystacked1_1
+E[D|X]       = D1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -511.5722   257.7553    -1.98   0.047    -1016.763   -6.381136
+------------------------------------------------------------------------------
+Warning: 46 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+error - short-stacked weights for bweight not available
+
+error - short-stacked weights for mbsmoke not available
+
+error - pool-stacked weights for bweight not available
+
+error - pool-stacked weights for mbsmoke not available
+
+. // restack - add shortstack
+. ddml estimate, shortstack
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+  ss  1  [shortstack]          [ss]          [ss]  -499.221  (237.412)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -499.2209   237.4124    -2.10   0.035    -964.5407   -33.90118
+------------------------------------------------------------------------------
+Warning: 51 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+short-stacked weights across resamples for bweight
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .94753478    .94753478
+gradboost            2            0    .05246522    .05246522
+      ols            1            1    .94753478    .94753478
+gradboost            2            1    .05246522    .05246522
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .94753478    .94753478
+gradboost            2    .05246522    .05246522
+
+error - pool-stacked weights for bweight not available
+
+error - pool-stacked weights for mbsmoke not available
+
+. 
+. // initial = std stack only
+. set seed 123
+
+. ddml crossfit
+Cross-fitting E[y|X,D] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+
+Stacking DDML model (ATE)
+E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y1_pystacked1_1
+E[D|X]       = D1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -511.5722   257.7553    -1.98   0.047    -1016.763   -6.381136
+------------------------------------------------------------------------------
+Warning: 46 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+error - short-stacked weights for bweight not available
+
+error - short-stacked weights for mbsmoke not available
+
+error - pool-stacked weights for bweight not available
+
+error - pool-stacked weights for mbsmoke not available
+
+. // restack - add shortstack with singlebest
+. ddml estimate, shortstack ssfinalest(singlebest)
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+  ss  1  [shortstack]          [ss]          [ss]  -576.772  (320.037)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -576.7724   320.0374    -1.80   0.072    -1204.034     50.4894
+------------------------------------------------------------------------------
+Warning: 52 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+short-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            1            1
+gradboost            2            1            0            0
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+error - pool-stacked weights for bweight not available
+
+error - pool-stacked weights for mbsmoke not available
+
+. mat ssw = r(Y_bweight_ss)
+
+. assert el(ssw,1,3)==1
+
+. assert el(ssw,2,3)==0
+
+. assert el(ssw,3,3)==1
+
+. assert el(ssw,4,3)==0
+
+. 
+. // initial = shortstack, no standard stack
+. set seed 123
+
+. ddml crossfit, shortstack nostdstack
+Cross-fitting E[y|X,D] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+. ddml estimate
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  ss  1  [shortstack]          [ss]          [ss]  -423.301  (168.609)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
+------------------------------------------------------------------------------
+Warning: 51 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+error - standard stack weights for bweight not available
+
+error - standard stack weights for mbsmoke not available
+
+short-stacked weights across resamples for bweight
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1    .39219115    .39219115
+gradboost            2            1    .60780885    .60780885
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .94753478    .94753478
+gradboost            2    .05246522    .05246522
+
+error - pool-stacked weights for bweight not available
+
+error - pool-stacked weights for mbsmoke not available
+
+. // restack - shortstack with singlebest
+. ddml estimate, shortstack ssfinalest(singlebest)
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  ss  1  [shortstack]          [ss]          [ss]  -576.772  (320.037)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -576.7724   320.0374    -1.80   0.072    -1204.034     50.4894
+------------------------------------------------------------------------------
+Warning: 52 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+error - standard stack weights for bweight not available
+
+error - standard stack weights for mbsmoke not available
+
+short-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            1            1
+gradboost            2            1            0            0
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+error - pool-stacked weights for bweight not available
+
+error - pool-stacked weights for mbsmoke not available
+
+. assert el(ssw,1,3)==1
+
+. assert el(ssw,2,3)==0
+
+. assert el(ssw,3,3)==1
+
+. assert el(ssw,4,3)==0
+
+. 
+. // without pystacked: not currently supported
+. 
+. // setup
+. set seed 123
+
+. ddml init interactive, kfolds(2) reps(1)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(ols gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X,D]: reg $Y $X
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner Y2_reg added successfully.
+
+. ddml E[D|X]: pystacked $D $X, type(class) method(logit gradboost)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X]: logit $D $X
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner D2_logit added successfully.
+
+. 
+. // no shortstack
+. set seed 123
+
+. ddml crossfit
+Cross-fitting E[y|X,D] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate, allcombos
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked Y2_reg
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked D2_logit
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+   2  1  Y1_pystacked  Y1_pystacked      D2_logit  -549.947  (249.767)
+   3  1  Y1_pystacked        Y2_reg  D1_pystacked  -578.800  (321.921)
+   4  1  Y1_pystacked        Y2_reg      D2_logit  -658.406  (323.903)
+   5  1        Y2_reg  Y1_pystacked  D1_pystacked  -513.091  (257.761)
+*  6  1        Y2_reg  Y1_pystacked      D2_logit  -551.280  (249.752)
+   7  1        Y2_reg        Y2_reg  D1_pystacked  -580.319  (321.923)
+   8  1        Y2_reg        Y2_reg      D2_logit  -659.740  (323.872)
+* = minimum MSE specification for that resample.
+
+Min MSE DDML model, specification 6 (ATE)
+E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
+E[y|X,D=1]   = Y1_pystacked1_1
+E[D|X]       = D2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -551.2799   249.7519    -2.21   0.027    -1040.785   -61.77525
+------------------------------------------------------------------------------
+Warning: 45 propensity scores trimmed to lower limit .01.
+
+
+. // restack - add shortstack
+. cap noi ddml estimate, shortstack
+error - restacking available only if pystacked is the only learner for each conditional expectation
+
+. assert _rc==198
+
+. 
 . log close
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactive.log
   log type:  text
- closed on:   9 Jun 2023, 13:41:45
--------------------------------------------------------------------------------------------------------------------------------------------
+ closed on:   8 Jul 2023, 21:16:38
+--------------------------------------------------------------------------------------------------------------------------
