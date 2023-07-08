@@ -130,8 +130,12 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 		vnames = sort(vnames,(1::cols(vnames))')
 		for (i=1;i<=rows(vnames);i++) {
 			eqn = (d.eqnAA).get(vnames[i])
-			// detailflag=0
-			pystacked_extract(d,eqn,vnames[i],"weights",0)
+			if (d.stdflag) {
+				pystacked_extract(d,eqn,vnames[i],"weights",0)
+			}
+			else {
+				printf("\n{res}error - standard stack weights for %s not available\n",vnames[i])
+			}
 		}
 	}
 	else if (show=="SSWEIGHTS") {
@@ -171,9 +175,14 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 		vnames =(d.eqnAA).keys()
 		vnames = sort(vnames,(1::cols(vnames))')
 		for (i=1;i<=rows(vnames);i++) {
-			eqn = (d.eqnAA).get(vnames[i])
-			pystacked_extract(d,eqn,vnames[i],"weights",detailflag)
-			pystacked_extract(d,eqn,vnames[i],"MSEs",detailflag)
+			if (d.stdflag) {
+				eqn = (d.eqnAA).get(vnames[i])
+				pystacked_extract(d,eqn,vnames[i],"weights",detailflag)
+				pystacked_extract(d,eqn,vnames[i],"MSEs",detailflag)
+			}
+			else {
+				printf("\n{res}error - standard stack weights and MSEs for %s not available\n",vnames[i])
+			}
 		}
 	}
 	else if ((show=="MSE") | (show=="N")) {
