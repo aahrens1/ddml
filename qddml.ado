@@ -146,7 +146,7 @@ program define qddml, eclass sortpreserve
 		local ycmdoptions	, `ycmdoptions'
 		local dcmdoptions	, `dcmdoptions'
 		local zcmdoptions	, `zcmdoptions'
-		local dhcmdoptions	, `dcmdoptions'
+		local dhcmdoptions	, `dhcmdoptions'
 	}
 
 	**** syntax checks
@@ -259,7 +259,7 @@ program define qddml, eclass sortpreserve
 			`dcmd' `dendog' `xctrl' `exexog' `dcmdoptions' `cmdoptions'
 		ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'):		///
 			`dhcmd' {D} `xctrl' `dhcmdoptions' `cmdoptions'
-	} 
+	}
 
 	*** IV 
 	else if ("`model'"=="iv") {
