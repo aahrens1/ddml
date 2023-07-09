@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 8 july 2023
+*! last edited: 9 july 2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -177,7 +177,6 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		}
 		else {
 			mata: st_local("poolstack", `eqn'.poolstack)
-			// must previously have been poolstacked for restacking to work
 			if "`poolstack'"=="" {
 				// not previously poolstacked, set local and struct field to default
 				local poolstack `etype'_`vname'
@@ -192,6 +191,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		// loop through reps
 		forvalues m=1/`reps' {
 			local fid `mname'_fid_`m'
+			tempvar fidtouse
 			// assemble learner list
 			// clear macro
 			local learner_list
@@ -218,7 +218,6 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				frame create `tframe'
 				frame change `tframe'
 				mata: `y_stacking_cv' = return_result_item(`eqn',"`vtilde'","y_stacking_cv", "`m'")
-				tempvar fidtouse
 				getmata (`fid' `fidtouse' `vname' `learner_list')=`y_stacking_cv', force replace
 				forvalues k=1/`kfolds' {
 					frame change `tframe'
@@ -245,7 +244,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				frame create `tframe'
 				frame change `tframe'
 				mata: `y_stacking_cv' = return_result_item(`eqn',"`vtilde'","y_stacking_cv", "`m'")				
-				getmata (`fid' `vname' `learner_list')=`y_stacking_cv', force replace
+				getmata (`fid' `fidtouse' `vname' `learner_list')=`y_stacking_cv', force replace
 				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') stype(`stype')
 				`qui' di as res "N=" e(N)
 				// since original finalest could be default (blank)
