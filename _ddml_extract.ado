@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 8 june 2023
+*! last edited: 9 july 2023
 *! authors: aa/ms
 
 program define _ddml_extract, rclass

@@ -1,5 +1,5 @@
 *! crossfit v0.6
-*! last edited: 8 july 2023
+*! last edited: 9 july 2023
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 
