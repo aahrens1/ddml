@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 8 june 2023
+*! last edited: 9 july 2023
 *! authors: aa/ms
 
 program _ddml_nnls
@@ -232,13 +232,13 @@ def py_get_stack_weights(yvar,xvars,touse,wvar,finalest,stype):
     elif finalest == "ridge" and stype == "class": 
         fin_est = LogisticRegression()
     elif finalest == "nnls0" and stype == "reg": 
-        fin_est = LinearRegression(fit_intercept=False,positive=True)
+        fin_est = LinearRegression2(fit_intercept=False,positive=True)
     elif finalest == "nnls_sk" and stype == "reg": 
-        fin_est = LinearRegression(fit_intercept=False,positive=True)
+        fin_est = LinearRegression2(fit_intercept=False,positive=True)
     elif finalest == "nnls1" and stype == "reg": 
         fin_est = ConstrLS()
     elif finalest == "ridge" and stype == "reg": 
-        fin_est = RidgeCV()
+        fin_est = RidgeCV2()
     elif finalest == "avg" and stype == "reg": 
         fin_est = AvgEstimator()
     elif finalest == "avg" and stype == "class": 
@@ -250,7 +250,7 @@ def py_get_stack_weights(yvar,xvars,touse,wvar,finalest,stype):
     elif finalest == "ols" and stype == "class": 
         fin_est = LinearRegressionClassifier()    
     elif finalest == "ols" and stype == "reg": 
-        fin_est = LinearRegression()    
+        fin_est = LinearRegression2()    
     elif finalest == "ls1" and stype == "reg":
         fin_est = ConstrLS(unit_interval=False)    
     elif finalest == "ls1" and stype == "class":
@@ -369,6 +369,22 @@ class AvgClassifier(AvgEstimator):
     _estimator_type="classifier"
     def predict_proba(self, X):
         return self.predict(X)
+
+class LinearRegressionClassifier(LinearRegression):
+    _estimator_type="classifier"
+    def predict_proba(self, X):
+        self.cvalid=X
+        return self.predict(X)
+
+class LinearRegression2(LinearRegression):
+    def fit(self,X,y):
+        self.cvalid=X
+        return LinearRegression.fit(self,X,y)
+
+class RidgeCV2(RidgeCV):
+    def fit(self,X,y):
+        self.cvalid=X
+        return RidgeCV.fit(self,X,y)
 
 end
 
