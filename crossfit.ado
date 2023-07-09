@@ -362,8 +362,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 		tempname pysw_temp pysw1_temp pysw0_temp
 		tempname pysm pysm0 pysm1
 		tempname pysm_temp pysm1_temp pysm0_temp
-		tempvar tomata
+		tempvar tomata fidtouse
 		qui gen byte `tomata'=.
+		qui gen int `fidtouse'=.
 		
 		// crossfit
 		di as text "Cross-fitting fold " _c
@@ -377,9 +378,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 			
 			if ~`tvflag' { // case 1
 				
-				if (`k'==1) & `psflag' {
-					// initialize mata object to hold dep var and in-sample crossfit CV predictions for pooled-stacking
-					mata: `y_stacking_cv' = J(0,`nlearners'+2,0)
+				if (`k'==1) & `stdflag' {
+					// initialize mata object to hold dep var and in-sample crossfit CV predictions
+					mata: `y_stacking_cv' = J(0,`nlearners'+3,0)
 				}
 				
 				// estimate excluding kth fold
@@ -402,8 +403,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				if `stdflag' {
 					// get fitted values for kth fold	
 					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
-					// in-sample CV base learner predicted values (for poolstacking)
-					if `psflag' {
+					// in-sample CV base learner predicted values
+					if `stdflag' {
 						tempvar stacking_p_cv
 						qui predict double `stacking_p_cv', basexb cv
 					}
@@ -433,20 +434,21 @@ program define _crossfit_pystacked, rclass sortpreserve
 					// get stacked out-of-sample predicted values
 					qui replace `vhat' = `vhat_k' if `fid'==`k' & `touse'
 				}
-				if `psflag' {				
+				if `stdflag' {				
 					// in-sample CV base learner predicted values
 					// accumulated in mata along with corresponding values of dep var
 					qui replace `tomata' = `fid'!=`k' & `touse'
+					qui replace `fidtouse' = (`k'*`touse')
 					fvexpand `stacking_p_cv'*
-					mata: `y_stacking_cv' = `y_stacking_cv' \ st_data(., "`fid' `vname' `r(varlist)'", "`tomata'")
+					mata: `y_stacking_cv' = `y_stacking_cv' \ st_data(., "`fid' `fidtouse' `vname' `r(varlist)'", "`tomata'")
 				}
 			}
 	
 			else {	// case 2: interactive models
 	
 				// pystacked learners
-				if (`k'==1) & `psflag' {
-					// initialize mata object to hold dep var and in-sample crossfit CV predictions for pooled-stacking
+				if (`k'==1) & `stdflag' {
+					// initialize mata object to hold dep var and in-sample crossfit CV predictions
 					mata: `y_stacking_cv0' = J(0,`nlearners'+2,0)
 					mata: `y_stacking_cv1' = J(0,`nlearners'+2,0)
 				}
@@ -474,8 +476,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				if `stdflag' {
 					// get fitted values for kth fold	
 					qui predict `vtype' `vhat1_k' if `fid'==`k' & `touse'
-					// in-sample CV base learner predicted values (for poolstacking)
-					if `psflag' {
+					// in-sample CV base learner predicted values
+					if `stdflag' {
 						tempvar stacking_p_cv
 						qui predict double `stacking_p_cv', basexb cv
 					}
@@ -505,7 +507,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 					// get stacked out-of-sample predicted values
 					qui replace `vhat1' = `vhat1_k' if `fid'==`k' & `touse'
 				}
-				if `psflag' {
+				if `stdflag' {
 					// in-sample CV base learner predicted values
 					// accumulated in mata along with corresponding values of dep var
 					qui replace `tomata' = `fid'!=`k' & `touse'
@@ -546,8 +548,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 					if `stdflag' {
 						// get fitted values for kth fold	
 						qui predict `vtype' `vhat0_k' if `fid'==`k' & `touse'
-						if `psflag' {
-							// in-sample CV base learner predicted values (for poolstacking)
+						if `stdflag' {
+							// in-sample CV base learner predicted values
 							tempvar stacking_p_cv
 							qui predict double `stacking_p_cv', basexb cv
 						}
@@ -583,11 +585,11 @@ program define _crossfit_pystacked, rclass sortpreserve
 				}
 				// in-sample CV base learner predicted values
 				// accumulated in mata along with corresponding values of dep var
-				if `psflag' {
+				if `stdflag' {
 					qui replace `tomata' = `fid'!=`k' & `touse'
 					fvexpand `stacking_p_cv'*
 					mata: `y_stacking_cv0' = `y_stacking_cv0' \ st_data(., "`fid' `vname' `r(varlist)'", "`tomata'")
-				}	
+				}
 			}
 		}
 	
@@ -847,6 +849,18 @@ program define _crossfit_pystacked, rclass sortpreserve
 				else			mata: add_learner_item(`ename',"opt`t'","`m'","")
 			}
 		}
+
+		// add standard stacking base learner CV predictions
+		if `stdflag' {
+			if ~`tvflag'{	// case 1
+				mata: add_result_item(`ename',"`vtilde'","y_stacking_cv", "`m'", `y_stacking_cv')
+			}
+			else {
+				forvalues t=0/1 {
+					mata: add_result_item(`ename',"`vtilde'","y_stacking_cv`t'", "`m'", `y_stacking_cv`t'')
+				}
+			}
+		}
 		
 		// add shortstack results
 		if `ssflag' {
@@ -973,7 +987,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mata: add_result_item(`ename',"`poolstack'_ps","MSE",           "`m'", `mse')
 				mata: add_result_item(`ename',"`poolstack'_ps","MSE_folds",     "`m'", st_matrix("`mse_folds'"))
 				mata: add_result_item(`ename',"`poolstack'_ps","ps_weights",    "`m'", st_matrix("`psw'"))
-				mata: add_result_item(`ename',"`poolstack'_ps","y_stacking_cv", "`m'", `y_stacking_cv')
 				// final estimator used to stack and stack type are learner items
 				mata: add_learner_item(`ename',"`poolstack'_ps","ps_final_est", "`psfinalest'")
 				mata: add_learner_item(`ename',"`poolstack'_ps","stack_type","`stype'")
@@ -1025,7 +1038,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mata: add_result_item(`ename',"`poolstack'_ps","MSE`t'",           "`m'", `mse`t'')
 					mata: add_result_item(`ename',"`poolstack'_ps","MSE`t'_folds",     "`m'", st_matrix("`mse`t'_folds'"))
 					mata: add_result_item(`ename',"`poolstack'_ps","ps_weights`t'",    "`m'", st_matrix("`psw`t''"))
-					mata: add_result_item(`ename',"`poolstack'_ps","y_stacking_cv`t'", "`m'", `y_stacking_cv`t'')
 				}
 				// final estimator used to stack and stack type are learner items
 				mata: add_learner_item(`ename',"`poolstack'_ps","ps_final_est", "`psfinalest'")
