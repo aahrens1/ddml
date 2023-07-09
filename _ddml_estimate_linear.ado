@@ -149,7 +149,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		}
 	}
 
-	tempname sweights N_folds mse_folds
+	tempname sweights stdweights N_folds mse_folds
 	tempname tframe y_stacking_cv
 	local numvts : word count `vtlist'
 	// loop through vtildes
@@ -162,7 +162,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		mata: st_local("stype",return_learner_item(`eqn',"`vtilde'","stack_type"))
 		mata: st_local("etype",`eqn'.etype)
 		local nlearners : word count `base_est'
-		// check if previously stacked; required for poolstacking
+		// check if previously stacked
 		if `ssflag' {
 			mata: st_local("shortstack", `eqn'.shortstack)
 			if "`shortstack'"=="" {
@@ -175,7 +175,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				local newstack 0
 			}
 		}
-		else {
+		else if `psflag' {
 			mata: st_local("poolstack", `eqn'.poolstack)
 			if "`poolstack'"=="" {
 				// not previously poolstacked, set local and struct field to default
@@ -187,6 +187,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				local newstack 0
 			}
 		}
+		else	local newstack 0
 
 		// loop through reps
 		forvalues m=1/`reps' {
@@ -212,7 +213,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				// standard stacking uses stacking CV predictions, stored in a mata struct
 				qui gen double `yhat' = .
 				qui gen double `yhat_k' = .
-				tempname stdweights
+				// reset stdweights
+				cap mat drop `stdweights'
 				qui frame pwf
 				local cframe `r(currentframe)'
 				frame create `tframe'
@@ -236,6 +238,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				}
 				frame change `cframe'
 				frame drop `tframe'
+				cap mata: mata drop `y_stacking_cv'
+				cap mata: mata drop `sweights'
 			}
 			else {
 				// poolstacking uses stacking CV predictions, stored in a mata struct
@@ -288,8 +292,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			// store:
 			if `stdflag' {
 				// N and N_folds haven't changed
-				mata: add_result_item(`eqn',"`vtilde'","MSE",          "`m'", `mse')
-				mata: add_result_item(`eqn',"`vtilde'","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
+				mata: add_result_item(`eqn',"`vtilde'","MSE",           "`m'", `mse')
+				mata: add_result_item(`eqn',"`vtilde'","MSE_folds",     "`m'", st_matrix("`mse_folds'"))
 				mata: add_result_item(`eqn',"`vtilde'","stack_weights", "`m'", st_matrix("`stdweights'"))
 				// final estimator used to stack is a learner item
 				mata: add_learner_item(`eqn',"`vtilde'","stack_final_est", "`finalest'")

@@ -362,9 +362,11 @@ program define _crossfit_pystacked, rclass sortpreserve
 		tempname pysw_temp pysw1_temp pysw0_temp
 		tempname pysm pysm0 pysm1
 		tempname pysm_temp pysm1_temp pysm0_temp
-		tempvar tomata fidtouse
+		tempvar tomata fidtouse fidtouse1 fidtouse0
 		qui gen byte `tomata'=.
 		qui gen int `fidtouse'=.
+		qui gen int `fidtouse0'=.
+		qui gen int `fidtouse1'=.
 		
 		// crossfit
 		di as text "Cross-fitting fold " _c
@@ -404,10 +406,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 					// get fitted values for kth fold	
 					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
 					// in-sample CV base learner predicted values
-					if `stdflag' {
-						tempvar stacking_p_cv
-						qui predict double `stacking_p_cv', basexb cv
-					}
+					tempvar stacking_p_cv
+					qui predict double `stacking_p_cv', basexb cv
 					// save pystacked weights and MSEs
 					qui pystacked, table(rmspe)		// create rmspe matrix
 					if (`k'==1) {
@@ -449,8 +449,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				// pystacked learners
 				if (`k'==1) & `stdflag' {
 					// initialize mata object to hold dep var and in-sample crossfit CV predictions
-					mata: `y_stacking_cv0' = J(0,`nlearners'+2,0)
-					mata: `y_stacking_cv1' = J(0,`nlearners'+2,0)
+					mata: `y_stacking_cv0' = J(0,`nlearners'+3,0)
+					mata: `y_stacking_cv1' = J(0,`nlearners'+3,0)
 				}
 	
 				// outcome equation so estimate separately for treated and untreated
@@ -477,10 +477,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 					// get fitted values for kth fold	
 					qui predict `vtype' `vhat1_k' if `fid'==`k' & `touse'
 					// in-sample CV base learner predicted values
-					if `stdflag' {
-						tempvar stacking_p_cv
-						qui predict double `stacking_p_cv', basexb cv
-					}
+					tempvar stacking_p_cv
+					qui predict double `stacking_p_cv', basexb cv
 					// save pystacked weights and MSEs if #learners>1
 					qui pystacked, table(rmspe)		// create rmspe matrix
 					if (`k'==1) {
@@ -511,8 +509,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 					// in-sample CV base learner predicted values
 					// accumulated in mata along with corresponding values of dep var
 					qui replace `tomata' = `fid'!=`k' & `touse'
+					qui replace `fidtouse1' = (`k'*`touse')
 					fvexpand `stacking_p_cv'*
-					mata: `y_stacking_cv1' = `y_stacking_cv1' \ st_data(., "`fid' `vname' `r(varlist)'", "`tomata'")
+					mata: `y_stacking_cv1' = `y_stacking_cv1' \ st_data(., "`fid' `fidtouse1' `vname' `r(varlist)'", "`tomata'")
 				}
 				
 				// for treatvar = 0
@@ -548,11 +547,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 					if `stdflag' {
 						// get fitted values for kth fold	
 						qui predict `vtype' `vhat0_k' if `fid'==`k' & `touse'
-						if `stdflag' {
-							// in-sample CV base learner predicted values
-							tempvar stacking_p_cv
-							qui predict double `stacking_p_cv', basexb cv
-						}
+						// in-sample CV base learner predicted values
+						tempvar stacking_p_cv
+						qui predict double `stacking_p_cv', basexb cv
 						// save pystacked weights and MSEs if #learners>1
 						if e(mcount)>1 & e(mcount)<. {
 							qui pystacked, table(rmspe)		// create rmspe matrix
@@ -587,8 +584,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 				// accumulated in mata along with corresponding values of dep var
 				if `stdflag' {
 					qui replace `tomata' = `fid'!=`k' & `touse'
+					qui replace `fidtouse0' = (`k'*`touse')
 					fvexpand `stacking_p_cv'*
-					mata: `y_stacking_cv0' = `y_stacking_cv0' \ st_data(., "`fid' `vname' `r(varlist)'", "`tomata'")
+					mata: `y_stacking_cv0' = `y_stacking_cv0' \ st_data(., "`fid' `fidtouse0' `vname' `r(varlist)'", "`tomata'")
 				}
 			}
 		}
