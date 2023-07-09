@@ -762,9 +762,9 @@ function pystacked_extract(									///
 					rmean_all[ll,1] = ll
 					rlearner = select(rmat_all,rmat_all[.,1]:==ll)
 					// mean across all folds and resamples
-					rmean_all[ll,2] = mean(mean(rlearner[.,(3,cols(rlearner))]')')
+					rmean_all[ll,2] = mean(mean(rlearner[.,(3..cols(rlearner))]')')
 					// mean across folds by resample
-					rmean_all[ll,(3..(2+nreps))] = mean(rlearner[.,(3,cols(rlearner))]')
+					rmean_all[ll,(3..(2+nreps))] = mean(rlearner[.,(3..cols(rlearner))]')
 				}
 
 				cstripe = ( "learner" \  ("mean_"+kstring))
@@ -793,8 +793,8 @@ function pystacked_extract(									///
 					rlearner = select(rmat_all,rmat_all[.,1]:==ll)
 					rlearner_0 = select(rlearner,rlearner[.,2]:==0)
 					rlearner_1 = select(rlearner,rlearner[.,2]:==1)
-					rmean_all[2*ll-1,3]		= mean(mean(rlearner_0[.,(4,cols(rlearner_0))]')')
-					rmean_all[2*ll,3]		= mean(mean(rlearner_1[.,(4,cols(rlearner_1))]')')
+					rmean_all[2*ll-1,3]		= mean(mean(rlearner_0[.,(4..cols(rlearner_0))]')')
+					rmean_all[2*ll,3]		= mean(mean(rlearner_1[.,(4..cols(rlearner_1))]')')
 					rstripe = rstripe \ ("",base_est[ll]) \ ("",base_est[ll])
 				}
 				if (eqn.lieflag==1) {
