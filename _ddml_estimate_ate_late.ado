@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 9 july 2023
+*! last edited: 10 july 2023
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -21,24 +21,44 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								psfinalest(name)	///
 								* ]
 
+	// default behavior if final estimators specified but stacking options are not
+	if "`stdfinalest'"~="" & "`stdstack'"=="" {
+		local stdstack		stdstack
+	}
+	if "`ssfinalest'"~="" & "`shortstack'"=="" {
+		local shortstack	shortstack
+	}
+	if "`psfinalest'"~="" & "`poolstack'"=="" {
+		local poolstack	poolstack
+	}
+	if "`stdstack'`shortstack'`poolstack'"=="" & "`finalest'"~="" {
+		// default is to re-stack whatever has been already stacked
+		mata: st_local("stdflag", strofreal(`mname'.stdflag))
+		mata: st_local("ssflag", strofreal(`mname'.ssflag))
+		mata: st_local("psflag", strofreal(`mname'.psflag))
+		if `stdflag'	local stdstack		stdstack
+		if `ssflag'		local shortstack	shortstack
+		if `psflag'		local poolstack		poolstack
+	}
+
+	// restacking
 	if "`stdstack'"~="" {
 		// restack
 		if "`stdfinalest'"==""	local stdfinalest `finalest'
 		_ddml_estimate_stacking `anything' `if' `in', std finalest(`stdfinalest') `options'
 	}
-	
 	if "`shortstack'"~="" {
 		// restack
 		if "`ssfinalest'"==""	local ssfinalest `finalest'
 		_ddml_estimate_stacking `anything' `if' `in', ss finalest(`ssfinalest') `options'
 	}
-
-		if "`poolstack'"~="" {
+	if "`poolstack'"~="" {
 		// restack
 		if "`psfinalest'"==""	local psfinalest `finalest'
 		_ddml_estimate_stacking `anything' `if' `in', ps finalest(`psfinalest') `options'
 	}
 	
+	// estimation
 	if "`y0'`y1'`d'`d0'`d1'`z'"=="" {
 		// main program for estimation
 		_ddml_estimate_main `anything' `if' `in', `options'
