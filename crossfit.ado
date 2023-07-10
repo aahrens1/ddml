@@ -153,9 +153,10 @@ program define _crossfit_pystacked, rclass sortpreserve
 													/// if omitted then default is additive model
 							NOIsily					///
 							allowallzero			/// in the LATE model: allow D
+							stdfinalest(name)		/// final estimator for standard stacking
 							ssfinalest(name)		/// final estimator for short-stacking
 							psfinalest(name)		/// final estimator for pooled-stacking
-							finalest(name)			/// final estimator for both
+							finalest(name)			/// final estimator for all
 							NOSTDstack				/// no standard stacking - use psytacked+voting to get learners only
 							*						/// ignored options
 							]
@@ -163,10 +164,11 @@ program define _crossfit_pystacked, rclass sortpreserve
 	// used throughout	
 	local cmd pystacked
 
-	// final estimator choice; default is NNLS + coefs sum to 1
-	if "`finalest'"==""		local finalest nnls1
+	// unless specified, finalest sets the final estimator for all stacking methods
+	// if empty, finalest will be the pystacked/ddml default
 	if "`ssfinalest'"==""	local ssfinalest `finalest'
 	if "`psfinalest'"==""	local psfinalest `finalest'
+	if "`stdfinalest'"==""	local stdfinalest `finalest'
 	
 	mata: st_local("vname", `ename'.vname)
 	mata: st_local("vtlist", invtokens(`ename'.vtlist))
@@ -288,7 +290,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 	// `shortstack': name for shortstacked fitted variable (predicted value).
 	// `shortstack'_ss_`m': shortstacked fitted variable of D for resample m; not a tempvar.
 	// `y_stacking_cv': mata matrix with depvar in column 1 and in-sample CV base learner predicted values in rest
-	//   used for poolstacking; accumulated in mata since row dimension >> rows of dataset; 0/1 variants for ate/late
+	//  accumulated in mata since row dimension >> rows of dataset; 0/1 variants for ate/late
 	
 	// loop over resamples (crossfitting, shortstacking, store results)
 	forvalues m=`firstrep'/`lastrep' {
@@ -386,7 +388,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				}
 				
 				// estimate excluding kth fold
-				`qui' `est_main' if `fid'!=`k' & `touse', `est_options' `nostdstackopt'
+				`qui' `est_main' if `fid'!=`k' & `touse', `est_options' `nostdstackopt' finalest(`stdfinalest')
 				`qui' di as text "N=" as res e(N)
 				local base_est `e(base_est)'
 				local stack_final_est `e(finalest)'
@@ -457,7 +459,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 	
 				// for treatvar = 1
 				// estimate excluding kth fold
-				`qui' `est_main' if `fid'!=`k' & `treatvar' == 1 & `touse', `est_options'
+				`qui' `est_main' if `fid'!=`k' & `treatvar' == 1 & `touse', `est_options' finalest(`stdfinalest')
 				`qui' di as text "N=" as res e(N)
 				local base_est `e(base_est)'
 				local stack_final_est `e(finalest)'
@@ -531,7 +533,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				} 
 				else {
 					// estimate excluding kth fold
-					`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options'
+					`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options' finalest(`stdfinalest')
 					`qui' di as text "N=" as res e(N)
 					local base_est `e(base_est)'
 					local stack_final_est `e(finalest)'

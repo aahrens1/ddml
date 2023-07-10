@@ -46,13 +46,14 @@ program define qddml, eclass sortpreserve
 		stdstack								///
 		ssfinalest(name)						///
 		psfinalest(name)						///
+		stdfinalest(name)						/// not compatible with setting finalest directly in pystacked
+		finalest(name)							///
 		atet 									///
 		ateu									///
 		cfseed(integer 0)						/// currently undocumented - reset seed prior to crossfitting
 		eseed(integer 0)						/// currently undocumented - reset seed prior to estimation
 		]
 	
-	mata: s_ivparse("`anything'")
 	** indicators for pystacked and stacking methods
 	local pyflag	= "`pystacked'`pystacked_y'`pystacked_d'`pystacked_z'"~="" | "`cmd'`ycmd'`dcmd'`zcmd'"==""
 	local ssflag	= "`shortstack'"~=""
@@ -64,6 +65,13 @@ program define qddml, eclass sortpreserve
 		local shortstack	shortstack
 	}
 
+	// unless specified, finalest sets the final estimator for all stacking methods
+	// if empty, finalest will be the pystacked/ddml default
+	if "`ssfinalest'"==""	local ssfinalest `finalest'
+	if "`psfinalest'"==""	local psfinalest `finalest'
+	if "`stdfinalest'"==""	local stdfinalest `finalest'
+	
+	mata: s_ivparse("`anything'")
 	local depvar	`s(depvar)'
 	local dendog	`s(dendog)'
 	local dexog		`s(dexog)'
@@ -133,6 +141,8 @@ program define qddml, eclass sortpreserve
 				local `opt' : subinstr local `opt' "," ",", all count(local hascomma)
 				if !`hascomma'	local `opt' ``opt'' ,
 			}
+			// add standard (pystacked) stacknig final estimator
+			local `opt' ``opt'' finalest(`finalest')
 		}
 	}
 	else {
