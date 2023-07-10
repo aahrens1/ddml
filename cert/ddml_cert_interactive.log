@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactive.log
   log type:  text
- opened on:   8 Jul 2023, 21:14:45
+ opened on:  10 Jul 2023, 22:43:38
 
 . 
 . which ddml
@@ -36,8 +36,8 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 
 . which pystacked
 C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
-*! pystacked v0.7.1
-*! last edited: 1april2023
+*! pystacked v0.7.2
+*! last edited: 8july2023
 *! authors: aa/ms
 
 . 
@@ -2134,8 +2134,6 @@ Learner Y1_pystacked added successfully.
 . ddml E[D|X]: pystacked $D $X, type(class) method(logit gradboost)
 Learner D1_pystacked added successfully.
 
-. set seed 123
-
 . 
 . // initial = std stack, shortstack, poolstack
 . set seed 123
@@ -2174,6 +2172,57 @@ E[D|X]       = D_mbsmoke_ss_1
 Warning: 51 propensity scores trimmed to lower limit .01.
 
 
+. // save for later comparison
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+short-stacked weights across resamples for bweight
+final stacking estimator: 
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1    .39219115    .39219115
+gradboost            2            1    .60780885    .60780885
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: 
+               learner  mean_weight        rep_1
+    logit            1    .94753478    .94753478
+gradboost            2    .05246522    .05246522
+
+pool-stacked weights across resamples for bweight
+final stacking estimator: 
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .87556132    .87556132
+gradboost            2            0    .12443868    .12443868
+      ols            1            1    .48466133    .48466133
+gradboost            2            1    .51533867    .51533867
+
+pool-stacked weights across resamples for mbsmoke
+final stacking estimator: 
+               learner  mean_weight        rep_1
+    logit            1    .82247991    .82247991
+gradboost            2    .17752009    .17752009
+
+. mat ssw_nnls1 = r(Y_bweight_ss)
+
+. mat psw_nnls1 = r(Y_bweight_ps)
+
+. mat stsw_nnls1 = r(Y1_pystacked_w_mn)
+
 . // restack shortstack
 . ddml estimate, shortstack ssfinalest(singlebest)
 
@@ -2187,7 +2236,7 @@ D equations (1):        mbsmoke
 DDML estimation results (ATE):
 spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
   st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
-  ss  1  [shortstack]          [ss]          [ss]  -576.772  (320.037)
+  ss  1  [shortstack]          [ss]          [ss]  -323.535  (135.293)
   ps  1   [poolstack]          [ps]          [ps]  -448.423  (189.609)
 
 Shortstack DDML model (ATE)
@@ -2198,7 +2247,7 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -576.7724   320.0374    -1.80   0.072    -1204.034     50.4894
+     mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
 ------------------------------------------------------------------------------
 Warning: 52 propensity scores trimmed to lower limit .01.
 
@@ -2224,14 +2273,275 @@ final stacking estimator: singlebest
                learner        D=0/1  mean_weight        rep_1
       ols            1            0            1            1
 gradboost            2            0            0            0
-      ols            1            1            1            1
-gradboost            2            1            0            0
+      ols            1            1            0            0
+gradboost            2            1            1            1
 
 short-stacked weights across resamples for mbsmoke
 final stacking estimator: singlebest
                learner  mean_weight        rep_1
     logit            1            1            1
 gradboost            2            0            0
+
+pool-stacked weights across resamples for bweight
+final stacking estimator: 
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .87556132    .87556132
+gradboost            2            0    .12443868    .12443868
+      ols            1            1    .48466133    .48466133
+gradboost            2            1    .51533867    .51533867
+
+pool-stacked weights across resamples for mbsmoke
+final stacking estimator: 
+               learner  mean_weight        rep_1
+    logit            1    .82247991    .82247991
+gradboost            2    .17752009    .17752009
+
+. mat ssw = r(Y_bweight_ss)
+
+. assert el(ssw,1,3)==1
+
+. assert el(ssw,2,3)==0
+
+. assert el(ssw,3,3)==0
+
+. assert el(ssw,4,3)==1
+
+. mat psw = r(Y_bweight_ps)
+
+. assert el(psw,1,3)~=1
+
+. mat stsw = r(Y1_pystacked_w_mn)
+
+. assert el(stsw,1,3)~=1
+
+. // restack poolstack
+. ddml estimate, poolstack psfinalest(singlebest)
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+  ss  1  [shortstack]          [ss]          [ss]  -323.535  (135.293)
+  ps  1   [poolstack]          [ps]          [ps]  -323.535  (135.293)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
+------------------------------------------------------------------------------
+Warning: 52 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0    .81986011
+      ols            1            1    .56775193
+gradboost            2            0    .18013989
+gradboost            2            1    .43224807
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123743    .83123743
+gradboost            2    .16876257    .16876257
+
+short-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            0            0
+gradboost            2            1            1            1
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+pool-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            0            0
+gradboost            2            1            1            1
+
+pool-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+. mat psw = r(Y_bweight_ps)
+
+. assert el(psw,1,3)==1
+
+. assert el(psw,2,3)==0
+
+. assert el(psw,3,3)==0
+
+. assert el(psw,4,3)==1
+
+. mat stsw = r(Y1_pystacked_w_mn)
+
+. assert el(stsw,1,3)~=1
+
+. // restack standard stack
+. ddml estimate, stdstack stdfinalest(singlebest)
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -555.388  (323.418)
+  ss  1  [shortstack]          [ss]          [ss]  -323.535  (135.293)
+  ps  1   [poolstack]          [ps]          [ps]  -323.535  (135.293)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
+------------------------------------------------------------------------------
+Warning: 52 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight
+      ols            1            0            1
+      ols            1            1           .5
+gradboost            2            0            0
+gradboost            2            1           .5
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+short-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            0            0
+gradboost            2            1            1            1
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+pool-stacked weights across resamples for bweight
+final stacking estimator: singlebest
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1            0            0
+gradboost            2            1            1            1
+
+pool-stacked weights across resamples for mbsmoke
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+    logit            1            1            1
+gradboost            2            0            0
+
+. mat stsw = r(Y1_pystacked_w_mn)
+
+. assert el(stsw,1,3)==1
+
+. assert el(stsw,2,3)==0.5
+
+. assert el(stsw,3,3)==0
+
+. assert el(stsw,4,3)==0.5
+
+. // all restacked to nnls1
+. ddml estimate, finalest(nnls1)
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
+  ss  1  [shortstack]          [ss]          [ss]  -423.301  (168.609)
+  ps  1   [poolstack]          [ps]          [ps]  -448.423  (189.609)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1_1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
+------------------------------------------------------------------------------
+Warning: 51 propensity scores trimmed to lower limit .01.
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight
+      ols            1            0     .8198601
+      ols            1            1    .56775275
+gradboost            2            0     .1801399
+gradboost            2            1    .43224725
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .83123742    .83123742
+gradboost            2    .16876258    .16876258
+
+short-stacked weights across resamples for bweight
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1    .39219115    .39219115
+gradboost            2            1    .60780885    .60780885
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+    logit            1    .94753478    .94753478
+gradboost            2    .05246522    .05246522
 
 pool-stacked weights across resamples for bweight
 final stacking estimator: nnls1
@@ -2249,96 +2559,16 @@ gradboost            2    .17752009    .17752009
 
 . mat ssw = r(Y_bweight_ss)
 
-. assert el(ssw,1,3)==1
-
-. assert el(ssw,2,3)==0
-
-. assert el(ssw,3,3)==1
-
-. assert el(ssw,4,3)==0
-
-. // restack poolstack
-. ddml estimate, poolstack psfinalest(singlebest)
-
-
-Model:                  interactive, crossfit folds k=2, resamples r=1
-Dependent variable (Y): bweight
- bweight learners:      Y1_pystacked
-D equations (1):        mbsmoke
- mbsmoke learners:      D1_pystacked
-
-DDML estimation results (ATE):
-spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
-  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
-  ss  1  [shortstack]          [ss]          [ss]  -576.772  (320.037)
-  ps  1   [poolstack]          [ps]          [ps]  -323.535  (135.293)
-
-Shortstack DDML model (ATE)
-E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
-E[D|X]       = D_mbsmoke_ss_1
-------------------------------------------------------------------------------
-             |               Robust
-     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
--------------+----------------------------------------------------------------
-     mbsmoke |  -576.7724   320.0374    -1.80   0.072    -1204.034     50.4894
-------------------------------------------------------------------------------
-Warning: 52 propensity scores trimmed to lower limit .01.
-
-
-. ddml extract, show(weights)
-
-mean stacking weights across folds/resamples for Y1_pystacked (bweight)
-final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
-
-mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
-final stacking estimator: nnls1
-               learner  mean_weight        rep_1
-    logit            1    .83123743    .83123743
-gradboost            2    .16876257    .16876257
-
-short-stacked weights across resamples for bweight
-final stacking estimator: singlebest
-               learner        D=0/1  mean_weight        rep_1
-      ols            1            0            1            1
-gradboost            2            0            0            0
-      ols            1            1            1            1
-gradboost            2            1            0            0
-
-short-stacked weights across resamples for mbsmoke
-final stacking estimator: singlebest
-               learner  mean_weight        rep_1
-    logit            1            1            1
-gradboost            2            0            0
-
-pool-stacked weights across resamples for bweight
-final stacking estimator: singlebest
-               learner        D=0/1  mean_weight        rep_1
-      ols            1            0            1            1
-gradboost            2            0            0            0
-      ols            1            1            1            1
-gradboost            2            1            0            0
-
-pool-stacked weights across resamples for mbsmoke
-final stacking estimator: singlebest
-               learner  mean_weight        rep_1
-    logit            1            1            1
-gradboost            2            0            0
-
 . mat psw = r(Y_bweight_ps)
 
-. assert el(psw,1,3)==1
+. mat stsw = r(Y1_pystacked_w_mn)
 
-. assert el(psw,2,3)==0
+. assert mreldif(ssw,ssw_nnls1) < 10e-10
 
-. assert el(psw,3,3)==1
+. assert mreldif(psw,psw_nnls1) < 10e-10
 
-. assert el(psw,4,3)==0
+. // slight differences, possible float/double issue
+. assert mreldif(stsw,stsw_nnls1) < 10e-6
 
 . 
 . // initial = std stack, shortstack, poolstack
@@ -2391,7 +2621,7 @@ D equations (1):        mbsmoke
 DDML estimation results (ATE):
 spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
   st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
-  ss  1  [shortstack]          [ss]          [ss]  -576.772  (320.037)
+  ss  1  [shortstack]          [ss]          [ss]  -323.535  (135.293)
   ps  1   [poolstack]          [ps]          [ps]  -323.535  (135.293)
 
 Shortstack DDML model (ATE)
@@ -2402,7 +2632,7 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -576.7724   320.0374    -1.80   0.072    -1204.034     50.4894
+     mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
 ------------------------------------------------------------------------------
 Warning: 52 propensity scores trimmed to lower limit .01.
 
@@ -2428,8 +2658,8 @@ final stacking estimator: singlebest
                learner        D=0/1  mean_weight        rep_1
       ols            1            0            1            1
 gradboost            2            0            0            0
-      ols            1            1            1            1
-gradboost            2            1            0            0
+      ols            1            1            0            0
+gradboost            2            1            1            1
 
 short-stacked weights across resamples for mbsmoke
 final stacking estimator: singlebest
@@ -2442,8 +2672,8 @@ final stacking estimator: singlebest
                learner        D=0/1  mean_weight        rep_1
       ols            1            0            1            1
 gradboost            2            0            0            0
-      ols            1            1            1            1
-gradboost            2            1            0            0
+      ols            1            1            0            0
+gradboost            2            1            1            1
 
 pool-stacked weights across resamples for mbsmoke
 final stacking estimator: singlebest
@@ -2457,9 +2687,9 @@ gradboost            2            0            0
 
 . assert el(ssw,2,3)==0
 
-. assert el(ssw,3,3)==1
+. assert el(ssw,3,3)==0
 
-. assert el(ssw,4,3)==0
+. assert el(ssw,4,3)==1
 
 . mat psw = r(Y_bweight_ps)
 
@@ -2467,9 +2697,9 @@ gradboost            2            0            0
 
 . assert el(psw,2,3)==0
 
-. assert el(psw,3,3)==1
+. assert el(psw,3,3)==0
 
-. assert el(psw,4,3)==0
+. assert el(psw,4,3)==1
 
 . 
 . // initial = std stack only
@@ -2544,7 +2774,7 @@ D equations (1):        mbsmoke
 DDML estimation results (ATE):
 spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
   st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
-  ss  1  [shortstack]          [ss]          [ss]  -499.221  (237.412)
+  ss  1  [shortstack]          [ss]          [ss]  -423.301  (168.609)
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
@@ -2554,7 +2784,7 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -499.2209   237.4124    -2.10   0.035    -964.5407   -33.90118
+     mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
 ------------------------------------------------------------------------------
 Warning: 51 propensity scores trimmed to lower limit .01.
 
@@ -2578,10 +2808,10 @@ gradboost            2    .16876257    .16876257
 short-stacked weights across resamples for bweight
 final stacking estimator: nnls1
                learner        D=0/1  mean_weight        rep_1
-      ols            1            0    .94753478    .94753478
-gradboost            2            0    .05246522    .05246522
-      ols            1            1    .94753478    .94753478
-gradboost            2            1    .05246522    .05246522
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1    .39219115    .39219115
+gradboost            2            1    .60780885    .60780885
 
 short-stacked weights across resamples for mbsmoke
 final stacking estimator: nnls1
@@ -2666,7 +2896,7 @@ D equations (1):        mbsmoke
 DDML estimation results (ATE):
 spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
   st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
-  ss  1  [shortstack]          [ss]          [ss]  -499.221  (237.412)
+  ss  1  [shortstack]          [ss]          [ss]  -423.301  (168.609)
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
@@ -2676,7 +2906,7 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -499.2209   237.4124    -2.10   0.035    -964.5407   -33.90118
+     mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
 ------------------------------------------------------------------------------
 Warning: 51 propensity scores trimmed to lower limit .01.
 
@@ -2700,10 +2930,10 @@ gradboost            2    .16876257    .16876257
 short-stacked weights across resamples for bweight
 final stacking estimator: nnls1
                learner        D=0/1  mean_weight        rep_1
-      ols            1            0    .94753478    .94753478
-gradboost            2            0    .05246522    .05246522
-      ols            1            1    .94753478    .94753478
-gradboost            2            1    .05246522    .05246522
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1    .39219115    .39219115
+gradboost            2            1    .60780885    .60780885
 
 short-stacked weights across resamples for mbsmoke
 final stacking estimator: nnls1
@@ -2788,7 +3018,7 @@ D equations (1):        mbsmoke
 DDML estimation results (ATE):
 spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
   st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -511.572  (257.755)
-  ss  1  [shortstack]          [ss]          [ss]  -576.772  (320.037)
+  ss  1  [shortstack]          [ss]          [ss]  -323.535  (135.293)
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
@@ -2798,7 +3028,7 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -576.7724   320.0374    -1.80   0.072    -1204.034     50.4894
+     mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
 ------------------------------------------------------------------------------
 Warning: 52 propensity scores trimmed to lower limit .01.
 
@@ -2824,8 +3054,8 @@ final stacking estimator: singlebest
                learner        D=0/1  mean_weight        rep_1
       ols            1            0            1            1
 gradboost            2            0            0            0
-      ols            1            1            1            1
-gradboost            2            1            0            0
+      ols            1            1            0            0
+gradboost            2            1            1            1
 
 short-stacked weights across resamples for mbsmoke
 final stacking estimator: singlebest
@@ -2843,9 +3073,9 @@ error - pool-stacked weights for mbsmoke not available
 
 . assert el(ssw,2,3)==0
 
-. assert el(ssw,3,3)==1
+. assert el(ssw,3,3)==0
 
-. assert el(ssw,4,3)==0
+. assert el(ssw,4,3)==1
 
 . 
 . // initial = shortstack, no standard stack
@@ -2890,7 +3120,7 @@ error - standard stack weights for bweight not available
 error - standard stack weights for mbsmoke not available
 
 short-stacked weights across resamples for bweight
-final stacking estimator: nnls1
+final stacking estimator: 
                learner        D=0/1  mean_weight        rep_1
       ols            1            0            1            1
 gradboost            2            0            0            0
@@ -2898,7 +3128,7 @@ gradboost            2            0            0            0
 gradboost            2            1    .60780885    .60780885
 
 short-stacked weights across resamples for mbsmoke
-final stacking estimator: nnls1
+final stacking estimator: 
                learner  mean_weight        rep_1
     logit            1    .94753478    .94753478
 gradboost            2    .05246522    .05246522
@@ -2919,7 +3149,7 @@ D equations (1):        mbsmoke
 
 DDML estimation results (ATE):
 spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
-  ss  1  [shortstack]          [ss]          [ss]  -576.772  (320.037)
+  ss  1  [shortstack]          [ss]          [ss]  -323.535  (135.293)
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
@@ -2929,7 +3159,7 @@ E[D|X]       = D_mbsmoke_ss_1
              |               Robust
      bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -576.7724   320.0374    -1.80   0.072    -1204.034     50.4894
+     mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
 ------------------------------------------------------------------------------
 Warning: 52 propensity scores trimmed to lower limit .01.
 
@@ -2945,8 +3175,8 @@ final stacking estimator: singlebest
                learner        D=0/1  mean_weight        rep_1
       ols            1            0            1            1
 gradboost            2            0            0            0
-      ols            1            1            1            1
-gradboost            2            1            0            0
+      ols            1            1            0            0
+gradboost            2            1            1            1
 
 short-stacked weights across resamples for mbsmoke
 final stacking estimator: singlebest
@@ -2962,9 +3192,9 @@ error - pool-stacked weights for mbsmoke not available
 
 . assert el(ssw,2,3)==0
 
-. assert el(ssw,3,3)==1
+. assert el(ssw,3,3)==0
 
-. assert el(ssw,4,3)==0
+. assert el(ssw,4,3)==1
 
 . 
 . // without pystacked: not currently supported
@@ -3046,5 +3276,5 @@ error - restacking available only if pystacked is the only learner for each cond
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactive.log
   log type:  text
- closed on:   8 Jul 2023, 21:16:38
+ closed on:  10 Jul 2023, 22:45:54
 --------------------------------------------------------------------------------------------------------------------------

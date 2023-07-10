@@ -176,7 +176,11 @@ ddml E[D|X]: pystacked $D1 $X , type(reg)
 set seed 123
 ddml crossfit, shortstack poolstack
 ddml estimate
+// save for later comparison
 ddml extract, show(weights)
+mat ssw_nnls1 = r(Y_logpgp95_ss)
+mat psw_nnls1 = r(Y_logpgp95_ps)
+mat stsw_nnls1 = r(Y1_pystacked_w_mn)
 // restack shortstack
 ddml estimate, shortstack ssfinalest(singlebest)
 ddml extract, show(weights)
@@ -184,6 +188,10 @@ mat ssw = r(Y_logpgp95_ss)
 assert el(ssw,1,2)==0
 assert el(ssw,2,2)==1
 assert el(ssw,3,2)==0
+mat psw = r(Y_logpgp95_ps)
+assert el(psw,1,2)~=0
+mat stsw = r(Y1_pystacked_w_mn)
+assert el(stsw,1,2)~=0
 // restack poolstack
 ddml estimate, poolstack psfinalest(singlebest)
 ddml extract, show(weights)
@@ -191,6 +199,25 @@ mat psw = r(Y_logpgp95_ps)
 assert el(psw,1,2)==0
 assert el(psw,2,2)==0
 assert el(psw,3,2)==1
+mat stsw = r(Y1_pystacked_w_mn)
+assert el(stsw,1,2)~=0
+// restack standard stack
+ddml estimate, stdstack stdfinalest(singlebest)
+ddml extract, show(weights)
+mat stsw = r(Y1_pystacked_w_mn)
+assert el(stsw,1,2)==0
+assert el(stsw,2,2)==0.5
+assert el(stsw,3,2)==0.5
+// all restacked to nnls1
+ddml estimate, finalest(nnls1)
+ddml extract, show(weights)
+mat ssw = r(Y_logpgp95_ss)
+mat psw = r(Y_logpgp95_ps)
+mat stsw = r(Y1_pystacked_w_mn)
+assert mreldif(ssw,ssw_nnls1) < 10e-10
+assert mreldif(psw,psw_nnls1) < 10e-10
+// slight differences, possible float/double issue
+assert mreldif(stsw,stsw_nnls1) < 10e-6
 
 // initial = std stack, shortstack, poolstack
 set seed 123

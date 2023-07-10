@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_misc.log
   log type:  text
- opened on:   8 Jul 2023, 21:35:49
+ opened on:  10 Jul 2023, 23:06:04
 
 . 
 . which ddml
@@ -249,7 +249,7 @@ ID:                     m0_id
 Full sample indic.:     m0_sample (N=64)
 Fold ID:                  m0_fid_1    m0_fid_2  
 Fold sample indic.:     m0_sample_1 m0_sample_2 
-Estimation N:              (n.a.)      (n.a.)   
+Estimation N:                59          59     
 
 Y learners (detail):
  Learner:     Y1_pystacked
@@ -505,7 +505,7 @@ Mean/med    Y learner     D learner         b        SE
 
 Median over 2 min-mse resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
-D-E[D|X]  = D1-D1_pystacked 
+D-E[D|X]  = D-D1_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
@@ -529,7 +529,7 @@ ID:                     m0_id
 Full sample indic.:     m0_sample (N=64)
 Fold ID:                  m0_fid_1    m0_fid_2  
 Fold sample indic.:     m0_sample_1 m0_sample_2 
-Estimation N:              (n.a.)      (n.a.)   
+Estimation N:                64          64     
 
 Y learners (detail):
  Learner:     Y1_pystacked
@@ -557,7 +557,7 @@ avexpr     D1_pysta~d     1          1.84      2.28      1.41
 
 Median over 2 min-mse resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
-D-E[D|X]  = D1-D1_pystacked 
+D-E[D|X]  = D-D1_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
@@ -599,7 +599,7 @@ D equations (1):        avexpr
 
 Median over 2 min-mse resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
-D-E[D|X]  = D1-D1_pystacked 
+D-E[D|X]  = D-D1_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
@@ -828,21 +828,21 @@ gradboost            3    .35859044    .55113914    .16604173
 . ddml extract, show(ssweights)
 
 short-stacked weights across resamples for avexpr
-final stacking estimator: nnls1
+final stacking estimator: 
                learner  mean_weight        rep_1        rep_2
       ols            1    .00379437            0    .00758873
   lassocv            2    .49228198    .62426945     .3602945
 gradboost            3    .50392366    .37573055    .63211677
 
 short-stacked weights across resamples for democ1
-final stacking estimator: nnls1
+final stacking estimator: 
                learner  mean_weight        rep_1        rep_2
       ols            1    6.939e-18            0    1.388e-17
   lassocv            2    .92073463    .84146926            1
 gradboost            3    .07926537    .15853074            0
 
 short-stacked weights across resamples for logpgp95
-final stacking estimator: nnls1
+final stacking estimator: 
                learner  mean_weight        rep_1        rep_2
       ols            1    .06450745    .12901491    3.092e-17
   lassocv            2     .3374693    .27630807    .39863054
@@ -851,21 +851,21 @@ gradboost            3    .59802324    .59467702    .60136946
 . ddml extract, show(psweights)
 
 pool-stacked weights across resamples for avexpr
-final stacking estimator: nnls1
+final stacking estimator: 
                learner  mean_weight        rep_1        rep_2
       ols            1    1.951e-16            0    3.902e-16
   lassocv            2    .76366453    .90346591    .62386316
 gradboost            3    .23633547    .09653409    .37613684
 
 pool-stacked weights across resamples for democ1
-final stacking estimator: nnls1
+final stacking estimator: 
                learner  mean_weight        rep_1        rep_2
       ols            1    .00132737    .00265473    1.928e-17
   lassocv            2    .54595262    .99734527    .09455997
 gradboost            3    .45272002            0    .90544003
 
 pool-stacked weights across resamples for logpgp95
-final stacking estimator: nnls1
+final stacking estimator: 
                learner  mean_weight        rep_1        rep_2
       ols            1    .00026783            0    .00053566
   lassocv            2    .68931033    .40911283    .96950783
@@ -962,7 +962,7 @@ Sample sizes for logpgp95:
 
 . // AA with estimation results for spec st, resample 1
 . mata: (m0.estAA).get(("st","1"))
-  0x36583c10
+  0x517916e0
 
 . mata: AA_e2_r1 = (m0.estAA).get(("st","1"))
 
@@ -1095,18 +1095,18 @@ AA keys for eqn avexpr.resAA:
   10 |   D1_pystacked      stack_MSEs               2  |
   11 |   D1_pystacked   stack_weights               1  |
   12 |   D1_pystacked   stack_weights               2  |
-  13 |    D_avexpr_ps             MSE               1  |
-  14 |    D_avexpr_ps             MSE               2  |
-  15 |    D_avexpr_ps       MSE_folds               1  |
-  16 |    D_avexpr_ps       MSE_folds               2  |
-  17 |    D_avexpr_ps               N               1  |
-  18 |    D_avexpr_ps               N               2  |
-  19 |    D_avexpr_ps         N_folds               1  |
-  20 |    D_avexpr_ps         N_folds               2  |
-  21 |    D_avexpr_ps      ps_weights               1  |
-  22 |    D_avexpr_ps      ps_weights               2  |
-  23 |    D_avexpr_ps   y_stacking_cv               1  |
-  24 |    D_avexpr_ps   y_stacking_cv               2  |
+  13 |   D1_pystacked   y_stacking_cv               1  |
+  14 |   D1_pystacked   y_stacking_cv               2  |
+  15 |    D_avexpr_ps             MSE               1  |
+  16 |    D_avexpr_ps             MSE               2  |
+  17 |    D_avexpr_ps       MSE_folds               1  |
+  18 |    D_avexpr_ps       MSE_folds               2  |
+  19 |    D_avexpr_ps               N               1  |
+  20 |    D_avexpr_ps               N               2  |
+  21 |    D_avexpr_ps         N_folds               1  |
+  22 |    D_avexpr_ps         N_folds               2  |
+  23 |    D_avexpr_ps      ps_weights               1  |
+  24 |    D_avexpr_ps      ps_weights               2  |
   25 |    D_avexpr_ss             MSE               1  |
   26 |    D_avexpr_ss             MSE               2  |
   27 |    D_avexpr_ss       MSE_folds               1  |
@@ -1123,7 +1123,7 @@ AA keys for eqn avexpr.resAA:
 . ddml extract avexpr_eqn, vname(avexpr)
 
 . mata: avexpr_eqn
-  0x34a9ee70
+  0x509da640
 
 . mata: avexpr_eqn.vname
   avexpr
@@ -1167,18 +1167,18 @@ AA keys for eqn avexpr_eqn.resAA:
   10 |   D1_pystacked      stack_MSEs               2  |
   11 |   D1_pystacked   stack_weights               1  |
   12 |   D1_pystacked   stack_weights               2  |
-  13 |    D_avexpr_ps             MSE               1  |
-  14 |    D_avexpr_ps             MSE               2  |
-  15 |    D_avexpr_ps       MSE_folds               1  |
-  16 |    D_avexpr_ps       MSE_folds               2  |
-  17 |    D_avexpr_ps               N               1  |
-  18 |    D_avexpr_ps               N               2  |
-  19 |    D_avexpr_ps         N_folds               1  |
-  20 |    D_avexpr_ps         N_folds               2  |
-  21 |    D_avexpr_ps      ps_weights               1  |
-  22 |    D_avexpr_ps      ps_weights               2  |
-  23 |    D_avexpr_ps   y_stacking_cv               1  |
-  24 |    D_avexpr_ps   y_stacking_cv               2  |
+  13 |   D1_pystacked   y_stacking_cv               1  |
+  14 |   D1_pystacked   y_stacking_cv               2  |
+  15 |    D_avexpr_ps             MSE               1  |
+  16 |    D_avexpr_ps             MSE               2  |
+  17 |    D_avexpr_ps       MSE_folds               1  |
+  18 |    D_avexpr_ps       MSE_folds               2  |
+  19 |    D_avexpr_ps               N               1  |
+  20 |    D_avexpr_ps               N               2  |
+  21 |    D_avexpr_ps         N_folds               1  |
+  22 |    D_avexpr_ps         N_folds               2  |
+  23 |    D_avexpr_ps      ps_weights               1  |
+  24 |    D_avexpr_ps      ps_weights               2  |
   25 |    D_avexpr_ss             MSE               1  |
   26 |    D_avexpr_ss             MSE               2  |
   27 |    D_avexpr_ss       MSE_folds               1  |
@@ -1337,7 +1337,6 @@ Summary over 2 resamples:
 
 . 
 . ddml export using cert_ddml_export.csv, mname(m_export) replace addvars(stata_id)
-(note: file cert_ddml_export.csv not found)
 file cert_ddml_export.csv saved
 
 . local numvars = r(numvars)
@@ -1408,7 +1407,7 @@ spec  r     Y learner     D learner         b        SE      Z learner     Z lea
 
 Stacking DDML model
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
-D-E[D|X]  = D1_pystacked_1 
+D-E[D|X]  = D-D1_pystacked_1 
 Z-E[Z|X]  = Z1-Z1_pystacked_1 Z2-Z2_pystacked_1 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -1894,7 +1893,7 @@ Mean/med    Y learner     D learner         b        SE     DH learner
 
 Median over 2 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pystacked 
+E[D|X,Z]  = D-Dhat_pystacked 
 E[D^|X]   = Dhat_pystacked_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1924,5 +1923,5 @@ file cert_ddml_export.csv saved
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_misc.log
   log type:  text
- closed on:   8 Jul 2023, 21:39:30
+ closed on:  10 Jul 2023, 23:10:33
 --------------------------------------------------------------------------------------------------------------------------

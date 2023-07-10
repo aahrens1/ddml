@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_fiv.log
   log type:  text
- opened on:   8 Jul 2023, 21:19:50
+ opened on:  10 Jul 2023, 22:54:59
 
 . 
 . which ddml
@@ -83,7 +83,7 @@ Mean/med    Y learner     D learner         b        SE     DH learner
 
 Median over 2 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pystacked 
+E[D|X,Z]  = D-Dhat_pystacked 
 E[D^|X]   = Dhat_pystacked_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -100,7 +100,7 @@ Summary over 2 resamples:
 
 Stacking DDML model (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pystacked_1 
+E[D|X,Z]  = D-Dhat_pystacked_1 
 E[D^|X]   = Dhat_pystacked_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -143,7 +143,7 @@ Mean/med    Y learner     D learner         b        SE     DH learner
 
 Median over 3 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pystacked 
+E[D|X,Z]  = D-Dhat_pystacked 
 E[D^|X]   = Dhat_pystacked_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ Summary over 3 resamples:
 
 Stacking DDML model (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pystacked_1 
+E[D|X,Z]  = D-Dhat_pystacked_1 
 E[D^|X]   = Dhat_pystacked_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -176,7 +176,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Stacking DDML model (sample=2)
 y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pystacked_2 
+E[D|X,Z]  = D-Dhat_pystacked_2 
 E[D^|X]   = Dhat_pystacked_h_2
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Mean over 3 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pystacked 
+E[D|X,Z]  = D-Dhat_pystacked 
 E[D^|X]   = Dhat_pystacked_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -208,7 +208,7 @@ Summary over 3 resamples:
 
 Median over 3 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pystacked 
+E[D|X,Z]  = D-Dhat_pystacked 
 E[D^|X]   = Dhat_pystacked_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -284,7 +284,7 @@ Mean/med    Y learner     D learner         b        SE     DH learner
 
 Median over 2 min-mse resamples
 y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf 
+E[D|X,Z]  = D-Dhat_rf 
 E[D^|X]   = Dhat_rf_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -301,7 +301,7 @@ Summary over 2 resamples:
 
 Min MSE DDML model (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -345,7 +345,7 @@ Mean/med    Y learner     D learner         b        SE     DH learner
 
 Median over 3 min-mse resamples
 y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf 
+E[D|X,Z]  = D-Dhat_rf 
 E[D^|X]   = Dhat_rf_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -363,7 +363,7 @@ Summary over 3 resamples:
 
 Min MSE DDML model (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -378,7 +378,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Min MSE DDML model (sample=2)
 y-E[y|X]  = y-Y3_pystacked_2                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_2 
+E[D|X,Z]  = D-Dhat_rf_2 
 E[D^|X]   = Dhat_rf_h_2
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -393,7 +393,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Mean over 3 min-mse resamples
 y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf 
+E[D|X,Z]  = D-Dhat_rf 
 E[D^|X]   = Dhat_rf_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -410,7 +410,7 @@ Summary over 3 resamples:
 
 Median over 3 min-mse resamples
 y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf 
+E[D|X,Z]  = D-Dhat_rf 
 E[D^|X]   = Dhat_rf_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -492,7 +492,7 @@ Mean/med    Y learner     D learner         b        SE     DH learner
 
 Shortstack DDML model (median over 2 resamples)
 y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss 
+E[D|X,Z]  = D-D_price_ss 
 E[D^|X]   = D_price_h_ss
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -509,7 +509,7 @@ Summary over 2 resamples:
 
 Shortstack DDML model (sample=1)
 y-E[y|X]  = y-Y_share_ss_1                         Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss_1 
+E[D|X,Z]  = D-D_price_ss_1 
 E[D^|X]   = D_price_h_ss_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -558,7 +558,7 @@ Mean/med    Y learner     D learner         b        SE     DH learner
 
 Shortstack DDML model (median over 3 resamples)
 y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss 
+E[D|X,Z]  = D-D_price_ss 
 E[D^|X]   = D_price_h_ss
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -576,7 +576,7 @@ Summary over 3 resamples:
 
 Min MSE DDML model (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -591,7 +591,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Min MSE DDML model (sample=2)
 y-E[y|X]  = y-Y3_pystacked_2                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_2 
+E[D|X,Z]  = D-Dhat_psgradboost_2 
 E[D^|X]   = Dhat_rf_h_2
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -606,7 +606,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Mean over 3 min-mse resamples
 y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf 
+E[D|X,Z]  = D-Dhat_rf 
 E[D^|X]   = Dhat_rf_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -623,7 +623,7 @@ Summary over 3 resamples:
 
 Median over 3 min-mse resamples
 y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf 
+E[D|X,Z]  = D-Dhat_rf 
 E[D^|X]   = Dhat_rf_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -640,7 +640,7 @@ Summary over 3 resamples:
 
 Shortstack DDML model (sample=1)
 y-E[y|X]  = y-Y_share_ss_1                         Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss_1 
+E[D|X,Z]  = D-D_price_ss_1 
 E[D^|X]   = D_price_h_ss_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -655,7 +655,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Shortstack DDML model (sample=2)
 y-E[y|X]  = y-Y_share_ss_2                         Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss_2 
+E[D|X,Z]  = D-D_price_ss_2 
 E[D^|X]   = D_price_h_ss_2
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -670,7 +670,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Shortstack DDML model (mean over 3 resamples)
 y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss 
+E[D|X,Z]  = D-D_price_ss 
 E[D^|X]   = D_price_h_ss
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -687,7 +687,7 @@ Summary over 3 resamples:
 
 Shortstack DDML model (median over 3 resamples)
 y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss 
+E[D|X,Z]  = D-D_price_ss 
 E[D^|X]   = D_price_h_ss
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -806,7 +806,7 @@ Mean/med    Y learner     D learner         b        SE     DH learner
 
 Shortstack DDML model (median over 3 resamples)
 y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss 
+E[D|X,Z]  = D-D_price_ss 
 E[D^|X]   = D_price_h_ss
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -825,7 +825,7 @@ Summary over 3 resamples:
 
 DDML model, specification 1 (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_1 
+E[D|X,Z]  = D-Dhat_psgradboost_1 
 E[D^|X]   = Dhat_psgradboost_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -838,7 +838,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 2 (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_1 
+E[D|X,Z]  = D-Dhat_psgradboost_1 
 E[D^|X]   = Dhat_pslassocv_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -851,7 +851,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 3 (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_1 
+E[D|X,Z]  = D-Dhat_psgradboost_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -864,7 +864,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 4 (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pslassocv_1 
+E[D|X,Z]  = D-Dhat_pslassocv_1 
 E[D^|X]   = Dhat_psgradboost_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -877,7 +877,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 5 (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pslassocv_1 
+E[D|X,Z]  = D-Dhat_pslassocv_1 
 E[D^|X]   = Dhat_pslassocv_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -890,7 +890,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 6 (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pslassocv_1 
+E[D|X,Z]  = D-Dhat_pslassocv_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -903,7 +903,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 7 (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_psgradboost_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -916,7 +916,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 8 (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_pslassocv_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -929,7 +929,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 9 (sample=1)
 y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -942,7 +942,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 10 (sample=1)
 y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_1 
+E[D|X,Z]  = D-Dhat_psgradboost_1 
 E[D^|X]   = Dhat_psgradboost_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -955,7 +955,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 11 (sample=1)
 y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_1 
+E[D|X,Z]  = D-Dhat_psgradboost_1 
 E[D^|X]   = Dhat_pslassocv_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -968,7 +968,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 12 (sample=1)
 y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_1 
+E[D|X,Z]  = D-Dhat_psgradboost_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -981,7 +981,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 13 (sample=1)
 y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pslassocv_1 
+E[D|X,Z]  = D-Dhat_pslassocv_1 
 E[D^|X]   = Dhat_psgradboost_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -994,7 +994,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 14 (sample=1)
 y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pslassocv_1 
+E[D|X,Z]  = D-Dhat_pslassocv_1 
 E[D^|X]   = Dhat_pslassocv_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1007,7 +1007,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 15 (sample=1)
 y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pslassocv_1 
+E[D|X,Z]  = D-Dhat_pslassocv_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1020,7 +1020,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 16 (sample=1)
 y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_psgradboost_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1033,7 +1033,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 17 (sample=1)
 y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_pslassocv_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1046,7 +1046,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 18 (sample=1)
 y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1059,7 +1059,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 19 (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_1 
+E[D|X,Z]  = D-Dhat_psgradboost_1 
 E[D^|X]   = Dhat_psgradboost_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1072,7 +1072,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 20 (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_1 
+E[D|X,Z]  = D-Dhat_psgradboost_1 
 E[D^|X]   = Dhat_pslassocv_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1085,7 +1085,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 21 (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_1 
+E[D|X,Z]  = D-Dhat_psgradboost_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1098,7 +1098,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 22 (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pslassocv_1 
+E[D|X,Z]  = D-Dhat_pslassocv_1 
 E[D^|X]   = Dhat_psgradboost_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1111,7 +1111,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 23 (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pslassocv_1 
+E[D|X,Z]  = D-Dhat_pslassocv_1 
 E[D^|X]   = Dhat_pslassocv_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1124,7 +1124,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 24 (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_pslassocv_1 
+E[D|X,Z]  = D-Dhat_pslassocv_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1137,7 +1137,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 25 (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_psgradboost_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1150,7 +1150,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 DDML model, specification 26 (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_pslassocv_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1163,7 +1163,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Min MSE DDML model, specification 27 (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1178,7 +1178,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Min MSE DDML model (sample=1)
 y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf_1 
+E[D|X,Z]  = D-Dhat_rf_1 
 E[D^|X]   = Dhat_rf_h_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1193,7 +1193,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Min MSE DDML model (sample=2)
 y-E[y|X]  = y-Y3_pystacked_2                       Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_psgradboost_2 
+E[D|X,Z]  = D-Dhat_psgradboost_2 
 E[D^|X]   = Dhat_rf_h_2
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1208,7 +1208,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Mean over 3 min-mse resamples
 y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf 
+E[D|X,Z]  = D-Dhat_rf 
 E[D^|X]   = Dhat_rf_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1225,7 +1225,7 @@ Summary over 3 resamples:
 
 Median over 3 min-mse resamples
 y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
-E[D|X,Z]  = D1-Dhat_rf 
+E[D|X,Z]  = D-Dhat_rf 
 E[D^|X]   = Dhat_rf_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1242,7 +1242,7 @@ Summary over 3 resamples:
 
 Shortstack DDML model (sample=1)
 y-E[y|X]  = y-Y_share_ss_1                         Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss_1 
+E[D|X,Z]  = D-D_price_ss_1 
 E[D^|X]   = D_price_h_ss_1
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1257,7 +1257,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Shortstack DDML model (sample=2)
 y-E[y|X]  = y-Y_share_ss_2                         Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss_2 
+E[D|X,Z]  = D-D_price_ss_2 
 E[D^|X]   = D_price_h_ss_2
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1272,7 +1272,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 
 Shortstack DDML model (mean over 3 resamples)
 y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss 
+E[D|X,Z]  = D-D_price_ss 
 E[D^|X]   = D_price_h_ss
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1289,7 +1289,7 @@ Summary over 3 resamples:
 
 Shortstack DDML model (median over 3 resamples)
 y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
-E[D|X,Z]  = D1-D_price_ss 
+E[D|X,Z]  = D-D_price_ss 
 E[D^|X]   = D_price_h_ss
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
@@ -1309,5 +1309,5 @@ Summary over 3 resamples:
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_fiv.log
   log type:  text
- closed on:   8 Jul 2023, 21:21:10
+ closed on:  10 Jul 2023, 22:56:30
 --------------------------------------------------------------------------------------------------------------------------

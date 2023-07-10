@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_crossfit.log
   log type:  text
- opened on:   8 Jul 2023, 21:17:15
+ opened on:  10 Jul 2023, 22:54:40
 
 . 
 . which ddml
@@ -20,7 +20,7 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 . which crossfit
 C:\LocalStore\ecomes\Documents\GitHub\ddml\crossfit.ado
 *! crossfit v0.6
-*! last edited: 8 july 2023
+*! last edited: 10 july 2023
 *! authors: aa/ms
 
 . 
@@ -110,5 +110,5 @@ Cross-fitting fold 1 2 ...completed cross-fitting
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_crossfit.log
   log type:  text
- closed on:   8 Jul 2023, 21:17:26
+ closed on:  10 Jul 2023, 22:54:52
 --------------------------------------------------------------------------------------------------------------------------
