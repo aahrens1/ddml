@@ -377,14 +377,14 @@ class LinearRegressionClassifier(LinearRegression):
         return self.predict(X)
 
 class LinearRegression2(LinearRegression):
-    def fit(self,X,y):
+    def fit(self,X,y,w):
         self.cvalid=X
-        return LinearRegression.fit(self,X,y)
+        return LinearRegression.fit(self,X,y,w)
 
 class RidgeCV2(RidgeCV):
-    def fit(self,X,y):
+    def fit(self,X,y,w):
         self.cvalid=X
-        return RidgeCV.fit(self,X,y)
+        return RidgeCV.fit(self,X,y,w)
 
 end
 

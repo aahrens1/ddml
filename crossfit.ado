@@ -647,7 +647,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				local cframe `r(currentframe)'
 				frame create `tframe'
 				frame change `tframe'
-				getmata (`fid' `vname' `vtilde_list')=`y_stacking_cv', force replace
+				getmata (`fid' `fidtouse' `vname' `vtilde_list')=`y_stacking_cv', force replace
 				`qui' di
 				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (additive model):"
 				`qui' _ddml_nnls `vname' `vtilde_list', finalest(`psfinalest') stype(`stype') `noisily'
@@ -669,7 +669,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				local cframe `r(currentframe)'
 				frame create `tframe'
 				frame change `tframe'
-				getmata (`fid' `vname' `vtilde1_list')=`y_stacking_cv1', force replace
+				getmata (`fid' `fidtouse' `vname' `vtilde1_list')=`y_stacking_cv1', force replace
 				`qui' di
 				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (additive model):"
 				`qui' _ddml_nnls `vname' `vtilde1_list', finalest(`psfinalest') stype(`stype') `noisily'
@@ -689,7 +689,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				local cframe `r(currentframe)'
 				frame create `tframe'
 				frame change `tframe'
-				getmata (`fid' `vname' `vtilde0_list')=`y_stacking_cv0', force replace
+				getmata (`fid' `fidtouse' `vname' `vtilde0_list')=`y_stacking_cv0', force replace
 				`qui' di
 				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (additive model):"
 				`qui' _ddml_nnls `vname' `vtilde0_list', finalest(`psfinalest') stype(`stype') `noisily'
