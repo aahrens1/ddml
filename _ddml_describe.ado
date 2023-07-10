@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 8 july 2023
+*! last edited: 10 july 2023
 *! authors: aa/ms
 
 program define _ddml_describe
@@ -115,7 +115,7 @@ program define _ddml_describe
 		di
 		di as text "Estimation N:" _col(25) as res _c
 		forvalues m=1/`nreps' {
-			if `ncombos' {
+			if `estimated' {
 				local rs : word `m' of `rslist'
 				qui count if `rs'
 				local N "`: di %2.0f r(N)'"
