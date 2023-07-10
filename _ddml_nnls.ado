@@ -29,7 +29,7 @@ program _ddml_nnls
         di as res "se option available only with stata option; using Stata -nl-..."
         local dostata = 1
     }
-    
+  
     if `dostata' {
         _ddml_nnls_stata `anything' `if' `in' [`weight' `exp'], `options' `se' `verbose'
     }

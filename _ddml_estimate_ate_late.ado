@@ -4,7 +4,7 @@
 
 program _ddml_estimate_ate_late, eclass sortpreserve
 	version 16
-	syntax [anything] [if] [in] ,					/// 
+	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
 								y0(varname)			/// for estimating by hand...
 								y1(varname)			/// 
@@ -45,27 +45,27 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	if "`stdstack'"~="" {
 		// restack
 		if "`stdfinalest'"==""	local stdfinalest `finalest'
-		_ddml_estimate_stacking `anything' `if' `in', std finalest(`stdfinalest') `options'
+		_ddml_estimate_stacking `mname' `if' `in', std finalest(`stdfinalest') `options'
 	}
 	if "`shortstack'"~="" {
 		// restack
 		if "`ssfinalest'"==""	local ssfinalest `finalest'
-		_ddml_estimate_stacking `anything' `if' `in', ss finalest(`ssfinalest') `options'
+		_ddml_estimate_stacking `mname' `if' `in', ss finalest(`ssfinalest') `options'
 	}
 	if "`poolstack'"~="" {
 		// restack
 		if "`psfinalest'"==""	local psfinalest `finalest'
-		_ddml_estimate_stacking `anything' `if' `in', ps finalest(`psfinalest') `options'
+		_ddml_estimate_stacking `mname' `if' `in', ps finalest(`psfinalest') `options'
 	}
 	
 	// estimation
 	if "`y0'`y1'`d'`d0'`d1'`z'"=="" {
 		// main program for estimation
-		_ddml_estimate_main `anything' `if' `in', `options'
+		_ddml_estimate_main `mname' `if' `in', `options'
 	}
 	else {
 		// a single user-specified estimation
-		_ddml_estimate_single `anything' `if' `in', y0(`y0') y1(`y1') d(`d') d0(`d0') d1(`d1') z(`z') `options'
+		_ddml_estimate_single `mname' `if' `in', y0(`y0') y1(`y1') d(`d') d0(`d0') d1(`d1') z(`z') `options'
 	}
 end
 
@@ -195,14 +195,15 @@ program _ddml_estimate_stacking, eclass sortpreserve
 		}
 	}
 
+	// used for both standard and 0/1 vtildes
 	tempname sweights stdweights N_folds mse_folds
 	tempname tframe y_stacking_cv
+	
 	local numvts : word count `vtlist'
 	// loop through standard vtildes
 	forvalues i=1/`numvts' {
 		local vname :	word `i' of `namelist'
 		local vtilde :	word `i' of `vtlist'
-
 		mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 		mata: st_local("base_est",return_learner_item(`eqn',"`vtilde'","stack_base_est"))
 		mata: st_local("stype",return_learner_item(`eqn',"`vtilde'","stack_type"))
@@ -245,11 +246,13 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			forvalues j=1/`nlearners' {
 				local learner_list `learner_list' `vtilde'_L`j'_`m'
 			}
+			
 			// get stacking weights
 			tempvar yhat yhat_k
 			if `ssflag' {
 				// shortstacking uses crossfit predictions
 				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') stype(`stype') if `touse'
+				`qui' di as res "N=" e(N)
 				// since original finalest could be default (blank)
 				local finalest	`e(finalest)'
 				mat `sweights'	= e(b)
@@ -310,25 +313,25 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			}
 			// Name of newly-stacked variable depends on stacking method.
 			if `stdflag' {
-				local nvtilde `vtilde'_`m'
+				local nvtilde `vtilde'
 				local labelmsg "Pred. values E[`vname'|X] using pystacked, rep `m'"
 			}
 			else {
-				local nvtilde ``typestack''_`ts'_`m'
+				local nvtilde ``typestack''_`ts'
 				local labelmsg "Pred. values E[`vname'|X] using `typestack'ing, rep `m'"
 			}
 			if `newstack' {
-				cap drop `nvtilde'
-				qui gen double `nvtilde' = `yhat'
-				label var `nvtilde' "`labelmsg'"
+				cap drop `nvtilde'_`m'
+				qui gen double `nvtilde'_`m' = `yhat'
+				label var `nvtilde'_`m' "`labelmsg'"
 			}
 			else {
 				if "`noisily'"~="" {
 					di
 					di "Existing vs new predicted values:"
-					sum `nvtilde' `yhat'
+					sum `nvtilde'_`m' `yhat'
 				}
-				qui replace `nvtilde' = `yhat'
+				qui replace `nvtilde'_`m' = `yhat'
 			}
 			get_stack_stats if `touse', kfolds(`kfolds') fid(`mname'_fid_`m') vname(`nameY') vhat(`yhat')
 			local N				= r(N)
@@ -345,28 +348,26 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				mata: add_learner_item(`eqn',"`vtilde'","stack_final_est", "`finalest'")
 			}
 			else {
-				mata: add_result_item(`eqn',"``typestack''_`ts'","N",            "`m'", `N')
-				mata: add_result_item(`eqn',"``typestack''_`ts'","N_folds",      "`m'", st_matrix("`N_folds'"))
-				mata: add_result_item(`eqn',"``typestack''_`ts'","MSE",          "`m'", `mse')
-				mata: add_result_item(`eqn',"``typestack''_`ts'","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
-				mata: add_result_item(`eqn',"``typestack''_`ts'","`ts'_weights", "`m'", st_matrix("`sweights'"))
+				mata: add_result_item(`eqn',"`nvtilde'","N",            "`m'", `N')
+				mata: add_result_item(`eqn',"`nvtilde'","N_folds",      "`m'", st_matrix("`N_folds'"))
+				mata: add_result_item(`eqn',"`nvtilde'","MSE",          "`m'", `mse')
+				mata: add_result_item(`eqn',"`nvtilde'","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
+				mata: add_result_item(`eqn',"`nvtilde'","`ts'_weights", "`m'", st_matrix("`sweights'"))
 				// final estimator used to stack is a learner item
-				mata: add_learner_item(`eqn',"``typestack''_`ts'","`ts'_final_est", "`finalest'")
+				mata: add_learner_item(`eqn',"`nvtilde'","`ts'_final_est", "`finalest'")
 				// need base estimators as well
-				mata: add_learner_item(`eqn',"``typestack''_`ts'","stack_base_est", "`base_est'")
+				mata: add_learner_item(`eqn',"`nvtilde'","stack_base_est", "`base_est'")
 			}
 			// replace updated eqn
 			mata: (`mname'.eqnAA).put("`vname'",`eqn')
 		}
 	}
 
-	tempname sweights0 sweights1 stdweights0 stdweights1 N0_folds N1_folds mse0_folds mse1_folds
 	local numvts : word count `vtlist01'
 	// loop through 0/1 vtildes
 	forvalues i=1/`numvts' {
 		local vname :	word `i' of `namelist01'
 		local vtilde :	word `i' of `vtlist01'
-
 		mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 		mata: st_local("base_est",return_learner_item(`eqn',"`vtilde'","stack_base_est"))
 		mata: st_local("stype",return_learner_item(`eqn',"`vtilde'","stack_type"))
@@ -411,23 +412,23 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				forvalues j=1/`nlearners' {
 					local learner_list `learner_list' `vtilde'`t'_L`j'_`m'
 				}
-				
 				// get stacking weights
 				tempvar yhat yhat_k
 				if `ssflag' {
 					// shortstacking uses crossfit predictions
-					`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') stype(`stype') if `touse' & `treatvar'==`t'
+					`qui' _ddml_nnls `vname' `learner_list' if `touse' & `treatvar'==`t', finalest(`finalest') stype(`stype')
+					`qui' di as res "N=" e(N)
 					// since original finalest could be default (blank)
 					local finalest		`e(finalest)'
-					mat `sweights`t''	= e(b)
+					mat `sweights'		= e(b)
 					qui predict double `yhat'
 				}
 				else if `stdflag' {
 					// standard stacking uses stacking CV predictions, stored in a mata struct
 					qui gen double `yhat' = .
 					qui gen double `yhat_k' = .
-					// reset stdweights
-					cap mat drop `stdweights`t''
+					// reset stdweights since we are appending fold-by-fold
+					cap mat drop `stdweights'
 					qui frame pwf
 					local cframe `r(currentframe)'
 					frame create `tframe'
@@ -440,19 +441,19 @@ program _ddml_estimate_stacking, eclass sortpreserve
 						`qui' di as res "N=" e(N)
 						// since original finalest could be default (blank)
 						local finalest	`e(finalest)'
-						mata: `sweights`t'' = st_matrix("e(b)")
+						mata: `sweights' = st_matrix("e(b)")
 						frame change `cframe'
-						mata: st_matrix("`sweights`t''",`sweights`t'')
-						mat colnames `sweights`t'' =  `learner_list'
+						mata: st_matrix("`sweights'",`sweights')
+						mat colnames `sweights' =  `learner_list'
 						qui replace `yhat_k' = .
-						mat score `yhat_k' = `sweights`t'' if `touse' & `mname'_fid_`m'==`k', replace
+						mat score `yhat_k' = `sweights' if `touse' & `mname'_fid_`m'==`k', replace
 						qui replace `yhat' = `yhat_k' if `mname'_fid_`m'==`k'
-						mat `stdweights`t'' = nullmat(`stdweights`t'') , `sweights`t'''
+						mat `stdweights' = nullmat(`stdweights') , `sweights''
 					}
 					frame change `cframe'
 					frame drop `tframe'
 					cap mata: mata drop `y_stacking_cv'
-					cap mata: mata drop `sweights`t''
+					cap mata: mata drop `sweights'
 				}
 				else {
 					// poolstacking uses stacking CV predictions, stored in a mata struct
@@ -468,36 +469,36 @@ program _ddml_estimate_stacking, eclass sortpreserve
 					`qui' di as res "N=" e(N)
 					// since original finalest could be default (blank)
 					local finalest	`e(finalest)'
-					mata: `sweights`t'' = st_matrix("e(b)")
+					mata: `sweights' = st_matrix("e(b)")
 					frame change `cframe'
 					frame drop `tframe'
-					mata: st_matrix("`sweights`t''",`sweights`t'')
-					mat colnames `sweights`t'' =  `learner_list'
-					mat score double `yhat' = `sweights`t'' if `touse'
+					mata: st_matrix("`sweights'",`sweights')
+					mat colnames `sweights' =  `learner_list'
+					mat score double `yhat' = `sweights' if `touse'
 					cap mata: mata drop `y_stacking_cv'
-					cap mata: mata drop `sweights`t''
+					cap mata: mata drop `sweights'
 				}
 				// Name of newly-stacked variable depends on stacking method.
 				if `stdflag' {
-					local nvtilde `vtilde'`t'_`m'
+					local nvtilde `vtilde'
 					local labelmsg "Pred. values E[`vname'|X] given `treatvar'==`t' using pystacked, rep `m'"
 				}
 				else {
-					local nvtilde ``typestack''_`ts'_`m'
+					local nvtilde ``typestack''_`ts'
 					local labelmsg "Pred. values E[`vname'|X] given `treatvar'==`t' using `typestack'ing, rep `m'"
 				}
 				if `newstack' {
-					cap drop `nvtilde'
-					qui gen double `nvtilde' = `yhat'
-					label var `nvtilde' "Predicted values cond. exp. of `vname' given `treatvar'=`t' using `typestack'ing"
+					cap drop `nvtilde'`t'_`m'
+					qui gen double `nvtilde'`t'_`m' = `yhat'
+					label var `nvtilde'`t'_`m' "Predicted values cond. exp. of `vname' given `treatvar'=`t' using `typestack'ing"
 				}
 				else {
 					if "`noisily'"~="" {
 						di
 						di "Existing vs new predicted values:"
-						sum `nvtilde' `yhat'
+						sum `nvtilde'`t'_`m' `yhat'
 					}
-					qui replace `nvtilde' = `yhat'
+					qui replace `nvtilde'`t'_`m' = `yhat'
 				}
 				get_stack_stats if `touse', kfolds(`kfolds') fid(`mname'_fid_`m') vname(`vname') vhat(`yhat')
 				local N				= r(N)
@@ -509,18 +510,18 @@ program _ddml_estimate_stacking, eclass sortpreserve
 					// N and N_folds haven't changed
 					mata: add_result_item(`eqn',"`vtilde'","MSE`t'",           "`m'", `mse')
 					mata: add_result_item(`eqn',"`vtilde'","MSE`t'_folds",     "`m'", st_matrix("`mse_folds'"))
-					mata: add_result_item(`eqn',"`vtilde'","stack_weights`t'", "`m'", st_matrix("`stdweights`t''"))
+					mata: add_result_item(`eqn',"`vtilde'","stack_weights`t'", "`m'", st_matrix("`stdweights'"))
 					// final estimator used to stack is a learner item
 					mata: add_learner_item(`eqn',"`vtilde'","stack_final_est", "`finalest'")
 				}
 				else {
-					mata: add_result_item(`eqn',"``typestack''_`ts'","N`t'",            "`m'", `N')
-					mata: add_result_item(`eqn',"``typestack''_`ts'","N`t'_folds",      "`m'", st_matrix("`N_folds'"))
-					mata: add_result_item(`eqn',"``typestack''_`ts'","MSE`t'",          "`m'", `mse')
-					mata: add_result_item(`eqn',"``typestack''_`ts'","MSE`t'_folds",    "`m'", st_matrix("`mse_folds'"))
-					mata: add_result_item(`eqn',"``typestack''_`ts'","`ts'_weights`t'", "`m'", st_matrix("`sweights'"))
+					mata: add_result_item(`eqn',"`nvtilde'","N`t'",            "`m'", `N')
+					mata: add_result_item(`eqn',"`nvtilde'","N`t'_folds",      "`m'", st_matrix("`N_folds'"))
+					mata: add_result_item(`eqn',"`nvtilde'","MSE`t'",          "`m'", `mse')
+					mata: add_result_item(`eqn',"`nvtilde'","MSE`t'_folds",    "`m'", st_matrix("`mse_folds'"))
+					mata: add_result_item(`eqn',"`nvtilde'","`ts'_weights`t'", "`m'", st_matrix("`sweights'"))
 					// final estimator used to stack is a learner item
-					mata: add_learner_item(`eqn',"``typestack''_`ts'","`ts'_final_est", "`finalest'")
+					mata: add_learner_item(`eqn',"`nvtilde'","`ts'_final_est", "`finalest'")
 				}
 			}
 			

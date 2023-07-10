@@ -223,7 +223,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			tempvar yhat yhat_k
 			if `ssflag' {
 				// shortstacking uses crossfit predictions
-				`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') stype(`stype') if `touse'
+				`qui' _ddml_nnls `vname' `learner_list' if `touse', finalest(`finalest') stype(`stype')
 				// since original finalest could be default (blank)
 				local finalest	`e(finalest)'
 				mat `sweights'	= e(b)
@@ -284,25 +284,25 @@ program _ddml_estimate_stacking, eclass sortpreserve
 			}
 			// Name of newly-stacked variable depends on stacking method.
 			if `stdflag' {
-				local nvtilde `vtilde'_`m'
+				local nvtilde `vtilde'
 				local labelmsg "Pred. values E[`vname'|X] using pystacked, rep `m'"
 			}
 			else {
-				local nvtilde ``typestack''_`ts'_`m'
+				local nvtilde ``typestack''_`ts'
 				local labelmsg "Pred. values E[`vname'|X] using `typestack'ing, rep `m'"
 			}
 			if `newstack' {
-				cap drop `nvtilde'
-				qui gen double `nvtilde' = `yhat'
-				label var `nvtilde' "`labelmsg'"
+				cap drop `nvtilde'_`m'
+				qui gen double `nvtilde'_`m' = `yhat'
+				label var `nvtilde'_`m' "`labelmsg'"
 			}
 			else {
 				if "`noisily'"~="" {
 					di
 					di "Existing vs new predicted values:"
-					sum `nvtilde' `yhat'
+					sum `nvtilde'_`m' `yhat'
 				}
-				qui replace `nvtilde' = `yhat'
+				qui replace `nvtilde'_`m' = `yhat'
 			}
 			get_stack_stats if `touse', kfolds(`kfolds') fid(`mname'_fid_`m') vname(`vname') vhat(`yhat')
 			local N				= r(N)
@@ -319,15 +319,15 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				mata: add_learner_item(`eqn',"`vtilde'","stack_final_est", "`finalest'")
 			}
 			else {
-				mata: add_result_item(`eqn',"``typestack''_`ts'","N",            "`m'", `N')
-				mata: add_result_item(`eqn',"``typestack''_`ts'","N_folds",      "`m'", st_matrix("`N_folds'"))
-				mata: add_result_item(`eqn',"``typestack''_`ts'","MSE",          "`m'", `mse')
-				mata: add_result_item(`eqn',"``typestack''_`ts'","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
-				mata: add_result_item(`eqn',"``typestack''_`ts'","`ts'_weights", "`m'", st_matrix("`sweights'"))
+				mata: add_result_item(`eqn',"`nvtilde'","N",            "`m'", `N')
+				mata: add_result_item(`eqn',"`nvtilde'","N_folds",      "`m'", st_matrix("`N_folds'"))
+				mata: add_result_item(`eqn',"`nvtilde'","MSE",          "`m'", `mse')
+				mata: add_result_item(`eqn',"`nvtilde'","MSE_folds",    "`m'", st_matrix("`mse_folds'"))
+				mata: add_result_item(`eqn',"`nvtilde'","`ts'_weights", "`m'", st_matrix("`sweights'"))
 				// final estimator used to stack is a learner item
-				mata: add_learner_item(`eqn',"``typestack''_`ts'","`ts'_final_est", "`finalest'")
+				mata: add_learner_item(`eqn',"`nvtilde'","`ts'_final_est", "`finalest'")
 				// need base estimators as well
-				mata: add_learner_item(`eqn',"``typestack''_`ts'","stack_base_est", "`base_est'")
+				mata: add_learner_item(`eqn',"`nvtilde'","stack_base_est", "`base_est'")
 			}
 			// replace updated eqn
 			mata: (`mname'.eqnAA).put("`vname'",`eqn')
