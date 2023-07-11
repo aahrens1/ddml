@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 10 july 2023
+*! last edited: 11 july 2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -1298,9 +1298,28 @@ program _ddml_estimate_main
 				// force noconstant with mean/median
 				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable replay `noconstant'
 				di %6s "{`rcmd':`specrep'}" _c
-				di as res %14s "[min-mse]" _c
+				if `poss_combos'>1 {
+					// learner is min-mse learner
+					di as res %14s "[min-mse]" _c
+				}
+				else {
+					// only one learner so use the name
+					mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+					mata: st_local("yt",invtokens(`eqn'.vtlist))
+					di as res %14s abbrev("`yt'",13) _c
+				}
 				forvalues j=1/`numeqnD' {
-					di as res %14s "[mse]" _c
+					if `poss_combos'>1 {
+						// learner is min-mse learner
+						di as res %14s "[min-mse]" _c
+					}
+					else {
+						// only one learner so use the name
+						local d_j : word `j' of `nameD'
+						mata: `eqn' = (`mname'.eqnAA).get("`d_j'")
+						mata: st_local("dt",invtokens(`eqn'.vtlist))
+						di as res %14s abbrev("`dt'",13) _c
+					}
 					// precede with a space
 					di as res " " %9.3f el(`btemp',1,`j') _c
 					local se = sqrt(el(`Vtemp',`j',`j'))
@@ -1311,11 +1330,31 @@ program _ddml_estimate_main
 				}
 				if "`model'"=="fiv" {
 					forvalues j=1/`numeqnD' {
-						di as res %14s "[mse]" _c
+						if `poss_combos'>1 {
+							// learner is min-mse learner
+							di as res %14s "[min-mse]" _c
+						}
+						else {
+							local d_j : word `j' of `nameD'
+							mata: `eqn' = (`mname'.eqnAA).get("`d_j'")
+							mata: st_local("dt",invtokens(`eqn'.vtlist))
+							// append "_h" to D learner name
+							di as res %14s abbrev("`dt'_h",13) _c
+						}
 					}
 				}
 				forvalues j=1/`numeqnZ' {
-					di as res %14s "[mse]" _c
+					if `poss_combos'>1 {
+						// learner is min-mse learner
+						di as res %14s "[min-mse]" _c
+					}
+					else {
+						local z_j : word `j' of `nameZ'
+						// only one learner so use the name
+						mata: `eqn' = (`mname'.eqnAA).get("`z_j'")
+						mata: st_local("zt",invtokens(`eqn'.vtlist))
+						di as res %14s abbrev("`zt'",13) _c
+					}
 				}
 				di
 			}

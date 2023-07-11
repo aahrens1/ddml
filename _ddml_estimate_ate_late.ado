@@ -1598,11 +1598,34 @@ program _ddml_estimate_main
 				local specrep "`: di %4s "`spectext'" %3s "`medmean'"'"
 				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable replay
 				di %6s "{`rcmd':`specrep'}" _c
-				di as res %14s "[min-mse]" _c
-				di as res %14s "[mse]" _c
-				di as res %14s "[mse]" _c
-				if ~`ateflag' {
-					di as res %14s "[mse]" _c
+				if `poss_combos'>1 {
+					// learner is min-mse learner
+					di as res %14s "[min-mse]" _c
+					di as res %14s "[min-mse]" _c
+					di as res %14s "[min-mse]" _c
+					if ~`ateflag' {
+						di as res %14s "[min-mse]" _c
+					}
+				}
+				else {
+					// only one learner so use the name
+					mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+					mata: st_local("yt0",invtokens(`eqn'.vtlist))
+					di as res %14s abbrev("`yt0'",13) _c
+					mata: st_local("yt1",invtokens(`eqn'.vtlist))
+					di as res %14s abbrev("`yt1'",13) _c
+					if `ateflag' {
+						mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
+						mata: st_local("dt",invtokens(`eqn'.vtlist))
+						di as res %14s abbrev("`dt'",13) _c
+					}
+					else {
+						mata: `eqn' = (`mname'.eqnAA).get("`nameD'")
+						mata: st_local("dt0",invtokens(`eqn'.vtlist))
+						di as res %14s abbrev("`dt0'",13) _c
+						mata: st_local("dt1",invtokens(`eqn'.vtlist))
+						di as res %14s abbrev("`dt1'",13) _c
+					}
 				}
 				// precede with a space
 				di as res " " %9.3f el(`btemp',1,1) _c
@@ -1611,8 +1634,15 @@ program _ddml_estimate_main
 				local pse (`se')
 				// precede with a space
 				di as res " " %10s "`pse'" _c
-				if ~`ateflag' {
+				if ~`ateflag' & `poss_combos'>1 {
+					// learner is min-mse learner
 					di as res %14s "[mse]" _c
+				}
+				else if ~`ateflag' {
+					// only one learner so use the name
+					mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
+					mata: st_local("zt",invtokens(`eqn'.vtlist))
+					di as res %14s abbrev("`zt'",13) _c				
 				}
 				di
 			}
@@ -2318,80 +2348,6 @@ program medmean_and_store, eclass
 	foreach obj in `list_scalar' {
 		mata: `A'.put(("`obj'","scalar"),``obj'')
 	}
-
-/*
-	// additional estimation results
-	tempname eqn
-	mata: `eqn' = init_eStruct()
-	// Y eqn results
-	mata: `eqn' = (`mname'.eqnAA).get("`yname'")
-	// pystacked final est (pystacked multi only)
-	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-	if `pystackedmulti' {
-		// cap because won't exist for e.g. shortstack variable
-		cap mata: `A'.put(("`y'_stack_final_est","local"), return_learner_item(`eqn',"`y'","stack_final_est"))
-	}
-	// ss results
-	if "`spec'"=="ss" {
-		mata: st_local("shortstack", `eqn'.shortstack)
-		mata: `A'.put(("`yname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
-	}
-	// ps results
-	if "`spec'"=="ps" {
-		mata: st_local("poolstack", `eqn'.poolstack)
-		mata: `A'.put(("`yname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
-	}
-
-	// D eqn results - uses vtilde names in d
-	forvalues i=1/`numeqnD' {
-		local dname : word `i' of `dnames'
-		local vtilde : word `i' of `d'
-		local vtilde_h `vtilde'
-
-		mata: `eqn' = (`mname'.eqnAA).get("`dname'")
-		// pystacked final est (pystacked multi only)
-		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-		if `pystackedmulti' {
-			// cap because won't exist for e.g. shortstack variable
-			cap mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
-		}
-		// ss results
-		if "`spec'"=="ss" {
-			mata: st_local("shortstack", `eqn'.shortstack)
-			mata: `A'.put(("`dname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
-		}
-		// ps results
-		if "`spec'"=="ps" {
-			mata: st_local("poolstack", `eqn'.poolstack)
-			mata: `A'.put(("`dname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
-		}
-	}
-	if `fivflag'==0 {
-		// Z eqn results; fiv won't enter
-		forvalues i=1/`numeqnZ' {
-			local zname : word `i' of `znames'
-			local vtilde : word `i' of `z'
-			mata: `eqn' = (`mname'.eqnAA).get("`zname'")
-			// pystacked final est (pystacked multi only)
-			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-			if `pystackedmulti' {
-				// cap because won't exist for e.g. shortstack variable
-				cap mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
-			}
-			// ss results
-			if "`spec'"=="ss" {
-				mata: st_local("shortstack", `eqn'.shortstack)
-				mata: `A'.put(("`zname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
-			}
-			// ps results
-			if "`spec'"=="ps" {
-				mata: st_local("poolstack", `eqn'.poolstack)
-				mata: `A'.put(("`zname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
-			}
-		}
-	}
-*/
-
 
 	// store AA with median/mean results
 	mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
