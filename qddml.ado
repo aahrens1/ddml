@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 10 july 2023
+*! last edited: 11 july 2023
 *! authors: aa/ms
 
 program define qddml, eclass sortpreserve
@@ -141,8 +141,10 @@ program define qddml, eclass sortpreserve
 				local `opt' : subinstr local `opt' "," ",", all count(local hascomma)
 				if !`hascomma'	local `opt' ``opt'' ,
 			}
-			// add standard (pystacked) stacknig final estimator
-			local `opt' ``opt'' finalest(`finalest')
+			// add standard (pystacked) stacking final estimator
+			if "`finalest'"~="" {
+				local `opt' ``opt'' finalest(`finalest')
+			}
 		}
 	}
 	else {
