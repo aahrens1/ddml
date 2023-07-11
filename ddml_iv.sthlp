@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 3jul2023}{...}
+{* *! version 11july2023}{...}
 {hline}
-{cmd:help ddml iv, help ddml fiv}{right: v1.2}
+{cmd:help ddml iv, help ddml fiv}{right: v1.3}
 {hline}
 
 {title:ddml - estimation examples for the partially-linear IV models in Double Debiased Machine Learning}

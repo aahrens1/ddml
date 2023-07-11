@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 3jul2023}{...}
+{* *! version 11july2023}{...}
 {hline}
-{cmd:help ddml crossfit, ddml estimate}{right: v1.2}
+{cmd:help ddml crossfit, ddml estimate}{right: v1.3}
 {hline}
 
 {title:ddml crossfit and estimate commands for Double Debiased Machine Learning}

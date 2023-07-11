@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 3jul2023}{...}
+{* *! version 11july2023}{...}
 {hline}
-{cmd:help ddml partial}{right: v1.2}
+{cmd:help ddml partial}{right: v1.3}
 {hline}
 
 {title:ddml - estimation examples for the interactive (ATE, ATET) model in Double Debiased Machine Learning}

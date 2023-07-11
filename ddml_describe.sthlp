@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 4jul2023}{...}
+{* *! version 11july2023}{...}
 {hline}
-{cmd:help ddml describe}{right: v1.2}
+{cmd:help ddml describe}{right: v1.3}
 {hline}
 
 {title:ddml describe utility for Double Debiased Machine Learning}

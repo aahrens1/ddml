@@ -1,2 +1,4 @@
 {smcl}
-INCLUDE help ddml_init.sthlp
+{* *! version 11july2023}{...}
+NA
+NA

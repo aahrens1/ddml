@@ -1,5 +1,5 @@
-*! crossfit v0.6
-*! last edited: 10 july 2023
+*! ddml v1.3
+*! last edited: 11july2023
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 

@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 3jul2023}{...}
+{* *! version 11july2023}{...}
 {hline}
-{cmd:help ddml init, ddml eq, ddml sample}{right: v1.2}
+{cmd:help ddml init, ddml eq, ddml sample}{right: v1.3}
 {hline}
 
 {title:ddml init, eq and sample commands for Double Debiased Machine Learning}

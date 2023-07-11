@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 15jun2023}{...}
+{* *! version 11july2023}{...}
 {hline}
-{cmd:help ddml extract}{right: v1.2}
+{cmd:help ddml extract}{right: v1.3}
 {hline}
 
 {title:ddml extract utility for Double Debiased Machine Learning}
