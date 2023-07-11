@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 7 july 2023
+*! last edited: 11 july 2023
 *! authors: aa/ms
 
 *** ddml cross-fitting
@@ -286,7 +286,7 @@ program _ddml_crossfit, eclass sortpreserve
 		}
 		
 		// create sample dfn variable by resample
-		create_sample_indicators, mname(`mname') stdflag(`stdflag')
+		create_sample_indicators, mname(`mname') stdflag(`stdflag') ssflag(`ssflag') psflag(`psflag')
 		
 		// set flag on model struct
 		// reps=resamplings to be done, crossfitted=resamplings done so far
@@ -310,7 +310,7 @@ end
 // same naming as main sample variable but with a _m resample subscript
 program create_sample_indicators
 	version 16
-	syntax [anything], mname(name) [ stdflag(integer 1) ]
+	syntax [anything], mname(name) [ stdflag(integer 1) ssflag(integer 1) psflag(integer 1) ]
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
@@ -326,9 +326,10 @@ program create_sample_indicators
 	
 	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 	mata: st_local("shortstack", `eqn'.shortstack)
-	// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
+	mata: st_local("poolstack", `eqn'.poolstack)
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
-	if ~`stdflag'	local vtlistY `shortstack'_ss
+	if `ssflag'		local vtlistY `vtlistY' `shortstack'_ss
+	if `psflag'		local vtlistY `vtlistY' `poolstack'_ps
 	
 	local lieflag = 0
 	if `numeqnD' {
@@ -336,9 +337,10 @@ program create_sample_indicators
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			mata: st_local("shortstack", `eqn'.shortstack)
-			// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
+			mata: st_local("poolstack", `eqn'.poolstack)
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
-			if ~`stdflag'	local vtlistD `shortstack'_ss
+			if `ssflag'		local vtlistD `vtlistD' `shortstack'_ss
+			if `psflag'		local vtlistD `vtlistD' `poolstack'_ps
 			local Dt_list `Dt_list' `vtlistD'
 		}
 	}
@@ -348,12 +350,13 @@ program create_sample_indicators
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			mata: st_local("shortstack", `eqn'.shortstack)
-			// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
+			mata: st_local("poolstack", `eqn'.poolstack)
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			foreach vn in `vtlistD' {
 				local vtlistD_h `vtlistD_h' `vn'_h
 			}
-			if ~`stdflag'	local vtlistD_h `shortstack'_h_ss
+			if `ssflag'	local vtlistD_h `vtlistD_h' `shortstack'_h_ss
+			if `psflag'	local vtlistD_h `vtlistD_h' `poolstack'_h_ps
 			local DHt_list `DHt_list' `vtlistD_h'
 		}
 	}
@@ -362,9 +365,10 @@ program create_sample_indicators
 		foreach var of varlist `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
 			mata: st_local("shortstack", `eqn'.shortstack)
-			// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
+			mata: st_local("poolstack", `eqn'.poolstack)
 			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
-			if ~`stdflag'	local vtlistZ `shortstack'_ss
+			if `ssflag'		local vtlistZ `vtlistZ' `shortstack'_ss
+			if `psflag'		local vtlistZ `vtlistZ' `poolstack'_ps
 			local Zt_list `Zt_list' `vtlistZ'
 		}
 	}
