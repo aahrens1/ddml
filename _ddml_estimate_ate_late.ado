@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 10 july 2023
+*! last edited: 11 july 2023
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -1595,7 +1595,7 @@ program _ddml_estimate_main
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
-				local specrep "`: di %4s "mse" %3s "`medmean'"'"
+				local specrep "`: di %4s "`spectext'" %3s "`medmean'"'"
 				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable replay
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[min-mse]" _c
