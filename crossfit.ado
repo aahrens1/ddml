@@ -1,5 +1,5 @@
 *! crossfit v0.6
-*! last edited: 10 july 2023
+*! last edited: 16 july 2023
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 
@@ -169,6 +169,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 	if "`ssfinalest'"==""	local ssfinalest `finalest'
 	if "`psfinalest'"==""	local psfinalest `finalest'
 	if "`stdfinalest'"==""	local stdfinalest `finalest'
+	// standard stacking final estimator goes directly to pystacked as an option
+	// but only if not empty (otherwise it can conflict with the pystacked command spec)
+	if "`stdfinalest'"~=""	local stdfinalestopt finalest(`stdfinalest')
 	
 	mata: st_local("vname", `ename'.vname)
 	mata: st_local("vtlist", invtokens(`ename'.vtlist))
@@ -388,7 +391,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				}
 				
 				// estimate excluding kth fold
-				`qui' `est_main' if `fid'!=`k' & `touse', `est_options' `nostdstackopt' finalest(`stdfinalest')
+				`qui' `est_main' if `fid'!=`k' & `touse', `est_options' `nostdstackopt' `stdfinalestopt'
 				`qui' di as text "N=" as res e(N)
 				local base_est `e(base_est)'
 				local stack_final_est `e(finalest)'
@@ -459,7 +462,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 	
 				// for treatvar = 1
 				// estimate excluding kth fold
-				`qui' `est_main' if `fid'!=`k' & `treatvar' == 1 & `touse', `est_options' finalest(`stdfinalest')
+				`qui' `est_main' if `fid'!=`k' & `treatvar' == 1 & `touse', `est_options' `stdfinalestopt'
 				`qui' di as text "N=" as res e(N)
 				local base_est `e(base_est)'
 				local stack_final_est `e(finalest)'
@@ -533,7 +536,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				} 
 				else {
 					// estimate excluding kth fold
-					`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options' finalest(`stdfinalest')
+					`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options' `stdfinalestopt'
 					`qui' di as text "N=" as res e(N)
 					local base_est `e(base_est)'
 					local stack_final_est `e(finalest)'
