@@ -713,9 +713,19 @@ program _ddml_estimate_single, eclass sortpreserve
 	if "`clustvar'"~="" ereturn scalar N_clust=`Nclust'
 	
 	di
-	di as text "E[y|X,D=0]" _col(14) "= " as res "`e(y0)'" _c
+	if "`e(model)'"=="interactive" {
+		di as text "E[y|X,D=0]" _col(14) "= " as res "`e(y0)'" _c
+	}
+	else {
+		di as text "E[y|X,Z=0]" _col(14) "= " as res "`e(y0)'" _c
+	}
 	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
-	di as text "E[y|X,D=1]" _col(14) "= " as res "`e(y1)'"
+	if "`e(model)'"=="interactive" {
+		di as text "E[y|X,D=1]" _col(14) "= " as res "`e(y1)'"
+	}
+	else {
+		di as text "E[y|X,Z=1]" _col(14) "= " as res "`e(y1)'"
+	}
 	if "`e(model)'"=="interactive" {
 		di as text "E[D|X]" _col(14)  "= " as res "`e(d)'"
 	}
@@ -2449,9 +2459,19 @@ program replay_estimate, eclass
 	
 	// display results
 	di as text "`e(title)'"
-	di as text "E[y|X,D=0]" _col(14) "= " as res "`e(y0_m)'" _c
+	if "`e(model)'"=="interactive" {
+		di as text "E[y|X,D=0]" _col(14) "= " as res "`e(y0_m)'" _c
+	}
+	else {
+		di as text "E[y|X,Z=0]" _col(14) "= " as res "`e(y0_m)'" _c
+	}
 	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
-	di as text "E[y|X,D=1]" _col(14) "= " as res "`e(y1_m)'"
+	if "`e(model)'"=="interactive" {
+		di as text "E[y|X,D=1]" _col(14) "= " as res "`e(y1)_m'"
+	}
+	else {
+		di as text "E[y|X,Z=1]" _col(14) "= " as res "`e(y1_m)'"
+	}
 	if "`e(model)'"=="interactive" {
 		di as text "E[D|X]" _col(14)  "= " as res "`e(d_m)'"
 	}
