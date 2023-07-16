@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 8 june 2023
+*! last edited: 16july2023
 *! authors: aa/ms
 
 program define _ddml_overlap
@@ -44,8 +44,11 @@ program define _ddml_overlap
 	}
 	
 	// default title
-	if "`title'"=="" {
+	if "`title'"=="" & "`model'"=="interactive" {
 		local title "Propensity scores by treatment group"
+	}
+	else {
+		local title "Propensity scores by assignment group"
 	}
 	// default replist, graph subtitle
 	if "`replist'"=="" {
