@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 11 july 2023
+*! last edited: 16 july 2023
 *! authors: aa/ms
 
 *** ddml cross-fitting
@@ -119,7 +119,6 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
 		// if model is LIE, pystacked is treated as a single learner
 		if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
-		// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
 		if `pystackedmulti'			local numlnrD=`pystackedmulti'
 		else						local allpsm=0
 		if `numlnrD'<`minlearners'	local minlearners=`numlnrD'
@@ -140,7 +139,6 @@ program _ddml_crossfit, eclass sortpreserve
 			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
 			// if model is LIE, pystacked is treated as a single learner
 			if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
-			// mata: st_local("nostdflag", strofreal(`eqn'.nostdstack))
 			if `pystackedmulti'			local numlnrZ=`pystackedmulti'
 			else						local allpsm=0
 			if `numlnrZ'<`minlearners'	local minlearners `numlnrZ'

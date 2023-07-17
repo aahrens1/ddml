@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 11 july 2023
+*! last edited: 17 july 2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -27,10 +27,10 @@ program _ddml_estimate_linear, eclass sortpreserve
 		local shortstack	shortstack
 	}
 	if "`psfinalest'"~="" & "`poolstack'"=="" {
-		local poolstack	poolstack
+		local poolstack		poolstack
 	}
 	if "`stdstack'`shortstack'`poolstack'"=="" & "`finalest'"~="" {
-		// default is to re-stack whatever has been already stacked
+		// default when just finalest(.) is specified is to re-stack whatever has been already stacked
 		mata: st_local("stdflag", strofreal(`mname'.stdflag))
 		mata: st_local("ssflag", strofreal(`mname'.ssflag))
 		mata: st_local("psflag", strofreal(`mname'.psflag))
@@ -317,6 +317,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				mata: add_result_item(`eqn',"`vtilde'","stack_weights", "`m'", st_matrix("`stdweights'"))
 				// final estimator used to stack is a learner item
 				mata: add_learner_item(`eqn',"`vtilde'","stack_final_est", "`finalest'")
+				// need base estimators as well
+				mata: add_learner_item(`eqn',"`vtilde'","stack_base_est",  "`base_est'")
 			}
 			else {
 				mata: add_result_item(`eqn',"`nvtilde'","N",            "`m'", `N')

@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 9 july 2023
+*! last edited: 17 july 2023
 *! authors: aa/ms
 
 program define _ddml_extract, rclass
@@ -362,7 +362,7 @@ function poolstack_extract(									///
 	rmatlist = J(1,0,"")
 
 	// poolstacking of pystacked base learners
-	vtlist = tokens((eqn.lrnAA).get((invtokens(eqn.vtlist),"stack_base_est")))
+	vtlist = tokens((eqn.lrnAA).get(((eqn.poolstack + "_ps"),"stack_base_est")))
 	nlearners=eqn.pystackedmulti
 
 	rstripe = vtlist'
@@ -635,6 +635,7 @@ function pystacked_extract(									///
 {
 	
 	nreps = d.nreps
+	kfolds = d.kfolds
 	// kstrings = key string, "weights" or "MSEs"
 	// kabbrev = "_w" or "_m"
 	// kstring = key string minus s at the end
@@ -726,6 +727,7 @@ function pystacked_extract(									///
 			
 		// process if any stacking weights encountered
 		if (rows(rmat_all) > 0) {
+			nlearners = rows(base_est)
 			if (detailflag) {
 				// rmat_all has full set of weights for all learners
 				if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
@@ -757,8 +759,8 @@ function pystacked_extract(									///
 			// learner means across resamples/folds
 			if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
 				// one mean per learner
-				rmean_all = J(rows(base_est),(2+nreps),.)
-				for (ll=1;ll<=rows(base_est);ll++) {
+				rmean_all = J(nlearners,(2+nreps),.)
+				for (ll=1;ll<=nlearners;ll++) {
 					rmean_all[ll,1] = ll
 					rlearner = select(rmat_all,rmat_all[.,1]:==ll)
 					// mean across all folds and resamples
@@ -772,7 +774,7 @@ function pystacked_extract(									///
 					cstripe = (cstripe \ ("rep_"+strofreal(m)))
 				}
 				cstripe = (J(rows(cstripe),1,""), cstripe)
-				rstripe = (J(rows(base_est),1,""), base_est)
+				rstripe = (J(nlearners,1,""), base_est)
 				rn = rname+kabbrev+"_mn"
 				st_matrix("r("+rn+")",rmean_all)
 				st_matrixcolstripe("r("+rn+")",cstripe)
@@ -783,29 +785,43 @@ function pystacked_extract(									///
 			}
 			else {
 				// two means per learner (ATE, LATE, LIE)
-				rmean_all = J(2*rows(base_est),3,.)
+				pre_rmean_all = J(2*nlearners,2,.)
+				rmean_all_0 = J(0,nreps,.)
+				rmean_all_1 = J(0,nreps,.)
 				rstripe = J(0,2,"")
-				for (ll=1;ll<=rows(base_est);ll++) {
-					rmean_all[2*ll-1,1]		= ll
-					rmean_all[2*ll,1]		= ll
-					rmean_all[2*ll-1,2]		= 0
-					rmean_all[2*ll,2]		= 1
-					rlearner = select(rmat_all,rmat_all[.,1]:==ll)
-					rlearner_0 = select(rlearner,rlearner[.,2]:==0)
-					rlearner_1 = select(rlearner,rlearner[.,2]:==1)
-					rmean_all[2*ll-1,3]		= mean(mean(rlearner_0[.,(4..cols(rlearner_0))]')')
-					rmean_all[2*ll,3]		= mean(mean(rlearner_1[.,(4..cols(rlearner_1))]')')
-					rstripe = rstripe \ ("",base_est[ll]) \ ("",base_est[ll])
+				rmat0 = select(rmat_all,rmat_all[.,2]:==0)
+				rmat1 = select(rmat_all,rmat_all[.,2]:==1)
+				for (ll=1;ll<=nlearners;ll++) {
+					pre_rmean_all[ll,1]				= ll
+					pre_rmean_all[nlearners+ll,1]	= ll
+					pre_rmean_all[ll,2]				= 0
+					pre_rmean_all[nlearners+ll,2]	= 1
+					rlearner_0 = select(rmat0,(rmat0[.,1]:==ll))
+					rlearner_0 = rlearner_0[.,4..cols(rlearner_0)]'
+					rmean_all_0 = rmean_all_0 \ mean(rlearner_0)
+					rlearner_1 = select(rmat1,rmat1[.,1]:==ll)
+					rlearner_1 = rlearner_1[.,4..cols(rlearner_1)]'
+					rmean_all_1 = rmean_all_1 \ mean(rlearner_1)
 				}
+				rmean_all_0 = mean(rmean_all_0')', rmean_all_0
+				rmean_all_1 = mean(rmean_all_1')', rmean_all_1
+				rmean_all = rmean_all_0 \ rmean_all_1
+				rmean_all = pre_rmean_all, rmean_all
 				if (eqn.lieflag==1) {
-					cstripe = (("" , "learner") \ ("" , "h=0/1") \ ("" , ("mean_"+kstring)))
+					cstripe = "learner" \ "h=0/1" \ ("mean_"+kstring)
 				}
 				else if (d.model=="interactive") {
-					cstripe = (("" , "learner") \ ("" , "D=0/1") \ ("" , ("mean_"+kstring)))
+					cstripe = "learner" \ "D=0/1" \ ("mean_"+kstring)
 				}
 				else {
-					cstripe = (("" , "learner") \ ("" , "H=0/1") \ ("" , ("mean_"+kstring)))
+					cstripe = "learner" \ "Z=0/1" \ ("mean_"+kstring)
 				}
+				for (m=1;m<=nreps;m++) {
+					cstripe = (cstripe \ ("rep_"+strofreal(m)))
+				}
+				cstripe = (J(rows(cstripe),1,""), cstripe)
+				rstripe = (J(nlearners,1,""), base_est)
+				rstripe = rstripe \ rstripe
 				rn = rname+kabbrev+"_mn"
 				st_matrix("r("+rn+")",rmean_all)
 				st_matrixcolstripe("r("+rn+")",cstripe)
@@ -817,16 +833,16 @@ function pystacked_extract(									///
 			
 			// learner list
 			cstripe = ("" , "learner")
-			rstripe = (J(rows(base_est),1,""), base_est)
+			rstripe = (J(nlearners,1,""), base_est)
 			rn = rname+"_learners"
-			st_matrix("r("+rn+")",(1::rows(base_est)))
+			st_matrix("r("+rn+")",(1::nlearners))
 			st_matrixcolstripe("r("+rn+")",cstripe)
 			st_matrixrowstripe("r("+rn+")",rstripe)
 			rmatlist = (rmatlist, rn)
 			
 			// rmat_ll will have weights separately for each learner
 			if (detailflag) {
-				for (ll=1;ll<=rows(base_est);ll++) {
+				for (ll=1;ll<=nlearners;ll++) {
 					
 					svec = rmat_all[.,1] :== ll
 					rmat_ll = select(rmat_all,svec)

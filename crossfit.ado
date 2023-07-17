@@ -990,6 +990,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mata: add_result_item(`ename',"`poolstack'_ps","MSE",           "`m'", `mse')
 				mata: add_result_item(`ename',"`poolstack'_ps","MSE_folds",     "`m'", st_matrix("`mse_folds'"))
 				mata: add_result_item(`ename',"`poolstack'_ps","ps_weights",    "`m'", st_matrix("`psw'"))
+				// save base estimator list with rest of poolstack results
+				mata: add_learner_item(`ename',"`poolstack'_ps","stack_base_est","`base_est'")
 				// final estimator used to stack and stack type are learner items
 				mata: add_learner_item(`ename',"`poolstack'_ps","ps_final_est", "`psfinalest'")
 				mata: add_learner_item(`ename',"`poolstack'_ps","stack_type","`stype'")
@@ -1042,6 +1044,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mata: add_result_item(`ename',"`poolstack'_ps","MSE`t'_folds",     "`m'", st_matrix("`mse`t'_folds'"))
 					mata: add_result_item(`ename',"`poolstack'_ps","ps_weights`t'",    "`m'", st_matrix("`psw`t''"))
 				}
+				// save base estimator list with rest of poolstack results
+				mata: add_learner_item(`ename',"`poolstack'_ps","stack_base_est","`base_est'")
 				// final estimator used to stack and stack type are learner items
 				mata: add_learner_item(`ename',"`poolstack'_ps","ps_final_est", "`psfinalest'")
 				mata: add_learner_item(`ename',"`poolstack'_ps","stack_type","`stype'")
