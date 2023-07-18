@@ -172,6 +172,9 @@ program _ddml_crossfit, eclass sortpreserve
 	else {
 		local allpystackedmulti = 0
 		mata: `mname'.allpystackedmulti = 0
+		// general (non-pystacked) code supports short-stacking but not standard or pooled stacking
+		local stdflag = 0
+		local psflag = 0
 		`qui' di as text "crossfitting all eqns will use general (not pystacked-specific) code"
 	}
 	// update model struct flags for stacking
