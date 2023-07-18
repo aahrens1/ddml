@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 17 july 2023
+*! last edited: 18 july 2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -20,15 +20,9 @@ program _ddml_estimate_linear, eclass sortpreserve
 								* ]
 
 	// default behavior if final estimators specified but stacking options are not
-	if "`stdfinalest'"~="" & "`stdstack'"=="" {
-		local stdstack		stdstack
-	}
-	if "`ssfinalest'"~="" & "`shortstack'"=="" {
-		local shortstack	shortstack
-	}
-	if "`psfinalest'"~="" & "`poolstack'"=="" {
-		local poolstack		poolstack
-	}
+	if "`stdfinalest'"~="" & "`stdstack'"==""	local stdstack		stdstack
+	if "`ssfinalest'"~="" & "`shortstack'"==""	local shortstack	shortstack
+	if "`psfinalest'"~="" & "`poolstack'"==""	local poolstack		poolstack
 	if "`stdstack'`shortstack'`poolstack'"=="" & "`finalest'"~="" {
 		// default when just finalest(.) is specified is to re-stack whatever has been already stacked
 		mata: st_local("stdflag", strofreal(`mname'.stdflag))
@@ -1741,23 +1735,19 @@ program define estimate_and_store, eclass
 	mata: `A'.put(("`y'_mse","scalar"),return_result_item(`eqn',"`y'","MSE","`rep'"))
 	// MSE folds
 	mata: `A'.put(("`y'_mse_folds","matrix"),return_result_item(`eqn',"`y'","MSE_folds","`rep'"))
-	// pystacked final est (pystacked multi only)
-	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-	if `pystackedmulti' {
-		// cap because won't exist for e.g. shortstack variable
-		cap mata: `A'.put(("`y'_stack_final_est","local"), return_learner_item(`eqn',"`y'","stack_final_est"))
+	// pystacked results
+	if "`spec'"=="st" {
+		mata: `A'.put(("`y'_stack_final_est","local"), return_learner_item(`eqn',"`y'","stack_final_est"))
 	}
 	// ss results
 	if "`spec'"=="ss" {
 		mata: st_local("shortstack", `eqn'.shortstack)
-		mata: `A'.put(("`yname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
-		mata: `A'.put(("`yname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
+		mata: `A'.put(("`shortstack'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
 	}
 	// ps results
 	if "`spec'"=="ps" {
 		mata: st_local("poolstack", `eqn'.poolstack)
-		mata: `A'.put(("`yname'_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
-		mata: `A'.put(("`yname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
+		mata: `A'.put(("`poolstack'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
 	}
 
 	// D eqn results - uses vtilde names in d
@@ -1771,23 +1761,21 @@ program define estimate_and_store, eclass
 		mata: `A'.put(("`vtilde'_mse","scalar"),return_result_item(`eqn',"`vtilde'","MSE","`rep'"))
 		// MSE folds
 		mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
-		// pystacked final est (pystacked multi only)
-		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-		if `pystackedmulti' {
-			// cap because won't exist for e.g. shortstack variable
-			cap mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
+		// pystacked results
+		if "`spec'"=="st" {
+			mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
 		}
 		// ss results
 		if "`spec'"=="ss" {
 			mata: st_local("shortstack", `eqn'.shortstack)
-			mata: `A'.put(("`dname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
-			mata: `A'.put(("`dname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
+			mata: `A'.put(("`shortstack'_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
+			mata: `A'.put(("`shortstack'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
 		}
 		// ps results
 		if "`spec'"=="ps" {
 			mata: st_local("poolstack", `eqn'.poolstack)
-			mata: `A'.put(("`dname'_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
-			mata: `A'.put(("`dname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
+			mata: `A'.put(("`poolstack'_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
+			mata: `A'.put(("`poolstack'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
 		}
 		if `fivflag' {
 			// MSE
@@ -1797,12 +1785,12 @@ program define estimate_and_store, eclass
 			// ss weights (no h final est saved - same as main est)
 			if "`spec'"=="ss" {
 					mata: st_local("shortstack", `eqn'.shortstack)
-					mata: `A'.put(("`dname'_h_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights_h","`rep'"))
+					mata: `A'.put(("`shortstack'_h_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights_h","`rep'"))
 			}
 			// ps weights (no h final est saved - same as main est)
 			if "`spec'"=="ps" {
 					mata: st_local("poolstack", `eqn'.poolstack)
-					mata: `A'.put(("`dname'_h_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights_h","`rep'"))
+					mata: `A'.put(("`poolstack'_h_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights_h","`rep'"))
 			}
 		}
 	}
@@ -1816,23 +1804,19 @@ program define estimate_and_store, eclass
 			mata: `A'.put(("`vtilde'_mse","scalar"),return_result_item(`eqn',"`vtilde'","MSE","`rep'"))
 			// MSE folds
 			mata: `A'.put(("`vtilde'_mse_folds","matrix"),return_result_item(`eqn',"`vtilde'","MSE_folds","`rep'"))
-			// pystacked final est (pystacked multi only)
-			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-			if `pystackedmulti' {
-				// cap because won't exist for e.g. shortstack variable
-				cap mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
+			// pystacked results
+			if "`spec'"=="st" {
+				mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
 			}
 			// ss results
 			if "`spec'"=="ss" {
 				mata: st_local("shortstack", `eqn'.shortstack)
-				mata: `A'.put(("`zname'_ssw","matrix"), return_result_item(`eqn',"`shortstack'_ss","ss_weights","`rep'"))
-				mata: `A'.put(("`zname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
+				mata: `A'.put(("`shortstack'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
 			}
 			// ps results
 			if "`spec'"=="ps" {
 				mata: st_local("poolstack", `eqn'.poolstack)
-				mata: `A'.put(("`zname'_psw","matrix"), return_result_item(`eqn',"`poolstack'_ps","ps_weights","`rep'"))
-				mata: `A'.put(("`zname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
+				mata: `A'.put(("`poolstack'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
 			}
 		}
 	}
@@ -2026,21 +2010,19 @@ program define medmean_and_store, eclass
 	mata: `eqn' = init_eStruct()
 	// Y eqn results
 	mata: `eqn' = (`mname'.eqnAA).get("`yname'")
-	// pystacked final est (pystacked multi only)
-	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-	if `pystackedmulti' {
-		// cap because won't exist for e.g. shortstack variable
-		cap mata: `A'.put(("`y'_stack_final_est","local"), return_learner_item(`eqn',"`y'","stack_final_est"))
+	// pystacked results
+	if "`spec'"=="st" {
+		mata: `A'.put(("`y'_stack_final_est","local"), return_learner_item(`eqn',"`y'","stack_final_est"))
 	}
 	// ss results
 	if "`spec'"=="ss" {
 		mata: st_local("shortstack", `eqn'.shortstack)
-		mata: `A'.put(("`yname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
+		mata: `A'.put(("`shortstack'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
 	}
 	// ps results
 	if "`spec'"=="ps" {
 		mata: st_local("poolstack", `eqn'.poolstack)
-		mata: `A'.put(("`yname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
+		mata: `A'.put(("`poolstack'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
 	}
 
 	// D eqn results - uses vtilde names in d
@@ -2050,21 +2032,19 @@ program define medmean_and_store, eclass
 		local vtilde_h `vtilde'
 
 		mata: `eqn' = (`mname'.eqnAA).get("`dname'")
-		// pystacked final est (pystacked multi only)
-		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-		if `pystackedmulti' {
-			// cap because won't exist for e.g. shortstack variable
-			cap mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
+		// pystacked results
+		if "`spec'"=="st" {
+			mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
 		}
 		// ss results
 		if "`spec'"=="ss" {
 			mata: st_local("shortstack", `eqn'.shortstack)
-			mata: `A'.put(("`dname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
+			mata: `A'.put(("`shortstack'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
 		}
 		// ps results
 		if "`spec'"=="ps" {
 			mata: st_local("poolstack", `eqn'.poolstack)
-			mata: `A'.put(("`dname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
+			mata: `A'.put(("`poolstack'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
 		}
 	}
 	if `fivflag'==0 {
@@ -2073,21 +2053,19 @@ program define medmean_and_store, eclass
 			local zname : word `i' of `znames'
 			local vtilde : word `i' of `z'
 			mata: `eqn' = (`mname'.eqnAA).get("`zname'")
-			// pystacked final est (pystacked multi only)
-			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-			if `pystackedmulti' {
-				// cap because won't exist for e.g. shortstack variable
-				cap mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
+			// pystacked results
+			if "`spec'"=="st" {
+				mata: `A'.put(("`vtilde'_stack_final_est","local"), return_learner_item(`eqn',"`vtilde'","stack_final_est"))
 			}
 			// ss results
 			if "`spec'"=="ss" {
 				mata: st_local("shortstack", `eqn'.shortstack)
-				mata: `A'.put(("`zname'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
+				mata: `A'.put(("`shortstack'_ss_final_est","local"), return_learner_item(`eqn',"`shortstack'_ss","ss_final_est"))
 			}
 			// ps results
 			if "`spec'"=="ps" {
 				mata: st_local("poolstack", `eqn'.poolstack)
-				mata: `A'.put(("`zname'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
+				mata: `A'.put(("`poolstack'_ps_final_est","local"), return_learner_item(`eqn',"`poolstack'_ps","ps_final_est"))
 			}
 		}
 	}
@@ -2232,11 +2210,40 @@ program define replay_estimate, eclass
 	}
 	ereturn display
 	
+	// stacking final estimator msg
+	local show_msg 0
+	if "`spec'"=="st" | "`spec'"=="ss" | "`spec'"=="ps" {
+		local show_msg 1
+		local vlist `e(y)' `e(d)' `e(z)'
+		// std stack and short/pool stacked final est named differently,
+		// e.g. vname_stack_final_est vs vname_final_est (where ss or ps is incorporated into vname)
+		if "`spec'"=="st"	local fe_string	stack_final_est
+		else				local fe_string	final_est
+		// initialize
+		local one_final_est = 1
+		foreach vn in `vlist' {
+			// set to zero if this final_est differs from a previous final_est
+			if "`final_est'"~="" & `one_final_est'	local one_final_est=("`final_est'"=="`e(`vn'_`fe_string')'")
+			local final_est `e(`vn'_`fe_string')'
+			// accumulate message used if multiple different final estimators
+			local stack_msg `stack_msg' `final_est' (`vn')
+		}
+	}
+	if `show_msg' {
+		if `one_final_est' {
+			di as text "Stacking final estimator: " as res "`final_est'"
+			ereturn local finalest `final_est'
+		}
+		else {
+			di as text "Stacking final estimators: " as res "`stack_msg'"
+		}
+	}
+	
 	// report warning if clustered SEs requested but doesn't match clustered crossfitting
 	mata: st_local("fclustvar",`mname'.fclustvar)
 	if "`e(clustvar)'"~="" {
 		if "`fclustvar'"=="" {
-			di as res "Warning" as text ": crossfit folds do not respect cluster structure used for VCE."
+			di as res "Warning" as text ": crossfit folds do not necessarily respect cluster structure used for VCE."
 		}
 		else if "`fclustvar'"~="`e(clustvar)'" {
 			di as res "Warning" as text ": cluster variable for VCE does not match cluster variable for crossfit folds."
