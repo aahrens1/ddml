@@ -1,5 +1,5 @@
 *! crossfit v0.6
-*! last edited: 16 july 2023
+*! last edited: 18 july 2023
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 
@@ -166,11 +166,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 
 	// unless specified, finalest sets the final estimator for all stacking methods
 	// if empty, finalest will be the pystacked/ddml default
-	if "`ssfinalest'"==""	local ssfinalest `finalest'
-	if "`psfinalest'"==""	local psfinalest `finalest'
 	if "`stdfinalest'"==""	local stdfinalest `finalest'
 	// standard stacking final estimator goes directly to pystacked as an option
-	// but only if not empty (otherwise it can conflict with the pystacked command spec)
+	// but only if not empty (otherwise it can conflict with the pystacked finalest(.) option)
 	if "`stdfinalest'"~=""	local stdfinalestopt finalest(`stdfinalest')
 	
 	mata: st_local("vname", `ename'.vname)
@@ -605,7 +603,10 @@ program define _crossfit_pystacked, rclass sortpreserve
 
 		// shortstacking. we need to distinguish between 3 cases again. 
 		if `ssflag' {
-	
+		
+			// if short-stacking final estimator not supplied, used std stack final est
+			if "`ssfinalest'"==""	local ssfinalest `stack_final_est'
+
 			if ~`tvflag' { // case 1
 				// stack dep var against all OOS (cross-fit) learner predicted values
 				`qui' di
@@ -645,6 +646,10 @@ program define _crossfit_pystacked, rclass sortpreserve
 		******************************** POOLSTACKING *************************************
 		
 		if `psflag' {
+		
+			// if pool-stacking final estimator not supplied, used std stack final est
+			if "`psfinalest'"==""	local psfinalest `stack_final_est'
+			
 			// mata object y_stacking_cv has y and predicted yhats of all learners in all crossfits
 			if ~`tvflag' { // case 1
 				tempname tframe
