@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 10 july 2023
+*! last edited: 19 july 2023
 *! authors: aa/ms
 
 program define _ddml_describe
@@ -36,6 +36,7 @@ program define _ddml_describe
 	// basic info about equations and learners - always displayed
 	di
 	di as text "Model:" _col(25) as res "`model', crossfit folds k=" `kfolds' ", resamples r=" `nreps'
+	di as text "Mata global (mname):" _col(25) as res "`mname'"
 	mata: st_local("fclustvar",`mname'.fclustvar)
 	if "`fclustvar'"~="" {
 		di as res _col(25) "Folds respect clustering by `fclustvar'"
