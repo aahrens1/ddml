@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 16july2023
+*! last edited: 19july2023
 *! authors: aa/ms
 
 program define _ddml_overlap
@@ -30,7 +30,7 @@ program define _ddml_overlap
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
 	
-	if "`model'"~="interactive" & "`model'"~="late" {
+	if "`model'"~="interactive" & "`model'"~="interactiveiv" {
 		di as err "error - overlap supported only for interactive or late models"
 		exit 198
 	}

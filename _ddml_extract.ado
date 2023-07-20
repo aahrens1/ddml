@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 17 july 2023
+*! last edited: 19 july 2023
 *! authors: aa/ms
 
 program define _ddml_extract, rclass
@@ -954,7 +954,7 @@ void display_pystacked_weights(									///
 			condit = "X"
 		}
 	}
-	else if (d.model=="late") {
+	else if (d.model=="interactiveiv") {
 		if ((d.nameY==vname) | (d.nameZ==vname)) {
 			condit = "X"
 		}

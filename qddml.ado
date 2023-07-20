@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 11 july 2023
+*! last edited: 20 july 2023
 *! authors: aa/ms
 
 program define qddml, eclass sortpreserve
@@ -46,7 +46,7 @@ program define qddml, eclass sortpreserve
 		stdstack								///
 		ssfinalest(name)						///
 		psfinalest(name)						///
-		stdfinalest(name)						/// not compatible with setting finalest directly in pystacked
+		stdfinalest(name)						///
 		finalest(name)							///
 		atet 									///
 		ateu									///
@@ -184,7 +184,7 @@ program define qddml, eclass sortpreserve
 			exit 198
 		}
 	}
-	else if ("`model'"=="late") {
+	else if ("`model'"=="interactiveiv") {
 		if "`dexog'"!="" {
 			di as error "no exogenous treatments allowed"
 			exit 198
@@ -291,8 +291,8 @@ program define qddml, eclass sortpreserve
 		}
 	}
 
-	*** late / interactive IV
-	else if ("`model'"=="late"|"`model'"=="interactiveiv") {
+	*** late / interactive IV ("late" is a synonym for "interactiveiv")
+	else if ("`model'"=="late" | "`model'"=="interactiveiv") {
 		ddml E[Y|Z,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):	///
 			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
 		ddml E[D|Z,X], mname(`mname') vname(`dendog') predopt(`dpredopt') vtype(`dvtype'):	///
