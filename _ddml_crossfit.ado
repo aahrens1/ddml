@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 16 july 2023
+*! last edited: 20 july 2023
 *! authors: aa/ms
 
 *** ddml cross-fitting
@@ -73,7 +73,7 @@ program _ddml_crossfit, eclass sortpreserve
 		di as err "error - no D learner defined"
 		exit 198
 	}
-	if `numeqnZ'==0 & ("`model'"=="late" | "`model'"=="iv") {
+	if `numeqnZ'==0 & ("`model'"=="interactiveiv" | "`model'"=="iv") {
 		di as err "error - no Z learner defined"
 		exit 198
 	}
@@ -81,12 +81,8 @@ program _ddml_crossfit, eclass sortpreserve
 	// equations and learners
 	
 	// will be set to zero if any eqn doesn't use pystacked, or if any
-	// equation has pystacked with a single learner, or if model=fiv
-	// controls whether crossfit uses pystacked-specific or general code
+	// or if any equation has pystacked with a single learner
 	local allpystackedmulti=1
-	
-	// if model is LIE, every eqn goes to general crossfit code
-	if "`model'"=="fiv"	local allpystackedmulti=0
 	
 	// will always be a Y eqn
 	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
@@ -96,8 +92,6 @@ program _ddml_crossfit, eclass sortpreserve
 	// used to track minimum number of learners in an equation; must be >1 for short/pool stacking
 	mata: st_local("minlearners", strofreal(`eqn'.nlearners))
 	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-	// if model is LIE, pystacked is treated as a single learner
-	if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
 	local allpsm		= 1
 	if `pystackedmulti'	local minlearners=`pystackedmulti'
 	else				local allpsm=0
@@ -117,15 +111,13 @@ program _ddml_crossfit, eclass sortpreserve
 		// update minlearners
 		mata: st_local("numlnrD", strofreal(`eqn'.nlearners))
 		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-		// if model is LIE, pystacked is treated as a single learner
-		if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
 		if `pystackedmulti'			local numlnrD=`pystackedmulti'
 		else						local allpsm=0
 		if `numlnrD'<`minlearners'	local minlearners=`numlnrD'
 		if `pystackedmulti'<=1		local allpystackedmulti=0
 	}
 	
-	// Z eqn exists for late, iv, fiv models
+	// Z eqn exists for late, iv models
 	if `numeqnZ' {
 		`qui' di as text "Z equations (`numeqnZ'): `nameZ'"
 		foreach var of varlist `nameZ' {
@@ -137,8 +129,6 @@ program _ddml_crossfit, eclass sortpreserve
 			// update minlearners
 			mata: st_local("numlnrZ", strofreal(`eqn'.nlearners))
 			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
-			// if model is LIE, pystacked is treated as a single learner
-			if `pystackedmulti'>1 & "`model'"=="fiv"	local pystackedmulti=1
 			if `pystackedmulti'			local numlnrZ=`pystackedmulti'
 			else						local allpsm=0
 			if `numlnrZ'<`minlearners'	local minlearners `numlnrZ'
@@ -164,6 +154,21 @@ program _ddml_crossfit, eclass sortpreserve
 		local psflag=0
 		local poolstack
 	}
+	// fiv/lie model special case - pystacked multilearner does not support short-stacking
+	if `ssflag' & "`model'"=="fiv" & `allpystackedmulti' {
+		di as text "shortstack requested but fiv model does not support pystacked integration"
+		di as text "to short-stack with fiv model, must have multiple learners in all equations; option ignored"
+		mata: `mname'.ssflag = 0
+		local ssflag=0
+		local shortstack
+	}
+	// fiv/lie model does not support pooled-stacking
+	if `psflag' & "`model'"=="fiv" {
+		di as text "poolstack requested but not supported for fiv model; option ignored"
+		mata: `mname'.psflag = 0
+		local psflag=0
+		local poolstack
+	}
 	// update allpystackedmulti
 	if `allpystackedmulti' & "`crossfitother'"=="" {
 		mata: `mname'.allpystackedmulti = 1
@@ -177,6 +182,7 @@ program _ddml_crossfit, eclass sortpreserve
 		local psflag = 0
 		`qui' di as text "crossfitting all eqns will use general (not pystacked-specific) code"
 	}
+
 	// update model struct flags for stacking
 	if `stdflag'	mata: `mname'.stdflag	= 1
 	else 			mata: `mname'.stdflag	= 0
@@ -184,7 +190,7 @@ program _ddml_crossfit, eclass sortpreserve
 	else 			mata: `mname'.ssflag	= 0
 	if `psflag' 	mata: `mname'.psflag	= 1
 	else			mata: `mname'.psflag	= 0
-	
+
 	if `debugflag' {
 		*** report estimates for full sample for debugging purposes
 		report_debugging `mname', fidlist(`fidlist')
@@ -204,7 +210,7 @@ program _ddml_crossfit, eclass sortpreserve
 		if "`model'"=="interactive" {
 			local treatvar	`nameD'
 		}
-		else if ("`model'"=="late") {
+		else if ("`model'"=="interactiveiv") {
 			local treatvar	`nameZ'
 		}
 		else if ("`model'"=="fiv") {
@@ -215,7 +221,7 @@ program _ddml_crossfit, eclass sortpreserve
 		}
 		
 		if ("`model'"=="partial") di as text "Cross-fitting E[y|X] equation: `nameY'"
-		if ("`model'"=="fiv"|"`model'"=="late") di as text "Cross-fitting E[y|X,Z] equation: `nameY'"
+		if ("`model'"=="fiv"|"`model'"=="interactiveiv") di as text "Cross-fitting E[y|X,Z] equation: `nameY'"
 		if ("`model'"=="interactive") di as text "Cross-fitting E[y|X,D] equation: `nameY'"
 		if ("`model'"=="iv") di as text "Cross-fitting E[y|X] equation: `nameY'"
 
@@ -225,13 +231,14 @@ program _ddml_crossfit, eclass sortpreserve
 			foldvar(`fidlist')						///
 			firstrep(`firstrep')					///
 			treatvar(`treatvar')					///
+			model(`model')							///
 			`options' `nostdstack' `noisily'
 		// resinsert into model struct AA with equations
 		mata: (`mname'.eqnAA).put("`nameY'",`eqn')
 
 		// D equations
 		if `numeqnD' {
-			if ("`model'"=="late") {
+			if ("`model'"=="interactiveiv") {
 				local treatvar	`nameZ'
 				local allowallzero allowallzero // for the case where D is always zero when Z=0
 			}
@@ -248,7 +255,7 @@ program _ddml_crossfit, eclass sortpreserve
 				if `psflag'		mata: `eqn'.poolstack = "D_`var'"				
 				else			mata: `eqn'.poolstack = ""
 				if ("`model'"=="partial") di as text "Cross-fitting E[D|X] equation: `var'"
-				if ("`model'"=="late") di as text "Cross-fitting E[D|X,Z] equation: `var'"
+				if ("`model'"=="interactiveiv") di as text "Cross-fitting E[D|X,Z] equation: `var'"
 				if ("`model'"=="fiv") di as text "Cross-fitting E[D|X,Z] and E[D|X] equation: `var'"
 				if ("`model'"=="interactive"|"`model'"=="iv") di as text "Cross-fitting E[D|X] equation: `var'"
 
@@ -259,6 +266,7 @@ program _ddml_crossfit, eclass sortpreserve
 					foldvar(`fidlist')						///
 					firstrep(`firstrep')					///
 					treatvar(`treatvar')					///
+					model(`model')							///
 					`options' `nostdstack' `noisily'		///
 					`allowallzero'
 				mata: (`mname'.eqnAA).put("`var'",`eqn')
@@ -281,6 +289,7 @@ program _ddml_crossfit, eclass sortpreserve
 					pystackedmulti(`allpystackedmulti')		///
 					foldvar(`fidlist')						///
 					firstrep(`firstrep')					///
+					model(`model')							///
 					`options' `nostdstack' `noisily'
 				mata: (`mname'.eqnAA).put("`var'",`eqn')
 			}
@@ -384,7 +393,7 @@ program create_sample_indicators
 		label var `mname'_sample_`m' "Sample indicator for rep `m'"
 				
 		// Y
-		if "`model'"=="interactive" | "`model'"=="late" {
+		if "`model'"=="interactive" | "`model'"=="interactiveiv" {
 			foreach vt in `vtlistY' {
 				local vtlist `vtlist' `vt'0
 				local vtlist `vtlist' `vt'1
@@ -394,7 +403,7 @@ program create_sample_indicators
 			local vtlist `vtlistY'
 		}
 		// D and Z
-		if "`model'"=="late" {
+		if "`model'"=="interactiveiv" {
 			foreach vt in `vtlistD' {
 				local vtlist `vtlist' `vt'0
 				local vtlist `vtlist' `vt'1

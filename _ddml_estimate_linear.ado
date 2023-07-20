@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 18 july 2023
+*! last edited: 20 july 2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -779,8 +779,9 @@ program _ddml_estimate_main
 	}
 
 	************* ESTIMATE ************
-	
+
 	if `estimated'==0 {
+
 		// enter if no estimates exist
 		// Loop over resamples and estimate/save the min mse and ss/ps models for each
 		forvalues m=1/`nreps' {

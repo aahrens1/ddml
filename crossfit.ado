@@ -1,5 +1,5 @@
 *! crossfit v0.6
-*! last edited: 18 july 2023
+*! last edited: 20 july 2023
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 
@@ -18,6 +18,7 @@ program define crossfit, rclass sortpreserve
 							vtype(string)				/// datatype of fitted variable; default=double
 							shortstack(name)			/// for interactive use
 							poolstack(name)				/// for interactive use
+							model(name)					/// when called by _ddml_crossfit
 							predopt(string asis)		/// undocumented
 							NOIsily						///
 							*							/// other options that go to subroutines
@@ -116,20 +117,24 @@ program define crossfit, rclass sortpreserve
 			mata: st_local("pystackedmulti", strofreal(`eqn_info'.pystackedmulti))
 		}
 	}
-	
-	if `pystackedmulti' {
+
+	// special treatment of fiv/lie - always goes to "other"
+	if `pystackedmulti' & "`model'"~="fiv" {
 		// enter single learner = pystacked and number of pystacked base learners > 1
 		_crossfit_pystacked	`if' `in',	///
 			ename(`eqn_info')			///
 			`noisily'					///
-			`cfoptions'			
+			`cfoptions'
 	}
 	else {
+		// special handling for single pystacked multilearner with fiv/lie
+		local stdflag=(`pystackedmulti'>1)
 		// multiple ddml learners or single learner = pystacked with a single base learner
 		_crossfit_other	`if' `in',		///
 			ename(`eqn_info')			///
 			`noisily'					///
-			`cfoptions'			
+			`cfoptions'					///
+			stdflag(`stdflag')
 	}
 	
 	return add
@@ -164,13 +169,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 	// used throughout	
 	local cmd pystacked
 
-	// unless specified, finalest sets the final estimator for all stacking methods
-	// if empty, finalest will be the pystacked/ddml default
-	if "`stdfinalest'"==""	local stdfinalest `finalest'
-	// standard stacking final estimator goes directly to pystacked as an option
-	// but only if not empty (otherwise it can conflict with the pystacked finalest(.) option)
-	if "`stdfinalest'"~=""	local stdfinalestopt finalest(`stdfinalest')
-	
 	mata: st_local("vname", `ename'.vname)
 	mata: st_local("vtlist", invtokens(`ename'.vtlist))
 	mata: st_local("shortstack", `ename'.shortstack)
@@ -199,10 +197,20 @@ program define _crossfit_pystacked, rclass sortpreserve
 		di as err "error - pystacked integration requires using either standard and/or short-stacking"
 		exit 198
 	}
-	// pystacked option for voting instead of stacking
+	
+	// unless specified, finalest sets the final estimator for all stacking methods
+	// if empty, finalest will be the pystacked/ddml default
+	if "`stdfinalest'"==""	local stdfinalest `finalest'
+	// standard stacking final estimator goes directly to pystacked as an option
+	// but only if not empty (otherwise it can conflict with the pystacked finalest(.) option)
+	if "`stdfinalest'"~=""	local stdfinalestopt finalest(`stdfinalest')
+	// nostd => pystacked option is voting instead of stacking
 	// votetype is ignored if type=reg; relevant only for type=class
+	// also reset other std final est macros to null
 	if ~`stdflag' {
 		local nostdstackopt voting votetype(soft)
+		local stdfinalest
+		local stdfinalestopt
 	}
 	
 	if "`noisily'"=="" {
@@ -605,7 +613,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 		if `ssflag' {
 		
 			// if short-stacking final estimator not supplied, used std stack final est
-			if "`ssfinalest'"==""	local ssfinalest `stack_final_est'
+			// unless stdflag==0, which means pystacked used voting, in which case use finalest(.)
+			if "`ssfinalest'"=="" & `stdflag'	local ssfinalest `stack_final_est'
+			else if "`ssfinalest'"==""			local ssfinalest `finalest'
 
 			if ~`tvflag' { // case 1
 				// stack dep var against all OOS (cross-fit) learner predicted values
@@ -648,6 +658,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 		if `psflag' {
 		
 			// if pool-stacking final estimator not supplied, used std stack final est
+			// note that pool-stacking can take place only if std stacking was done
+			// hence macro stack_final_est is the appropriate default
 			if "`psfinalest'"==""	local psfinalest `stack_final_est'
 			
 			// mata object y_stacking_cv has y and predicted yhats of all learners in all crossfits
@@ -1117,6 +1129,7 @@ program define _crossfit_other, rclass sortpreserve
 							allowallzero			/// in the LATE model: allow D
 							ssfinalest(name)		/// final estimator for short-stacking
 							finalest(name)			/// final estimator for both
+							stdflag(integer 0)		/// flag for pystacked with multiple learners
 							*						/// ignored options
 							]
 
@@ -1184,11 +1197,11 @@ program define _crossfit_other, rclass sortpreserve
 	
 	*** syntax
 	if `ssflag' & `nlearners'==1 {
-		di as err "error - shortstack option relevant only for multiple learners"
-		exit 198
+		di as res "short-stacking relevant only for multiple learners; shortstack option ignored"
+		local ssflag = 0
 	}
 	if `psflag' {
-		di as err "error - poolstack option available only with pystacked; also unavailable for fiv model"
+		di as err "error - {opt poolstack} available only with pystacked integration; also unavailable for fiv model"
 		exit 198
 	}
 	
@@ -1197,7 +1210,9 @@ program define _crossfit_other, rclass sortpreserve
 	tempname mse_h_list N_h_list mse_h_folds_list N_h_folds_list
 	tempname mse0_list N0_list mse0_folds_list N0_folds_list
 	tempname mse1_list N1_list mse1_folds_list N1_folds_list
-		
+	// pystacked support for fiv/lie
+	tempname pysw pysw_h pysw_temp pysm pysm_h pysm_temp
+	
 	// loop over resamples (crossfitting, shortstacking, store results)
 	forvalues m=`firstrep'/`lastrep' {
 	
@@ -1317,7 +1332,6 @@ program define _crossfit_other, rclass sortpreserve
 					mata: st_local("est_options_h", return_learner_item(`ename',"`vtilde'","est_options_h"))
 					mata: st_local("predopt_h",return_learner_item(`ename',"`vtilde'","predopt_h"))
 				}
-				
 				if ~`tvflag' & ~`lieflag' { // case 1
 				
 					tempvar vhat_k
@@ -1328,6 +1342,32 @@ program define _crossfit_other, rclass sortpreserve
 					if "`cmd'"=="" {
 						// macro e(cmd) may be missing, so deduce from command line
 						local cmd : word 1 of `est_main'
+					}
+					
+					// special treatment of single call to pystacked with multiple learners
+					if `stdflag' {
+						local base_est `e(base_est)'
+						local stack_final_est `e(finalest)'
+						local stype `e(type)'
+						// check
+						assert "`e(cmd)'"=="pystacked"
+						assert e(mcount)>1 & e(mcount)<.
+						// save pystacked weights and MSEs
+						qui pystacked, table(rmspe)		// create rmspe matrix
+						if (`k'==1) {
+							mat `pysw' = e(weights)
+							mat `pysm_temp' = e(rmspe)
+							mat `pysm' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm'",st_matrix("`pysm'"):^2)
+						}
+						else {
+							mat `pysw_temp' = e(weights)
+							mat `pysw' = (`pysw',`pysw_temp')
+							mat `pysm_temp' = e(rmspe)
+							mat `pysm_temp' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm_temp'",st_matrix("`pysm_temp'"):^2)
+							mat `pysm' = (`pysm',`pysm_temp')
+						}
 					}
 					
 					// get fitted values for kth fold	
@@ -1395,6 +1435,32 @@ program define _crossfit_other, rclass sortpreserve
 						// macro e(cmd) may be missing, so deduce from command line
 						local cmd : word 1 of `est_main'
 					}
+					
+					// special treatment of single call to pystacked with multiple learners
+					if `stdflag' {
+						local base_est `e(base_est)'
+						local stack_final_est `e(finalest)'
+						local stype `e(type)'
+						// check
+						assert "`e(cmd)'"=="pystacked"
+						assert e(mcount)>1 & e(mcount)<.
+						// save pystacked weights and MSEs
+						qui pystacked, table(rmspe)		// create rmspe matrix
+						if (`k'==1) {
+							mat `pysw' = e(weights)
+							mat `pysm_temp' = e(rmspe)
+							mat `pysm' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm'",st_matrix("`pysm'"):^2)
+						}
+						else {
+							mat `pysw_temp' = e(weights)
+							mat `pysw' = (`pysw',`pysw_temp')
+							mat `pysm_temp' = e(rmspe)
+							mat `pysm_temp' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm_temp'",st_matrix("`pysm_temp'"):^2)
+							mat `pysm' = (`pysm',`pysm_temp')
+						}
+					}
 		
 					// get fitted values (in and out of sample)
 					qui predict `vtype' `vhat_k' if `touse', `predopt'
@@ -1414,6 +1480,33 @@ program define _crossfit_other, rclass sortpreserve
 					`qui' `est_main_h_k' if `fid'!=`k' & `touse', `est_options_h'
 					local cmd_h `e(cmd)'
 		
+					// special treatment of single call to pystacked with multiple learners
+					// h estimation
+					if `stdflag' {
+						local base_est_h `e(base_est)'
+						local stack_final_est_h `e(finalest)'
+						local stype_h `e(type)'
+						// check
+						assert "`e(cmd)'"=="pystacked"
+						assert e(mcount)>1 & e(mcount)<.
+						// save pystacked weights and MSEs
+						qui pystacked, table(rmspe)		// create rmspe matrix
+						if (`k'==1) {
+							mat `pysw_h' = e(weights)
+							mat `pysm_temp' = e(rmspe)
+							mat `pysm_h' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm_h'",st_matrix("`pysm_h'"):^2)
+						}
+						else {
+							mat `pysw_temp' = e(weights)
+							mat `pysw_h' = (`pysw_h',`pysw_temp')
+							mat `pysm_temp' = e(rmspe)
+							mat `pysm_temp' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
+							mata: st_replacematrix("`pysm_temp'",st_matrix("`pysm_temp'"):^2)
+							mat `pysm_h' = (`pysm_h',`pysm_temp')
+						}
+					}
+					
 					// get fitted values  
 					qui predict `vtype' `vtil_k' if `touse', `predopt_h'
 		
@@ -1940,6 +2033,22 @@ program define _crossfit_other, rclass sortpreserve
 				mata: add_result_item(`ename',"`shortstack'_ss","ss_weights",   "`m'", st_matrix("`ssw'"))
 				mata: add_result_item(`ename',"`shortstack'_ss","ss_weights_h", "`m'", st_matrix("`ssw_h'"))
 			}
+		}
+		
+		// save results relating to stacked learner if it exists
+		if `stdflag' {
+			mata: add_result_item(`ename',"`vtilde'","stack_weights",   "`m'", st_matrix("`pysw'"))
+			mata: add_result_item(`ename',"`vtilde'","stack_MSEs",      "`m'", st_matrix("`pysm'"))
+			mata: add_learner_item(`ename',"`vtilde'","stack_base_est","`base_est'")
+			mata: add_learner_item(`ename',"`vtilde'","stack_final_est","`stack_final_est'")
+			mata: add_learner_item(`ename',"`vtilde'","stack_type","`stype'")
+		}
+		if `stdflag' & `lieflag' {
+			mata: add_result_item(`ename',"`vtilde'","stack_weights_h",   "`m'", st_matrix("`pysw_h'"))
+			mata: add_result_item(`ename',"`vtilde'","stack_MSEs_h",      "`m'", st_matrix("`pysm_h'"))
+			mata: add_learner_item(`ename',"`vtilde'","stack_base_est_h","`base_est_h'")
+			mata: add_learner_item(`ename',"`vtilde'","stack_final_est_h","`stack_final_est_h'")
+			mata: add_learner_item(`ename',"`vtilde'","stack_type_h","`stype_h'")
 		}
 	
 	}		// end of resampling loop
