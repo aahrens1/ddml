@@ -1,5 +1,5 @@
 *! ddml v1.2
-*! last edited: 18 july 2023
+*! last edited: 19 july 2023
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -614,7 +614,7 @@ program _ddml_estimate_single, eclass sortpreserve
 			exit 198
 		}
 	}
-	else if "`model'"=="late" {
+	else if "`model'"=="interactiveiv" {
 		if "`z'"=="" {
 			di as err "option z(.) missing"
 			exit 198
@@ -981,7 +981,7 @@ program _ddml_estimate_main
 		local Dss	`shortstack'_ss
 		local D0ss	`shortstack'_ss
 		local D1ss	`shortstack'_ss
-		if "`model'"=="late" {
+		if "`model'"=="interactiveiv" {
 			mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
 			mata: st_local("shortstack", `eqn'.shortstack)
 			local Zss	`shortstack'_ss
@@ -999,7 +999,7 @@ program _ddml_estimate_main
 		local Dps	`poolstack'_ps
 		local D0ps	`poolstack'_ps
 		local D1ps	`poolstack'_ps
-		if "`model'"=="late" {
+		if "`model'"=="interactiveiv" {
 			mata: `eqn' = (`mname'.eqnAA).get("`nameZ'")
 			mata: st_local("poolstack", `eqn'.poolstack)
 			local Zps	`poolstack'_ps
