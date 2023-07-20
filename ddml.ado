@@ -1,11 +1,11 @@
 *! ddml v1.2
-*! last edited: 8 july 2023
+*! last edited: 19 july 2023
 *! authors: aa/ms
 
 program ddml	// no class - some subcommands are eclass, some are rclass
 
 	version 16
-	local lversion 0.5
+	local lversion 1.2
 	
 	if replay() {
 		syntax [, VERsion * ]
@@ -148,9 +148,9 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 				di as err "no or wrong model specified." 
 				exit 198
 			}
-			// interactiveiv is synonym of late; internally we use "late"
-			if "`model'"=="interactiveiv" local model late
-				
+			// late is synonym for interactiveiv
+			if "`model'"=="late" local model interactiveiv
+			
 			mata: `mname'=init_mStruct()
 			// create and store sample indicator; initialized so all obs are used
 			cap drop `mname'_sample
@@ -195,23 +195,23 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 	
 			** check that equation is consistent with model
 			mata: st_local("model",`mname'.model)
-			if ("`model'"=="late"&strpos("E[D|Z,X] E[D|X,Z] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq","`subcmd'")==0) {
+			if ("`model'"=="interactiveiv" & strpos("E[D|Z,X] E[D|X,Z] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
-			if ("`model'"=="iv"&strpos("E[Y|X] E[D|X] E[Z|X] yeq deq zeq","`subcmd'")==0) {
+			if ("`model'"=="iv" & strpos("E[Y|X] E[D|X] E[Z|X] yeq deq zeq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
-			if ("`model'"=="partial"&strpos("E[Y|X] E[D|X] yeq deq","`subcmd'")==0) {
+			if ("`model'"=="partial" & strpos("E[Y|X] E[D|X] yeq deq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
-			if ("`model'"=="interactive"&strpos("E[D|X] E[Y|X,D] E[Y|D,X] yeq deq","`subcmd'")==0) {
+			if ("`model'"=="interactive" & strpos("E[D|X] E[Y|X,D] E[Y|D,X] yeq deq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
-			if ("`model'"=="fiv"&strpos("E[D|Z,X] E[D|X,Z] E[Y|X] E[D|X] yeq deq dheq","`subcmd'")==0) {
+			if ("`model'"=="fiv" & strpos("E[D|Z,X] E[D|X,Z] E[Y|X] E[D|X] yeq deq dheq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
@@ -333,7 +333,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			if ("`r(model)'"=="interactive") {
 				_ddml_estimate_ate_late `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
-			if ("`r(model)'"=="late") {
+			if ("`r(model)'"=="interactiveiv") {
 				_ddml_estimate_ate_late `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
 			if ("`r(model)'"=="fiv") {
@@ -442,7 +442,7 @@ program define add_eqn_to_model, rclass
 		}
 	}
 	// LATE with multiple Z variables not supported
-	if "`subcmd'"=="zeq" & "`model'"=="late" {
+	if "`subcmd'"=="zeq" & "`model'"=="interactiveiv" {
 		mata: st_local("nameZ",invtokens(`mname'.nameZ))
 		local nlist `nameZ' `vname'
 		local nlist : list uniq nlist
@@ -542,7 +542,7 @@ program define add_eqn_to_model, rclass
 		if "`model'"=="interactive" & "`subcmd'"=="yeq" {
 			mata: `eqn'.ateflag = 1
 		}
-		else if "`model'"=="late" & ("`subcmd'"=="yeq" | "`subcmd'"=="deq") {
+		else if "`model'"=="interactiveiv" & ("`subcmd'"=="yeq" | "`subcmd'"=="deq") {
 			mata: `eqn'.ateflag = 1
 		}
 	}

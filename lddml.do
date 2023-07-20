@@ -144,13 +144,12 @@ struct mStruct init_mStruct()
 	return(m)
 }
 
-// clear results from all eStructs in mStruct
+// clear crossfitting and estimation results from all eStructs in mStruct
 void clear_model_results(struct mStruct m)
 {
 	// if not crossfitted, nothing to clear
 	if (m.crossfitted>0) {
 		struct eStruct scalar			e
-		class AssociativeArray scalar	A3
 		
 		// clear results for each equation
 		eqnlist = (m.nameY, m.nameD, m.nameZ)
@@ -161,7 +160,9 @@ void clear_model_results(struct mStruct m)
 		// also clear:
 		m.ncombos		= 0
 		m.crossfitted	= 0
+		m.estimated		= 0
 		m.ssflag		= 0
+		m.psflag		= 0
 		m.strDatavars	= ""
 		m.matDatavars	= J(0,0,.)
 		(m.estAA).reinit("string",2)
@@ -254,10 +255,10 @@ transmorphic return_ncombos(struct mStruct m)
 		comboZ = comboZ * numlrnZ
 	}
 	
-	if (m.model=="interactive" | m.model=="late") {
+	if (m.model=="interactive" | m.model=="interactiveiv") {
 	    comboY = comboY^2
 	}
-	if (m.model=="late" | m.model=="fiv") {
+	if (m.model=="interactiveiv" | m.model=="fiv") {
 	    comboD = comboD^2
 	}
 	
@@ -319,7 +320,7 @@ transmorphic model_chars(struct mStruct m)
 	if (poolstack~="") {
 	    vtlistY = vtlistY + " " + poolstack + "_ps"
 	}
-	if ((m.model=="interactive") | (m.model=="late")) {
+	if ((m.model=="interactive") | (m.model=="interactiveiv")) {
 	    vtlistY01 = ""
 	    vtlistY_tk = tokens(vtlistY)
 		numvt = cols(vtlistY_tk)
@@ -353,7 +354,7 @@ transmorphic model_chars(struct mStruct m)
 		if ((e.pystackedmulti>0) & (m.model~="fiv")) {
 		    vtlistY_L = ""
 		    for (j=1;j<=e.pystackedmulti;j++) {
-				if ((m.model=="interactive") | (m.model=="late")) {
+				if ((m.model=="interactive") | (m.model=="interactiveiv")) {
 					vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "0_L" + strofreal(j)
 					vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "1_L" + strofreal(j)
 				}
@@ -384,7 +385,7 @@ transmorphic model_chars(struct mStruct m)
 		if (poolstack~="") {
 			vtlistD = vtlistD + " " + poolstack + "_ps"
 		}
-		if (m.model=="late") {
+		if (m.model=="interactiveiv") {
 			vtlistD01 = ""
 			vtlistD_tk = tokens(vtlistD)
 			numvt = cols(vtlistD_tk)
@@ -425,7 +426,7 @@ transmorphic model_chars(struct mStruct m)
 			if ((e.pystackedmulti>0) & (m.model~="fiv")) {
 				vtlistD_L = ""
 				for (j=1;j<=e.pystackedmulti;j++) {
-					if (m.model=="late") {
+					if (m.model=="interactiveiv") {
 						vtlistD_L = vtlistD_L + " " + invtokens(e.vtlist) + "0_L" + strofreal(j)
 						vtlistD_L = vtlistD_L + " " + invtokens(e.vtlist) + "1_L" + strofreal(j)
 					}

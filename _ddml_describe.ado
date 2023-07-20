@@ -69,13 +69,13 @@ program define _ddml_describe
 		}
 	}
 	// report number of specifications
-	if "`model'"=="interactive" | "`model'"=="late" {
+	if "`model'"=="interactive" | "`model'"=="interactiveiv" {
 		local comboY `numlnrY' * `numlnrY'
 	}
 	else {
 		local comboY `numlnrY'
 	}
-	if "`model'"=="late" | "`model'"=="fiv" {
+	if "`model'"=="interactiveiv" | "`model'"=="fiv" {
 		local comboD `comboD' `comboD'
 	}
 	
@@ -170,7 +170,7 @@ program define _ddml_describe
 	}
 	
 	// estimate results in detail; notable option since _ddml_estimate routines would otherwise output this
-	if `eflag' & ("`model'"=="interactive" | "`model'"=="late") & `estimated' {
+	if `eflag' & ("`model'"=="interactive" | "`model'"=="interactiveiv") & `estimated' {
 		di
 		_ddml_estimate_ate_late `mname', `options' replay notable
 	}
@@ -211,10 +211,10 @@ prog define desc_learners
 	// used below to indicate set of crossfitting results to report
 	local pairs		= 0
 	local heqn		= 0
-	if ("`etype'"=="yeq") & ("`model'"=="interactive" | "`model'"=="late") {
+	if ("`etype'"=="yeq") & ("`model'"=="interactive" | "`model'"=="interactiveiv") {
 		local pairs	= 1
 	}
-	if ("`etype'"=="deq") & ("`model'"=="late") {
+	if ("`etype'"=="deq") & ("`model'"=="interactiveiv") {
 		local pairs	= 1
 	}
 	if ("`etype'"=="deq") & ("`model'"=="fiv") {
