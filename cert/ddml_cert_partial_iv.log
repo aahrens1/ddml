@@ -1,20 +1,20 @@
---------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial_iv.log
   log type:  text
- opened on:  10 Jul 2023, 23:02:50
+ opened on:  20 Jul 2023, 15:02:09
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 *! ddml v1.2
-*! last edited: 8 july 2023
+*! last edited: 19 july 2023
 *! authors: aa/ms
 
 . mata: whichddml()
   
   Mata library for ddml and related programs,
-  compiled 8 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
 . 
@@ -30,8 +30,8 @@ C:\LocalStore\ecomes\Documents\GitHub\pystacked/pystacked.ado
 
 . 
 . ******************************************************************************** 
-. **** Partially linear model.                                                                                            
-> ****
+. **** Partially linear model.                                                                                         
+>    ****
 . ******************************************************************************** 
 . 
 . global Y logpgp95
@@ -88,6 +88,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  iv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked
 D equations (1):        avexpr
@@ -102,8 +103,8 @@ spec  r     Y learner     D learner         b        SE      Z learner     Z lea
   st  2  Y1_pystacked  D1_pystacked     0.764    (0.290)  Z1_pystacked  Z2_pystacked
 
 Mean/med    Y learner     D learner         b        SE      Z learner     Z learner
-  st mn     [min-mse]         [mse]     0.653    (0.233)         [mse]         [mse]
-  st md     [min-mse]         [mse]     0.653    (0.259)         [mse]         [mse]
+  st mn  Y1_pystacked  D1_pystacked     0.653    (0.233)  Z1_pystacked  Z2_pystacked
+  st md  Y1_pystacked  D1_pystacked     0.653    (0.259)  Z1_pystacked  Z2_pystacked
 
 Median over 2 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
@@ -115,6 +116,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked Z2-Z2_pystacked
 -------------+----------------------------------------------------------------
       avexpr |   .6532976   .2593449     2.52   0.012      .144991    1.161604
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -134,6 +136,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked_1 Z2-Z2_pystacked_1
       avexpr |   .5422441   .1597715     3.39   0.001     .2290977    .8553905
        _cons |  -.0004448   .0841044    -0.01   0.996    -.1652863    .1643967
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . *** append, estimate, replay
@@ -157,6 +160,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  iv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked
 D equations (1):        avexpr
@@ -172,8 +176,8 @@ spec  r     Y learner     D learner         b        SE      Z learner     Z lea
   st  3  Y1_pystacked  D1_pystacked     0.835    (0.318)  Z1_pystacked  Z2_pystacked
 
 Mean/med    Y learner     D learner         b        SE      Z learner     Z learner
-  st mn     [min-mse]         [mse]     0.714    (0.275)         [mse]         [mse]
-  st md     [min-mse]         [mse]     0.764    (0.279)         [mse]         [mse]
+  st mn  Y1_pystacked  D1_pystacked     0.714    (0.275)  Z1_pystacked  Z2_pystacked
+  st md  Y1_pystacked  D1_pystacked     0.764    (0.279)  Z1_pystacked  Z2_pystacked
 
 Median over 3 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
@@ -184,6 +188,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked Z2-Z2_pystacked
 -------------+----------------------------------------------------------------
       avexpr |   .7643511   .2785742     2.74   0.006     .2183557    1.310346
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -202,6 +207,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked_1 Z2-Z2_pystacked_1
       avexpr |   .5422441    .168143     3.22   0.001       .21269    .8717983
        _cons |  -.0004448   .0893707    -0.00   0.996    -.1756081    .1747185
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(st) rep(2) replay notable
@@ -216,6 +222,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked_2 Z2-Z2_pystacked_2
       avexpr |   .7643511   .2646492     2.89   0.004     .2456482    1.283054
        _cons |  -.1052604   .1161122    -0.91   0.365     -.332836    .1223153
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(st) rep(mn) replay notable
@@ -229,6 +236,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked Z2-Z2_pystacked
 -------------+----------------------------------------------------------------
       avexpr |   .7139169   .2747688     2.60   0.009     .1753799    1.252454
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -245,6 +253,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked Z2-Z2_pystacked
 -------------+----------------------------------------------------------------
       avexpr |   .7643511   .2785742     2.74   0.006     .2183557    1.310346
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -298,6 +307,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...c
 
 
 Model:                  iv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked
 D equations (1):        avexpr
@@ -316,10 +326,10 @@ spec  r     Y learner     D learner         b        SE      Z learner     Z lea
   ps  2   [poolstack]          [ps]     1.229    (0.530)          [ps]          [ps]
 
 Mean/med    Y learner     D learner         b        SE      Z learner     Z learner
-  st mn     [min-mse]         [mse]     1.321    (0.897)         [mse]         [mse]
+  st mn  Y1_pystacked  D1_pystacked     1.321    (0.897)  Z1_pystacked  Z2_pystacked
   ss mn  [shortstack]          [ss]     0.938    (0.331)          [ss]          [ss]
   ps mn   [poolstack]          [ps]     1.426    (0.754)          [ps]          [ps]
-  st md     [min-mse]         [mse]     1.321    (1.654)         [mse]         [mse]
+  st md  Y1_pystacked  D1_pystacked     1.321    (1.654)  Z1_pystacked  Z2_pystacked
   ss md  [shortstack]          [ss]     0.938    (0.338)          [ss]          [ss]
   ps md   [poolstack]          [ps]     1.426    (1.208)          [ps]          [ps]
 
@@ -333,6 +343,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ss Z2-Z_logem4_ss
 -------------+----------------------------------------------------------------
       avexpr |   .9378337   .3382972     2.77   0.006     .2747834    1.600884
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -352,6 +363,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked_1 Z2-Z2_pystacked_1
       avexpr |   1.236872   2.242613     0.55   0.581    -3.158569    5.632313
        _cons |   .5025991   1.194919     0.42   0.674    -1.839399    2.844598
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
@@ -367,6 +379,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ss_1 Z2-Z_logem4_ss_1
       avexpr |   .9040583   .2996633     3.02   0.003     .3167289    1.491388
        _cons |   .0193414   .1367867     0.14   0.888    -.2487556    .2874384
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ps) rep(1) replay notable
@@ -382,6 +395,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ps_1 Z2-Z_logem4_ps_1
       avexpr |   1.622924   1.600531     1.01   0.311    -1.514059    4.759908
        _cons |   .6021083   1.056775     0.57   0.569    -1.469132    2.673348
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . *** append, estimate, replay
@@ -405,6 +419,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...c
 
 
 Model:                  iv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked
 D equations (1):        avexpr
@@ -426,10 +441,10 @@ spec  r     Y learner     D learner         b        SE      Z learner     Z lea
   ps  3   [poolstack]          [ps]     0.645    (0.139)          [ps]          [ps]
 
 Mean/med    Y learner     D learner         b        SE      Z learner     Z learner
-  st mn     [min-mse]         [mse]     1.146    (0.566)         [mse]         [mse]
+  st mn  Y1_pystacked  D1_pystacked     1.146    (0.566)  Z1_pystacked  Z2_pystacked
   ss mn  [shortstack]          [ss]     0.914    (0.281)          [ss]          [ss]
   ps mn   [poolstack]          [ps]     1.166    (0.577)          [ps]          [ps]
-  st md     [min-mse]         [mse]     1.237    (0.613)         [mse]         [mse]
+  st md  Y1_pystacked  D1_pystacked     1.237    (0.613)  Z1_pystacked  Z2_pystacked
   ss md  [shortstack]          [ss]     0.904    (0.289)          [ss]          [ss]
   ps md   [poolstack]          [ps]     1.229    (0.600)          [ps]          [ps]
 
@@ -442,6 +457,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ss Z2-Z_logem4_ss
 -------------+----------------------------------------------------------------
       avexpr |   .9040583   .2891079     3.13   0.002     .3374173    1.470699
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -460,6 +476,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked_1 Z2-Z2_pystacked_1
       avexpr |   1.236872    1.14834     1.08   0.281    -1.013833    3.487576
        _cons |   .5025991   .6411436     0.78   0.433    -.7540192    1.759218
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(st) rep(2) replay notable
@@ -474,6 +491,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked_2 Z2-Z2_pystacked_2
       avexpr |   1.405222   .5892458     2.38   0.017     .2503215    2.560123
        _cons |   .1292874    .224303     0.58   0.564    -.3103384    .5689132
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(st) rep(mn) replay notable
@@ -487,6 +505,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked Z2-Z2_pystacked
 -------------+----------------------------------------------------------------
       avexpr |   1.146189   .5658096     2.03   0.043      .037223    2.255156
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -503,6 +522,7 @@ Z-E[Z|X]  = Z1-Z1_pystacked Z2-Z2_pystacked
 -------------+----------------------------------------------------------------
       avexpr |   1.236872   .6128233     2.02   0.044     .0357602    2.437983
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -520,6 +540,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ss_1 Z2-Z_logem4_ss_1
       avexpr |   .9040583   .2891079     3.13   0.002     .3374173    1.470699
        _cons |   .0193414   .1393612     0.14   0.890    -.2538015    .2924843
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(2) replay notable
@@ -534,6 +555,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ss_2 Z2-Z_logem4_ss_2
       avexpr |   .9716091   .3210694     3.03   0.002     .3423246    1.600894
        _cons |   .0988001   .1400825     0.71   0.481    -.1757565    .3733567
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
@@ -547,6 +569,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ss Z2-Z_logem4_ss
 -------------+----------------------------------------------------------------
       avexpr |   .9142635   .2805846     3.26   0.001     .3643278    1.464199
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -563,6 +586,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ss Z2-Z_logem4_ss
 -------------+----------------------------------------------------------------
       avexpr |   .9040583   .2891079     3.13   0.002     .3374173    1.470699
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -580,6 +604,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ps_1 Z2-Z_logem4_ps_1
       avexpr |   1.622924   1.585208     1.02   0.306    -1.484026    4.729875
        _cons |   .6021083   .8276549     0.73   0.467    -1.020065    2.224282
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ps) rep(2) replay notable
@@ -594,6 +619,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ps_2 Z2-Z_logem4_ps_2
       avexpr |   1.228829   .4342379     2.83   0.005     .3777385     2.07992
        _cons |   .1071121   .1904861     0.56   0.574    -.2662338     .480458
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ps) rep(mn) replay notable
@@ -607,6 +633,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ps Z2-Z_logem4_ps
 -------------+----------------------------------------------------------------
       avexpr |    1.16562   .5772096     2.02   0.043     .0343104     2.29693
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -623,6 +650,7 @@ Z-E[Z|X]  = Z1-Z_lat_abst_ps Z2-Z_logem4_ps
 -------------+----------------------------------------------------------------
       avexpr |   1.228829   .6001473     2.05   0.041      .052562    2.405096
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -671,6 +699,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  iv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked Y2_reg
 D equations (1):        avexpr
@@ -685,8 +714,8 @@ spec  r     Y learner     D learner         b        SE      Z learner
 mse = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE      Z learner
- mse mn     [min-mse]         [mse]    -0.345    (0.707)         [mse]
- mse md     [min-mse]         [mse]    -0.345    (1.693)         [mse]
+ mse mn     [min-mse]     [min-mse]    -0.345    (0.707)     [min-mse]
+ mse md     [min-mse]     [min-mse]    -0.345    (1.693)     [min-mse]
 
 Median over 2 min-mse resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
@@ -723,6 +752,7 @@ Z-E[Z|X]  = Z-Z1_pystacked_1
 
 
 Model:                  iv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked Y2_reg
 D equations (1):        avexpr
@@ -751,8 +781,8 @@ spec  r     Y learner     D learner         b        SE      Z learner
 * = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE      Z learner
- mse mn     [min-mse]         [mse]    -0.345    (0.677)         [mse]
- mse md     [min-mse]         [mse]    -0.345    (1.666)         [mse]
+ mse mn     [min-mse]     [min-mse]    -0.345    (0.677)     [min-mse]
+ mse md     [min-mse]     [min-mse]    -0.345    (1.666)     [min-mse]
 
 Median over 2 min-mse resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
@@ -838,6 +868,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  iv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked Y2_reg
 D equations (1):        avexpr
@@ -853,8 +884,8 @@ spec  r     Y learner     D learner         b        SE      Z learner
 mse = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE      Z learner
- mse mn     [min-mse]         [mse]     0.415    (0.573)         [mse]
- mse md     [min-mse]         [mse]     0.118    (2.440)         [mse]
+ mse mn     [min-mse]     [min-mse]     0.415    (0.573)     [min-mse]
+ mse md     [min-mse]     [min-mse]     0.118    (2.440)     [min-mse]
 
 Median over 3 min-mse resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
@@ -935,6 +966,7 @@ Summary over 3 resamples:
 
 
 Model:                  iv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked Y2_reg
 D equations (1):        avexpr
@@ -971,8 +1003,8 @@ spec  r     Y learner     D learner         b        SE      Z learner
 * = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE      Z learner
- mse mn     [min-mse]         [mse]     0.415    (0.573)         [mse]
- mse md     [min-mse]         [mse]     0.118    (2.440)         [mse]
+ mse mn     [min-mse]     [min-mse]     0.415    (0.573)     [min-mse]
+ mse md     [min-mse]     [min-mse]     0.118    (2.440)     [min-mse]
 
 Median over 3 min-mse resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
@@ -1165,6 +1197,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 
 Model:                  iv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked Y2_reg
 D equations (1):        avexpr
@@ -1181,9 +1214,9 @@ spec  r     Y learner     D learner         b        SE      Z learner
 mse = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE      Z learner
- mse mn     [min-mse]         [mse]     0.512    (0.202)         [mse]
+ mse mn     [min-mse]     [min-mse]     0.512    (0.202)     [min-mse]
   ss mn  [shortstack]          [ss]    -1.378    (2.658)          [ss]
- mse md     [min-mse]         [mse]     0.512    (0.203)         [mse]
+ mse md     [min-mse]     [min-mse]     0.512    (0.203)     [min-mse]
   ss md  [shortstack]          [ss]    -1.378   (15.719)          [ss]
 
 Shortstack DDML model (median over 2 resamples)
@@ -1196,6 +1229,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss
 -------------+----------------------------------------------------------------
       avexpr |  -1.377642   15.71881    -0.09   0.930    -32.18594    29.43065
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1229,6 +1263,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss_1
       avexpr |   .4892868   .2678459     1.83   0.068    -.0356815    1.014255
        _cons |   -.051912   .1039891    -0.50   0.618    -.2557269    .1519029
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . *** allcombos
@@ -1236,6 +1271,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss_1
 
 
 Model:                  iv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked Y2_reg
 D equations (1):        avexpr
@@ -1266,9 +1302,9 @@ spec  r     Y learner     D learner         b        SE      Z learner
 * = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE      Z learner
- mse mn     [min-mse]         [mse]     0.512    (0.194)         [mse]
+ mse mn     [min-mse]     [min-mse]     0.512    (0.194)     [min-mse]
   ss mn  [shortstack]          [ss]    -1.378    (2.648)          [ss]
- mse md     [min-mse]         [mse]     0.512    (0.199)         [mse]
+ mse md     [min-mse]     [min-mse]     0.512    (0.199)     [min-mse]
   ss md  [shortstack]          [ss]    -1.378   (12.797)          [ss]
 
 Shortstack DDML model (median over 2 resamples)
@@ -1280,6 +1316,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss
 -------------+----------------------------------------------------------------
       avexpr |  -1.377642    12.7968    -0.11   0.914     -26.4589    23.70362
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1349,6 +1386,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss_1
       avexpr |   .4892868   .2423958     2.02   0.044     .0141998    .9643737
        _cons |   -.051912   .1042676    -0.50   0.619    -.2562727    .1524487
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . *** append, estimate, replay
@@ -1369,6 +1407,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 
 Model:                  iv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked Y2_reg
 D equations (1):        avexpr
@@ -1387,9 +1426,9 @@ spec  r     Y learner     D learner         b        SE      Z learner
 mse = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE      Z learner
- mse mn     [min-mse]         [mse]     0.488    (0.214)         [mse]
+ mse mn     [min-mse]     [min-mse]     0.488    (0.214)     [min-mse]
   ss mn  [shortstack]          [ss]    -0.772    (1.549)          [ss]
- mse md     [min-mse]         [mse]     0.451    (0.245)         [mse]
+ mse md     [min-mse]     [min-mse]     0.451    (0.245)     [min-mse]
   ss md  [shortstack]          [ss]     0.440    (0.302)          [ss]
 
 Shortstack DDML model (median over 3 resamples)
@@ -1401,6 +1440,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss
 -------------+----------------------------------------------------------------
       avexpr |   .4395253   .3022015     1.45   0.146    -.1527788    1.031829
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1478,6 +1518,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss_1
       avexpr |   .4892868   .2423958     2.02   0.044     .0141998    .9643737
        _cons |   -.051912   .1042676    -0.50   0.619    -.2562727    .1524487
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(2) replay notable
@@ -1492,6 +1533,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss_2
       avexpr |   -3.24457   17.90213    -0.18   0.856    -38.33211    31.84297
        _cons |   -.483109   2.096429    -0.23   0.818    -4.592034    3.625816
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
@@ -1505,6 +1547,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss
 -------------+----------------------------------------------------------------
       avexpr |  -.7719193    1.54869    -0.50   0.618    -3.807296    2.263458
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1521,6 +1564,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss
 -------------+----------------------------------------------------------------
       avexpr |   .4395253   .3022015     1.45   0.146    -.1527788    1.031829
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1531,6 +1575,7 @@ Summary over 3 resamples:
 
 
 Model:                  iv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): logpgp95
  logpgp95 learners:     Y1_pystacked Y2_reg
 D equations (1):        avexpr
@@ -1570,9 +1615,9 @@ spec  r     Y learner     D learner         b        SE      Z learner
 * = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE      Z learner
- mse mn     [min-mse]         [mse]     0.488    (0.214)         [mse]
+ mse mn     [min-mse]     [min-mse]     0.488    (0.214)     [min-mse]
   ss mn  [shortstack]          [ss]    -0.772    (1.549)          [ss]
- mse md     [min-mse]         [mse]     0.451    (0.245)         [mse]
+ mse md     [min-mse]     [min-mse]     0.451    (0.245)     [min-mse]
   ss md  [shortstack]          [ss]     0.440    (0.302)          [ss]
 
 Shortstack DDML model (median over 3 resamples)
@@ -1584,6 +1629,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss
 -------------+----------------------------------------------------------------
       avexpr |   .4395253   .3022015     1.45   0.146    -.1527788    1.031829
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1763,6 +1809,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss_1
       avexpr |   .4892868   .2423958     2.02   0.044     .0141998    .9643737
        _cons |   -.051912   .1042676    -0.50   0.619    -.2562727    .1524487
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(2) replay notable
@@ -1777,6 +1824,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss_2
       avexpr |   -3.24457   17.90213    -0.18   0.856    -38.33211    31.84297
        _cons |   -.483109   2.096429    -0.23   0.818    -4.592034    3.625816
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
@@ -1790,6 +1838,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss
 -------------+----------------------------------------------------------------
       avexpr |  -.7719193    1.54869    -0.50   0.618    -3.807296    2.263458
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1806,6 +1855,7 @@ Z-E[Z|X]  = Z-Z_lat_abst_ss
 -------------+----------------------------------------------------------------
       avexpr |   .4395253   .3022015     1.45   0.146    -.1527788    1.031829
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1816,5 +1866,5 @@ Summary over 3 resamples:
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial_iv.log
   log type:  text
- closed on:  10 Jul 2023, 23:05:41
---------------------------------------------------------------------------------------------------------------------------
+ closed on:  20 Jul 2023, 15:04:18
+-----------------------------------------------------------------------------------------------------------------------

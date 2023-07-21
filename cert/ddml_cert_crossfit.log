@@ -1,26 +1,26 @@
---------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_crossfit.log
   log type:  text
- opened on:  10 Jul 2023, 22:54:40
+ opened on:  20 Jul 2023, 12:19:27
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 *! ddml v1.2
-*! last edited: 8 july 2023
+*! last edited: 19 july 2023
 *! authors: aa/ms
 
 . mata: whichddml()
   
   Mata library for ddml and related programs,
-  compiled 8 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
 . which crossfit
 C:\LocalStore\ecomes\Documents\GitHub\ddml\crossfit.ado
 *! crossfit v0.6
-*! last edited: 10 july 2023
+*! last edited: 20 july 2023
 *! authors: aa/ms
 
 . 
@@ -110,5 +110,5 @@ Cross-fitting fold 1 2 ...completed cross-fitting
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_crossfit.log
   log type:  text
- closed on:  10 Jul 2023, 22:54:52
---------------------------------------------------------------------------------------------------------------------------
+ closed on:  20 Jul 2023, 12:19:37
+-----------------------------------------------------------------------------------------------------------------------

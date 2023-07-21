@@ -1,20 +1,20 @@
---------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_fiv.log
   log type:  text
- opened on:  10 Jul 2023, 22:54:59
+ opened on:  20 Jul 2023, 12:21:23
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 *! ddml v1.2
-*! last edited: 8 july 2023
+*! last edited: 19 july 2023
 *! authors: aa/ms
 
 . mata: whichddml()
   
   Mata library for ddml and related programs,
-  compiled 8 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
 . 
@@ -30,8 +30,8 @@ C:\LocalStore\ecomes\Documents\GitHub\pystacked/pystacked.ado
 
 . 
 . ******************************************************************************** 
-. **** Flexible IV                                                                                                        
->         ****
+. **** Flexible IV                                                                                                     
+>            ****
 . ******************************************************************************** 
 . 
 . global Y share
@@ -67,6 +67,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  fiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): share
  share learners:        Y1_pystacked
 D equations (1):        price
@@ -78,8 +79,8 @@ spec  r     Y learner     D learner         b        SE     DH learner
   st  2  Y1_pystacked Dhat_pystac~d    -0.101    (0.008) Dhat_pystac~h
 
 Mean/med    Y learner     D learner         b        SE     DH learner
-  st mn     [min-mse]         [mse]    -0.104    (0.009)         [mse]
-  st md     [min-mse]         [mse]    -0.104    (0.009)         [mse]
+  st mn  Y1_pystacked Dhat_pystac~d    -0.104    (0.009) Dhat_pystac~h
+  st md  Y1_pystacked Dhat_pystac~d    -0.104    (0.009) Dhat_pystac~h
 
 Median over 2 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
@@ -91,6 +92,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.1041662   .0086374   -12.06   0.000    -.1210952   -.0872373
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -109,7 +111,111 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
        price |  -.1076037   .0082844   -12.99   0.000    -.1238409   -.0913665
        _cons |   .0003447   .0221142     0.02   0.988    -.0429983    .0436877
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
+
+. ddml extract, show(stweights)
+
+mean stacking weights across folds/resamples for Dhat_pystacked (price)
+final stacking estimator: nnls1
+               learner        h=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .01292186    .02584372    7.598e-16
+  lassocv            2            0    1.544e-17    3.089e-17            0
+gradboost            3            0    .98707814    .97415628            1
+      ols            1            1    .01101253    .02202506            0
+  lassocv            2            1    8.462e-18    1.692e-17            0
+gradboost            3            1    .98898747    .97797494            1
+
+mean stacking weights across folds/resamples for Y1_pystacked (share)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .05189334    .07113894    .03264774
+  lassocv            2    1.952e-18    3.036e-18    8.674e-19
+gradboost            3    .94810666    .92886106    .96735226
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Dhat_pystacked (price)
+             learner          h   resample     fold_1     fold_2
+      ols          1          0          1  1.284e-16  .05168744
+  lassocv          2          0          1          0  6.177e-17
+gradboost          3          0          1          1  .94831256
+      ols          1          0          2  1.520e-15          0
+  lassocv          2          0          2          0          0
+gradboost          3          0          2          1          1
+      ols          1          1          1          0  .04405013
+  lassocv          2          1          1          0  3.385e-17
+gradboost          3          1          1          1  .95594987
+      ols          1          1          2          0          0
+  lassocv          2          1          2          0          0
+gradboost          3          1          2          1          1
+
+mean stacking weights across folds/resamples for Dhat_pystacked (price)
+final stacking estimator: nnls1
+               learner        h=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .01292186    .02584372    7.598e-16
+  lassocv            2            0    1.544e-17    3.089e-17            0
+gradboost            3            0    .98707814    .97415628            1
+      ols            1            1    .01101253    .02202506            0
+  lassocv            2            1    8.462e-18    1.692e-17            0
+gradboost            3            1    .98898747    .97797494            1
+
+pystacked MSEs for Dhat_pystacked (price)
+             learner          h   resample     fold_1     fold_2
+      ols          1          0          1  29.601114  27.567273
+  lassocv          2          0          1  29.485851   27.41815
+gradboost          3          0          1  13.972635  12.535436
+      ols          1          0          2  28.242577  28.694185
+  lassocv          2          0          2  28.095606  28.651871
+gradboost          3          0          2  13.666131  11.749602
+      ols          1          1          1  22.703368  20.740393
+  lassocv          2          1          1  22.704314  20.729829
+gradboost          3          1          1  10.397591  8.4311154
+      ols          1          1          2   22.67543   23.35364
+  lassocv          2          1          2   22.71365  23.355042
+gradboost          3          1          2  10.296092  8.9064354
+
+mean stacking MSEs across folds/resamples for Dhat_pystacked (price)
+final stacking estimator: nnls1
+             learner      h=0/1   mean_MSE      rep_1      rep_2
+      ols          1          0  28.526287  28.584193  28.468381
+  lassocv          2          0   28.41287     28.452  28.373739
+gradboost          3          0  12.980951  13.254035  12.707867
+      ols          1          1  22.368207   21.72188  23.014535
+  lassocv          2          1  22.375709  21.717072  23.034346
+gradboost          3          1  9.5078085  9.4143533  9.6012638
+
+pystacked weights for Y1_pystacked (share)
+             learner   resample     fold_1     fold_2
+      ols          1          1          0  .14227788
+  lassocv          2          1          0  6.072e-18
+gradboost          3          1          1  .85772212
+      ols          1          2   .0161017  .04919379
+  lassocv          2          2  1.735e-18          0
+gradboost          3          2   .9838983  .95080621
+
+mean stacking weights across folds/resamples for Y1_pystacked (share)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .05189334    .07113894    .03264774
+  lassocv            2    1.952e-18    3.036e-18    8.674e-19
+gradboost            3    .94810666    .92886106    .96735226
+
+pystacked MSEs for Y1_pystacked (share)
+             learner   resample     fold_1     fold_2
+      ols          1          1  1.5197857  1.3645529
+  lassocv          2          1  1.5198816  1.3646797
+gradboost          3          1  1.2030607   1.223346
+      ols          1          2  1.4580414  1.4089005
+  lassocv          2          2  1.4579988  1.4090234
+gradboost          3          2  1.1898666  1.2163349
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (share)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+      ols          1  1.4378201  1.4421693   1.433471
+  lassocv          2  1.4378959  1.4422807  1.4335111
+gradboost          3   1.208152  1.2132033  1.2031007
 
 . *** append, estimate, replay
 . ddml sample, append(1)
@@ -126,6 +232,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  fiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): share
  share learners:        Y1_pystacked
 D equations (1):        price
@@ -138,8 +245,8 @@ spec  r     Y learner     D learner         b        SE     DH learner
   st  3  Y1_pystacked Dhat_pystac~d    -0.092    (0.008) Dhat_pystac~h
 
 Mean/med    Y learner     D learner         b        SE     DH learner
-  st mn     [min-mse]         [mse]    -0.100    (0.010)         [mse]
-  st md     [min-mse]         [mse]    -0.101    (0.011)         [mse]
+  st mn  Y1_pystacked Dhat_pystac~d    -0.100    (0.010) Dhat_pystac~h
+  st md  Y1_pystacked Dhat_pystac~d    -0.101    (0.011) Dhat_pystac~h
 
 Median over 3 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
@@ -151,6 +258,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.1007287   .0107656    -9.36   0.000    -.1218289   -.0796286
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -170,6 +278,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
        price |  -.1076037   .0082844   -12.99   0.000    -.1238409   -.0913665
        _cons |   .0003447   .0221142     0.02   0.988    -.0429983    .0436877
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(st) rep(2) replay notable
@@ -185,6 +294,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
        price |  -.1007287   .0075461   -13.35   0.000    -.1155188   -.0859387
        _cons |   -.006026   .0217092    -0.28   0.781    -.0485753    .0365233
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(st) rep(mn) replay notable
@@ -199,6 +309,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.1001114   .0095209   -10.51   0.000    -.1187721   -.0814507
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -216,6 +327,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.1007287   .0107656    -9.36   0.000    -.1218289   -.0796286
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -267,6 +379,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  fiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): share
  share learners:        Y1_pystacked Y2_pystacked Y3_pystacked
 D equations (1):        price
@@ -279,8 +392,8 @@ spec  r     Y learner     D learner         b        SE     DH learner
 mse = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE     DH learner
- mse mn     [min-mse]         [mse]    -0.104    (0.009)         [mse]
- mse md     [min-mse]         [mse]    -0.104    (0.009)         [mse]
+ mse mn     [min-mse]     [min-mse]    -0.104    (0.009)     [min-mse]
+ mse md     [min-mse]     [min-mse]    -0.104    (0.009)     [min-mse]
 
 Median over 2 min-mse resamples
 y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
@@ -327,6 +440,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  fiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): share
  share learners:        Y1_pystacked Y2_pystacked Y3_pystacked
 D equations (1):        price
@@ -340,8 +454,8 @@ spec  r     Y learner     D learner         b        SE     DH learner
 mse = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE     DH learner
- mse mn     [min-mse]         [mse]    -0.101    (0.010)         [mse]
- mse md     [min-mse]         [mse]    -0.101    (0.010)         [mse]
+ mse mn     [min-mse]     [min-mse]    -0.101    (0.010)     [min-mse]
+ mse md     [min-mse]     [min-mse]    -0.101    (0.010)     [min-mse]
 
 Median over 3 min-mse resamples
 y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
@@ -471,6 +585,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 
 Model:                  fiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): share
  share learners:        Y1_pystacked Y2_pystacked Y3_pystacked
 D equations (1):        price
@@ -485,9 +600,9 @@ spec  r     Y learner     D learner         b        SE     DH learner
 mse = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE     DH learner
- mse mn     [min-mse]         [mse]    -0.091    (0.018)         [mse]
+ mse mn     [min-mse]     [min-mse]    -0.091    (0.018)     [min-mse]
   ss mn  [shortstack]          [ss]    -0.094    (0.010)          [ss]
- mse md     [min-mse]         [mse]    -0.091    (0.018)         [mse]
+ mse md     [min-mse]     [min-mse]    -0.091    (0.018)     [min-mse]
   ss md  [shortstack]          [ss]    -0.094    (0.010)          [ss]
 
 Shortstack DDML model (median over 2 resamples)
@@ -500,6 +615,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.0943598   .0100487    -9.39   0.000    -.1140549   -.0746647
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -518,7 +634,27 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
        price |  -.1006893   .0078788   -12.78   0.000    -.1161314   -.0852471
        _cons |    .008106   .0210713     0.38   0.700    -.0331931     .049405
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
+
+. ddml extract, show(ssweights)
+
+short-stacked weights across resamples for price
+final stacking estimator: nnls1
+                  learner        h=0/1  mean_weight        rep_1        rep_2
+Dhat_psgra~t            1            0    .49226723    .46442069    .52011377
+Dhat_pslas~v            2            0    1.540e-15    1.117e-16    2.967e-15
+     Dhat_rf            3            0    .50773277    .53557931    .47988623
+Dhat_psgra~h            1            1    .20187036      .150443    .25329772
+Dhat_pslas~h            2            1    .02609407    .00550543    .04668271
+   Dhat_rf_h            3            1    .77203557    .84405157    .70001957
+
+short-stacked weights across resamples for share
+final stacking estimator: nnls1
+                  learner  mean_weight        rep_1        rep_2
+Y1_pystacked            1    .18091017    .15340265     .2084177
+Y2_pystacked            2    .04566254    .05851007      .032815
+Y3_pystacked            3    .77342729    .78808729    .75876729
 
 . *** append, estimate, replay
 . ddml sample, append(1)
@@ -535,6 +671,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 
 Model:                  fiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): share
  share learners:        Y1_pystacked Y2_pystacked Y3_pystacked
 D equations (1):        price
@@ -551,9 +688,9 @@ spec  r     Y learner     D learner         b        SE     DH learner
 mse = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE     DH learner
- mse mn     [min-mse]         [mse]    -0.099    (0.016)         [mse]
+ mse mn     [min-mse]     [min-mse]    -0.099    (0.016)     [min-mse]
   ss mn  [shortstack]          [ss]    -0.101    (0.011)          [ss]
- mse md     [min-mse]         [mse]    -0.107    (0.013)         [mse]
+ mse md     [min-mse]     [min-mse]    -0.107    (0.013)     [min-mse]
   ss md  [shortstack]          [ss]    -0.101    (0.015)          [ss]
 
 Shortstack DDML model (median over 3 resamples)
@@ -566,10 +703,30 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.1006893   .0148325    -6.79   0.000    -.1297605   -.0716181
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
        price     -0.1006   -0.1130   -0.1130   -0.1007   -0.0880   -0.0880
+
+. ddml extract, show(ssweights)
+
+short-stacked weights across resamples for price
+final stacking estimator: nnls1
+                  learner        h=0/1  mean_weight        rep_1        rep_2        rep_3
+Dhat_psgra~t            1            0    .45750454    .46442069    .52011377    .38797915
+Dhat_pslas~v            2            0    1.026e-15    1.117e-16    2.967e-15            0
+     Dhat_rf            3            0    .54249546    .53557931    .47988623    .61202085
+Dhat_psgra~h            1            1    .19448496      .150443    .25329772    .17971417
+Dhat_pslas~h            2            1    .01739605    .00550543    .04668271    3.353e-19
+   Dhat_rf_h            3            1    .78811899    .84405157    .70001957    .82028583
+
+short-stacked weights across resamples for share
+final stacking estimator: nnls1
+                  learner  mean_weight        rep_1        rep_2        rep_3
+Y1_pystacked            1    .15085465    .15340265     .2084177     .0907436
+Y2_pystacked            2    .04592971    .05851007      .032815    .04646405
+Y3_pystacked            3    .80321564    .78808729    .75876729    .86279235
 
 . *** replay
 . ddml estimate, mname(m0) spec(mse) rep(1) replay notable
@@ -649,6 +806,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
        price |  -.1006893   .0078788   -12.78   0.000    -.1161314   -.0852471
        _cons |    .008106   .0210713     0.38   0.700    -.0331931     .049405
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(2) replay notable
@@ -664,6 +822,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
        price |  -.0880302   .0077299   -11.39   0.000    -.1031806   -.0728799
        _cons |  -.0169228   .0210814    -0.80   0.422    -.0582416    .0243959
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
@@ -678,6 +837,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.1005709   .0109469    -9.19   0.000    -.1220264   -.0791153
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -695,6 +855,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.1006893   .0148325    -6.79   0.000    -.1297605   -.0716181
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -705,6 +866,7 @@ Summary over 3 resamples:
 
 
 Model:                  fiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): share
  share learners:        Y1_pystacked Y2_pystacked Y3_pystacked
 D equations (1):        price
@@ -799,9 +961,9 @@ spec  r     Y learner     D learner         b        SE     DH learner
 * = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE     DH learner
- mse mn     [min-mse]         [mse]    -0.099    (0.016)         [mse]
+ mse mn     [min-mse]     [min-mse]    -0.099    (0.016)     [min-mse]
   ss mn  [shortstack]          [ss]    -0.101    (0.011)          [ss]
- mse md     [min-mse]         [mse]    -0.107    (0.013)         [mse]
+ mse md     [min-mse]     [min-mse]    -0.107    (0.013)     [min-mse]
   ss md  [shortstack]          [ss]    -0.101    (0.015)          [ss]
 
 Shortstack DDML model (median over 3 resamples)
@@ -814,6 +976,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.1006893   .0148325    -6.79   0.000    -.1297605   -.0716181
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1251,6 +1414,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
        price |  -.1006893   .0078788   -12.78   0.000    -.1161314   -.0852471
        _cons |    .008106   .0210713     0.38   0.700    -.0331931     .049405
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(2) replay notable
@@ -1266,6 +1430,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
        price |  -.0880302   .0077299   -11.39   0.000    -.1031806   -.0728799
        _cons |  -.0169228   .0210814    -0.80   0.422    -.0582416    .0243959
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 
 . ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
@@ -1280,6 +1445,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.1005709   .0109469    -9.19   0.000    -.1220264   -.0791153
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1297,6 +1463,7 @@ Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 -------------+----------------------------------------------------------------
        price |  -.1006893   .0148325    -6.79   0.000    -.1297605   -.0716181
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
@@ -1309,5 +1476,5 @@ Summary over 3 resamples:
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_fiv.log
   log type:  text
- closed on:  10 Jul 2023, 22:56:30
---------------------------------------------------------------------------------------------------------------------------
+ closed on:  20 Jul 2023, 12:22:53
+-----------------------------------------------------------------------------------------------------------------------

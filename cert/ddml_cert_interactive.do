@@ -225,8 +225,8 @@ ddml estimate, stdstack stdfinalest(singlebest)
 ddml extract, show(weights)
 mat stsw = r(Y1_pystacked_w_mn)
 assert el(stsw,1,3)==1
-assert el(stsw,2,3)==0.5
-assert el(stsw,3,3)==0
+assert el(stsw,2,3)==0
+assert el(stsw,3,3)==0.5
 assert el(stsw,4,3)==0.5
 // all restacked to nnls1
 ddml estimate, finalest(nnls1)

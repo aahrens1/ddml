@@ -147,6 +147,7 @@ global D price
 global X hpwt air mpd space
 global Z sum*
 
+// standard stacking by pystacked
 set seed 42
 ddml init fiv
 ddml E[Y|X]: pystacked $Y $X, type(reg)
@@ -157,9 +158,50 @@ ddml estimate
 global b1 = _b[$D]
 
 set seed 42
+// enforce standard stacking using the cmd(.) option
 qddml $Y ($X) ($D=$Z), model(fiv) cmd(pystacked) cmdopt(type(reg))
 global b2 = _b[$D]
 
 assert reldif($b1,$b2) < 10e-10
+
+ddml extract, show(pystacked)
+ddml extract, show(stweights)
+
+// short-stacking only
+use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear
+global Y share
+global D price
+global X hpwt air mpd space
+global Z sum*
+
+set seed 42
+ddml init fiv
+ddml E[Y|X], learner(Y1_ols): pystacked $Y $X, type(reg) m(ols)
+ddml E[Y|X], learner(Y2_lassocv): pystacked $Y $X, type(reg) m(lassocv)
+ddml E[Y|X], learner(Y3_gradboost): pystacked $Y $X, type(reg) m(gradboost)
+ddml E[D|Z,X], learner(D1_ols): pystacked $D $X $Z, type(reg) m(ols)
+ddml E[D|X], learner(D1_ols) vname($D): pystacked {D} $X, type(reg) m(ols)
+ddml E[D|Z,X], learner(D2_lassocv): pystacked $D $X $Z, type(reg) m(lassocv)
+ddml E[D|X], learner(D2_lassocv) vname($D): pystacked {D} $X, type(reg) m(lassocv)
+ddml E[D|Z,X], learner(D3_gradboost): pystacked $D $X $Z, type(reg) m(gradboost)
+ddml E[D|X], learner(D3_gradboost) vname($D): pystacked {D} $X, type(reg) m(gradboost)
+ddml crossfit, shortstack
+ddml estimate
+global b1 = _b[$D]
+ddml extract, show(ssweights)
+mat Yss1 = r(Y_share_ss)
+mat Dss1 = r(D_price_ss)
+
+set seed 42
+// short-stacking only by default
+qddml $Y ($X) ($D=$Z), model(fiv)
+global b2 = _b[$D]
+ddml extract, show(ssweights)
+mat Yss2 = r(Y_share_ss)
+mat Dss2 = r(D_price_ss)
+
+assert reldif($b1,$b2) < 10e-10
+assert mreldif(Yss1,Yss2) < 10e-10
+assert mreldif(Dss1,Dss2) < 10e-10
 
 log close

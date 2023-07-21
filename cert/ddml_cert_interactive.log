@@ -1,20 +1,20 @@
---------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactive.log
   log type:  text
- opened on:  10 Jul 2023, 22:43:38
+ opened on:  20 Jul 2023, 12:37:09
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 *! ddml v1.2
-*! last edited: 8 july 2023
+*! last edited: 19 july 2023
 *! authors: aa/ms
 
 . mata: whichddml()
   
   Mata library for ddml and related programs,
-  compiled 8 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
 . 
@@ -31,7 +31,7 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 *! ddml v1.2
-*! last edited: 8 july 2023
+*! last edited: 19 july 2023
 *! authors: aa/ms
 
 . which pystacked
@@ -50,8 +50,8 @@ C:\LocalStore\ecomes\Documents\GitHub\pystacked/pystacked.ado
 
 . 
 . ********************************************************************************
-. **** Interactive model                                                                                                  
->         ****
+. **** Interactive model                                                                                               
+>            ****
 . ********************************************************************************
 . 
 . global Y bweight
@@ -88,6 +88,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -99,8 +100,8 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
   st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -263.575  (102.062)
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -409.562  (225.695)
- mse md     [min-mse]         [mse]         [mse]  -409.562  (283.567)
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  -409.562  (225.695)
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  -409.562  (283.567)
 
 Median over 2 stacking resamples (ATE)
 E[y|X,D=0]   = Y1_pystacked0                       Number of obs   =      1000
@@ -112,6 +113,7 @@ E[D|X]       = D1_pystacked
 -------------+----------------------------------------------------------------
      mbsmoke |  -409.5623   283.5675    -1.44   0.149    -965.3443    146.2198
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
@@ -123,7 +125,7 @@ Summary over 2 resamples:
 
 Stacking DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -131,6 +133,7 @@ E[D|X]       = D1_pystacked_1
 -------------+----------------------------------------------------------------
      mbsmoke |    -555.55    328.298    -1.69   0.091    -1199.002    87.90232
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 44 propensity scores trimmed to lower limit .01.
 
 
@@ -149,6 +152,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -161,8 +165,8 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
   st  3  Y1_pystacked  Y1_pystacked  D1_pystacked  -129.568  (312.989)
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -316.231  (183.178)
- mse md     [min-mse]         [mse]         [mse]  -263.575  (340.470)
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  -316.231  (183.178)
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  -263.575  (340.470)
 
 Median over 3 stacking resamples (ATE)
 E[y|X,D=0]   = Y1_pystacked0                       Number of obs   =      1000
@@ -174,6 +178,7 @@ E[D|X]       = D1_pystacked
 -------------+----------------------------------------------------------------
      mbsmoke |  -263.5745   340.4701    -0.77   0.439    -930.8836    403.7346
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -185,7 +190,7 @@ Summary over 3 resamples:
 
 Stacking DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -193,6 +198,7 @@ E[D|X]       = D1_pystacked_1
 -------------+----------------------------------------------------------------
      mbsmoke |    -555.55    328.298    -1.69   0.091    -1199.002    87.90232
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 44 propensity scores trimmed to lower limit .01.
 
 
@@ -200,7 +206,7 @@ Warning: 44 propensity scores trimmed to lower limit .01.
 
 Stacking DDML model (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_2
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -208,6 +214,7 @@ E[D|X]       = D1_pystacked_2
 -------------+----------------------------------------------------------------
      mbsmoke |  -263.5745   102.0617    -2.58   0.010    -463.6119   -63.53721
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 27 propensity scores trimmed to lower limit .01.
 
 
@@ -223,6 +230,7 @@ E[D|X]       = D1_pystacked
 -------------+----------------------------------------------------------------
      mbsmoke |  -316.2309   183.1781    -1.73   0.084    -675.2534    42.79152
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -241,6 +249,7 @@ E[D|X]       = D1_pystacked
 -------------+----------------------------------------------------------------
      mbsmoke |  -263.5745   340.4701    -0.77   0.439    -930.8836    403.7346
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -278,6 +287,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...c
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -293,10 +303,10 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
   ps  2   [poolstack]          [ps]          [ps]  -149.540  (447.926)
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -327.535  (337.761)
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  -327.535  (337.761)
   ss mn  [shortstack]          [ss]          [ss]  -236.372  (364.472)
   ps mn   [poolstack]          [ps]          [ps]  -296.956  (285.667)
- mse md     [min-mse]         [mse]         [mse]  -327.535  (381.539)
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  -327.535  (381.539)
   ss md  [shortstack]          [ss]          [ss]  -236.372  (388.717)
   ps md   [poolstack]          [ps]          [ps]  -296.956  (369.013)
 
@@ -310,6 +320,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -236.3721   388.7173    -0.61   0.543    -998.2441    525.4999
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
@@ -321,7 +332,7 @@ Summary over 2 resamples:
 
 Stacking DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -329,6 +340,7 @@ E[D|X]       = D1_pystacked_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -512.5175   208.9214    -2.45   0.014    -921.9959   -103.0391
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 62 propensity scores trimmed to lower limit .01.
 
 
@@ -336,7 +348,7 @@ Warning: 62 propensity scores trimmed to lower limit .01.
 
 Shortstack DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -344,6 +356,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -481.6904    195.936    -2.46   0.014    -865.7179   -97.66293
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 47 propensity scores trimmed to lower limit .01.
 
 
@@ -351,7 +364,7 @@ Warning: 47 propensity scores trimmed to lower limit .01.
 
 Poolstack DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y_bweight_ps0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ps1_1
+E[y|X,D=1]   = Y_bweight_ps1
 E[D|X]       = D_mbsmoke_ps_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -359,6 +372,7 @@ E[D|X]       = D_mbsmoke_ps_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -444.3715   168.0503    -2.64   0.008    -773.7439    -114.999
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 54 propensity scores trimmed to lower limit .01.
 
 
@@ -378,6 +392,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...c
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -396,10 +411,10 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
   ps  3   [poolstack]          [ps]          [ps]  -410.565  (228.494)
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -374.006  (304.535)
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  -374.006  (304.535)
   ss mn  [shortstack]          [ss]          [ss]  -299.774  (306.259)
   ps mn   [poolstack]          [ps]          [ps]  -334.826  (254.374)
- mse md     [min-mse]         [mse]         [mse]  -466.949  (271.612)
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  -466.949  (271.612)
   ss md  [shortstack]          [ss]          [ss]  -426.577  (237.372)
   ps md   [poolstack]          [ps]          [ps]  -410.565  (228.494)
 
@@ -413,6 +428,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -426.5767   237.3719    -1.80   0.072     -891.817    38.66366
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -424,7 +440,7 @@ Summary over 3 resamples:
 
 Stacking DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -432,6 +448,7 @@ E[D|X]       = D1_pystacked_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -512.5175   208.9214    -2.45   0.014    -921.9959   -103.0391
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 62 propensity scores trimmed to lower limit .01.
 
 
@@ -439,7 +456,7 @@ Warning: 62 propensity scores trimmed to lower limit .01.
 
 Stacking DDML model (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_2
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -447,6 +464,7 @@ E[D|X]       = D1_pystacked_2
 -------------+----------------------------------------------------------------
      mbsmoke |   -142.552   423.1527    -0.34   0.736     -971.916     686.812
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 121 propensity scores trimmed to lower limit .01.
 
 
@@ -462,6 +480,7 @@ E[D|X]       = D1_pystacked
 -------------+----------------------------------------------------------------
      mbsmoke |  -374.0062   304.5347    -1.23   0.219    -970.8832    222.8708
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -480,6 +499,7 @@ E[D|X]       = D1_pystacked
 -------------+----------------------------------------------------------------
      mbsmoke |  -466.9491   271.6116    -1.72   0.086     -999.298    65.39983
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -490,7 +510,7 @@ Summary over 3 resamples:
 
 Shortstack DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -498,6 +518,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -481.6904    195.936    -2.46   0.014    -865.7179   -97.66293
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 47 propensity scores trimmed to lower limit .01.
 
 
@@ -505,7 +526,7 @@ Warning: 47 propensity scores trimmed to lower limit .01.
 
 Shortstack DDML model (sample=2) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_2
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -513,6 +534,7 @@ E[D|X]       = D_mbsmoke_ss_2
 -------------+----------------------------------------------------------------
      mbsmoke |   8.946172    378.747     0.02   0.981    -733.3844    751.2767
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 114 propensity scores trimmed to lower limit .01.
 
 
@@ -528,6 +550,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -299.7736   306.2586    -0.98   0.328    -900.0295    300.4822
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -546,6 +569,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -426.5767   237.3719    -1.80   0.072     -891.817    38.66366
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -556,7 +580,7 @@ Summary over 3 resamples:
 
 Poolstack DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y_bweight_ps0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ps1_1
+E[y|X,D=1]   = Y_bweight_ps1
 E[D|X]       = D_mbsmoke_ps_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -564,6 +588,7 @@ E[D|X]       = D_mbsmoke_ps_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -444.3715   168.0503    -2.64   0.008    -773.7439    -114.999
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 54 propensity scores trimmed to lower limit .01.
 
 
@@ -571,7 +596,7 @@ Warning: 54 propensity scores trimmed to lower limit .01.
 
 Poolstack DDML model (sample=2) (ATE)
 E[y|X,D=0]   = Y_bweight_ps0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ps1_2
+E[y|X,D=1]   = Y_bweight_ps1
 E[D|X]       = D_mbsmoke_ps_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -579,6 +604,7 @@ E[D|X]       = D_mbsmoke_ps_2
 -------------+----------------------------------------------------------------
      mbsmoke |  -149.5402   447.9261    -0.33   0.738    -1027.459    728.3789
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 117 propensity scores trimmed to lower limit .01.
 
 
@@ -594,6 +620,7 @@ E[D|X]       = D_mbsmoke_ps
 -------------+----------------------------------------------------------------
      mbsmoke |  -334.8257   254.3738    -1.32   0.188    -833.3892    163.7377
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -612,6 +639,7 @@ E[D|X]       = D_mbsmoke_ps
 -------------+----------------------------------------------------------------
      mbsmoke |  -410.5655   228.4938    -1.80   0.072     -858.405     37.2741
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -653,6 +681,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked Y2_reg
 D equations (1):        mbsmoke
@@ -665,8 +694,8 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 mse = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -308.255  (289.083)
- mse md     [min-mse]         [mse]         [mse]  -308.255  (289.193)
+ mse mn     [min-mse]     [min-mse]     [min-mse]  -308.255  (289.083)
+ mse md     [min-mse]     [min-mse]     [min-mse]  -308.255  (289.193)
 
 Median over 2 min-mse resamples (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
@@ -688,7 +717,7 @@ Summary over 2 resamples:
 
 Min MSE DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -704,6 +733,7 @@ Warning: 48 propensity scores trimmed to lower limit .01.
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked Y2_reg
 D equations (1):        mbsmoke
@@ -730,8 +760,8 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 * = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -308.255  (289.083)
- mse md     [min-mse]         [mse]         [mse]  -308.255  (289.193)
+ mse mn     [min-mse]     [min-mse]     [min-mse]  -308.255  (289.083)
+ mse md     [min-mse]     [min-mse]     [min-mse]  -308.255  (289.193)
 
 Median over 2 min-mse specifications (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
@@ -755,7 +785,7 @@ Summary over 2 resamples:
 
 DDML model, specification 1 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -768,7 +798,7 @@ Warning: 61 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 2 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -781,7 +811,7 @@ Warning: 48 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 3 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -794,7 +824,7 @@ Warning: 61 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 4 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -807,7 +837,7 @@ Warning: 48 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 5 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -820,7 +850,7 @@ Warning: 61 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 6 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -833,7 +863,7 @@ Warning: 48 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 7 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -846,7 +876,7 @@ Warning: 61 propensity scores trimmed to lower limit .01.
 
 Min MSE DDML model, specification 8 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -872,6 +902,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked Y2_reg
 D equations (1):        mbsmoke
@@ -885,8 +916,8 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 mse = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -272.447  (228.572)
- mse md     [min-mse]         [mse]         [mse]  -200.831  (216.991)
+ mse mn     [min-mse]     [min-mse]     [min-mse]  -272.447  (228.572)
+ mse md     [min-mse]     [min-mse]     [min-mse]  -200.831  (216.991)
 
 Median over 3 min-mse resamples (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
@@ -908,7 +939,7 @@ Summary over 3 resamples:
 
 Min MSE DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -923,7 +954,7 @@ Warning: 48 propensity scores trimmed to lower limit .01.
 
 Min MSE DDML model (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_2
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -975,6 +1006,7 @@ Summary over 3 resamples:
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked Y2_reg
 D equations (1):        mbsmoke
@@ -1009,8 +1041,8 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 * = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -272.447  (228.572)
- mse md     [min-mse]         [mse]         [mse]  -200.831  (216.991)
+ mse mn     [min-mse]     [min-mse]     [min-mse]  -272.447  (228.572)
+ mse md     [min-mse]     [min-mse]     [min-mse]  -200.831  (216.991)
 
 Median over 3 min-mse specifications (ATE)
 E[y|X,D=0]   = Y2_reg0                             Number of obs   =      1000
@@ -1036,7 +1068,7 @@ Summary over 3 resamples:
 
 DDML model, specification 1 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1049,7 +1081,7 @@ Warning: 61 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 1 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_2
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1062,7 +1094,7 @@ Warning: 46 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 2 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1075,7 +1107,7 @@ Warning: 48 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 2 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_2
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1088,7 +1120,7 @@ Warning: 50 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 3 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1101,7 +1133,7 @@ Warning: 61 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 3 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_2
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1114,7 +1146,7 @@ Warning: 46 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 4 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1127,7 +1159,7 @@ Warning: 48 propensity scores trimmed to lower limit .01.
 
 Min MSE DDML model, specification 4 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_2
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1209,6 +1241,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked Y2_reg
 D equations (1):        mbsmoke
@@ -1223,9 +1256,9 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 mse = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -294.236  (191.133)
+ mse mn     [min-mse]     [min-mse]     [min-mse]  -294.236  (191.133)
   ss mn  [shortstack]          [ss]          [ss]  -289.449  (187.007)
- mse md     [min-mse]         [mse]         [mse]  -294.236  (196.096)
+ mse md     [min-mse]     [min-mse]     [min-mse]  -294.236  (196.096)
   ss md  [shortstack]          [ss]          [ss]  -289.449  (191.740)
 
 Shortstack DDML model (median over 2 resamples) (ATE)
@@ -1238,6 +1271,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -289.4486   191.7403    -1.51   0.131    -665.2526    86.35543
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
@@ -1248,7 +1282,7 @@ Summary over 2 resamples:
 
 Min MSE DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1263,7 +1297,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 Shortstack DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1271,6 +1305,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -385.7083   188.7242    -2.04   0.041    -755.6009   -15.81573
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 71 propensity scores trimmed to lower limit .01.
 
 
@@ -1279,6 +1314,7 @@ Warning: 71 propensity scores trimmed to lower limit .01.
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked Y2_reg
 D equations (1):        mbsmoke
@@ -1307,9 +1343,9 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 * = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -294.236  (191.133)
+ mse mn     [min-mse]     [min-mse]     [min-mse]  -294.236  (191.133)
   ss mn  [shortstack]          [ss]          [ss]  -289.449  (187.007)
- mse md     [min-mse]         [mse]         [mse]  -294.236  (196.096)
+ mse md     [min-mse]     [min-mse]     [min-mse]  -294.236  (196.096)
   ss md  [shortstack]          [ss]          [ss]  -289.449  (191.740)
 
 Shortstack DDML model (median over 2 resamples) (ATE)
@@ -1322,6 +1358,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -289.4486   191.7403    -1.51   0.131    -665.2526    86.35543
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
@@ -1334,7 +1371,7 @@ Summary over 2 resamples:
 
 DDML model, specification 1 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1347,7 +1384,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 2 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1360,7 +1397,7 @@ Warning: 58 propensity scores trimmed to lower limit .01.
 
 Min MSE DDML model, specification 3 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1373,7 +1410,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 4 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1386,7 +1423,7 @@ Warning: 58 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 5 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1399,7 +1436,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 6 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1412,7 +1449,7 @@ Warning: 58 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 7 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1425,7 +1462,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 8 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1440,7 +1477,7 @@ Warning: 58 propensity scores trimmed to lower limit .01.
 
 Shortstack DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1448,6 +1485,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -385.7083   188.7242    -2.04   0.041    -755.6009   -15.81573
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 71 propensity scores trimmed to lower limit .01.
 
 
@@ -1466,6 +1504,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked Y2_reg
 D equations (1):        mbsmoke
@@ -1482,9 +1521,9 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 mse = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -293.286  (160.843)
+ mse mn     [min-mse]     [min-mse]     [min-mse]  -293.286  (160.843)
   ss mn  [shortstack]          [ss]          [ss]  -293.223  (160.367)
- mse md     [min-mse]         [mse]         [mse]  -291.386  (171.094)
+ mse md     [min-mse]     [min-mse]     [min-mse]  -291.386  (171.094)
   ss md  [shortstack]          [ss]          [ss]  -300.772  (175.938)
 
 Shortstack DDML model (median over 3 resamples) (ATE)
@@ -1497,6 +1536,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -300.7724    175.938    -1.71   0.087    -645.6046    44.05982
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -1507,7 +1547,7 @@ Summary over 3 resamples:
 
 Min MSE DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1522,7 +1562,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 Min MSE DDML model (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_2
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1573,7 +1613,7 @@ Summary over 3 resamples:
 
 Shortstack DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1581,6 +1621,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -385.7083   188.7242    -2.04   0.041    -755.6009   -15.81573
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 71 propensity scores trimmed to lower limit .01.
 
 
@@ -1588,7 +1629,7 @@ Warning: 71 propensity scores trimmed to lower limit .01.
 
 Shortstack DDML model (sample=2) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_2
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1596,6 +1637,7 @@ E[D|X]       = D_mbsmoke_ss_2
 -------------+----------------------------------------------------------------
      mbsmoke |  -193.1889    139.212    -1.39   0.165    -466.0393    79.66161
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 68 propensity scores trimmed to lower limit .01.
 
 
@@ -1611,6 +1653,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -293.2232    160.367    -1.83   0.067    -607.5368    21.09041
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -1629,6 +1672,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -300.7724    175.938    -1.71   0.087    -645.6046    44.05982
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -1640,6 +1684,7 @@ Summary over 3 resamples:
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked Y2_reg
 D equations (1):        mbsmoke
@@ -1677,9 +1722,9 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 * = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -293.286  (160.843)
+ mse mn     [min-mse]     [min-mse]     [min-mse]  -293.286  (160.843)
   ss mn  [shortstack]          [ss]          [ss]  -293.223  (160.367)
- mse md     [min-mse]         [mse]         [mse]  -291.386  (171.094)
+ mse md     [min-mse]     [min-mse]     [min-mse]  -291.386  (171.094)
   ss md  [shortstack]          [ss]          [ss]  -300.772  (175.938)
 
 Shortstack DDML model (median over 3 resamples) (ATE)
@@ -1692,6 +1737,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -300.7724    175.938    -1.71   0.087    -645.6046    44.05982
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -1706,7 +1752,7 @@ Summary over 3 resamples:
 
 DDML model, specification 1 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1719,7 +1765,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 1 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_2
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1732,7 +1778,7 @@ Warning: 59 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 2 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1745,7 +1791,7 @@ Warning: 58 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 2 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_2
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1758,7 +1804,7 @@ Warning: 76 propensity scores trimmed to lower limit .01.
 
 Min MSE DDML model, specification 3 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1771,7 +1817,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 Min MSE DDML model, specification 3 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_2
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1784,7 +1830,7 @@ Warning: 59 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 4 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1797,7 +1843,7 @@ Warning: 58 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 4 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_2
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1810,7 +1856,7 @@ Warning: 76 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 5 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1823,7 +1869,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 5 (sample=2) (ATE)
 E[y|X,D=0]   = Y2_reg0_2                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_2
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1836,7 +1882,7 @@ Warning: 59 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 6 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1849,7 +1895,7 @@ Warning: 58 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 6 (sample=2) (ATE)
 E[y|X,D=0]   = Y2_reg0_2                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_2
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1862,7 +1908,7 @@ Warning: 76 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 7 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1875,7 +1921,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 7 (sample=2) (ATE)
 E[y|X,D=0]   = Y2_reg0_2                           Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_2
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1888,7 +1934,7 @@ Warning: 59 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 8 (sample=1) (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1901,7 +1947,7 @@ Warning: 58 propensity scores trimmed to lower limit .01.
 
 DDML model, specification 8 (sample=2) (ATE)
 E[y|X,D=0]   = Y2_reg0_2                           Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_2
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D2_logit_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1916,7 +1962,7 @@ Warning: 76 propensity scores trimmed to lower limit .01.
 
 Min MSE DDML model, specification 3 (sample=1) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_1
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1931,7 +1977,7 @@ Warning: 72 propensity scores trimmed to lower limit .01.
 
 Min MSE DDML model, specification 3 (sample=2) (ATE)
 E[y|X,D=0]   = Y1_pystacked0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y2_reg1_2
+E[y|X,D=1]   = Y2_reg1
 E[D|X]       = D1_pystacked_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -1982,7 +2028,7 @@ Summary over 3 resamples:
 
 Shortstack DDML model (sample=1) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -1990,6 +2036,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -385.7083   188.7242    -2.04   0.041    -755.6009   -15.81573
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 71 propensity scores trimmed to lower limit .01.
 
 
@@ -1997,7 +2044,7 @@ Warning: 71 propensity scores trimmed to lower limit .01.
 
 Shortstack DDML model (sample=2) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_2                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_2
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_2
 ------------------------------------------------------------------------------
              |               Robust
@@ -2005,6 +2052,7 @@ E[D|X]       = D_mbsmoke_ss_2
 -------------+----------------------------------------------------------------
      mbsmoke |  -193.1889    139.212    -1.39   0.165    -466.0393    79.66161
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 68 propensity scores trimmed to lower limit .01.
 
 
@@ -2020,6 +2068,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -293.2232    160.367    -1.83   0.067    -607.5368    21.09041
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -2038,6 +2087,7 @@ E[D|X]       = D_mbsmoke_ss
 -------------+----------------------------------------------------------------
      mbsmoke |  -300.7724    175.938    -1.71   0.087    -645.6046    44.05982
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 3 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 3 resamples:
@@ -2073,6 +2123,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2084,8 +2135,8 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
   st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -143.809  (197.009)
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]         [mse]         [mse]  -268.719  (280.478)
- mse md     [min-mse]         [mse]         [mse]  -268.719  (313.321)
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  -268.719  (280.478)
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  -268.719  (313.321)
 
 Median over 2 stacking resamples (ATE)
 E[y|X,D=0]   = Y1_pystacked0                       Number of obs   =      1000
@@ -2097,6 +2148,7 @@ E[D|X]       = D1_pystacked
 -------------+----------------------------------------------------------------
      mbsmoke |  -268.7186   313.3212    -0.86   0.391    -882.8168    345.3796
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
@@ -2117,8 +2169,8 @@ Summary over 2 resamples:
 
 . 
 . ******************************************************************************** 
-. **** Restacking with ddml estimate                                                                                      
-> ****
+. **** Restacking with ddml estimate                                                                                   
+>    ****
 . ******************************************************************************** 
 . 
 . set seed 123
@@ -2148,6 +2200,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...c
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2161,7 +2214,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2169,6 +2222,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 51 propensity scores trimmed to lower limit .01.
 
 
@@ -2177,11 +2231,11 @@ Warning: 51 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .81986011    .81986011
+gradboost            2            0    .18013989    .18013989
+      ols            1            1    .56775193    .56775193
+gradboost            2            1    .43224807    .43224807
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -2190,7 +2244,7 @@ final stacking estimator: nnls1
 gradboost            2    .16876257    .16876257
 
 short-stacked weights across resamples for bweight
-final stacking estimator: 
+final stacking estimator: nnls1
                learner        D=0/1  mean_weight        rep_1
       ols            1            0            1            1
 gradboost            2            0            0            0
@@ -2198,13 +2252,13 @@ gradboost            2            0            0            0
 gradboost            2            1    .60780885    .60780885
 
 short-stacked weights across resamples for mbsmoke
-final stacking estimator: 
+final stacking estimator: nnls1
                learner  mean_weight        rep_1
     logit            1    .94753478    .94753478
 gradboost            2    .05246522    .05246522
 
 pool-stacked weights across resamples for bweight
-final stacking estimator: 
+final stacking estimator: nnls1
                learner        D=0/1  mean_weight        rep_1
       ols            1            0    .87556132    .87556132
 gradboost            2            0    .12443868    .12443868
@@ -2212,7 +2266,7 @@ gradboost            2            0    .12443868    .12443868
 gradboost            2            1    .51533867    .51533867
 
 pool-stacked weights across resamples for mbsmoke
-final stacking estimator: 
+final stacking estimator: nnls1
                learner  mean_weight        rep_1
     logit            1    .82247991    .82247991
 gradboost            2    .17752009    .17752009
@@ -2228,6 +2282,7 @@ gradboost            2    .17752009    .17752009
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2241,7 +2296,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2249,6 +2304,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
 ------------------------------------------------------------------------------
+Stacking final estimator: singlebest
 Warning: 52 propensity scores trimmed to lower limit .01.
 
 
@@ -2256,11 +2312,11 @@ Warning: 52 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .81986011    .81986011
+gradboost            2            0    .18013989    .18013989
+      ols            1            1    .56775193    .56775193
+gradboost            2            1    .43224807    .43224807
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -2283,7 +2339,7 @@ final stacking estimator: singlebest
 gradboost            2            0            0
 
 pool-stacked weights across resamples for bweight
-final stacking estimator: 
+final stacking estimator: nnls1
                learner        D=0/1  mean_weight        rep_1
       ols            1            0    .87556132    .87556132
 gradboost            2            0    .12443868    .12443868
@@ -2291,7 +2347,7 @@ gradboost            2            0    .12443868    .12443868
 gradboost            2            1    .51533867    .51533867
 
 pool-stacked weights across resamples for mbsmoke
-final stacking estimator: 
+final stacking estimator: nnls1
                learner  mean_weight        rep_1
     logit            1    .82247991    .82247991
 gradboost            2    .17752009    .17752009
@@ -2319,6 +2375,7 @@ gradboost            2    .17752009    .17752009
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2332,7 +2389,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2340,6 +2397,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
 ------------------------------------------------------------------------------
+Stacking final estimator: singlebest
 Warning: 52 propensity scores trimmed to lower limit .01.
 
 
@@ -2347,11 +2405,11 @@ Warning: 52 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .81986011    .81986011
+gradboost            2            0    .18013989    .18013989
+      ols            1            1    .56775193    .56775193
+gradboost            2            1    .43224807    .43224807
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -2406,6 +2464,7 @@ gradboost            2            0            0
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2419,7 +2478,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2427,6 +2486,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
 ------------------------------------------------------------------------------
+Stacking final estimator: singlebest
 Warning: 52 propensity scores trimmed to lower limit .01.
 
 
@@ -2434,11 +2494,11 @@ Warning: 52 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: singlebest
-               learner        D=0/1  mean_weight
-      ols            1            0            1
-      ols            1            1           .5
-gradboost            2            0            0
-gradboost            2            1           .5
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0            1            1
+gradboost            2            0            0            0
+      ols            1            1           .5           .5
+gradboost            2            1           .5           .5
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: singlebest
@@ -2478,9 +2538,9 @@ gradboost            2            0            0
 
 . assert el(stsw,1,3)==1
 
-. assert el(stsw,2,3)==0.5
+. assert el(stsw,2,3)==0
 
-. assert el(stsw,3,3)==0
+. assert el(stsw,3,3)==0.5
 
 . assert el(stsw,4,3)==0.5
 
@@ -2489,6 +2549,7 @@ gradboost            2            0            0
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2502,7 +2563,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2510,6 +2571,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 51 propensity scores trimmed to lower limit .01.
 
 
@@ -2517,11 +2579,11 @@ Warning: 51 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0     .8198601
-      ols            1            1    .56775275
-gradboost            2            0     .1801399
-gradboost            2            1    .43224725
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0     .8198601     .8198601
+gradboost            2            0     .1801399     .1801399
+      ols            1            1    .56775275    .56775275
+gradboost            2            1    .43224725    .43224725
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -2584,6 +2646,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...c
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2597,7 +2660,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2605,6 +2668,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 51 propensity scores trimmed to lower limit .01.
 
 
@@ -2613,6 +2677,7 @@ Warning: 51 propensity scores trimmed to lower limit .01.
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2626,7 +2691,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2634,6 +2699,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
 ------------------------------------------------------------------------------
+Stacking final estimator: singlebest
 Warning: 52 propensity scores trimmed to lower limit .01.
 
 
@@ -2641,11 +2707,11 @@ Warning: 52 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .81986011    .81986011
+gradboost            2            0    .18013989    .18013989
+      ols            1            1    .56775193    .56775193
+gradboost            2            1    .43224807    .43224807
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -2715,6 +2781,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2726,7 +2793,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Stacking DDML model (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2734,6 +2801,7 @@ E[D|X]       = D1_pystacked_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -511.5722   257.7553    -1.98   0.047    -1016.763   -6.381136
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 46 propensity scores trimmed to lower limit .01.
 
 
@@ -2741,11 +2809,11 @@ Warning: 46 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .81986011    .81986011
+gradboost            2            0    .18013989    .18013989
+      ols            1            1    .56775193    .56775193
+gradboost            2            1    .43224807    .43224807
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -2766,6 +2834,7 @@ error - pool-stacked weights for mbsmoke not available
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2778,7 +2847,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2786,6 +2855,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 51 propensity scores trimmed to lower limit .01.
 
 
@@ -2793,11 +2863,11 @@ Warning: 51 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .81986011    .81986011
+gradboost            2            0    .18013989    .18013989
+      ols            1            1    .56775193    .56775193
+gradboost            2            1    .43224807    .43224807
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -2837,6 +2907,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2848,7 +2919,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Stacking DDML model (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2856,6 +2927,7 @@ E[D|X]       = D1_pystacked_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -511.5722   257.7553    -1.98   0.047    -1016.763   -6.381136
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 46 propensity scores trimmed to lower limit .01.
 
 
@@ -2863,11 +2935,11 @@ Warning: 46 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .81986011    .81986011
+gradboost            2            0    .18013989    .18013989
+      ols            1            1    .56775193    .56775193
+gradboost            2            1    .43224807    .43224807
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -2888,6 +2960,7 @@ error - pool-stacked weights for mbsmoke not available
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2900,7 +2973,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2908,6 +2981,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 51 propensity scores trimmed to lower limit .01.
 
 
@@ -2915,11 +2989,11 @@ Warning: 51 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .81986011    .81986011
+gradboost            2            0    .18013989    .18013989
+      ols            1            1    .56775193    .56775193
+gradboost            2            1    .43224807    .43224807
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -2959,6 +3033,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -2970,7 +3045,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Stacking DDML model (ATE)
 E[y|X,D=0]   = Y1_pystacked0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D1_pystacked_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -2978,6 +3053,7 @@ E[D|X]       = D1_pystacked_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -511.5722   257.7553    -1.98   0.047    -1016.763   -6.381136
 ------------------------------------------------------------------------------
+Stacking final estimator: nnls1
 Warning: 46 propensity scores trimmed to lower limit .01.
 
 
@@ -2985,11 +3061,11 @@ Warning: 46 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .81986011    .81986011
+gradboost            2            0    .18013989    .18013989
+      ols            1            1    .56775193    .56775193
+gradboost            2            1    .43224807    .43224807
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -3010,6 +3086,7 @@ error - pool-stacked weights for mbsmoke not available
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -3022,7 +3099,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -3030,6 +3107,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
 ------------------------------------------------------------------------------
+Stacking final estimator: singlebest
 Warning: 52 propensity scores trimmed to lower limit .01.
 
 
@@ -3037,11 +3115,11 @@ Warning: 52 propensity scores trimmed to lower limit .01.
 
 mean stacking weights across folds/resamples for Y1_pystacked (bweight)
 final stacking estimator: nnls1
-               learner        D=0/1  mean_weight
-      ols            1            0    .81986011
-      ols            1            1    .56775193
-gradboost            2            0    .18013989
-gradboost            2            1    .43224807
+               learner        D=0/1  mean_weight        rep_1
+      ols            1            0    .81986011    .81986011
+gradboost            2            0    .18013989    .18013989
+      ols            1            1    .56775193    .56775193
+gradboost            2            1    .43224807    .43224807
 
 mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
 final stacking estimator: nnls1
@@ -3091,6 +3169,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -3102,7 +3181,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -3110,6 +3189,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |  -423.3015   168.6092    -2.51   0.012    -753.7694   -92.83351
 ------------------------------------------------------------------------------
+Stacking final estimator: 
 Warning: 51 propensity scores trimmed to lower limit .01.
 
 
@@ -3142,6 +3222,7 @@ error - pool-stacked weights for mbsmoke not available
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked
 D equations (1):        mbsmoke
@@ -3153,7 +3234,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Shortstack DDML model (ATE)
 E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
-E[y|X,D=1]   = Y_bweight_ss1_1
+E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -3161,6 +3242,7 @@ E[D|X]       = D_mbsmoke_ss_1
 -------------+----------------------------------------------------------------
      mbsmoke |   -323.535   135.2928    -2.39   0.017    -588.7041    -58.3659
 ------------------------------------------------------------------------------
+Stacking final estimator: singlebest
 Warning: 52 propensity scores trimmed to lower limit .01.
 
 
@@ -3235,6 +3317,7 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 
 
 Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
 Dependent variable (Y): bweight
  bweight learners:      Y1_pystacked Y2_reg
 D equations (1):        mbsmoke
@@ -3254,7 +3337,7 @@ spec  r  Y(0) learner  Y(1) learner     D learner         b        SE
 
 Min MSE DDML model, specification 6 (ATE)
 E[y|X,D=0]   = Y2_reg0_1                           Number of obs   =      1000
-E[y|X,D=1]   = Y1_pystacked1_1
+E[y|X,D=1]   = Y1_pystacked1
 E[D|X]       = D2_logit_1
 ------------------------------------------------------------------------------
              |               Robust
@@ -3276,5 +3359,5 @@ error - restacking available only if pystacked is the only learner for each cond
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactive.log
   log type:  text
- closed on:  10 Jul 2023, 22:45:54
---------------------------------------------------------------------------------------------------------------------------
+ closed on:  20 Jul 2023, 12:39:10
+-----------------------------------------------------------------------------------------------------------------------

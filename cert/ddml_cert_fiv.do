@@ -38,6 +38,8 @@ ddml E[D|X], learner(Dhat_pystacked) vname($D): pystacked {D} $X, type(reg)
 ddml crossfit
 ddml estimate
 ddml estimate, mname(m0) spec(st) rep(1) replay notable
+ddml extract, show(stweights)
+ddml extract, show(pystacked)
 *** append, estimate, replay
 ddml sample, append(1)
 ddml crossfit
@@ -88,10 +90,12 @@ ddml E[D|X], learner(Dhat_rf) vname($D): pystacked {D} $X, type(reg) m(rf)
 ddml crossfit, shortstack
 ddml estimate
 ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+ddml extract, show(ssweights)
 *** append, estimate, replay
 ddml sample, append(1)
 ddml crossfit, shortstack
 ddml estimate
+ddml extract, show(ssweights)
 *** replay
 ddml estimate, mname(m0) spec(mse) rep(1) replay notable
 ddml estimate, mname(m0) spec(mse) rep(2) replay notable
