@@ -10,7 +10,7 @@
 {pstd}{help ddml_example_interactive_pystacked_detailed}{p_end}
 {pstd}{help ddml_example_partialiv_pystacked_basic}{p_end}
 {pstd}{help ddml_example_partialiv_anylearner_basic}{p_end}
-{pstd}{help ddml_example_flexiv_pystacked_basic}{p_end}
+{pstd}{help ddml_example_flexiv_anylearner_basic}{p_end}
 {pstd}{help ddml_example_flexiv_anylearner_detailed}{p_end}
 {pstd}{help ddml_example_interactiveiv_pystacked_basic}{p_end}
 {pstd}{help ddml_example_interactiveiv_pystacked_detailed}{p_end}
