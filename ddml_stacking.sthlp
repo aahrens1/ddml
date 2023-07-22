@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3jul2023}{...}
+{* *! version 22jul2023}{...}
 {hline}
 {cmd:help ddml stacking}{right: v1.2}
 {hline}
@@ -16,8 +16,8 @@ controls and/or instrumental variables.
 
 {pstd}Stacking regression is a simple and powerful method for 
 combining predictions from multiple learners.
-{helpb pystacked} is the recommended way to specify multiple learners in {opt ddml},
-and {opt ddml} has integrated support for various features provided by {helpb pystacked}.
+{help pystacked} is the recommended way to specify multiple learners in {opt ddml},
+and {opt ddml} has integrated support for various features provided by {help pystacked}.
 This help file provides an overview of how to implement stacking
 when estimating using {opt ddml}.
 
@@ -34,22 +34,28 @@ A common approach is to use the cross-validated (out-of-sample, OOS) predictions
 of the base learners to obtain the weights for combining the learners.
 
 {pstd}
-Three versions of stacking are supported by {opt ddml}:
-standard stacking, provided via the {help pystacked} package;
-pooled stacking, a variant of standard stacking;
-and short-stacking, a version of stacking specific to double-debiased machine learning.
+Three ways of pairing stacking with DDML are supported:
+{it:standard stacking}, provided via the {help pystacked} package;
+{it:pooled stacking}, a variant of standard stacking;
+and {it:short-stacking}, a version of stacking specific to double-debiased machine learning.
 
-{pstd}{helpb pystacked} is the recommended way to specify multiple learners in {opt ddml}.
-{helpb pystacked} provides a fast way of estimating all the learners in a single call to one program,
-and {opt ddml} has integrated support for various features provided by {helpb pystacked}.
+{marker pystacked}{...}
+{pstd}{help pystacked} is the recommended way to specify multiple learners in {opt ddml}.
+{help pystacked} provides a fast way of estimating all the learners in a single call to one program,
+and {opt ddml} has integrated support for various features provided by {help pystacked}.
 {opt ddml} will store the predicted values of the specified base learners as well as the combined ("stacked") predicted values.
 It also stores the standard and pooled stacking weights used by {help pystacked}
 along with the {opt ddml} short-stacking weights.
 
-{pstd}{bf:Important}: For these features to be available, {helpb pystacked} needs to be the only learner for each conditional expectation.
-Multiple learners must be specified in the call to {helpb pystacked}; see the examples below.
-{helpb pystacked} can be provided directly to {opt ddml} as one of several learners for a conditional expectation,
-but in this case the extra features for {helpb pystacked} will not be availabe.
+{pstd}{bf:Important}: For these features to be available, {help pystacked} needs to be the only learner for each conditional expectation.
+Multiple learners must be specified in the call to {help pystacked}; see the examples below.
+{help pystacked} can be provided directly to {opt ddml} as one of several learners for a conditional expectation,
+but in this case the extra features for {help pystacked} will not be availabe.
+
+{pstd}Note: some of the {opt ddml} stacking options available via {help pystacked} integration
+are not available for the flexible IV model.
+See this {help ddml_example_flexiv_anylearner_detailed:help file} for examples and discussion
+of how to stack and short-stack when using the flexible IV model).{p_end}
 
 
 {title:Standard stacking}
@@ -92,7 +98,7 @@ and can be changed using the {opt psfinalest(estimator)} option.
 {pstd}Note: all final estimators available with {help pystacked} are also available for pooled stacking.
 However, the current version of {help pystacked} generates the necessary cross-validated OOS predicted values
 only if the standard stacking final estimator used by {help pystacked}
-is either {opt nnls1} (the default), {opt ls1} or {opt singlebest}.
+is either {opt nnls1} (the default), {opt ls1}, {opt ols}, {opt ridge} or {opt singlebest}.
 Hence when using pooled stacking,
 the standard stacking final estimator specified with {help pystacked} needs to be one of these.
 
@@ -109,7 +115,26 @@ Short-stacking also does not require use of {help pystacked};
 the predictions of any base learners specified by the user can be short-stacked.
 Short-stacking is specified at the {help ddml crossfit} stage using the {opt shortstack} option.
 The default final estimator is the same as with {help pystacked},
-and can be changed using the {opt ssfinalest(estimator)} option.
+and can be changed using the {opt finalest(estimator)} option.
+
+{pstd}
+Because short-stacking is typically much faster than standard or pooled stacking,
+users may wish to use short-stacking as the only stacking method.
+This can be done efficiently in combination with {help pystacked}.
+To do this, (1) use {help pystacked} as the single learner in each equation;
+(2) at the cross-fitting stage, specify the {opt shortstack} and {cmdab:nostd:stack} options.
+This causes {help pystacked} to estimate the base learners
+without the computationally-costly stacking step in each cross-fit fold.
+
+
+{title:Re-stacking after cross-fitting}
+
+{pstd}
+Users have the option of re-stacking the base learner predictions using a different final estimator
+without having to re-cross-fit/re-estimate the entire model.
+This is done by specifying the stacking method and final estimator
+at the {help ddml estimate:ddml estimate} step.
+This feature is available only if {help pystacked} is the single learner in every equation.
 
 
 {title:Stacking weights}
@@ -127,118 +152,16 @@ use the {opt show(pystacked)} option.
 {title:Examples}
 
 {pstd}
-For more examples of usage see the links via the main {help ddml##examples:ddml help file}.
 See {help ddml init:help ddml init} for details of model initialization and learner specification options.
 
-{pstd}Note: the additional support provided by {opt ddml} for {helpb pystacked} (see {help ddml##pystacked:above})
-is available only if, as in this example, {help pystacked} is the only learner for each conditional expectation.
+{pstd}Note: the additional support provided by {opt ddml} for {help pystacked} (see {help ddml stacking##pystacked:above})
+is available only if {help pystacked} is the sole learner for each conditional expectation.
 Mutliple learners are provided to {help pystacked}, not directly to {opt ddml}.{p_end}
 
-{pstd}Preparation: load the data, define global macros, set the seed and initialize the model.{p_end}
-{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
-{phang2}. {stata "global Y net_tfa"}{p_end}
-{phang2}. {stata "global D e401"}{p_end}
-{phang2}. {stata "global X tw age inc fsize educ db marr twoearn pira hown"}{p_end}
-{phang2}. {stata "set seed 42"}{p_end}
-{phang2}. {stata "ddml init partial, kfolds(2) reps(2)"}{p_end}
 
-{pstd}Add supervised machine learners for estimating conditional expectations.
-For simplicity, we use {help pystacked}'s default learners: OLS, cross-validated lasso, and gradient boosting.{p_end}
-
-{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X"}{p_end}
-{phang2}. {stata "ddml E[D|X]: pystacked $D $X"}{p_end}
-
-{pstd} Cross-fitting: The learners are iteratively fitted on the training data.
-In addition to the standard stacking done by {helpb pystacked},
-also request short-stacking and pooled-stacking to be done by {opt ddml}.{p_end}
-{phang2}. {stata "ddml crossfit, shortstack poolstack"}{p_end}
-
-{pstd}Estimate the coefficients of interest.
-Specify heteroskedastic-consistent SEs.{p_end}
-{phang2}. {stata "ddml estimate, robust"}{p_end}
-
-{pstd}Examine the standard ({cmd:pystacked}) stacking weights as well as
-the {opt ddml} short-stacking and pooled-stacking weights.{p_end}
-{phang2}. {stata "ddml extract, show(stweights)"}{p_end}
-{phang2}. {stata "ddml extract, show(ssweights)"}{p_end}
-{phang2}. {stata "ddml extract, show(psweights)"}{p_end}
-
-{pstd}Shorthand for displaying all weights:{p_end}
-{phang2}. {stata "ddml extract, show(weights)"}{p_end}
-
-{pstd}Examine the full set of {help pystacked} stacking weights
-by cross-fit folds plus other {help pystacked} results:{p_end}
-{phang2}. {stata "ddml extract, show(weights)"}{p_end}
-
-{pstd}As above, but specify the base learners explicitly.
-The first learner in the stacked ensemble is OLS.
-We also use cross-validated lasso, ridge and two random forests with different settings.
-The settings are stored in macros for readability.{p_end}
-
-{phang2}. {stata "ddml init partial, kfolds(2) reps(2)"}{p_end}
-{phang2}. {stata "global rflow max_features(5) min_samples_leaf(1) max_samples(.7)"}{p_end}
-{phang2}. {stata "global rfhigh max_features(5) min_samples_leaf(10) max_samples(.7)"}{p_end}
-{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf) opt($rflow) || method(rf) opt($rfhigh), type(reg)"}{p_end}
-{phang2}. {stata "ddml E[D|X]: pystacked $D $X || method(ols) || method(lassocv) || method(ridgecv) || method(rf) opt($rflow) || method(rf) opt($rfhigh), type(reg)"}{p_end}
-
-{pstd}Note: Options before ":" and after the first comma refer to {cmd:ddml}. 
-Options that come after the final comma refer to the estimation command. 
-Make sure to not confuse the two types of options.{p_end}
-
-{pstd}The learners are iteratively fitted on the training data.
-In addition to the standard stacking done by {helpb pystacked},
-also request short-stacking to be done by {opt ddml}.
-Finally, estimate the coefficients of interest.{p_end}
-{phang2}. {stata "ddml crossfit, shortstack"}{p_end}
-{phang2}. {stata "ddml estimate, robust"}{p_end}
-
-{pstd}Examine the standard ({cmd:pystacked}) stacking weights as well as the {opt ddml} short-stacking weights.{p_end}
-{phang2}. {stata "ddml extract, show(stweights)"}{p_end}
-{phang2}. {stata "ddml extract, show(ssweights)"}{p_end}
+{smcl}
+INCLUDE help ddml_example_stacking.sthlp
 
 
-{marker references}{title:References}
-
-{pstd}
-Chernozhukov, V., Chetverikov, D., Demirer, M., 
-Duflo, E., Hansen, C., Newey, W. and Robins, J. (2018), 
-Double/debiased machine learning for 
-treatment and structural parameters. 
-{it:The Econometrics Journal}, 21: C1-C68. {browse "https://doi.org/10.1111/ectj.12097"}
-
-{marker Hastie2009}{...}
-{pstd}
-Hastie, T., Tibshirani, R., & Friedman, J. (2009). 
-The elements of statistical learning: data mining, inference,
-and prediction. Springer Science & Business Media.
-
-{marker Wolpert1992}{...}
-{pstd}
-Wolpert, David H. Stacked generalization. {it:Neural networks} 5.2 (1992): 241-259.
-{browse "https://doi.org/10.1016/S0893-6080(05)80023-1"}
-
-
-{title:Authors}
-
-{pstd}
-Achim Ahrens, Public Policy Group, ETH Zurich, Switzerland  {break}
-achim.ahrens@gess.ethz.ch
-
-{pstd}
-Christian B. Hansen, University of Chicago, USA {break}
-Christian.Hansen@chicagobooth.edu
-
-{pstd}
-Mark E Schaffer, Heriot-Watt University, UK {break}
-m.e.schaffer@hw.ac.uk	
-
-{pstd}
-Thomas Wiemann, University of Chicago, USA {break}
-wiemann@uchicago.edu
-
-
-{title:Also see (if installed)}
-
-{pstd}
-Help: {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
- {helpb pdslasso}, {helpb pystacked}.{p_end}
+{smcl}
+INCLUDE help ddml_install_ref_auth
