@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 21mar2023}{...}
+{* *! version 24jul2023}{...}
 {hline}
 {cmd:help crossfit}{right: v1.2}
 {hline}
@@ -24,7 +24,7 @@ This is done iteratively to obtain out-of-sample ("cross-fitted") fitted values 
 
 {pstd}
 {opt crossfit} is an auxiliary program that is internally used by 
-{helpb ddml} and {helpb qddml}, but can be used for other purposes.
+{help ddml} and {help qddml}, but can be used for other purposes.
 
 
 {marker syntax}{...}
@@ -36,7 +36,7 @@ This is done iteratively to obtain out-of-sample ("cross-fitted") fitted values 
 {synopt:{opt estring(string)}}
 An estimation string, e.g. "reg y x1 x2", that will be 
 repeatedly invoked. See note on compatible programs 
-{helpb ddml##compatibility:here}.
+{help ddml##compatibility:here}.
 {p_end}
 {synopt:{opt g:enerate(stubname)}}
 Name of the new variable to be created;
@@ -105,13 +105,13 @@ A simple example of how to use {opt crossfit} to do this is below.
 {p_end}
 
 {pstd}
-{opt crossfit} has integrated support for {opt pystacked} (see the help for {helpb pystacked} if installed).
-{helpb pystacked} is a front-end for the {browse "https://scikit-learn.org/stable/index.html":scikit-learn}
+{opt crossfit} has integrated support for {opt pystacked} (see the help for {help pystacked} if installed).
+{help pystacked} is a front-end for the {browse "https://scikit-learn.org/stable/index.html":scikit-learn}
 implementation of stacking regression.
 Stacking is a way of combining multiple supervised
 machine learners (the "base" or "level-0" learners) into
 an ensemble or "meta" learner.
-When used in conjunction with {opt crossfit}, the predictions of the {helpb pystacked} base learners
+When used in conjunction with {opt crossfit}, the predictions of the {help pystacked} base learners
 are generated along with the ensemble predicted values.
 {p_end}
 
@@ -131,15 +131,18 @@ See {help ddml##compatibility:here}.
 {phang2}. {stata "set seed 42"}{p_end}
 
 {pstd}Note that the variable created is called yhat_1 because the number of resamples defaults to 1.{p_end}
+
 {phang2}. {stata "crossfit, estring(reg earnings $X) gen(yhat) kfolds(3)"}{p_end}
 {phang2}. {stata "sum earnings yhat_1"}{p_end}
 
 {pstd}As above but using 5 resamples.{p_end}
+
 {phang2}. {stata "crossfit, estring(reg earnings $X) gen(yhat) kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "sum earnings yhat*"}{p_end}
 
-{pstd}As above but using {helpb pystacked}.
+{pstd}As above but using {help pystacked}.
 The default base learners are OLS, CV-lasso and gradient boosting.{p_end}
+
 {phang2}. {stata "crossfit, estring(pystacked earnings $X) gen(yhat) kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "sum earnings yhat*"}{p_end}
 
@@ -151,6 +154,7 @@ These could be used after cross-fitting to calculate the MSPE (mean squared pred
 but the MSPE is one of the returned results of {opt crossfit} so we just report that.
 The specification that minimizes the MSPE for all 5 resamples is lambda=250.
 {p_end}
+
 {phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(2000)) gen(yhat2000) kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "mat list r(mse_list)"}{p_end}
 {phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(1000)) gen(yhat1000) kfolds(3) reps(5)"}{p_end}
@@ -159,6 +163,18 @@ The specification that minimizes the MSPE for all 5 resamples is lambda=250.
 {phang2}. {stata "mat list r(mse_list)"}{p_end}
 {phang2}. {stata "crossfit, estring(lasso2 earnings $X, lglmnet lambda(250)) gen(yhat250) kfolds(3) reps(5)"}{p_end}
 {phang2}. {stata "mat list r(mse_list)"}{p_end}
+
+{pstd}When used as a standalone program, {opt crossfit} leaves behind in Mata a eStruct ("equation struct") called "crossfit".
+This object contains information about the estimation, stored on associative arrays.
+The utility {help ddml extract} can be used to extract this information.
+The example below shows how to list the AA keys
+and how to extract the {help pystacked} stacking weights for resample 2.
+Rows are base learners; columns are the weights for each learner.{p_end}
+
+{phang2}. {stata "mata: mata desc crossfit"}{p_end}
+{phang2}. {stata "ddml extract, ename(crossfit) keys"}{p_end}
+{phang2}. {stata "ddml extract, ename(crossfit) key1(yhat) key2(stack_base_est)"}{p_end}
+{phang2}. {stata "ddml extract, ename(crossfit) key1(yhat) key2(stack_weights) key3(2)"}{p_end}
 
 
 {marker results}{title:Saved results}
@@ -218,4 +234,4 @@ wiemann@uchicago.edu
 {title:Also see (if installed)}
 
 {pstd}
-Help: {helpb ddml}, {helpb qddml}, {helpb pystacked}, {helpb lasso2}, {helpb cvlasso}.{p_end}
+Help: {help ddml}, {help qddml}, {help pystacked}, {help lasso2}, {help cvlasso}.{p_end}

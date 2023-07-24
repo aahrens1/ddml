@@ -1,10 +1,10 @@
 {smcl}
-{* *! version 3jul2023}{...}
+{* *! version jul2023}{...}
 {hline}
-{cmd:help ddml partial}{right: v1.2}
+{cmd:help ddml interactiveiv}{right: v1.2}
 {hline}
 
-{title:ddml - estimation examples for the interactive IV (LATE) model in Double Debiased Machine Learning}
+{title:ddml - estimation of the interactive IV (LATE) model in Double Debiased Machine Learning}
 
 {pstd}
 {opt ddml} implements algorithms for causal inference aided by supervised
@@ -16,12 +16,12 @@ controls and/or instrumental variables.
 
 {pstd}
 {opt ddml} supports a variety of different ML programs, including
-but not limited to {helpb pystacked} and {helpb lassopack}. 
-{helpb pystacked} is the recommended way to specify multiple learners in {opt ddml},
-and {opt ddml} has integrated support for various features provided by {helpb pystacked}.
+but not limited to {help pystacked} and {help lassopack}. 
+{help pystacked} is the recommended way to specify multiple learners in {opt ddml},
+and {opt ddml} has integrated support for various features provided by {help pystacked}.
 
 {pstd}
-The {opt ddml} package also includes the wrapper program {helpb qddml},
+The {opt ddml} package also includes the wrapper program {help qddml},
 which uses a simplified one-line syntax, but offers less flexibility.
 
 {pstd}
@@ -57,72 +57,13 @@ learner, the following conditional expectations:
 
 {pstd}
 Below we demonstrate the use of {cmd:ddml} for the interactive IV model. 
-Note that estimation models are chosen for demonstration purposes only and 
-kept simple to allow you to run the code quickly.
 
-{marker late}{...}
-{pstd}{ul:Interactive IV model--LATE estimation.} 
+{marker late_i}{...}
+{pstd}{help ddml_example_interactiveiv_pystacked_basic:Basic example of the interactive IV model (LATE) with pystacked}
 
-{pstd}Preparation: we load the data, define global macros and set the seed.{p_end}
-{phang2}. {stata "use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta, clear"}{p_end}
-{phang2}. {stata "global Y earnings"}{p_end}
-{phang2}. {stata "global D training"}{p_end}
-{phang2}. {stata "global Z assignmt"}{p_end}
-{phang2}. {stata "global X sex age married black hispanic"}{p_end}
-{phang2}. {stata "set seed 42"}{p_end}
-
-{pstd}We initialize the model.{p_end}
-{phang2}. {stata "ddml init interactiveiv, kfolds(5)"}{p_end}
-
-{pstd}We use {helpb pystacked} with two base learners for each reduced form equation.{p_end}
-{phang2}. {stata "ddml E[Y|X,Z]: pystacked $Y c.($X)# #c($X), type(reg) m(ols lassocv)"}{p_end}
-{phang2}. {stata "ddml E[D|X,Z]: pystacked $D c.($X)# #c($X), type(class) m(logit lassocv)"}{p_end}
-{phang2}. {stata "ddml E[Z|X]: pystacked $Z c.($X)# #c($X), type(class) m(logit lassocv)"}{p_end}
-
-{pstd}Cross-fitting and estimation, with short-stacking implemented via {opt ddml}.{p_end}
-{phang2}. {stata "ddml crossfit, shortstack"}{p_end}
-{phang2}. {stata "ddml estimate, robust"}{p_end}
-
-{pstd}Compare the short-stacking estimation above with standard (within-cross-fit-fold) stacking:{p_end}
-{phang2}. {stata "ddml estimate, spec(mse) rep(1) replay notable"}{p_end}
+{marker late_ii}{...}
+{pstd}{help ddml_example_interactiveiv_pystacked_detailed:Detailed example of the interactive IV model (LATE) with pystacked}
 
 
-{marker references}{title:References}
-
-{pstd}
-Chernozhukov, V., Chetverikov, D., Demirer, M., 
-Duflo, E., Hansen, C., Newey, W. and Robins, J. (2018), 
-Double/debiased machine learning for 
-treatment and structural parameters. 
-{it:The Econometrics Journal}, 21: C1-C68. {browse "https://doi.org/10.1111/ectj.12097"}
-
-{marker Wolpert1992}{...}
-{pstd}
-Wolpert, David H. Stacked generalization. {it:Neural networks} 5.2 (1992): 241-259.
-{browse "https://doi.org/10.1016/S0893-6080(05)80023-1"}
-
-
-{title:Authors}
-
-{pstd}
-Achim Ahrens, Public Policy Group, ETH Zurich, Switzerland  {break}
-achim.ahrens@gess.ethz.ch
-
-{pstd}
-Christian B. Hansen, University of Chicago, USA {break}
-Christian.Hansen@chicagobooth.edu
-
-{pstd}
-Mark E Schaffer, Heriot-Watt University, UK {break}
-m.e.schaffer@hw.ac.uk	
-
-{pstd}
-Thomas Wiemann, University of Chicago, USA {break}
-wiemann@uchicago.edu
-
-
-{title:Also see (if installed)}
-
-{pstd}
-Help: {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
- {helpb pdslasso}, {helpb pystacked}.{p_end}
+{smcl}
+INCLUDE help ddml_install_ref_auth

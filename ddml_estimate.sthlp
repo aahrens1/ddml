@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3jul2023}{...}
+{* *! version 24jul2023}{...}
 {hline}
 {cmd:help ddml crossfit, ddml estimate}{right: v1.2}
 {hline}
@@ -22,20 +22,32 @@ Each learner is fitted iteratively on training folds and out-of-sample predicted
 {opt ddml estimate} estimates the model using the conditional expectations obtained from the cross-fitting step.
 
 {pstd}
-Before cross-fitting, the model must be defined using {helpb ddml init} and the learners specified using {helpb ddml eq};
-see the help files for details.
+Before cross-fitting, the model must be defined using {help ddml init} and the learners specified using {help ddml eq}.
+
+{pstd}
+See the help for {help ddml stacking} for a detailed discussion and examples of stacking with {opt ddml}.
+
 
 {marker syntax}{...}
 {title:Syntax}
 
-{p 8 14}{cmd:ddml crossfit} [ , {opt mname(name)} {opt shortstack} {opt poolstack}
-{opt ssfinalest(name)} {opt psfinalest(name)} {opt finalest(name)}{bind: ]} 
+{p 8 14}{cmd:ddml crossfit} [ , {opt mname(name)} {opt shortstack} {opt poolstack} {cmdab:NOSTD:stack} {opt finalest(name)}{bind: ]} 
 
-{p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)} {opt atet} {opt ateu} {opt trim(real)}{bind: ]} 
+{p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)}
+{opt atet} {opt ateu} {opt trim(real)}
+{opt mname(name)} {opt shortstack} {opt poolstack} {opt stdstack} {opt finalest(name)}{bind: ]} 
 
 {p 8 14}Replay options:
 
-{p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {opt spec(integer or string)} {opt rep(integer or string)} {opt allcombos} {opt not:able} {opt replay} {bind: ]} 
+{p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {opt spec(integer or string)} {opt rep(integer or string)} {opt allcombos} {opt not:able} {opt replay}{bind: ]} 
+
+{p 8 14}Using a user-specified combination of {help ddml crossfit} conditional expectations (models {opt partial}, {opt partialiv}, {opt fiv}):
+
+{p 8 14}{cmd:ddml estimate} , {opt y(varname)} {opt d(varlist)} [ {opt z(varlist)} {opt dh(varname)} {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)}{bind: ]} 
+
+{p 8 14}Using a user-specified combination of {help ddml crossfit} conditional expectations (models {opt interactive}, {opt interactiviv}):
+
+{p 8 14}{cmd:ddml estimate} , {opt y0(varname)} {opt y1(varname)} [ {opt d(varname)} {opt d0(varname)} {opt d1(varname)} {opt z(varname)} {opt mname(name)}  {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)}{bind: ]}
 
 
 {synoptset 20}{...}
@@ -49,11 +61,7 @@ Short-stacking uses the
 cross-fitted predicted values to obtain a weighted average
 of the multiple base learners.
 It is computationally faster (often much faster) than standard stacking
-available when {help pystacked} is used to specify the base learners
-{p_end}
-{synopt:{opt ssfinalest(name)}} specifies the estimator used
-to obtain the short-stacking weights; the default is constrained non-negative least squares.
-For the list of available final estimators, see the help for {help pystacked}.
+(implemented via {help pystacked}) is used to specify the base learners
 {p_end}
 {synopt:{opt poolstack}} is available as an alternative to standard stacking
 when {help pystacked} is used to specify the base learners.
@@ -62,14 +70,17 @@ by obtaining a single set of stacking weights
 from the full set of out-of-sample base learner predicted values
 (in contrast to {help pystacked}, which stacks each cross-fit fold separately).
 {p_end}
-{synopt:{opt psfinalest(name)}} specifies the estimator used
-to obtain the pooled-stacking weights; the default is constrained non-negative least squares.
-For the list of available final estimators, see the help for {help pystacked}.
+{synopt:{opt nostdstack}} is used in conjunction with short-stacking and {help pystacked}.
+It tells {help pystacked} to generate the base learner predictions without
+the computationally-expensive additional step of obtaining the stacking weights.
+This option should be used if short-stacking is the only stacking method needed.
 {p_end}
-{synopt:{opt finalest(name)}} sets the final estimator for both
-short-stacking and pooled-stacking.
-NB: to set the final estimator for standard stacking using {help pystacked},
-use the {help pystacked} {opt finalest} option when specifying the base learners using {help ddml eq}.
+{synopt:{opt finalest(name)}} sets the final estimator for all stacking methods;
+the default is the {help pystacked} default of non-negative nonlinear least squares.
+See {help pystacked} for alternative stacking final estimators.
+NB: use of this option is incompatible with use of the {opt finalest(.)} option
+when {help pystacked} is the learner specified in an equation using {help ddml eq};
+use {opt finalest} in one or the other, or neither (the default), but not both.
 {p_end}
 {synoptline}
 {p2colreset}{...}
@@ -89,7 +100,7 @@ presence of arbitrary heteroskedasticity.
 select cluster-robust variance-covariance estimator, e.g. {cmd:vce(hc3)} or {cmd:vce(cluster id)}.
 {p_end}
 {synopt:{opt vce(type)}}
-select variance-covariance estimator; see {helpb regress##vcetype:here}.
+select variance-covariance estimator; see {help regress##vcetype:here}.
 {p_end}
 {synopt:{cmdab:noc:onstant}}
 suppress constant term ({it:partial}, {it:iv}, {it:fiv} models only). Since the residualized outcome 
@@ -110,7 +121,25 @@ trimming of propensity scores for the Interactive and Interactive IV models. The
 (that is, values below 0.01 and above 0.99 are set 
 to 0.01 and 0.99, respectively).
 {p_end}
-{synoptline}
+{synopt:{opt shortstack}} requests re-stacking of the short-stacking results
+using the final estimator specified with {opt finalest(.)};
+this option is available only if {help pystacked} is the single learner for each equation.
+Re-stacking is fast because it doesn't require re-cross-fitting.
+{p_end}
+{synopt:{opt poolstack}} requests re-stacking of the pooled stacking results
+using the final estimator specified with {opt finalest(.)};
+this option is available only if {help pystacked} is the single learner for each equation.
+Re-stacking is fast because it doesn't require re-cross-fitting.
+{p_end}
+{synopt:{opt stdstack}} requests re-stacking of the standard stacking results
+using the final estimator specified with {opt finalest(.)};
+this option is available only if {help pystacked} is the single learner for each equation.
+Re-stacking is fast because it doesn't require re-cross-fitting.
+{p_end}
+{synopt:{opt finalest(name)}} sets the final estimator for all stacking methods;
+the default is the {help pystacked} default of non-negative nonlinear least squares.
+See {help pystacked} for alternative stacking final estimators.
+{p_end}
 {p2colreset}{...}
 {pstd}
 
@@ -134,98 +163,34 @@ used in combination with {opt spec()} and {opt rep()} to display and return esti
 {p2colreset}{...}
 {pstd}
 
-
-{title:Examples}
-
-{pstd}
-For more examples of usage see the links via the main {help ddml##examples:ddml help file}.
-See {help ddml init:help ddml init} for details of model initialization and learner specification options.
-
-{pstd}Note: the additional support provided by {opt ddml} for {helpb pystacked} (see {help ddml stacking:help ddml stacking})
-is available only if, as in this example, {help pystacked} is the only learner for each conditional expectation.
-Mutliple learners are provided to {help pystacked}, not directly to {opt ddml}.{p_end}
-
-{pstd}Preparation: load the data, define global macros, set the seed and initialize the model.{p_end}
-{phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
-{phang2}. {stata "global Y net_tfa"}{p_end}
-{phang2}. {stata "global D e401"}{p_end}
-{phang2}. {stata "global X tw age inc fsize educ db marr twoearn pira hown"}{p_end}
-{phang2}. {stata "set seed 42"}{p_end}
-{phang2}. {stata "ddml init partial, kfolds(2) reps(2)"}{p_end}
-
-{pstd}Add supervised machine learners for estimating conditional expectations.
-For simplicity, we use {help pystacked}'s default learners: OLS, cross-validated lasso, and gradient boosting.{p_end}
-
-{phang2}. {stata "ddml E[Y|X]: pystacked $Y $X"}{p_end}
-{phang2}. {stata "ddml E[D|X]: pystacked $D $X"}{p_end}
-
-{pstd} Cross-fitting: The learners are iteratively fitted on the training data.
-In addition to the standard stacking done by {helpb pystacked},
-also request short-stacking and pooled-stacking to be done by {opt ddml}.{p_end}
-{phang2}. {stata "ddml crossfit, shortstack poolstack"}{p_end}
-
-{pstd}Estimate the coefficients of interest.
-Specify heteroskedastic-consistent SEs.{p_end}
-{phang2}. {stata "ddml estimate, robust"}{p_end}
-
-{pstd}Examine the standard ({cmd:pystacked}) stacking weights as well as
-the {opt ddml} short-stacking and pooled-stacking weights.{p_end}
-{phang2}. {stata "ddml extract, show(stweights)"}{p_end}
-{phang2}. {stata "ddml extract, show(ssweights)"}{p_end}
-{phang2}. {stata "ddml extract, show(psweights)"}{p_end}
+{synoptset 20}{...}
+{synopthdr:User-specified vars}
+{synoptline}
+{synopt:{opt y(varname)}}
+estimated conditional expectation of dependent variable (models {opt partial}, {opt partialiv}, {opt fiv})
+{p_end}
+{synopt:{opt d(varname)}}
+estimated conditional expectation of causal variable of interest (models {opt partial}, {opt partialiv}, {opt fiv})
+{p_end}
+{synopt:{opt z(varname)}}
+estimated conditional expectation of instrumental variables (models {opt partialiv}, {opt interactiv})
+{p_end}
+{synopt:{opt dh(varname)}}
+estimated optimal IV = E[D|X,Z] - E[D^|X] (model {opt fiv} only)
+{p_end}
+{synopt:{opt y0(varname)}}
+estimated E[Y|X,D=0] (model {opt interactive}) or E[Y|X,Z=0] (model {opt interactiveiv})
+{p_end}
+{synopt:{opt y1(varname)}}
+estimated E[Y|X,D=1] (model {opt interactive}) or E[Y|X,Z=1] (model {opt interactiveiv})
+{p_end}
+{synopt:{opt d0(varname)}}
+estimated E[D|X,Z=0] (model {opt interactiveiv})
+{p_end}
+{synopt:{opt d1(varname)}}
+estimated E[D|X,Z=1] (model {opt interactiveiv})
+{p_end}
 
 
-{marker installation}{title:Installation}
-
-{pstd}
-To get the latest stable version of {cmd:ddml} from our website, 
-check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
-We update the stable website version more frequently than the SSC version.
-
-
-{marker references}{title:References}
-
-{pstd}
-Chernozhukov, V., Chetverikov, D., Demirer, M., 
-Duflo, E., Hansen, C., Newey, W. and Robins, J. (2018), 
-Double/debiased machine learning for 
-treatment and structural parameters. 
-{it:The Econometrics Journal}, 21: C1-C68. {browse "https://doi.org/10.1111/ectj.12097"}
-
-{marker Wolpert1992}{...}
-{pstd}
-Wolpert, David H. Stacked generalization. {it:Neural networks} 5.2 (1992): 241-259.
-{browse "https://doi.org/10.1016/S0893-6080(05)80023-1"}
-
-
-{pstd}
-To verify that {cmd:ddml} is correctly installed, 
-click on or type {stata "whichpkg ddml"} 
-(which requires {helpb whichpkg} 
-to be installed; {stata "ssc install whichpkg"}).
-
-
-{title:Authors}
-
-{pstd}
-Achim Ahrens, Public Policy Group, ETH Zurich, Switzerland  {break}
-achim.ahrens@gess.ethz.ch
-
-{pstd}
-Christian B. Hansen, University of Chicago, USA {break}
-Christian.Hansen@chicagobooth.edu
-
-{pstd}
-Mark E Schaffer, Heriot-Watt University, UK {break}
-m.e.schaffer@hw.ac.uk	
-
-{pstd}
-Thomas Wiemann, University of Chicago, USA {break}
-wiemann@uchicago.edu
-
-
-{title:Also see (if installed)}
-
-{pstd}
-Help: {helpb pystacked}, {helpb lasso2}, {helpb cvlasso}, {helpb rlasso}, {helpb ivlasso},
- {helpb pdslasso}.{p_end}
+{smcl}
+INCLUDE help ddml_install_ref_auth
