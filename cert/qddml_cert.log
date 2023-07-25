@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\qddml_cert.log
   log type:  text
- opened on:  21 Jul 2023, 15:05:52
+ opened on:  25 Jul 2023, 18:56:22
 
 . 
 . * global tol = 0.0001
@@ -14,8 +14,8 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 
 . which pystacked
 C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
-*! pystacked v0.7.2
-*! last edited: 8july2023
+*! pystacked v0.7.4
+*! last edited: 23july2023
 *! authors: aa/ms
 
 . 
@@ -880,22 +880,22 @@ gradboost            3            1            1            1
 
 pystacked MSEs for D1_pystacked (price)
              learner          h   resample     fold_1     fold_2     fold_3     fold_4     fold_5
-      ols          1          0          1  29.117489  28.750466  28.599267  27.608756  27.983965
-  lassocv          2          0          1  29.105272  28.733157  28.611889  27.596552  27.974027
-gradboost          3          0          1  12.489312  11.066585  11.899599  11.454667  11.791297
-      ols          1          1          1  22.708616  21.869202  22.138751  21.559737  22.334863
-  lassocv          2          1          1  22.708692  21.869205   22.13965  21.560182  22.334991
-gradboost          3          1          1  8.5346349   7.795872  8.9776892   7.626841  8.9642442
+      ols          1          0          1  29.117492  28.750566  28.599294  27.609091  27.984089
+  lassocv          2          0          1  29.105272  28.733296  28.611895  27.596867  27.974163
+gradboost          3          0          1  12.489515  11.066737    11.8996  11.454903  11.792511
+      ols          1          1          1  22.708623  21.869205  22.138751  21.559765  22.334953
+  lassocv          2          1          1  22.708698  21.869208   22.13965  21.560209  22.335081
+gradboost          3          1          1  8.5356607  7.7975507  8.9779883  7.6268412   8.967218
 
 mean stacking MSEs across folds/resamples for D1_pystacked (price)
 final stacking estimator: nnls1
              learner      h=0/1   mean_MSE      rep_1
-      ols          1          0  28.411989  28.411989
-  lassocv          2          0  28.404179  28.404179
-gradboost          3          0  11.740292  11.740292
-      ols          1          1  22.122234  22.122234
-  lassocv          2          1  22.122544  22.122544
-gradboost          3          1  8.3798563  8.3798563
+      ols          1          0  28.412106  28.412106
+  lassocv          2          0  28.404299  28.404299
+gradboost          3          0  11.740653  11.740653
+      ols          1          1  22.122259  22.122259
+  lassocv          2          1  22.122569  22.122569
+gradboost          3          1  8.3810518  8.3810518
 
 pystacked weights for Y1_pystacked (share)
              learner   resample     fold_1     fold_2     fold_3     fold_4     fold_5
@@ -912,16 +912,16 @@ gradboost            3    .98838092    .98838092
 
 pystacked MSEs for Y1_pystacked (share)
              learner   resample     fold_1     fold_2     fold_3     fold_4     fold_5
-      ols          1          1   1.410348  1.4521798  1.4141429  1.4309874  1.4682377
-  lassocv          2          1  1.4103449  1.4520811  1.4140542  1.4310179  1.4680031
-gradboost          3          1  1.1464263  1.2157506  1.1896365  1.2043872   1.234467
+      ols          1          1   1.410348  1.4521883  1.4141429  1.4309885  1.4682377
+  lassocv          2          1  1.4103449  1.4520901  1.4140542  1.4310193  1.4680032
+gradboost          3          1  1.1465506  1.2157637  1.1898038  1.2044167  1.2344672
 
 mean stacking MSEs across folds/resamples for Y1_pystacked (share)
 final stacking estimator: nnls1
              learner   mean_MSE      rep_1
-      ols          1  1.4351791  1.4351791
-  lassocv          2  1.4351002  1.4351002
-gradboost          3  1.1981335  1.1981335
+      ols          1  1.4351811  1.4351811
+  lassocv          2  1.4351023  1.4351023
+gradboost          3  1.1982004  1.1982004
 
 . ddml extract, show(stweights)
 
@@ -1146,5 +1146,5 @@ Y3_gradboost            3            1            1
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\qddml_cert.log
   log type:  text
- closed on:  21 Jul 2023, 15:09:47
+ closed on:  25 Jul 2023, 19:00:21
 -----------------------------------------------------------------------------------------------------------------------

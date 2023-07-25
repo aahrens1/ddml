@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial.log
   log type:  text
- opened on:  20 Jul 2023, 14:45:19
+ opened on:  25 Jul 2023, 18:23:39
 
 . 
 . which ddml
@@ -2894,5 +2894,5 @@ error - restacking available only if pystacked is the only learner for each cond
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial.log
   log type:  text
- closed on:  20 Jul 2023, 14:48:36
+ closed on:  25 Jul 2023, 18:26:35
 -----------------------------------------------------------------------------------------------------------------------

@@ -3,13 +3,43 @@
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:39:49
+ {txt}opened on:  {res}25 Jul 2023, 18:28:58
+{txt}
+{com}. which ddml
+{txt}C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
+{res}*! ddml v1.2
+*! last edited: 19 july 2023
+*! authors: aa/ms
+{txt}
+{com}. mata: whichddml()
+{res}  
+  Mata library for ddml and related programs,
+  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  authors AA/MS
+{txt}
+{com}. which qddml
+{txt}C:\LocalStore\ecomes\Documents\GitHub\ddml\qddml.ado
+{res}*! ddml v1.2
+*! last edited: 20 july 2023
+*! authors: aa/ms
+{txt}
+{com}. which crossfit
+{txt}C:\LocalStore\ecomes\Documents\GitHub\ddml\crossfit.ado
+{res}*! crossfit v0.6
+*! last edited: 20 july 2023
+*! authors: aa/ms
+{txt}
+{com}. which pystacked
+{txt}C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
+{res}*! pystacked v0.7.4
+*! last edited: 23july2023
+*! authors: aa/ms
 {txt}
 {com}. log close
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:39:49
+ {txt}closed on:  {res}25 Jul 2023, 18:28:58
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -17,14 +47,14 @@
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:39:49
+ {txt}opened on:  {res}25 Jul 2023, 18:28:58
 
 Help file: ddml_example_partial_pystacked_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:39:49
+ {txt}closed on:  {res}25 Jul 2023, 18:28:58
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -150,14 +180,14 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:40:22
+ {txt}opened on:  {res}25 Jul 2023, 18:29:32
 
 Help file: ddml_example_partial_pystacked_detailed.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:40:22
+ {txt}closed on:  {res}25 Jul 2023, 18:29:32
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -443,14 +473,14 @@ Then replicate by hand.{p_end}
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:41:24
+ {txt}opened on:  {res}25 Jul 2023, 18:30:36
 
 Help file: ddml_example_partial_anylearner_detailed.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:41:24
+ {txt}closed on:  {res}25 Jul 2023, 18:30:36
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -800,14 +830,14 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:42:14
+ {txt}opened on:  {res}25 Jul 2023, 18:31:26
 
 Help file: ddml_example_partial_pystacked_multitreat.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:42:14
+ {txt}closed on:  {res}25 Jul 2023, 18:31:26
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -977,14 +1007,14 @@ ols {res}         1  1.541e+09  1.541e+09
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:43:25
+ {txt}opened on:  {res}25 Jul 2023, 18:32:19
 
 Help file: ddml_example_interactive_pystacked_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:43:25
+ {txt}closed on:  {res}25 Jul 2023, 18:32:19
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -1120,14 +1150,14 @@ Summary over 2 resamples:
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:44:09
+ {txt}opened on:  {res}25 Jul 2023, 18:32:55
 
 Help file: ddml_example_interactive_pystacked_detailed.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:44:09
+ {txt}closed on:  {res}25 Jul 2023, 18:32:55
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -1411,14 +1441,14 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:46:23
+ {txt}opened on:  {res}25 Jul 2023, 18:34:46
 
 Help file: ddml_example_partialiv_pystacked_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:46:23
+ {txt}closed on:  {res}25 Jul 2023, 18:34:46
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -1556,14 +1586,14 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:48:51
+ {txt}opened on:  {res}25 Jul 2023, 18:37:10
 
 Help file: ddml_example_partialiv_anylearner_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:48:51
+ {txt}closed on:  {res}25 Jul 2023, 18:37:10
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -1679,14 +1709,14 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:49:02
+ {txt}opened on:  {res}25 Jul 2023, 18:37:21
 
 Help file: ddml_example_flexiv_anylearner_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:49:02
+ {txt}closed on:  {res}25 Jul 2023, 18:37:21
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -1786,14 +1816,14 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:49:37
+ {txt}opened on:  {res}25 Jul 2023, 18:37:52
 
 Help file: ddml_example_flexiv_anylearner_detailed.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:49:37
+ {txt}closed on:  {res}25 Jul 2023, 18:37:52
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -2137,14 +2167,14 @@ Y1_pystacked {res}           1            0            0
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:50:24
+ {txt}opened on:  {res}25 Jul 2023, 18:38:34
 
 Help file: ddml_example_interactiveiv_pystacked_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:50:24
+ {txt}closed on:  {res}25 Jul 2023, 18:38:34
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -2224,14 +2254,14 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:53:04
+ {txt}opened on:  {res}25 Jul 2023, 18:41:07
 
 Help file: ddml_example_interactiveiv_pystacked_detailed.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:53:04
+ {txt}closed on:  {res}25 Jul 2023, 18:41:07
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -2389,14 +2419,14 @@ Stacking final estimator: {res}
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 10:57:30
+ {txt}opened on:  {res}25 Jul 2023, 18:45:22
 
 Help file: ddml_example_extract.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 10:57:30
+ {txt}closed on:  {res}25 Jul 2023, 18:45:22
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -3591,7 +3621,7 @@ so this step is unnecessary when using this command.{p_end}
 {input}. ddml extract AA_e401, vname(e401)
 {res}
 {input}. mata: AA_e401
-{res}  0x35d56ac0
+{res}  0x4b8e9bd0
 
 
 {pstd}Examples of working with this equation associative array.
@@ -3668,14 +3698,14 @@ Note that all keys are strings.{p_end}
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 11:00:41
+ {txt}opened on:  {res}25 Jul 2023, 18:47:50
 
 Help file: ddml_example_stacking.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 11:00:41
+ {txt}closed on:  {res}25 Jul 2023, 18:47:50
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -4129,14 +4159,14 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 11:03:18
+ {txt}opened on:  {res}25 Jul 2023, 18:49:35
 
 Help file: ddml_example_describe.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 11:03:18
+ {txt}closed on:  {res}25 Jul 2023, 18:49:35
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -4403,14 +4433,14 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 11:04:12
+ {txt}opened on:  {res}25 Jul 2023, 18:50:06
 
 Help file: ddml_example_export.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 11:04:12
+ {txt}closed on:  {res}25 Jul 2023, 18:50:06
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -4499,8 +4529,7 @@ This dataset doesn't include an ID variable, so we create one.{p_end}
 The data will be exported to a CSV file called "m_ddml_sip1991.csv".{p_end}
 
 {input}. ddml export using m_ddml_sip1991.csv, mname(m_sip1991) replace addvars(m_sip1991_id)
-{res}{txt}(note: file m_ddml_sip1991.csv not found)
-{txt}file m_ddml_sip1991.csv saved
+{res}{txt}file m_ddml_sip1991.csv saved
 
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -4508,14 +4537,14 @@ The data will be exported to a CSV file called "m_ddml_sip1991.csv".{p_end}
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 11:05:05
+ {txt}opened on:  {res}25 Jul 2023, 18:50:41
 
 Help file: ddml_example_overlap.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 11:05:05
+ {txt}closed on:  {res}25 Jul 2023, 18:50:41
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -4631,18 +4660,18 @@ and combine the two into a single graph:{p_end}
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}24 Jul 2023, 11:06:51
+ {txt}opened on:  {res}25 Jul 2023, 18:51:41
 
-Help file: ddml_example_fcluster
+Help file: ddml_example_fcluster.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}24 Jul 2023, 11:06:51
+ {txt}closed on:  {res}25 Jul 2023, 18:51:41
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
-{com}{sf}{ul off}{res}{smcl}
+{txt}{sf}{ul off}{res}{smcl}
 {pstd}{ul:Cluster sampling with cross-fit folds - Basic example with {help pystacked}}{p_end}
 
 {pstd}Load the data, define global macros and set the seed.{p_end}
@@ -4838,5 +4867,1438 @@ y-E[y|X]{col 11}= {res}y-Y1_pystacked_1{txt}{col 52}Number of obs   ={col 70}{re
 Stacking final estimator: {res}nnls1
 
 
+{smcl}
+{res}{sf}{ul off}{smcl}
+{res}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}25 Jul 2023, 18:52:28
+
+Help file: qddml.sthlp
+
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res}25 Jul 2023, 18:52:28
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}{smcl}
+{txt}{sf}{ul off}{res}{smcl}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Syntax" "qddml##syntax"}{...}
+{viewerjumpto "Options" "qddml##options"}{...}
+{viewerjumpto "Models" "qddml##models"}{...}
+{viewerjumpto "Compatibility" "qddml##compatibility"}{...}
+{viewerjumpto "Examples" "qddml##examples"}{...}
+{viewerjumpto "Installation" "qddml##installation"}{...}
+{viewerjumpto "References" "qddml##references"}{...}
+{viewerjumpto "Authors" "qddml##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "qddml##also_see"}{...}
+{hline}
+{cmd:help qddml}{right: v1.2}
+{hline}
+
+{title:ddml, qddml - Stata package for Double Debiased Machine Learning}
+
+{pstd}
+{help ddml} implements algorithms for causal inference aided by supervised
+machine learning as proposed in 
+{it:Double/debiased machine learning for treatment and structural parameters}
+(Econometrics Journal, 2018). Five different models are supported, allowing for 
+binary or continuous treatment variables and endogeneity, high-dimensional 
+controls and/or instrumental variables. 
+{help ddml} supports a variety of different ML programs, including
+but not limited to {help pystacked} and {help lassopack}. 
+
+{pstd}
+{opt qddml} is a wrapper program for {help ddml}. It provides a convenient 
+one-line syntax with almost the full flexibility of {help ddml}.
+The main restriction of {cmd:qddml} is that it only allows to be used 
+with one machine learning program at the time, while {help ddml} 
+allow for multiple learners per reduced form equation.
+
+{pstd}
+{opt qddml} uses stacking regression implemented via {help pystacked}
+as the default machine learning program.
+{opt qddml} has various options specific to {help pystacked}; see below.
+
+{pstd}
+Since {opt qddml} uses {help pystacked} by default, 
+it requires Stata 16 or higher, Python 3.x and at least scikit-learn 0.24.
+See {help python:this help file},
+{browse "https://blog.stata.com/2020/08/18/stata-python-integration-part-1-setting-up-stata-to-use-python/":this Stata blog entry}
+and 
+{browse "https://www.youtube.com/watch?v=4WxMAGNhcuE":this Youtube video}
+for how to set up Python on your system.
+In short, install Python 3.x (we recommend Anaconda) 
+and set the appropriate Python path using {cmd:python set exec}.
+
+{pstd}
+Please check the {help qddml##examples:examples} provided at the end of this help file.
+
+
+{marker syntax}{...}
+{title:Syntax}
+
+{pstd}When used with {help pystacked}:{p_end}
+
+{p 8 14 2}
+{cmd:qddml}
+{it:depvar} {it:regressors} [{cmd:(}{it:hd_controls}{cmd:)}]
+{cmd:(}{it:endog}{cmd:=}{it:instruments}{cmd:)}
+[{cmd:if} {it:exp}] [{cmd:in} {it:range}]
+{opt model(name)}
+{bind:[ {cmd:,}}
+{opt pystacked(string)}
+{opt pystacked_y(string)}
+{opt pystacked_d(string)}
+{opt pystacked_z(string)}
+{opt shortstack}
+{opt stdstack}
+{opt poolstack}
+{opt finalest(name)}
+{opt mname(string)}
+{bind:... ]}
+
+{pstd}When used with other learners:{p_end}
+
+{p 8 14 2}
+{cmd:qddml}
+{it:depvar} {it:regressors} [{cmd:(}{it:hd_controls}{cmd:)}]
+{cmd:(}{it:endog}{cmd:=}{it:instruments}{cmd:)}
+[{cmd:if} {it:exp}] [{cmd:in} {it:range}]
+{opt model(name)}
+{bind:[ {cmd:,}}
+{opt cmd(string)}
+{opt cmdopt(string)}
+{opt shortstack}
+{opt finalest(name)}
+{opt mname(string)}
+{bind:... ]}
+
+{marker options}{...}
+{title:Options}
+
+{synoptset 20}{...}
+{synopthdr:General}
+{synoptline}
+{synopt:{opt model(name)}}
+the model to be estimated; allows for {it:partial}, {it:interactive},
+{it:iv}, {it:fiv}, {it:late}. See {help ddml##models:here} for an overview.
+{p_end}
+{synopt:{opt mname(string)}}
+name of the DDML model. Allows to run multiple DDML
+models simultaneously. Defaults to {it:m0}.
+{p_end}
+{synopt:{opt kfolds(integer)}}
+number of cross-fitting folds. The default is 5.
+{p_end}
+{synopt:{opt fcluster(varname)}}
+cluster identifiers for cluster randomization of random folds.
+{p_end}
+{synopt:{opt foldvar(varname)}}
+integer variable with user-specified cross-fitting folds.
+{p_end}
+{synopt:{opt reps(integer)}}
+number of re-sampling iterations, i.e., how often the cross-fitting procedure is
+repeated on randomly generated folds. 
+{p_end}
+{synopt:{cmdab:r:obust}}
+report SEs that are robust to the
+presence of arbitrary heteroskedasticity.
+{p_end}
+{synopt:{opt vce(type)}}
+select variance-covariance estimator, see {help regress##vcetype:here}
+{p_end}
+{synopt:{opt cluster(varname)}}
+select cluster-robust variance-covariance estimator.
+{p_end}
+
+{synoptset 20}{...}
+{synopthdr:Stacking}
+{synoptline}
+{synopt:{opt shortstack}} asks for short-stacking to be used.
+Short-stacking combines the cross-fitted predicted values
+to obtain a weighted average of several base learners.
+The default behavior of {opt qddml} is to report short-stacked results;
+the {opt shortstack} option is used when the user wants to report
+more than one type of stacking results.
+{p_end}
+{synopt:{opt stdstack}} (requires {help pystacked}) requests results based on standard stacking.
+Stacking is done k times when cross-fitting.
+Note that the final estimator for combining the base learner predicted values
+is set via the options provided directly to {help pystacked};
+the {help pystacked} default is constrained non-negative least squares.
+Standard stacking is available only in combination with {help pystacked}.
+{p_end}
+{synopt:{opt poolstack}} (requires {help pystacked}) is an alternative to standard stacking.
+Pooled stacking combines the out-of-sample predicted values of the {help pystacked}
+using a single final estimation and set of weights.
+Pooled stacking is available only in conjunction with {help pystacked}.
+{p_end}
+{synopt:{opt finalest(name)}}
+specifies the final (ensemble) estimator used to combine
+the base learner predicted values.
+The default is constrained non-negative least squares;
+for alternatives, see the choices of final estimator available in {help pystacked}.
+{opt finalest(name)} controls the final estimator used for all types of stacking.
+NB: in the unlikely event you want to change the stacking final estimators separately,
+prefix "finalest" with either "std", "ss" or "ps".
+{p_end}
+
+{pstd}
+For more on stacking, see {help ddml stacking:help ddml stacking}.
+Note: some of the stacking options available via {help pystacked} integration
+are not available for the flexible IV model.
+In particular, pooled stacking is not available,
+and standard stacking and short-stacking need to be done separately.
+See the {help qddml##fivexample:example} below
+for how to stack and short-stack when using the flexible IV model.{p_end}
+
+{synoptset 20}{...}
+{synopthdr:Learners - pystacked}
+{synoptline}
+{synopt:{opt pystacked(string)}}
+{help pystacked} options;
+applies to all estimated conditional expectations. 
+If no options are specified, {help pystacked}'s defaults are used.
+{p_end}
+{synopt:{opt pystacked_y(string)}}
+{help pystacked} options specific to the estimation of the conditional expectations of the outcome {it:Y}. 
+{p_end}
+{synopt:{opt pystacked_d(string)}}
+{help pystacked} options specific to the estimation of the conditional expectations of the treatment variable(s) {it:D}.
+{p_end}
+{synopt:{opt pystacked_z(string)}}
+{help pystacked} options specific to the estimation of the conditional expectations of instrumental variable(s) {it:Z}. 
+{p_end}
+
+{synoptset 20}{...}
+{synopthdr:Learners - other}
+{synoptline}
+{synopt:{opt cmd(string)}}
+ML program used for estimating conditional expectations. 
+Defaults to {help pystacked}. 
+See {help ddml##compatibility:here} for 
+other supported programs.
+{p_end}
+{synopt:{opt ycmd(string)}}
+ML program used for estimating the conditional expectations of the outcome {it:Y}. 
+Defaults to {opt cmd(string)}. 
+{p_end}
+{synopt:{opt dcmd(string)}}
+ML program used for estimating the conditional expectations of the treatment variable(s) {it:D}. 
+Defaults to {opt cmd(string)}. 
+{p_end}
+{synopt:{opt zcmd(string)}}
+ML program used for estimating conditional expectations of instrumental variable(s) {it:Z}. 
+Defaults to {opt cmd(string)}. 
+{p_end}
+{synopt:{opt *cmdopt(string)}}
+options that are passed on to ML program. 
+The asterisk {cmd:*} can be replaced with either nothing 
+(setting the default for all reduced form equations), 
+{cmd:y} (setting the default for the conditional expectation of {it:Y}), 
+{cmd:d} (setting the default for {it:D})
+or {cmd:z} (setting the default for {it:Z}).
+{p_end}
+{synopt:{opt *vtype(string)}}
+variable type of the variable to be created. Defaults to {it:double}. 
+{it:none} can be used to leave the type field blank 
+(this is required when using {help ddml} with {help rforest}.)
+The asterisk {cmd:*} can be replaced with either nothing 
+(setting the default for all reduced form equations), 
+{cmd:y} (setting the default for the conditional expectation of {it:Y}), 
+{cmd:d} (setting the default for {it:D})
+or {cmd:z} (setting the default for {it:Z}).
+{p_end}
+{synopt:{opt *predopt(string)}}
+{cmd:predict} option to be used to get predicted values. 
+Typical values could be {opt xb} or {opt pr}. Default is 
+blank. The asterisk {cmd:*} can be replaced with either nothing 
+(setting the default for all reduced form equations), 
+{cmd:y} (setting the default for the conditional expectation of {it:Y}), 
+{cmd:d} (setting the default for {it:D})
+or {cmd:z} (setting the default for {it:Z}).
+{p_end}
+
+{synoptset 20}{...}
+{synopthdr:Output}
+{synoptline}
+{synopt:{opt verb:ose}}
+show detailed output
+{p_end}
+{synopt:{opt vverb:ose}}
+show even more output
+{p_end}
+
+
+{marker models}{...}
+{title:Models}
+
+{pstd} 
+See {help ddml##help:here}.
+
+
+{marker compatibility}{...}
+{title:Compatible programs}
+
+{pstd} 
+See {help ddml##compatibility:here}.
+
+
+{marker examples}{...}
+{title:Examples}
+
+{pstd}Below we demonstrate the use of {cmd:qddml} for each of the 5 models supported. 
+Note that estimation models are chosen for demonstration purposes only and 
+may be kept simple to allow you to run the code quickly.
+
+{pstd}The last example below illustrates the equivalence of {help ddml} and {opt qddml},
+i.e., the sequence of {help ddml} commands executed internally by {opt qddml}.
+
+{pstd}{ul:Partially-linear model} 
+
+{pstd}Preparation: we load the data and define global macros.{p_end}
+
+{input}. use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear
+
+{input}. global Y net_tfa
+
+{input}. global D e401
+
+{input}. global X tw age inc fsize educ db marr twoearn pira hown
+
+
+{pstd}The options {cmd:model(partial)} selects the partially-linear model
+and {cmd:kfolds(2)} selects two cross-fitting folds.
+We use the options {cmd:cmd()} and {cmd:cmdopt()} to select
+random forest and cross-validated lasso for estimating the conditional expectations.{p_end}
+
+{pstd}Note that we set the number of random folds to 2, so that 
+the model runs quickly. The default is {opt kfolds(5)}. We recommend 
+to consider at least 5-10 folds and even more if your sample size is small.{p_end}
+
+{pstd}Note also that we recommend to re-run the model multiple time on 
+different random folds; see options {opt reps(integer)}.{p_end}
+
+{input}. qddml $Y $D ($X), kfolds(2) model(partial) cmd(pystacked) cmdopt(type(reg) method(rf lassocv))
+{res}warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+{txt}Learner Y1_pystacked added successfully.
+{res}{txt}Learner D1_pystacked added successfully.
+{res}{txt}Cross-fitting E[y|X] equation: net_tfa
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting...completed short-stacking
+{res}{txt}Cross-fitting E[D|X] equation: e401
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting...completed short-stacking
+{res}
+
+{txt}Model:{col 25}{res}partial, crossfit folds k=2, resamples r=1
+{txt}Mata global (mname):{col 25}{res}m0
+{txt}Dependent variable (Y):{col 25}{res}net_tfa
+{txt}{col 2}net_tfa learners:{col 25}{res}Y1_pystacked
+{txt}D equations (1):{col 25}{res}e401
+{txt}{col 2}e401 learners:{col 25}{res}D1_pystacked
+
+{txt}DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+{stata ddml estimate, mname(m0) spec(st) rep(1) notable replay:  st  1}{res}  Y1_pystacked  D1_pystacked  6654.955  (772.859)
+{stata ddml estimate, mname(m0) spec(ss) rep(1) notable replay:  ss  1}  [shortstack]          [ss]  7047.612  (759.915)
+
+{txt}Shortstack DDML model
+y-E[y|X]{col 11}= {res}y-Y_net_tfa_ss_1{txt}{col 52}Number of obs   ={col 70}{res}     9915
+{txt}D-E[D|X]{col 11}= {res}D-D_e401_ss_1 
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}     net_tfa{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 8}e401 {c |}{col 14}{res}{space 2} 7047.612{col 26}{space 2} 759.9146{col 37}{space 1}    9.27{col 46}{space 3}0.000{col 54}{space 4} 5558.207{col 67}{space 3} 8537.017
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} -640.347{col 26}{space 2} 339.0844{col 37}{space 1}   -1.89{col 46}{space 3}0.059{col 54}{space 4} -1304.94{col 67}{space 3} 24.24623
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+Stacking final estimator: {res}nnls1
+
+
+
+{pstd}Postestimation options for {help ddml} also work after {opt qddml}.
+Here we request display of the {help pystacked} stacking weights and MSEs.{p_end}
+
+{input}. ddml extract, show(pystacked)
+{res}
+{res}pystacked weights for D1_pystacked (e401)
+{txt}           learner   resample     fold_1     fold_2
+     rf {res}         1          1  .32558284  .33949796
+{txt}lassocv {res}         2          1  .67441716  .66050204
+{reset}
+{res}mean stacking weights across folds/resamples for D1_pystacked (e401)
+{res}final stacking estimator: nnls1
+{txt}             learner  mean_weight        rep_1
+     rf {res}           1     .3325404     .3325404
+{txt}lassocv {res}           2     .6674596     .6674596
+{reset}
+{res}pystacked MSEs for D1_pystacked (e401)
+{txt}           learner   resample     fold_1     fold_2
+     rf {res}         1          1  .21141083  .20838311
+{txt}lassocv {res}         2          1  .20264705   .2003294
+{reset}
+{res}mean stacking MSEs across folds/resamples for D1_pystacked (e401)
+{res}final stacking estimator: nnls1
+{txt}           learner   mean_MSE      rep_1
+     rf {res}         1  .20989697  .20989697
+{txt}lassocv {res}         2  .20148823  .20148823
+{reset}
+{res}pystacked weights for Y1_pystacked (net_tfa)
+{txt}           learner   resample     fold_1     fold_2
+     rf {res}         1          1  .62522887  .61889155
+{txt}lassocv {res}         2          1  .37477113  .38110845
+{reset}
+{res}mean stacking weights across folds/resamples for Y1_pystacked (net_tfa)
+{res}final stacking estimator: nnls1
+{txt}             learner  mean_weight        rep_1
+     rf {res}           1    .62206021    .62206021
+{txt}lassocv {res}           2    .37793979    .37793979
+{reset}
+{res}pystacked MSEs for Y1_pystacked (net_tfa)
+{txt}           learner   resample     fold_1     fold_2
+     rf {res}         1          1  1.376e+09  1.586e+09
+{txt}lassocv {res}         2          1  1.514e+09  1.695e+09
+{reset}
+{res}mean stacking MSEs across folds/resamples for Y1_pystacked (net_tfa)
+{res}final stacking estimator: nnls1
+{txt}           learner   mean_MSE      rep_1
+     rf {res}         1  1.481e+09  1.481e+09
+{txt}lassocv {res}         2  1.605e+09  1.605e+09
+{reset}{res}
+
+{pstd}{ul:Partially-linear IV model} 
+
+{pstd}Preparation: we load the data and define global macros.{p_end}
+
+{input}. use https://statalasso.github.io/dta/AJR.dta, clear
+
+{input}. global Y logpgp95
+
+{input}. global D avexpr
+
+{input}. global Z logem4
+
+{input}. global X lat_abst edes1975 avelf temp* humid* steplow-oilres
+
+
+{pstd}Since the data set is very small, we consider 30 cross-fitting folds.{p_end} 
+{pstd}We need to add the option {opt vtype(none)} for {help rforest} to 
+work with {help ddml} since {help rforests}'s {cmd:predict} command doesn't
+support variable types.{p_end}
+
+{input}. set seed 42
+
+{input}. qddml $Y ($X) ($D=$Z), kfolds(30) model(iv) cmd(rforest) cmdopt(type(reg)) vtype(none) robust
+{res}warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+{txt}Learner Y1_rforest added successfully.
+{res}{txt}Learner D1_rforest added successfully.
+{res}{txt}Learner Z1_rforest added successfully.
+{res}{txt}shortstack  requested but must have multiple learners in all equations; option ignored
+{res}{txt}Cross-fitting E[y|X] equation: logpgp95
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}6 {res}{txt}7 {res}{txt}8 {res}{txt}9 {res}{txt}10 {res}{txt}11 {res}{txt}12 {res}{txt}13 {res}{txt}14 {res}{txt}15 {res}{txt}16 {res}{txt}17 {res}{txt}18 {res}{txt}19 {res}{txt}20 {res}{txt}21 {res}{txt}22 {res}{txt}23 {res}{txt}24 {res}{txt}25 {res}{txt}26 {res}{txt}27 {res}{txt}28 {res}{txt}29 {res}{txt}30 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting E[D|X] equation: avexpr
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}6 {res}{txt}7 {res}{txt}8 {res}{txt}9 {res}{txt}10 {res}{txt}11 {res}{txt}12 {res}{txt}13 {res}{txt}14 {res}{txt}15 {res}{txt}16 {res}{txt}17 {res}{txt}18 {res}{txt}19 {res}{txt}20 {res}{txt}21 {res}{txt}22 {res}{txt}23 {res}{txt}24 {res}{txt}25 {res}{txt}26 {res}{txt}27 {res}{txt}28 {res}{txt}29 {res}{txt}30 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting E[Z|X]: logem4
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}6 {res}{txt}7 {res}{txt}8 {res}{txt}9 {res}{txt}10 {res}{txt}11 {res}{txt}12 {res}{txt}13 {res}{txt}14 {res}{txt}15 {res}{txt}16 {res}{txt}17 {res}{txt}18 {res}{txt}19 {res}{txt}20 {res}{txt}21 {res}{txt}22 {res}{txt}23 {res}{txt}24 {res}{txt}25 {res}{txt}26 {res}{txt}27 {res}{txt}28 {res}{txt}29 {res}{txt}30 {res}{txt}...completed cross-fitting
+{res}
+
+{txt}Model:{col 25}{res}iv, crossfit folds k=30, resamples r=1
+{txt}Mata global (mname):{col 25}{res}m0
+{txt}Dependent variable (Y):{col 25}{res}logpgp95
+{txt}{col 2}logpgp95 learners:{col 25}{res}Y1_rforest
+{txt}D equations (1):{col 25}{res}avexpr
+{txt}{col 2}avexpr learners:{col 25}{res}D1_rforest
+{txt}Z equations (1):{col 25}{res}logem4
+{txt}{col 2}logem4 learners:{col 25}{res}Z1_rforest
+
+{txt}DDML estimation results:
+spec  r     Y learner     D learner         b        SE      Z learner
+{stata ddml estimate, mname(m0) spec(1) rep(1) notable replay:   1  1}{res}    Y1_rforest    D1_rforest     0.772    (0.207)    Z1_rforest
+
+{txt}DDML model
+y-E[y|X]{col 11}= {res}y-Y1_rforest_1{txt}{col 52}Number of obs   ={col 70}{res}       64
+{txt}D-E[D|X]{col 11}= {res}D-D1_rforest_1 
+{txt}Z-E[Z|X]{col 11}= {res}Z-Z1_rforest_1 
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}    logpgp95{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 6}avexpr {c |}{col 14}{res}{space 2} .7723141{col 26}{space 2} .2068282{col 37}{space 1}    3.73{col 46}{space 3}0.000{col 54}{space 4} .3669382{col 67}{space 3}  1.17769
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2}-.0119092{col 26}{space 2}  .100929{col 37}{space 1}   -0.12{col 46}{space 3}0.906{col 54}{space 4}-.2097263{col 67}{space 3} .1859079
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+
+
+{pstd}{ul:Interactive model--ATE and ATET estimation} 
+
+{pstd}Preparation: we load the data and define global macros.{p_end}
+
+{input}. webuse cattaneo2, clear
+{txt}(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+
+{input}. global Y bweight
+
+{input}. global D mbsmoke
+
+{input}. global X mage prenatal1 mmarried fbaby mage medu
+
+
+{pstd}
+Note that we use gradient boosted regression trees for E[Y|X,D] (see {opt ycmdopt()}),
+but gradient boosted classification trees for E[D|X] (see {opt dcmdopt()}).{p_end}
+
+{input}. set seed 42
+
+{input}. qddml $Y $D ($X), kfolds(5) reps(5) model(interactive) cmd(pystacked) ycmdopt(type(reg) method(gradboost)) dcmdopt(type(class) method(gradboost))
+{res}warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+{txt}Learner Y1_pystacked added successfully.
+{res}{txt}Learner D1_pystacked added successfully.
+{res}{txt}shortstack  requested but must have multiple learners in all equations; option ignored
+{res}{txt}Cross-fitting E[y|X,D] equation: bweight
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting E[D|X] equation: mbsmoke
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}
+
+{txt}Model:{col 25}{res}interactive, crossfit folds k=5, resamples r=5
+{txt}Mata global (mname):{col 25}{res}m0
+{txt}Dependent variable (Y):{col 25}{res}bweight
+{txt}{col 2}bweight learners:{col 25}{res}Y1_pystacked
+{txt}D equations (1):{col 25}{res}mbsmoke
+{txt}{col 2}mbsmoke learners:{col 25}{res}D1_pystacked
+
+{txt}DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+{stata ddml estimate, mname(m0) spec(1) rep(1) notable replay:   1  1}{res}  Y1_pystacked  Y1_pystacked  D1_pystacked  -195.812   (30.885)
+{stata ddml estimate, mname(m0) spec(1) rep(2) notable replay:   1  2}  Y1_pystacked  Y1_pystacked  D1_pystacked  -199.401   (32.442)
+{stata ddml estimate, mname(m0) spec(1) rep(3) notable replay:   1  3}  Y1_pystacked  Y1_pystacked  D1_pystacked  -227.291   (32.605)
+{stata ddml estimate, mname(m0) spec(1) rep(4) notable replay:   1  4}  Y1_pystacked  Y1_pystacked  D1_pystacked  -234.604   (33.826)
+{stata ddml estimate, mname(m0) spec(1) rep(5) notable replay:   1  5}  Y1_pystacked  Y1_pystacked  D1_pystacked  -215.839   (31.833)
+
+{txt}Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+{stata ddml estimate, mname(m0) spec(1) rep(mn) notable replay:   1 mn}{res}  Y1_pystacked  Y1_pystacked  D1_pystacked  -214.589   (35.381)
+{stata ddml estimate, mname(m0) spec(1) rep(md) notable replay:   1 md}  Y1_pystacked  Y1_pystacked  D1_pystacked  -215.839   (36.369)
+
+{txt}Median over 5 resamples (ATE)
+E[y|X,D=0]{col 14}= {res}Y1_pystacked0{txt}{col 52}Number of obs   ={col 70}{res}     4642
+{txt}E[y|X,D=1]{col 14}= {res}Y1_pystacked1
+{txt}E[D|X]{col 14}= {res}D1_pystacked
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}     bweight{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 5}mbsmoke {c |}{col 14}{res}{space 2}-215.8387{col 26}{space 2} 36.36916{col 37}{space 1}   -5.93{col 46}{space 3}0.000{col 54}{space 4}-287.1209{col 67}{space 3}-144.5565
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}Warning{txt}: 5 resamples had propensity scores trimmed to lower limit .01.
+
+Summary over 5 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+     mbsmoke{col 15}{res} -214.5893 -234.6039 -227.2912 -215.8387 -199.4008 -195.8117
+
+
+{pstd}{cmd:qddml} reports the ATE effect by default. The option {cmd:atet}
+returns the ATET estimate.{p_end}
+
+{pstd}If we want retrieve the ATET estimate after estimation, 
+we can simply use {ddml estimate}.{p_end}
+
+{input}. ddml estimate, atet
+{res}
+
+{txt}Model:{col 25}{res}interactive, crossfit folds k=5, resamples r=5
+{txt}Mata global (mname):{col 25}{res}m0
+{txt}Dependent variable (Y):{col 25}{res}bweight
+{txt}{col 2}bweight learners:{col 25}{res}Y1_pystacked
+{txt}D equations (1):{col 25}{res}mbsmoke
+{txt}{col 2}mbsmoke learners:{col 25}{res}D1_pystacked
+
+{txt}DDML estimation results (ATET):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+{stata ddml estimate, mname(m0) spec(1) rep(1) notable replay:   1  1}{res}  Y1_pystacked  Y1_pystacked  D1_pystacked  -228.707   (25.699)
+{stata ddml estimate, mname(m0) spec(1) rep(2) notable replay:   1  2}  Y1_pystacked  Y1_pystacked  D1_pystacked  -229.323   (25.031)
+{stata ddml estimate, mname(m0) spec(1) rep(3) notable replay:   1  3}  Y1_pystacked  Y1_pystacked  D1_pystacked  -231.423   (27.400)
+{stata ddml estimate, mname(m0) spec(1) rep(4) notable replay:   1  4}  Y1_pystacked  Y1_pystacked  D1_pystacked  -243.639   (24.590)
+{stata ddml estimate, mname(m0) spec(1) rep(5) notable replay:   1  5}  Y1_pystacked  Y1_pystacked  D1_pystacked  -237.354   (24.847)
+
+{txt}Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+{stata ddml estimate, mname(m0) spec(1) rep(mn) notable replay:   1 mn}{res}  Y1_pystacked  Y1_pystacked  D1_pystacked  -234.089   (26.101)
+{stata ddml estimate, mname(m0) spec(1) rep(md) notable replay:   1 md}  Y1_pystacked  Y1_pystacked  D1_pystacked  -231.423   (25.842)
+
+{txt}Median over 5 resamples (ATET)
+E[y|X,D=0]{col 14}= {res}Y1_pystacked0{txt}{col 52}Number of obs   ={col 70}{res}     4642
+{txt}E[y|X,D=1]{col 14}= {res}Y1_pystacked1
+{txt}E[D|X]{col 14}= {res}D1_pystacked
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}     bweight{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 5}mbsmoke {c |}{col 14}{res}{space 2}-231.4228{col 26}{space 2} 25.84174{col 37}{space 1}   -8.96{col 46}{space 3}0.000{col 54}{space 4}-282.0716{col 67}{space 3}-180.7739
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}Warning{txt}: 5 resamples had propensity scores trimmed to lower limit .01.
+
+Summary over 5 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+     mbsmoke{col 15}{res} -234.0891 -243.6388 -237.3540 -231.4228 -229.3230 -228.7068
+
+
+{pstd}{ul:Interactive IV model--LATE estimation} 
+
+{pstd}Preparation: we load the data, define global macros and then estimate.{p_end}
+
+{input}. use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta,clear
+
+{input}. global Y earnings
+
+{input}. global D training
+
+{input}. global Z assignmt
+
+{input}. global X sex age married black hispanic
+
+{input}. set seed 42
+
+{input}. qddml $Y (c.($X)# #c($X)) ($D=$Z), kfolds(5) model(interactiveiv) cmd(pystacked) ycmdopt(type(reg) m(lassocv)) dcmdopt(type(class) m(lassocv)) zcmdopt(type(class) m(lassocv))
+{res}warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+{txt}Learner Y1_pystacked added successfully.
+{res}{txt}Learner D1_pystacked added successfully.
+{res}{txt}Learner Z1_pystacked added successfully.
+{res}{txt}shortstack  requested but must have multiple learners in all equations; option ignored
+{res}{txt}Cross-fitting E[y|X,Z] equation: earnings
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting E[D|X,Z] equation: training
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting E[Z|X]: assignmt
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}
+
+{txt}Model:{col 25}{res}interactiveiv, crossfit folds k=5, resamples r=1
+{txt}Mata global (mname):{col 25}{res}m0
+{txt}Dependent variable (Y):{col 25}{res}earnings
+{txt}{col 2}earnings learners:{col 25}{res}Y1_pystacked
+{txt}D equations (1):{col 25}{res}training
+{txt}{col 2}training learners:{col 25}{res}D1_pystacked
+{txt}Z equations (1):{col 25}{res}assignmt
+{txt}{col 2}assignmt learners:{col 25}{res}Z1_pystacked
+
+{txt}DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+{stata ddml estimate, mname(m0) spec(1) rep(1) notable replay:   1  1}{res}  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked  1824.216  (514.244)  Z1_pystacked
+
+{txt}DDML model (LATE)
+E[y|X,Z=0]{col 14}= {res}Y1_pystacked0_1{txt}{col 52}Number of obs   ={col 70}{res}    11204
+{txt}E[y|X,Z=1]{col 14}= {res}Y1_pystacked1_1
+{txt}E[D|X,Z=0]{col 14}= {res}D1_pystacked0_1
+{txt}E[D|X,Z=1]{col 14}= {res}D1_pystacked1_1
+{txt}E[Z|X]{col 14}= {res}Z1_pystacked_1
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}    earnings{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 4}training {c |}{col 14}{res}{space 2} 1824.216{col 26}{space 2} 514.2438{col 37}{space 1}    3.55{col 46}{space 3}0.000{col 54}{space 4} 816.3162{col 67}{space 3} 2832.115
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+
+
+{marker fivexample}{...}
+{pstd}{ul:Flexible partially-linear IV model} 
+
+{pstd}Preparation: we load the data and define global macros.
+We use {help pystacked}'s default learners.
+By default, {opt qddml} will short-stack;
+internally, {opt qddml} extracts the list of {help pystacked} learners
+and adds them to the model one-by-one:{p_end}
+
+{input}. use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear
+
+{input}. global Y share
+
+{input}. global D price
+
+{input}. global X hpwt air mpd space
+
+{input}. global Z sum*
+
+
+{pstd}The syntax is the same as in the partially-linear IV model, 
+but we now estimate the optimal instrument flexibly.{p_end}
+
+{input}. set seed 42
+
+{input}. qddml $Y ($X) ($D=$Z), model(fiv)
+{res}warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+Y learner 1:
+{txt}Learner Y1_ols added successfully.
+Y learner 2:
+{res}{txt}Learner Y2_lassocv added successfully.
+Y learner 3:
+{res}{txt}Learner Y3_gradboost added successfully.
+D learner 1:
+{res}{txt}Learner D1_ols added successfully.
+D learner 2:
+{res}{txt}Learner D2_lassocv added successfully.
+D learner 3:
+{res}{txt}Learner D3_gradboost added successfully.
+D learner 1:
+{res}{txt}Learner D1_ols_h added successfully.
+D learner 2:
+{res}{txt}Learner D2_lassocv_h added successfully.
+D learner 3:
+{res}{txt}Learner D3_gradboost_h added successfully.
+{res}{txt}Cross-fitting E[y|X,Z] equation: share
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting...completed short-stacking
+{res}{txt}Cross-fitting E[D|X,Z] and E[D|X] equation: price
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting{res}{txt}...completed short-stacking
+{res}
+
+{txt}Model:{col 25}{res}fiv, crossfit folds k=5, resamples r=1
+{txt}Mata global (mname):{col 25}{res}m0
+{txt}Dependent variable (Y):{col 25}{res}share
+{txt}{col 2}share learners:{col 25}{res}Y1_ols Y2_lassocv Y3_gradboost
+{txt}D equations (1):{col 25}{res}price
+{txt}{col 2}price learners:{col 25}{res}D1_ols D2_lassocv D3_gradboost
+
+{txt}DDML estimation results:
+spec  r     Y learner     D learner         b        SE     DH learner
+{stata ddml estimate, mname(m0) spec(mse) rep(1) notable replay: mse  1}{res}  Y3_gradboost  D3_gradboost    -0.098    (0.008) D3_gradboos~h
+{stata ddml estimate, mname(m0) spec(ss) rep(1) notable replay:  ss  1}  [shortstack]          [ss]    -0.097    (0.008)          [ss]
+{txt}mse = minimum MSE specification for that resample.
+
+{res}{txt}Shortstack DDML model
+y-E[y|X]{col 11}= {res}y-Y_share_ss_1{txt}{col 52}Number of obs   ={col 70}{res}     2217
+{txt}E[D|X,Z]{col 11}= {res}D-D_price_ss_1 
+{txt}E[D^|X]{col 11}= {res}D_price_h_ss_1
+{txt}Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}       share{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}price {c |}{col 14}{res}{space 2} -.097427{col 26}{space 2} .0079921{col 37}{space 1}  -12.19{col 46}{space 3}0.000{col 54}{space 4}-.1130912{col 67}{space 3}-.0817628
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .0034453{col 26}{space 2} .0215531{col 37}{space 1}    0.16{col 46}{space 3}0.873{col 54}{space 4} -.038798{col 67}{space 3} .0456885
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+Stacking final estimator: {res}nnls1
+
+
+
+{pstd}Report the short-stack weights:{p_end}
+
+{input}. ddml extract, show(ssweights)
+{res}
+{res}short-stacked weights across resamples for price
+{res}final stacking estimator: nnls1
+{txt}                  learner        h=0/1  mean_weight        rep_1
+      D1_ols {res}           1            0            0            0
+{txt}  D2_lassocv {res}           2            0            0            0
+{txt}D3_gradboost {res}           3            0            1            1
+{txt}    D1_ols_h {res}           1            1            0            0
+{txt}D2_lassocv_h {res}           2            1            0            0
+{txt}D3_gradboo~h {res}           3            1            1            1
+{reset}
+{res}short-stacked weights across resamples for share
+{res}final stacking estimator: nnls1
+{txt}                  learner  mean_weight        rep_1
+      Y1_ols {res}           1            0            0
+{txt}  Y2_lassocv {res}           2            0            0
+{txt}Y3_gradboost {res}           3            1            1
+{reset}{res}
+
+{pstd}To get {opt qddml} to use standard stacking via {help pystacked},
+bypass its {help pystacked} integration by specifying {help pystacked} as a standard estimation command
+with the {opt cmd} and {opt cmdopt(.)} options:{p_end}
+
+{input}. set seed 42
+
+{input}. qddml $Y ($X) ($D=$Z), model(fiv) cmd(pystacked) cmdopt(type(reg))
+{res}warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+{txt}Learner Y1_pystacked added successfully.
+{res}{txt}Learner D1_pystacked added successfully.
+{res}{txt}Learner D1_pystacked_h added successfully.
+{res}{txt}shortstack requested but fiv model does not support pystacked integration
+to short-stack with fiv model, must have multiple learners in all equations; option ignored
+{res}{txt}Cross-fitting E[y|X,Z] equation: share
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting E[D|X,Z] and E[D|X] equation: price
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}
+
+{txt}Model:{col 25}{res}fiv, crossfit folds k=5, resamples r=1
+{txt}Mata global (mname):{col 25}{res}m0
+{txt}Dependent variable (Y):{col 25}{res}share
+{txt}{col 2}share learners:{col 25}{res}Y1_pystacked
+{txt}D equations (1):{col 25}{res}price
+{txt}{col 2}price learners:{col 25}{res}D1_pystacked
+
+{txt}DDML estimation results:
+spec  r     Y learner     D learner         b        SE     DH learner
+{stata ddml estimate, mname(m0) spec(st) rep(1) notable replay:  st  1}{res}  Y1_pystacked  D1_pystacked    -0.098    (0.008) D1_pystacke~h
+
+{txt}Stacking DDML model
+y-E[y|X]{col 11}= {res}y-Y1_pystacked_1{txt}{col 52}Number of obs   ={col 70}{res}     2217
+{txt}E[D|X,Z]{col 11}= {res}D-D1_pystacked_1 
+{txt}E[D^|X]{col 11}= {res}D1_pystacked_h_1
+{txt}Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+{res}{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}       share{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}price {c |}{col 14}{res}{space 2}-.0978842{col 26}{space 2} .0079847{col 37}{space 1}  -12.26{col 46}{space 3}0.000{col 54}{space 4} -.113534{col 67}{space 3}-.0822344
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .0032566{col 26}{space 2} .0215635{col 37}{space 1}    0.15{col 46}{space 3}0.880{col 54}{space 4}-.0390072{col 67}{space 3} .0455204
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+Stacking final estimator: {res}nnls1
+
+
+
+{pstd}Report the standard stacking weights:{p_end}
+
+{input}. ddml extract, show(stweights)
+{res}
+{res}mean stacking weights across folds/resamples for D1_pystacked (price)
+{res}final stacking estimator: nnls1
+{txt}               learner        h=0/1  mean_weight        rep_1
+      ols {res}           1            0    .00029361    .00029361
+{txt}  lassocv {res}           2            0    3.869e-16    3.869e-16
+{txt}gradboost {res}           3            0    .99970639    .99970639
+{txt}      ols {res}           1            1            0            0
+{txt}  lassocv {res}           2            1            0            0
+{txt}gradboost {res}           3            1            1            1
+{reset}
+{res}mean stacking weights across folds/resamples for Y1_pystacked (share)
+{res}final stacking estimator: nnls1
+{txt}               learner  mean_weight        rep_1
+      ols {res}           1    .01072127    .01072127
+{txt}  lassocv {res}           2    .00089782    .00089782
+{txt}gradboost {res}           3    .98838092    .98838092
+{reset}{res}
+
+{pstd}{ul:Equivalence of ddml and qddml} 
+
+{pstd}Here we illustrate how to replicate the output of {opt qddml} using separate {help ddml} commands.
+Note that to guarantee exact replication, we need to set Stata's random-number seed.
+Also note that {help ddml} with {help pystacked} will (unlike {opt qddml})
+by default cross-fit using standard stacking,
+so we specifiy that the {opt qddml} estimation should report both standard stacking and short-stacking.
+The replication works because "under the hood"
+{opt qddml} follows the same {help ddml} steps as we specify here,
+and with no intermediate calculations that would affect Stata's random number seed.{p_end}
+
+{pstd}We specify 5 base learners: OLS, cross-validated lasso and ridge, and two random forests.
+We will use the same specification for both conditional expectations E[Y|X] and E[D|X].{p_end}
+
+{input}. global rflow max_features(5) min_samples_leaf(1) max_samples(.7)
+
+{input}. global rfhigh max_features(5) min_samples_leaf(10) max_samples(.7)
+
+{input}. global psoptions method(ols lassocv ridgecv rf rf) cmdopt4($rflow) cmdopt5($rfhigh) type(reg)
+
+
+{pstd}Estimation using {opt ddml}.{p_end}
+
+{input}. set seed 42
+
+{input}. ddml init partial, kfolds(2)
+{res}warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+{input}. ddml E[Y|X]: pystacked $Y $X, $psoptions
+{res}{txt}Learner Y1_pystacked added successfully.
+
+{input}. ddml E[D|X]: pystacked $D $X, $psoptions
+{res}{txt}Learner D1_pystacked added successfully.
+
+{input}. ddml crossfit, shortstack
+{res}{txt}Cross-fitting E[y|X] equation: share
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting...completed short-stacking
+{res}{txt}Cross-fitting E[D|X] equation: price
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting...completed short-stacking
+{res}
+{input}. ddml estimate
+{res}
+
+{txt}Model:{col 25}{res}partial, crossfit folds k=2, resamples r=1
+{txt}Mata global (mname):{col 25}{res}m0
+{txt}Dependent variable (Y):{col 25}{res}share
+{txt}{col 2}share learners:{col 25}{res}Y1_pystacked
+{txt}D equations (1):{col 25}{res}price
+{txt}{col 2}price learners:{col 25}{res}D1_pystacked
+
+{txt}DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+{stata ddml estimate, mname(m0) spec(st) rep(1) notable replay:  st  1}{res}  Y1_pystacked  D1_pystacked    -0.078    (0.005)
+{stata ddml estimate, mname(m0) spec(ss) rep(1) notable replay:  ss  1}  [shortstack]          [ss]    -0.075    (0.005)
+
+{txt}Shortstack DDML model
+y-E[y|X]{col 11}= {res}y-Y_share_ss_1{txt}{col 52}Number of obs   ={col 70}{res}     2217
+{txt}D-E[D|X]{col 11}= {res}D-D_price_ss_1 
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}       share{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}price {c |}{col 14}{res}{space 2}-.0752506{col 26}{space 2} .0052847{col 37}{space 1}  -14.24{col 46}{space 3}0.000{col 54}{space 4}-.0856085{col 67}{space 3}-.0648927
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2}-.0005764{col 26}{space 2} .0213419{col 37}{space 1}   -0.03{col 46}{space 3}0.978{col 54}{space 4}-.0424057{col 67}{space 3}  .041253
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+Stacking final estimator: {res}nnls1
+
+
+
+{pstd}Estimation using {opt qddml}.{p_end}
+
+{input}. set seed 42
+
+{input}. qddml $Y $D ($X), mname(m1) model(partial) kfolds(2) shortstack stdstack pystacked($psoptions)
+{res}warning - model m1 already exists
+all existing model results and variables will
+be dropped and model m1 will be re-initialized
+{txt}Learner Y1_pystacked added successfully.
+{res}{txt}Learner D1_pystacked added successfully.
+{res}{txt}Cross-fitting E[y|X] equation: share
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting...completed short-stacking
+{res}{txt}Cross-fitting E[D|X] equation: price
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting...completed short-stacking
+{res}
+
+{txt}Model:{col 25}{res}partial, crossfit folds k=2, resamples r=1
+{txt}Mata global (mname):{col 25}{res}m1
+{txt}Dependent variable (Y):{col 25}{res}share
+{txt}{col 2}share learners:{col 25}{res}Y1_pystacked
+{txt}D equations (1):{col 25}{res}price
+{txt}{col 2}price learners:{col 25}{res}D1_pystacked
+
+{txt}DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+{stata ddml estimate, mname(m1) spec(st) rep(1) notable replay:  st  1}{res}  Y1_pystacked  D1_pystacked    -0.078    (0.005)
+{stata ddml estimate, mname(m1) spec(ss) rep(1) notable replay:  ss  1}  [shortstack]          [ss]    -0.075    (0.005)
+
+{txt}Shortstack DDML model
+y-E[y|X]{col 11}= {res}y-Y_share_ss_1{txt}{col 52}Number of obs   ={col 70}{res}     2217
+{txt}D-E[D|X]{col 11}= {res}D-D_price_ss_1 
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}       share{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}price {c |}{col 14}{res}{space 2}-.0752506{col 26}{space 2} .0052847{col 37}{space 1}  -14.24{col 46}{space 3}0.000{col 54}{space 4}-.0856085{col 67}{space 3}-.0648927
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2}-.0005764{col 26}{space 2} .0213419{col 37}{space 1}   -0.03{col 46}{space 3}0.978{col 54}{space 4}-.0424057{col 67}{space 3}  .041253
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+Stacking final estimator: {res}nnls1
+
+
+
+{pstd}The same {help ddml} tools can be used after {help ddml} or {opt qddml}.
+The model estimated by {help ddml} has the default name m0;
+the model estimated by {opt qddml} has the name m1.
+For example:{p_end}
+
+{input}. ddml extract, mname(m0) show(ssweights)
+{res}
+{res}short-stacked weights across resamples for price
+{res}final stacking estimator: nnls1
+{txt}             learner  mean_weight        rep_1
+    ols {res}           1            0            0
+{txt}lassocv {res}           2            0            0
+{txt}ridgecv {res}           3            0            0
+{txt}     rf {res}           4            1            1
+{txt}     rf {res}           5            0            0
+{reset}
+{res}short-stacked weights across resamples for share
+{res}final stacking estimator: nnls1
+{txt}             learner  mean_weight        rep_1
+    ols {res}           1    .03038145    .03038145
+{txt}lassocv {res}           2    1.015e-16    1.015e-16
+{txt}ridgecv {res}           3    .01640807    .01640807
+{txt}     rf {res}           4    .95321048    .95321048
+{txt}     rf {res}           5            0            0
+{reset}{res}
+{input}. ddml extract, mname(m1) show(ssweights)
+{res}
+{res}short-stacked weights across resamples for price
+{res}final stacking estimator: nnls1
+{txt}             learner  mean_weight        rep_1
+    ols {res}           1            0            0
+{txt}lassocv {res}           2            0            0
+{txt}ridgecv {res}           3            0            0
+{txt}     rf {res}           4            1            1
+{txt}     rf {res}           5            0            0
+{reset}
+{res}short-stacked weights across resamples for share
+{res}final stacking estimator: nnls1
+{txt}             learner  mean_weight        rep_1
+    ols {res}           1    .03038145    .03038145
+{txt}lassocv {res}           2    1.015e-16    1.015e-16
+{txt}ridgecv {res}           3    .01640807    .01640807
+{txt}     rf {res}           4    .95321048    .95321048
+{txt}     rf {res}           5            0            0
+{reset}{res}
+
+
+{smcl}
+INCLUDE help ddml_install_ref_auth
+{smcl}
+{res}{sf}{ul off}{smcl}
+{res}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}25 Jul 2023, 18:55:21
+
+Help file: crossfit.sthlp
+
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res}25 Jul 2023, 18:55:21
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}{smcl}
+{txt}{sf}{ul off}{res}{smcl}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Syntax" "crossfit##syntax"}{...}
+{viewerjumpto "Summary" "crossfit##summary"}{...}
+{viewerjumpto "Compatible programs" "crossfit##compatibility"}{...}
+{viewerjumpto "Examples" "crossfit##examples"}{...}
+{viewerjumpto "Saved results" "crossfit##results"}{...}
+{viewerjumpto "References" "crossfit##references"}{...}
+{viewerjumpto "Authors" "crossfit##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "ddml crossfit" "ddml crossfit"}{...}
+{vieweralsosee "ddml stacking" "ddml stacking"}{...}
+{vieweralsosee "Other" "crossfit##also_see"}{...}
+{hline}
+{cmd:help crossfit}{right: v1.2}
+{hline}
+
+
+{title:crossfit - Stata program for cross-fitting}
+
+{pstd}
+{opt crossfit} fits a supervised machine learner on K-1 folds
+and returns the out-of-sample predicted values for the holdout fold.
+This is done iteratively to obtain out-of-sample ("cross-fitted") fitted values for the whole sample.
+
+{pstd}
+{opt crossfit} is an auxiliary program that is internally used by 
+{help ddml} and {help qddml}, but can be used for other purposes.
+
+
+{marker syntax}{...}
+{title:Syntax}
+
+{p 8 14 2}
+{cmd:crossfit} , 
+{opt estring(string)}
+{opt g:enerate(stubname)}
+[{opt kfolds(integer)}
+{opt foldvar(varlist)}
+{opt norandom}
+{opt reps(integer)}
+{opt vtype(string)}]
+
+{synoptset 20}{...}
+{synopthdr:Option}
+{synoptline}
+{synopt:{opt estring(string)}}
+An estimation string, e.g. "reg y x1 x2", that will be 
+repeatedly invoked. See note on compatible programs 
+{help ddml##compatibility:here}.
+{p_end}
+{synopt:{opt g:enerate(stubname)}}
+Name of the new variable to be created;
+the resample number is appended to the end of the variable name.
+Note that if the variable (including the resample number) already exists, it is overwritten.
+{p_end}
+{synopt:{opt kfolds(integer)}}
+Number of randomly drawn folds; ignored if {opt foldvar(varlist)} is specified; default=5.
+{p_end}
+{synopt:{opt foldvar(varlist)}}
+Integer variable(s) with user-specified cross-fitting folds; one foldvar per resample.
+{p_end}
+{synopt:{opt norandom}}
+Use observations in existing order instead of randomizing before splitting into folds;
+if multiple resamples, applies to first resample only;
+ignored if user-defined fold variables are provided in {opt foldvar(varlist)}.
+{p_end}
+{synopt:{opt reps(integer)}}
+Number of resampling iterations, i.e., how often the cross-fitting procedure is
+repeated on randomly generated folds;
+ignored if {opt foldvar(varlist)} is specified;
+default=1.
+{p_end}
+{synopt:{opt vtype(string)}}
+Variable type of the variable to be created. Defaults to {it:double}. 
+{it:none} can be used to leave the type field blank.
+{p_end}
+
+
+{marker summary}{...}
+{title:Summary}
+
+{pstd}
+{opt crossfit} fits a supervised machine learner on K-1 folds
+and returns the out-of-sample predicted values for the holdout fold.
+This process is repeated so that each fold serves once as the holdout fold
+for which predictions are created.
+At the end of the cross-fitting, a full set of predictions is available
+in the new variable specified by the {opt generate} option.
+The "supervised machine learner" can be any Stata estimator
+that supports standard postestimation prediction.
+{p_end}
+
+{pstd}
+{opt crossfit}'s default is to generate a single random split into folds.
+This can be overridden by specifying user-defined fold variables,
+or by the {opt norandom} option (indicating that the split use the data in the existing order).
+{p_end}
+
+{pstd}
+{opt crossfit} allows multiple resampling,
+meaning that the procedure is applied repeatedly
+using multiple fold variables that indicate different fold splits.
+This can be done via the {opt reps} option,
+or by providing multiple user-defined fold variables.
+The resample number is appended to the generated predictions.
+{p_end}
+
+{pstd}
+The output of {opt crossfit} can be seen as the intermediate step
+of standard K-fold cross-validation.
+In a typical cross-validation exercise, a search is conducted across a range of specifications (e.g. values for a tuning parameter).
+The prediction errors for the holdout folds are assembled for each specification,
+and the specification with the best prediction performance (e.g. smallest mean squared prediction error) is chosen.
+A simple example of how to use {opt crossfit} to do this is below.
+{p_end}
+
+{pstd}
+{opt crossfit} has integrated support for {opt pystacked} (see the help for {help pystacked} if installed).
+{help pystacked} is a front-end for the {browse "https://scikit-learn.org/stable/index.html":scikit-learn}
+implementation of stacking regression.
+Stacking is a way of combining multiple supervised
+machine learners (the "base" or "level-0" learners) into
+an ensemble or "meta" learner.
+When used in conjunction with {opt crossfit}, the predictions of the {help pystacked} base learners
+are generated along with the ensemble predicted values.
+{p_end}
+
+
+{marker compatibility}{...}
+{title:Compatible programs}
+
+{pstd} 
+See {help ddml##compatibility:here}.
+
+
+{marker examples}{...}
+{title:Examples}
+
+{input}. use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta, clear
+
+{input}. global X sex age married black hispanic
+
+{input}. set seed 42
+
+
+{pstd}Note that the variable created is called yhat_1 because the number of resamples defaults to 1.{p_end}
+
+{input}. crossfit, estring(reg earnings $X) gen(yhat) kfolds(3)
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}
+{input}. sum earnings yhat_1
+
+{txt}    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 4}earnings {c |}{res}     11,204    15815.29    16767.05          0     155760
+{txt}{space 6}yhat_1 {c |}{res}     11,204     15812.1    3774.255   6123.432   23867.51
+
+
+{pstd}As above but using 5 resamples.{p_end}
+
+{input}. crossfit, estring(reg earnings $X) gen(yhat) kfolds(3) reps(5)
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}
+{input}. sum earnings yhat*
+
+{txt}    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 4}earnings {c |}{res}     11,204    15815.29    16767.05          0     155760
+{txt}{space 6}yhat_1 {c |}{res}     11,204    15817.76    3772.003   5660.687   24048.23
+{txt}{space 6}yhat_2 {c |}{res}     11,204    15811.39    3776.824   5764.323   24005.49
+{txt}{space 6}yhat_3 {c |}{res}     11,204    15818.01    3777.579   5495.782      24012
+{txt}{space 6}yhat_4 {c |}{res}     11,204    15811.81    3777.137   5751.744   23775.22
+{txt}{hline 13}{c +}{hline 57}
+{space 6}yhat_5 {c |}{res}     11,204    15817.15     3777.96    6044.12   23928.68
+
+
+{pstd}As above but using {help pystacked}.
+The default base learners are OLS, CV-lasso and gradient boosting.{p_end}
+
+{input}. crossfit, estring(pystacked earnings $X) gen(yhat) kfolds(3) reps(5)
+{res}{txt}calling pystacked on full sample with noestimate option...
+N={res}11204
+{txt}number of learners = {res}3
+{txt}Base learners: {res}ols lassocv gradboost 
+{txt}Resample 1...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 2...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 3...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 4...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 5...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}
+{input}. sum earnings yhat*
+
+{txt}    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 4}earnings {c |}{res}     11,204    15815.29    16767.05          0     155760
+{txt}{space 3}yhat_L1_1 {c |}{res}     11,204    15814.67    3771.158   6154.772   23792.97
+{txt}{space 3}yhat_L2_1 {c |}{res}     11,204    15814.67    3765.064   6180.004   23777.85
+{txt}{space 3}yhat_L3_1 {c |}{res}     11,204    15816.24    4484.243   1665.902   28229.47
+{txt}{space 6}yhat_1 {c |}{res}     11,204    15816.52    4153.282   3465.912   26655.86
+{txt}{hline 13}{c +}{hline 57}
+{space 3}yhat_L1_2 {c |}{res}     11,204    15814.28     3773.44   5357.084   23895.38
+{txt}{space 3}yhat_L2_2 {c |}{res}     11,204    15814.28    3767.491   5381.269   23879.07
+{txt}{space 3}yhat_L3_2 {c |}{res}     11,204    15813.21    4482.175  -3728.535   29254.65
+{txt}{space 6}yhat_2 {c |}{res}     11,204    15812.08    4174.833  -723.8463   26819.96
+{txt}{space 3}yhat_L1_3 {c |}{res}     11,204    15816.28    3782.185   5912.759    23893.9
+{txt}{hline 13}{c +}{hline 57}
+{space 3}yhat_L2_3 {c |}{res}     11,204     15816.3    3774.708   5960.517   23865.76
+{txt}{space 3}yhat_L3_3 {c |}{res}     11,204     15817.7    4492.836   1363.014   34460.92
+{txt}{space 6}yhat_3 {c |}{res}     11,204    15817.88    4204.399    3435.11   31379.16
+{txt}{space 3}yhat_L1_4 {c |}{res}     11,204    15815.53     3776.09   5301.554      24088
+{txt}{space 3}yhat_L2_4 {c |}{res}     11,204    15815.53    3770.267   5327.434   24072.52
+{txt}{hline 13}{c +}{hline 57}
+{space 3}yhat_L3_4 {c |}{res}     11,204    15821.58     4484.34  -1822.032   31067.63
+{txt}{space 6}yhat_4 {c |}{res}     11,204     15819.3    4158.618   1107.619   28814.61
+{txt}{space 3}yhat_L1_5 {c |}{res}     11,204    15816.62    3781.457   6159.217   23814.33
+{txt}{space 3}yhat_L2_5 {c |}{res}     11,204    15816.62    3775.649   6184.389   23798.95
+{txt}{space 3}yhat_L3_5 {c |}{res}     11,204    15804.12    4469.694   818.7079    29594.9
+{txt}{hline 13}{c +}{hline 57}
+{space 6}yhat_5 {c |}{res}     11,204    15806.92    4184.636   2429.249   27209.38
+
+
+{pstd}A simple example of 3-fold cross-validation with 5 resamples using {opt crossfit}.
+{input}. ssc install lassopack
+{txt}checking {hilite:lassopack} consistency and verifying not already installed...
+{smcl}
+all files already exist and are up to date.
+
+We estimate using the following values of the lambda parameter: 2000, 1000, 500, 250.
+Each time we call {opt crossfit} to obtain the predicted values.
+These could be used after cross-fitting to calculate the MSPE (mean squared prediction error),
+but the MSPE is one of the returned results of {opt crossfit} so we just report that.
+The specification that minimizes the MSPE for all 5 resamples is lambda=250.
+{p_end}
+
+{input}. crossfit, estring(lasso2 earnings $X, lglmnet lambda(2000)) gen(yhat2000) kfolds(3) reps(5)
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}
+{input}. mat list r(mse_list)
+{res}
+{txt}r(mse_list)[5,1]
+                   c1
+resample_1 {res} 2.758e+08
+{txt}resample_2 {res} 2.759e+08
+{txt}resample_3 {res} 2.759e+08
+{txt}resample_4 {res} 2.759e+08
+{txt}resample_5 {res} 2.758e+08
+{reset}
+{input}. crossfit, estring(lasso2 earnings $X, lglmnet lambda(1000)) gen(yhat1000) kfolds(3) reps(5)
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}
+{input}. mat list r(mse_list)
+{res}
+{txt}r(mse_list)[5,1]
+                   c1
+resample_1 {res} 2.710e+08
+{txt}resample_2 {res} 2.710e+08
+{txt}resample_3 {res} 2.709e+08
+{txt}resample_4 {res} 2.710e+08
+{txt}resample_5 {res} 2.709e+08
+{reset}
+{input}. crossfit, estring(lasso2 earnings $X, lglmnet lambda(500)) gen(yhat500) kfolds(3) reps(5)
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}
+{input}. mat list r(mse_list)
+{res}
+{txt}r(mse_list)[5,1]
+                   c1
+resample_1 {res} 2.684e+08
+{txt}resample_2 {res} 2.686e+08
+{txt}resample_3 {res} 2.686e+08
+{txt}resample_4 {res} 2.685e+08
+{txt}resample_5 {res} 2.684e+08
+{reset}
+{input}. crossfit, estring(lasso2 earnings $X, lglmnet lambda(250)) gen(yhat250) kfolds(3) reps(5)
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}
+{input}. mat list r(mse_list)
+{res}
+{txt}r(mse_list)[5,1]
+                   c1
+resample_1 {res} 2.675e+08
+{txt}resample_2 {res} 2.676e+08
+{txt}resample_3 {res} 2.679e+08
+{txt}resample_4 {res} 2.676e+08
+{txt}resample_5 {res} 2.673e+08
+{reset}
+
+{pstd}When used as a standalone program, {opt crossfit} leaves behind in Mata a eStruct ("equation struct") called "crossfit".
+This object contains information about the estimation, stored on associative arrays.
+The utility {help ddml extract} can be used to extract this information.
+The example below shows how to list the AA keys
+and how to extract the {help pystacked} stacking weights for resample 2.
+Rows are base learners; columns are the weights for each learner.{p_end}
+
+{input}. mata: mata desc crossfit
+
+      {txt}# bytes   type                        name and extent
+{hline 79}
+{res}            8   {txt}struct scalar               {res}crossfit
+{txt}{hline 79}
+
+{input}. ddml extract, ename(crossfit) keys
+{res}{txt}AA keys for eqn crossfit.lrnAA:
+                  1             2
+     {c TLC}{hline 29}{c TRC}
+   1 {c |}  {res}        opt             1{txt}  {c |}
+   2 {c |}  {res}        opt             2{txt}  {c |}
+   3 {c |}  {res}        opt             3{txt}  {c |}
+   4 {c |}  {res}        opt             4{txt}  {c |}
+   5 {c |}  {res}        opt             5{txt}  {c |}
+   6 {c |}  {res}    yhat250      est_main{txt}  {c |}
+   7 {c |}  {res}    yhat250   est_options{txt}  {c |}
+   8 {c |}  {res}    yhat250       estring{txt}  {c |}
+   9 {c |}  {res}    yhat250       predopt{txt}  {c |}
+  10 {c |}  {res}    yhat250         vtype{txt}  {c |}
+     {c BLC}{hline 29}{c BRC}
+{txt}AA keys for eqn crossfit.resAA:
+                1           2           3
+     {c TLC}{hline 37}{c TRC}
+   1 {c |}  {res}  yhat250         MSE           1{txt}  {c |}
+   2 {c |}  {res}  yhat250         MSE           2{txt}  {c |}
+   3 {c |}  {res}  yhat250         MSE           3{txt}  {c |}
+   4 {c |}  {res}  yhat250         MSE           4{txt}  {c |}
+   5 {c |}  {res}  yhat250         MSE           5{txt}  {c |}
+   6 {c |}  {res}  yhat250   MSE_folds           1{txt}  {c |}
+   7 {c |}  {res}  yhat250   MSE_folds           2{txt}  {c |}
+   8 {c |}  {res}  yhat250   MSE_folds           3{txt}  {c |}
+   9 {c |}  {res}  yhat250   MSE_folds           4{txt}  {c |}
+  10 {c |}  {res}  yhat250   MSE_folds           5{txt}  {c |}
+  11 {c |}  {res}  yhat250           N           1{txt}  {c |}
+  12 {c |}  {res}  yhat250           N           2{txt}  {c |}
+  13 {c |}  {res}  yhat250           N           3{txt}  {c |}
+  14 {c |}  {res}  yhat250           N           4{txt}  {c |}
+  15 {c |}  {res}  yhat250           N           5{txt}  {c |}
+  16 {c |}  {res}  yhat250     N_folds           1{txt}  {c |}
+  17 {c |}  {res}  yhat250     N_folds           2{txt}  {c |}
+  18 {c |}  {res}  yhat250     N_folds           3{txt}  {c |}
+  19 {c |}  {res}  yhat250     N_folds           4{txt}  {c |}
+  20 {c |}  {res}  yhat250     N_folds           5{txt}  {c |}
+     {c BLC}{hline 37}{c BRC}
+{res}
+{input}. ddml extract, ename(crossfit) key1(yhat) key2(stack_base_est)
+{res}  0x0
+
+{input}. ddml extract, ename(crossfit) key1(yhat) key2(stack_weights) key3(2)
+{res}  0x0
+
+
+
+{marker results}{title:Saved results}
+
+{p}{opt crossfit} saves the following results in {cmd:r()}:
+
+Scalars
+{col 4}{opt r(N)}{col 25}Number of observations.
+{col 4}{opt r(mse)}{col 25}Mean squared prediction error in the last resample.
+
+Macros
+{col 4}{opt r(cmd_list)}{col 25}Estimation command
+
+Matrices
+{col 4}{opt r(N_list)}{col 25}Sample size; rows are resamples.
+{col 4}{opt r(mse_list)}{col 25}MSPE; rows are resamples.
+{col 4}{opt r(N_folds_list)}{col 25}Sample size by fold; rows are resamples.
+{col 4}{opt r(mse_folds_list)}{col 25}MSPE by fold; rows are resamples.
+
+
+{marker references}{title:References}
+
+{phang}
+Ahrens, A., Hansen, C.B. and M.E. Schaffer. 2020.
+lassopack: model selection and prediction with regularized regression in Stata.
+{it:The Stata Journal}, 20(1):176-235.
+{browse "https://journals.sagepub.com/doi/abs/10.1177/1536867X20909697"}.
+Working paper version: {browse "https://arxiv.org/abs/1901.05397"}.{p_end}
+
+{phang}
+Chernozhukov, V., Chetverikov, D., Demirer, M., 
+Duflo, E., Hansen, C., Newey, W. and Robins, J. (2018), 
+Double/debiased machine learning for 
+treatment and structural parameters. 
+{it:The Econometrics Journal}, 21: C1-C68. {browse "https://doi.org/10.1111/ectj.12097"}
+
+
+{marker authors}{title:Authors}
+
+{pstd}
+Achim Ahrens, Public Policy Group, ETH Zurich, Switzerland  {break}
+achim.ahrens@gess.ethz.ch
+
+{pstd}
+Christian B. Hansen, University of Chicago, USA {break}
+Christian.Hansen@chicagobooth.edu
+
+{pstd}
+Mark E Schaffer, Heriot-Watt University, UK {break}
+m.e.schaffer@hw.ac.uk   
+
+{pstd}
+Thomas Wiemann, University of Chicago, USA {break}
+wiemann@uchicago.edu
+
+
+{title:Also see (if installed)}
+
+{pstd}
+Help: {help ddml}, {help qddml}, {help pystacked}, {help lasso2}, {help cvlasso}.{p_end}
 {smcl}
 {res}{sf}{ul off}

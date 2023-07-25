@@ -4,6 +4,11 @@ clear all
 
 cap log close
 log using "ddml_helpfiles_cert", replace smcl
+which ddml
+mata: whichddml()
+which qddml
+which crossfit
+which pystacked
 log close
 
 foreach sthlpfile in									///
@@ -24,7 +29,10 @@ foreach sthlpfile in									///
 	ddml_example_describe.sthlp							///
 	ddml_example_export.sthlp							///
 	ddml_example_overlap.sthlp							///
-	ddml_example_fcluster.sthlp {
+	ddml_example_fcluster.sthlp							///
+	qddml.sthlp											///
+	crossfit.sthlp										///
+	{
 
 	log using "ddml_helpfiles_cert", append smcl
 	di

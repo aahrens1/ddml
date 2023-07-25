@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_late.log
   log type:  text
- opened on:  20 Jul 2023, 12:41:59
+ opened on:  25 Jul 2023, 18:15:02
 
 . 
 . which ddml
@@ -33,8 +33,8 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 
 . which pystacked
 C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
-*! pystacked v0.7.2
-*! last edited: 8july2023
+*! pystacked v0.7.4
+*! last edited: 23july2023
 *! authors: aa/ms
 
 . 
@@ -2595,5 +2595,5 @@ Summary over 2 resamples:
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_late.log
   log type:  text
- closed on:  20 Jul 2023, 12:47:14
+ closed on:  25 Jul 2023, 18:19:56
 -----------------------------------------------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_fiv.log
   log type:  text
- opened on:  20 Jul 2023, 12:21:23
+ opened on:  25 Jul 2023, 18:11:43
 
 . 
 . which ddml
@@ -162,28 +162,28 @@ gradboost            3            1    .98898747    .97797494            1
 
 pystacked MSEs for Dhat_pystacked (price)
              learner          h   resample     fold_1     fold_2
-      ols          1          0          1  29.601114  27.567273
-  lassocv          2          0          1  29.485851   27.41815
-gradboost          3          0          1  13.972635  12.535436
-      ols          1          0          2  28.242577  28.694185
-  lassocv          2          0          2  28.095606  28.651871
-gradboost          3          0          2  13.666131  11.749602
-      ols          1          1          1  22.703368  20.740393
-  lassocv          2          1          1  22.704314  20.729829
-gradboost          3          1          1  10.397591  8.4311154
-      ols          1          1          2   22.67543   23.35364
-  lassocv          2          1          2   22.71365  23.355042
-gradboost          3          1          2  10.296092  8.9064354
+      ols          1          0          1  29.601258  27.567405
+  lassocv          2          0          1  29.486182  27.418188
+gradboost          3          0          1  13.972661  12.535805
+      ols          1          0          2  28.242818  28.694189
+  lassocv          2          0          2  28.095981  28.651877
+gradboost          3          0          2   13.66995  11.749715
+      ols          1          1          1  22.703521   20.74046
+  lassocv          2          1          1  22.704472  20.729858
+gradboost          3          1          1  10.398402  8.4312557
+      ols          1          1          2   22.67543  23.353678
+  lassocv          2          1          2  22.713653   23.35508
+gradboost          3          1          2  10.296549  8.9067805
 
 mean stacking MSEs across folds/resamples for Dhat_pystacked (price)
 final stacking estimator: nnls1
              learner      h=0/1   mean_MSE      rep_1      rep_2
-      ols          1          0  28.526287  28.584193  28.468381
-  lassocv          2          0   28.41287     28.452  28.373739
-gradboost          3          0  12.980951  13.254035  12.707867
-      ols          1          1  22.368207   21.72188  23.014535
-  lassocv          2          1  22.375709  21.717072  23.034346
-gradboost          3          1  9.5078085  9.4143533  9.6012638
+      ols          1          0  28.526418  28.584332  28.468503
+  lassocv          2          0  28.413057  28.452185  28.373929
+gradboost          3          0  12.982033  13.254233  12.709833
+      ols          1          1  22.368272  21.721991  23.014554
+  lassocv          2          1  22.375766  21.717165  23.034366
+gradboost          3          1  9.5082467  9.4148289  9.6016646
 
 pystacked weights for Y1_pystacked (share)
              learner   resample     fold_1     fold_2
@@ -203,19 +203,19 @@ gradboost            3    .94810666    .92886106    .96735226
 
 pystacked MSEs for Y1_pystacked (share)
              learner   resample     fold_1     fold_2
-      ols          1          1  1.5197857  1.3645529
-  lassocv          2          1  1.5198816  1.3646797
-gradboost          3          1  1.2030607   1.223346
-      ols          1          2  1.4580414  1.4089005
-  lassocv          2          2  1.4579988  1.4090234
-gradboost          3          2  1.1898666  1.2163349
+      ols          1          1  1.5197976  1.3645544
+  lassocv          2          1  1.5198932  1.3646814
+gradboost          3          1  1.2031303  1.2233741
+      ols          1          2  1.4580414  1.4089006
+  lassocv          2          2  1.4579988  1.4090236
+gradboost          3          2  1.1900187  1.2163575
 
 mean stacking MSEs across folds/resamples for Y1_pystacked (share)
 final stacking estimator: nnls1
              learner   mean_MSE      rep_1      rep_2
-      ols          1  1.4378201  1.4421693   1.433471
-  lassocv          2  1.4378959  1.4422807  1.4335111
-gradboost          3   1.208152  1.2132033  1.2031007
+      ols          1  1.4378235   1.442176   1.433471
+  lassocv          2  1.4378992  1.4422873  1.4335112
+gradboost          3  1.2082202  1.2132522  1.2031881
 
 . *** append, estimate, replay
 . ddml sample, append(1)
@@ -1476,5 +1476,5 @@ Summary over 3 resamples:
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_fiv.log
   log type:  text
- closed on:  20 Jul 2023, 12:22:53
+ closed on:  25 Jul 2023, 18:13:10
 -----------------------------------------------------------------------------------------------------------------------
