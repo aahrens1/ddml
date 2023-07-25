@@ -1,4 +1,9 @@
 // do file to run all clickable examples in ddml help files
+// this file requires the Stata program loghelp
+// install from SSC if available or from github:
+// net install loghelp, ///
+//   from(https://raw.githubusercontent.com/markeschaffer/stata-utilities/master) ///
+//   replace
 
 clear all
 

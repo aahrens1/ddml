@@ -9,7 +9,7 @@ to be installed; {stata "ssc install whichpkg"}).
 
 {pstd}
 To get the latest stable versions of {opt ddml} and {opt qddml} from our website, 
-check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
+check the installation instructions at {browse "https://statalasso.github.io/docs/ddml/installation/"}.
 We update the stable website version more frequently than the SSC version.
 
 
