@@ -1,5 +1,6 @@
 {smcl}
-{* *! version 24jul2023}{...}
+{* *! version 25jul2023}{...}
+{marker models}{...}
 {title:Models}
 
 {pstd}
@@ -79,6 +80,7 @@ E[D|X,Z=0] and E[D|X,Z=1] (jointly added using {cmd:ddml E[D|X,Z]});
 and E[Z|X].
 
 
+{marker estimation}{...}
 {title:Main steps when estimating with ddml}
 
 {pstd}Estimation with {cmd:ddml} proceeds in four steps. 

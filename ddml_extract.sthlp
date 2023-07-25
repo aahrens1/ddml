@@ -1,5 +1,13 @@
 {smcl}
-{* *! version 23jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Syntax" "ddml_extract##syntax"}{...}
+{viewerjumpto "Options" "ddml_extract##options"}{...}
+{viewerjumpto "Examples" "ddml_extract##examples"}{...}
+{viewerjumpto "Installation" "ddml_extract##installation"}{...}
+{viewerjumpto "References" "ddml_extract##references"}{...}
+{viewerjumpto "Authors" "ddml_extract##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_extract##also_see"}{...}
 {hline}
 {cmd:help ddml extract}{right: v1.2}
 {hline}
@@ -36,7 +44,7 @@ Please check the {helpb ddml extract##examples:examples} provided at the end of 
 {cmd:ddml} stores many internal results on associative arrays.
 These can be retrieved using the different key options.
 
-{marker syntax}{...}
+{marker options}{...}
 {title:Options}
 
 {synoptset 20}{...}

@@ -1,5 +1,17 @@
 {smcl}
-{* *! version 22jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Stacking" "ddml_stacking##stacking"}{...}
+{viewerjumpto "Standard stacking with pystacked" "ddml_stacking##std_stack"}{...}
+{viewerjumpto "Pooled stacking" "ddml_stacking##pool_stack"}{...}
+{viewerjumpto "Short-stacking" "ddml_stacking##short_stack"}{...}
+{viewerjumpto "Re-stacking" "ddml_stacking##restack"}{...}
+{viewerjumpto "Retrieving stacking weights" "ddml_stacking##stack_weights"}{...}
+{viewerjumpto "Examples" "ddml_stacking##examples"}{...}
+{viewerjumpto "Installation" "ddml_stacking##installation"}{...}
+{viewerjumpto "References" "ddml_stacking##references"}{...}
+{viewerjumpto "Authors" "ddml_stacking##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_stacking##also_see"}{...}
 {hline}
 {cmd:help ddml stacking}{right: v1.2}
 {hline}
@@ -22,7 +34,7 @@ This help file provides an overview of how to implement stacking
 when estimating using {opt ddml}.
 
 
-{marker section_stacking}{...}
+{marker stacking}{...}
 {title:Stacking}
 
 {pstd}
@@ -58,6 +70,7 @@ See this {help ddml_example_flexiv_anylearner_detailed:help file} for examples a
 of how to stack and short-stack when using the flexible IV model).{p_end}
 
 
+{marker std_stack}{...}
 {title:Standard stacking}
 
 {pstd}
@@ -80,6 +93,7 @@ and with the constraint that weights sum to one.
 See {help pystacked} for alternative final estimators.
 
 
+{marker pool_stack}{...}
 {title:Pooled stacking}
 
 {pstd}
@@ -103,6 +117,7 @@ Hence when using pooled stacking,
 the standard stacking final estimator specified with {help pystacked} needs to be one of these.
 
 
+{marker short_stack}{...}
 {title:Short-stacking}
 
 {pstd}
@@ -127,6 +142,7 @@ This causes {help pystacked} to estimate the base learners
 without the computationally-costly stacking step in each cross-fit fold.
 
 
+{marker restack}{...}
 {title:Re-stacking after cross-fitting}
 
 {pstd}
@@ -137,6 +153,7 @@ at the {help ddml estimate:ddml estimate} step.
 This feature is available only if {help pystacked} is the single learner in every equation.
 
 
+{marker stack_weights}{...}
 {title:Stacking weights}
 
 {pstd}
@@ -154,7 +171,7 @@ use the {opt show(pystacked)} option.
 {pstd}
 See {help ddml init:help ddml init} for details of model initialization and learner specification options.
 
-{pstd}Note: the additional support provided by {opt ddml} for {help pystacked} (see {help ddml stacking##pystacked:above})
+{pstd}Note: the additional support provided by {opt ddml} for {help pystacked} (see above)
 is available only if {help pystacked} is the sole learner for each conditional expectation.
 Mutliple learners are provided to {help pystacked}, not directly to {opt ddml}.{p_end}
 

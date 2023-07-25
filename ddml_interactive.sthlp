@@ -1,5 +1,11 @@
 {smcl}
-{* *! version 24jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Examples" "ddml_interactive##examples"}{...}
+{viewerjumpto "Installation" "ddml_interactive##installation"}{...}
+{viewerjumpto "References" "ddml_interactive##references"}{...}
+{viewerjumpto "Authors" "ddml_interactive##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_interactive##also_see"}{...}
 {hline}
 {cmd:help ddml interactive}{right: v1.2}
 {hline}
@@ -58,12 +64,19 @@ learner, the following conditional expectations:
 
 {pstd}
 Below we demonstrate the use of {cmd:ddml} for the interactive model. 
+Note that estimation models are chosen for demonstration purposes only and 
+may be kept simple to allow you to run the code quickly.
 
-{marker interactive_i}{...}
-{pstd}{help ddml_example_interactive_pystacked_basic:Basic example of the interactive model (ATE, ATET) with pystacked}
+{pstd}{help ddml interactive##pystacked_basic:1. Basic example of the interactive model (ATE, ATET) with pystacked}{p_end}
+{pstd}{help ddml interactive##pystacked_detailed:2. Detailed example of the interactive model (ATE, ATET) with pystacked}{p_end}
 
-{marker interactive_ii}{...}
-{pstd}{help ddml_example_interactive_pystacked_detailed:Detailed example of the interactive model (ATE, ATET) with pystacked}
+{marker pystacked_basic}
+{smcl}
+INCLUDE help ddml_example_interactive_pystacked_basic.sthlp
+
+{marker pystacked_detailed}
+{smcl}
+INCLUDE help ddml_example_interactive_pystacked_detailed.sthlp
 
 
 {smcl}

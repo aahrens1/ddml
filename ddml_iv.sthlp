@@ -1,5 +1,11 @@
 {smcl}
-{* *! version 24jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Examples" "ddml_iv##examples"}{...}
+{viewerjumpto "Installation" "ddml_iv##installation"}{...}
+{viewerjumpto "References" "ddml_iv##references"}{...}
+{viewerjumpto "Authors" "ddml_iv##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_iv##also_see"}{...}
 {hline}
 {cmd:help ddml iv, help ddml fiv}{right: v1.2}
 {hline}
@@ -93,18 +99,29 @@ the flexible partially-linear IV model can accommodate both low- and high-dimens
 
 {pstd}
 Below we demonstrate the use of {cmd:ddml} for partially-linear IV models.
+Note that estimation models are chosen for demonstration purposes only and 
+may be kept simple to allow you to run the code quickly.
 
-{marker pliv_i}{...}
-{pstd}{help ddml_example_partialiv_pystacked_basic:Basic example of the partially-linear IV model with pystacked}
+{pstd}{help ddml iv##iv_pystacked_basic:1. Basic example of the partially-linear IV model with pystacked}{p_end}
+{pstd}{help ddml iv##iv_anylearner_basic:2. Basic example of the partially-linear IV model with any learner(s)}{p_end}
+{pstd}{help ddml iv##fiv_anylearner_basic:3. Basic example of the flexible partially-linear IV model with any learner(s)}{p_end}
+{pstd}{help ddml iv##fiv_anylearner_detailed:4. Detailed example of the flexible partially-linear IV model with any learner(s)}{p_end}
 
-{marker pliv_ii}{...}
-{pstd}{help ddml_example_partialiv_anylearner_basic:Basic example of the partially-linear IV model with any learner(s)}
+{marker iv_pystacked_basic}
+{smcl}
+INCLUDE help ddml_example_partialiv_pystacked_basic.sthlp
 
-{marker fiv_i}{...}
-{pstd}{help ddml_example_flexiv_anylearner_basic:Basic example of the flexible partially-linear IV model with any learner(s)}
+{marker iv_anylearner_basic}
+{smcl}
+INCLUDE help ddml_example_partialiv_anylearner_basic.sthlp
 
-{marker fiv_ii}{...}
-{pstd}{help ddml_example_flexiv_anylearner_detailed:Detailed example of the flexible partially-linear IV model with any learner(s)}
+{marker fiv_anylearner_basic}
+{smcl}
+INCLUDE help ddml_example_flexiv_anylearner_basic.sthlp
+
+{marker fiv_anylearner_detailed}
+{smcl}
+INCLUDE help ddml_example_flexiv_anylearner_detailed.sthlp
 
 
 {smcl}

@@ -1,5 +1,15 @@
 {smcl}
-{* *! version 23jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Syntax" "qddml##syntax"}{...}
+{viewerjumpto "Options" "qddml##options"}{...}
+{viewerjumpto "Models" "qddml##models"}{...}
+{viewerjumpto "Compatibility" "qddml##compatibility"}{...}
+{viewerjumpto "Examples" "qddml##examples"}{...}
+{viewerjumpto "Installation" "qddml##installation"}{...}
+{viewerjumpto "References" "qddml##references"}{...}
+{viewerjumpto "Authors" "qddml##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "qddml##also_see"}{...}
 {hline}
 {cmd:help qddml}{right: v1.2}
 {hline}
@@ -82,7 +92,7 @@ Please check the {help qddml##examples:examples} provided at the end of this hel
 {opt mname(string)}
 {bind:... ]}
 
-
+{marker options}{...}
 {title:Options}
 
 {synoptset 20}{...}
@@ -258,9 +268,9 @@ See {help ddml##compatibility:here}.
 
 {pstd}Below we demonstrate the use of {cmd:qddml} for each of the 5 models supported. 
 Note that estimation models are chosen for demonstration purposes only and 
-kept simple to allow you to run the code quickly.
+may be kept simple to allow you to run the code quickly.
 
-{pstd}The last example illustrates the equivalence of {help ddml} and {opt qddml},
+{pstd}The last example below illustrates the equivalence of {help ddml} and {opt qddml},
 i.e., the sequence of {help ddml} commands executed internally by {opt qddml}.
 
 {pstd}{ul:Partially-linear model} 
@@ -393,7 +403,7 @@ The replication works because "under the hood"
 and with no intermediate calculations that would affect Stata's random number seed.{p_end}
 
 {pstd}We specify 5 base learners: OLS, cross-validated lasso and ridge, and two random forests.
-We will use the same specification for both conditional expectations E[Y|X} and E[D|X].{p_end}
+We will use the same specification for both conditional expectations E[Y|X] and E[D|X].{p_end}
 
 {phang2}. {stata "global rflow max_features(5) min_samples_leaf(1) max_samples(.7)"}{p_end}
 {phang2}. {stata "global rfhigh max_features(5) min_samples_leaf(10) max_samples(.7)"}{p_end}

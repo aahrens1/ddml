@@ -1,5 +1,11 @@
 {smcl}
-{* *! version 24jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Examples" "ddml_partial##examples"}{...}
+{viewerjumpto "Installation" "ddml_partial##installation"}{...}
+{viewerjumpto "References" "ddml_partial##references"}{...}
+{viewerjumpto "Authors" "ddml_partial##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_partial##also_see"}{...}
 {hline}
 {cmd:help ddml partial}{right: v1.2}
 {hline}
@@ -52,19 +58,28 @@ E[Y|X] and E[D|X] using a supervised machine learner.
 {pstd}
 Below we demonstrate the use of {cmd:ddml} for the partially-linear model. 
 Note that estimation models are chosen for demonstration purposes only and 
-kept simple to allow you to run the code quickly.
+may be kept simple to allow you to run the code quickly.
 
-{marker plm_i}{...}
-{pstd}{help ddml_example_partial_pystacked_basic:Basic example of the partially-linear model with pystacked}
+{pstd}{help ddml partial##pystacked_basic:1. Basic example of the partially-linear model with pystacked}{p_end}
+{pstd}{help ddml partial##pystacked_detailed:2. Detailed example of the partially-linear model with pystacked}{p_end}
+{pstd}{help ddml partial##anylearner_detailed:3. Detailed general example of the partially-linear model with any learner(s)}{p_end}
+{pstd}{help ddml partial##pystacked_multitreat:4. Estimating the partially-linear model with multiple treatments}{p_end}
 
-{marker plm_iii}{...}
-{pstd}{help ddml_example_partial_pystacked_detailed:Detailed example of the partially-linear model with pystacked}
+{marker pystacked_basic}
+{smcl}
+INCLUDE help ddml_example_partial_pystacked_basic.sthlp
 
-{marker plm_iii}{...}
-{pstd}{help ddml_example_partial_anylearner_detailed:Detailed general example of the partially-linear model with any learner(s)}
+{marker pystacked_detailed}
+{smcl}
+INCLUDE help ddml_example_partial_pystacked_detailed.sthlp
 
-{marker plm_iii}{...}
-{pstd}{help ddml_example_partial_pystacked_multitreat:Estimating the partially-linear model with multiple treatments}
+{marker anylearner_detailed}
+{smcl}
+INCLUDE help ddml_example_partial_anylearner_detailed.sthlp
+
+{marker pystacked_multitreat}
+{smcl}
+INCLUDE help ddml_example_partial_pystacked_multitreat.sthlp
 
 
 {smcl}

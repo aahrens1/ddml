@@ -1,5 +1,14 @@
 {smcl}
-{* *! version 24jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Links to detailed help files" "ddml##help"}{...}
+{viewerjumpto "Models" "ddml##models"}{...}
+{viewerjumpto "Estimation steps" "ddml##estimation"}{...}
+{viewerjumpto "Compatible programs and pystacked" "ddml##compatibility"}{...}
+{viewerjumpto "Basic example" "ddml##example"}{...}
+{viewerjumpto "Installation" "ddml##installation"}{...}
+{viewerjumpto "References" "ddml##references"}{...}
+{viewerjumpto "Authors" "ddml##authors"}{...}
+{vieweralsosee "Also see" "ddml##also_see"}{...}
 {hline}
 {cmd:help ddml}{right: v1.2}
 {hline}
@@ -32,7 +41,8 @@ but offers less flexibility.
 {title:Contents}
 
 {p 2}{help ddml##help:Links to detailed help files}{p_end}
-{p 2}{help ddml##overview:Supported models in ddml and main steps in estimation using ddml}{p_end}
+{p 2}{help ddml##models:Supported models in ddml}{p_end}
+{p 2}{help ddml##estimation:Main steps in estimation using ddml}{p_end}
 {p 2}{help ddml##compatibility:Compatible programs and pystacked integration}{p_end}
 {p 2}{help ddml##example:Basic example: the partially-linear model with pystacked}{p_end}
 {p 2}{help ddml##installation:Installation}{p_end}
@@ -47,7 +57,7 @@ but offers less flexibility.
 {p 2}Help files: qddml{p_end}
 {p2col:{help qddml}} One-step DDML estimation using {help qddml}.{p_end}
 
-{p 2}Help files: detailed help files for main steps in using {opt ddml}{p_end}
+{p 2}Help files: detailed help files including syntax/options for main steps in using {opt ddml}{p_end}
 {p2col:{help ddml init}} 1. Initialize {opt ddml} and select model.{p_end}
 {p2col:{help ddml eq}} 2. Add supervised ML programs for estimating conditional expectations.{p_end}
 {p2col:{help ddml crossfit}} 3. Cross-fitting to estimate conditional expectations.{p_end}
@@ -78,6 +88,9 @@ INCLUDE help ddml_overview.sthlp
 
 {marker example}{...}
 {title:Example}
+
+{pstd}A basic example of how to use {opt ddml} is below.
+For a clickable list of all examples in the package, see {help ddml examples:help ddml examples}.{p_end}
 
 {smcl}
 INCLUDE help ddml_example_partial_pystacked_basic.sthlp

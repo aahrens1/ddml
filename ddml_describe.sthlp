@@ -1,5 +1,12 @@
 {smcl}
-{* *! version 23jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Syntax" "ddml_describe##syntax"}{...}
+{viewerjumpto "Examples" "ddml_describe##examples"}{...}
+{viewerjumpto "Installation" "ddml_describe##installation"}{...}
+{viewerjumpto "References" "ddml_describe##references"}{...}
+{viewerjumpto "Authors" "ddml_describe##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_describe##also_see"}{...}
 {hline}
 {cmd:help ddml describe}{right: v1.2}
 {hline}
@@ -55,6 +62,7 @@ equivalent to {opt sample} + {opt learners} + {opt crossfit} + {opt estiamtes}.
 {pstd}
 
 
+{marker examples}{...}
 {title:Examples}
 
 {smcl}

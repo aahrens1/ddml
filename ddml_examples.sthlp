@@ -1,5 +1,7 @@
 {smcl}
-{* *! version 24jul2023}{...}
+{* *! version 25jul2023}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_stacking##also_see"}{...}
 {hline}
 {cmd:help ddml examples}{right: v1.2}
 {hline}
@@ -51,3 +53,7 @@ All the examples in the help files have clickable links and can be run by the us
 
 {pstd}{ul:Cluster cross-fitting with ddml}:{p_end}
 {pstd}{help ddml_example_fcluster:Cluster sampling with cross-fit folds}{p_end}
+
+
+{smcl}
+INCLUDE help ddml_install_ref_auth

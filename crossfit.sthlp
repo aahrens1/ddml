@@ -1,5 +1,16 @@
 {smcl}
-{* *! version 24jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Syntax" "crossfit##syntax"}{...}
+{viewerjumpto "Summary" "crossfit##summary"}{...}
+{viewerjumpto "Compatible programs" "crossfit##compatibility"}{...}
+{viewerjumpto "Examples" "crossfit##examples"}{...}
+{viewerjumpto "Saved results" "crossfit##results"}{...}
+{viewerjumpto "References" "crossfit##references"}{...}
+{viewerjumpto "Authors" "crossfit##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "ddml crossfit" "ddml crossfit"}{...}
+{vieweralsosee "ddml stacking" "ddml stacking"}{...}
+{vieweralsosee "Other" "crossfit##also_see"}{...}
 {hline}
 {cmd:help crossfit}{right: v1.2}
 {hline}
@@ -12,6 +23,14 @@
 and returns the out-of-sample predicted values for the holdout fold.
 This is done iteratively to obtain out-of-sample ("cross-fitted") fitted values for the whole sample.
 
+{pstd}
+{opt crossfit} is an auxiliary program that is internally used by 
+{help ddml} and {help qddml}, but can be used for other purposes.
+
+
+{marker syntax}{...}
+{title:Syntax}
+
 {p 8 14 2}
 {cmd:crossfit} , 
 {opt estring(string)}
@@ -22,16 +41,8 @@ This is done iteratively to obtain out-of-sample ("cross-fitted") fitted values 
 {opt reps(integer)}
 {opt vtype(string)}]
 
-{pstd}
-{opt crossfit} is an auxiliary program that is internally used by 
-{help ddml} and {help qddml}, but can be used for other purposes.
-
-
-{marker syntax}{...}
-{title:Options}
-
 {synoptset 20}{...}
-{synopthdr:General}
+{synopthdr:Option}
 {synoptline}
 {synopt:{opt estring(string)}}
 An estimation string, e.g. "reg y x1 x2", that will be 
@@ -212,7 +223,7 @@ treatment and structural parameters.
 {it:The Econometrics Journal}, 21: C1-C68. {browse "https://doi.org/10.1111/ectj.12097"}
 
 
-{title:Authors}
+{marker authors}{title:Authors}
 
 {pstd}
 Achim Ahrens, Public Policy Group, ETH Zurich, Switzerland  {break}

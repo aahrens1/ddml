@@ -2,13 +2,13 @@
 {marker installation}{title:Installation}
 
 {pstd}
-To verify that {cmd:ddml} is correctly installed, 
+To verify that {opt ddml} and {opt qddml} are correctly installed, 
 click on or type {stata "whichpkg ddml"} 
 (which requires {helpb whichpkg} 
 to be installed; {stata "ssc install whichpkg"}).
 
 {pstd}
-To get the latest stable version of {cmd:ddml} from our website, 
+To get the latest stable versions of {opt ddml} and {opt qddml} from our website, 
 check the installation instructions at {browse "https://statalasso.github.io/installation/"}.
 We update the stable website version more frequently than the SSC version.
 
@@ -53,7 +53,7 @@ Thomas Wiemann, University of Chicago, USA {break}
 wiemann@uchicago.edu
 
 
-{title:Also see (if installed)}
+{marker also_see}{title:Also see (if installed)}
 
 {pstd}
 Help:

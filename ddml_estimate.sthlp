@@ -1,5 +1,15 @@
 {smcl}
-{* *! version 24jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Syntax" "ddml_estimate##syntax"}{...}
+{viewerjumpto "Cross-fit options" "ddml_estimate##crossfit"}{...}
+{viewerjumpto "Estimation options" "ddml_estimate##estimation"}{...}
+{viewerjumpto "Replay options" "ddml_estimate##replay"}{...}
+{viewerjumpto "User-specified variables" "ddml_estimate##userspec"}{...}
+{viewerjumpto "Installation" "ddml_estimate##installation"}{...}
+{viewerjumpto "References" "ddml_estimate##references"}{...}
+{viewerjumpto "Authors" "ddml_estimate##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_estimate##also_see"}{...}
 {hline}
 {cmd:help ddml crossfit, ddml estimate}{right: v1.2}
 {hline}
@@ -37,7 +47,7 @@ See the help for {help ddml stacking} for a detailed discussion and examples of 
 {opt atet} {opt ateu} {opt trim(real)}
 {opt mname(name)} {opt shortstack} {opt poolstack} {opt stdstack} {opt finalest(name)}{bind: ]} 
 
-{p 8 14}Replay options:
+{p 8 14}Replay options (available after model estimation):
 
 {p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {opt spec(integer or string)} {opt rep(integer or string)} {opt allcombos} {opt not:able} {opt replay}{bind: ]} 
 
@@ -50,6 +60,7 @@ See the help for {help ddml stacking} for a detailed discussion and examples of 
 {p 8 14}{cmd:ddml estimate} , {opt y0(varname)} {opt y1(varname)} [ {opt d(varname)} {opt d0(varname)} {opt d1(varname)} {opt z(varname)} {opt mname(name)}  {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)}{bind: ]}
 
 
+{marker crossfit}{...}
 {synoptset 20}{...}
 {synopthdr:Cross-fitting}
 {synoptline}
@@ -86,6 +97,7 @@ use {opt finalest} in one or the other, or neither (the default), but not both.
 {p2colreset}{...}
 {pstd}
 
+{marker estimation}{...}
 {synoptset 20}{...}
 {synopthdr:Estimation}
 {synoptline}
@@ -143,6 +155,7 @@ See {help pystacked} for alternative stacking final estimators.
 {p2colreset}{...}
 {pstd}
 
+{marker replay}{...}
 {synoptset 20}{...}
 {synopthdr:Replay}
 {synoptline}
@@ -163,6 +176,7 @@ used in combination with {opt spec()} and {opt rep()} to display and return esti
 {p2colreset}{...}
 {pstd}
 
+{marker userspec}{...}
 {synoptset 20}{...}
 {synopthdr:User-specified vars}
 {synoptline}

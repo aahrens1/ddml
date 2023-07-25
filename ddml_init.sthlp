@@ -1,5 +1,12 @@
 {smcl}
-{* *! version 24jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Syntax" "ddml_init##syntax"}{...}
+{viewerjumpto "Options" "ddml_init##options"}{...}
+{viewerjumpto "Installation" "ddml_init##installation"}{...}
+{viewerjumpto "References" "ddml_init##references"}{...}
+{viewerjumpto "Authors" "ddml_init##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_init##also_see"}{...}
 {hline}
 {cmd:help ddml init, ddml eq, ddml sample}{right: v1.2}
 {hline}
@@ -65,6 +72,7 @@ where the additional repetitions is indicated either by {opt append(#)}
 or by {opt append} and the cross-fit fold identifiers in {opt foldvar(varlist)}.
 
 
+{marker options}{...}
 {synoptset 20}{...}
 {synopthdr:init options}
 {synoptline}

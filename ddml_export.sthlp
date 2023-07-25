@@ -1,5 +1,12 @@
 {smcl}
-{* *! version 23jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Syntax" "ddml_export##syntax"}{...}
+{viewerjumpto "Examples" "ddml_export##examples"}{...}
+{viewerjumpto "Installation" "ddml_export##installation"}{...}
+{viewerjumpto "References" "ddml_export##references"}{...}
+{viewerjumpto "Authors" "ddml_export##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_export##also_see"}{...}
 {hline}
 {cmd:help ddml export}{right: v1.2}
 {hline}
@@ -44,6 +51,7 @@ additional Stata variables to include with {opt ddml} variables.
 {pstd}
 
 
+{marker examples}{...}
 {title:Examples}
 
 {smcl}

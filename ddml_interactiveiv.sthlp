@@ -1,5 +1,11 @@
 {smcl}
-{* *! version jul2023}{...}
+{* *! version 25jul2023}{...}
+{viewerjumpto "Examples" "ddml_interactiveiv##examples"}{...}
+{viewerjumpto "Installation" "ddml_interactiveiv##installation"}{...}
+{viewerjumpto "References" "ddml_interactiveiv##references"}{...}
+{viewerjumpto "Authors" "ddml_interactiveiv##authors"}{...}
+{vieweralsosee "ddml main page" "ddml"}{...}
+{vieweralsosee "Other" "ddml_interactiveiv##also_see"}{...}
 {hline}
 {cmd:help ddml interactiveiv}{right: v1.2}
 {hline}
@@ -56,13 +62,20 @@ learner, the following conditional expectations:
 {title:Examples}
 
 {pstd}
-Below we demonstrate the use of {cmd:ddml} for the interactive IV model. 
+Below we demonstrate the use of {cmd:ddml} for the interactive IV model.
+Note that estimation models are chosen for demonstration purposes only and 
+may be kept simple to allow you to run the code quickly.
 
-{marker late_i}{...}
-{pstd}{help ddml_example_interactiveiv_pystacked_basic:Basic example of the interactive IV model (LATE) with pystacked}
+{pstd}{help ddml interactiveiv##pystacked_basic:1. Basic example of the interactive IV model (LATE) with pystacked}{p_end}
+{pstd}{help ddml interactiveiv##pystacked_detailed:2. Detailed example of the interactive IV model (LATE) with pystacked}{p_end}
 
-{marker late_ii}{...}
-{pstd}{help ddml_example_interactiveiv_pystacked_detailed:Detailed example of the interactive IV model (LATE) with pystacked}
+{marker pystacked_basic}
+{smcl}
+INCLUDE help ddml_example_interactiveiv_pystacked_basic.sthlp
+
+{marker pystacked_detailed}
+{smcl}
+INCLUDE help ddml_example_interactiveiv_pystacked_detailed.sthlp
 
 
 {smcl}
