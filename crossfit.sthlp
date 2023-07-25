@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 25jul2023}{...}
+{* *! version 25july2023}{...}
 {viewerjumpto "Syntax" "crossfit##syntax"}{...}
 {viewerjumpto "Summary" "crossfit##summary"}{...}
 {viewerjumpto "Compatible programs" "crossfit##compatibility"}{...}

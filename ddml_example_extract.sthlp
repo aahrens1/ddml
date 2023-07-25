@@ -1,5 +1,5 @@
 {smcl}
-{pstd}{ul:ddml extract utility: Extracting stored information from ddml associative arrays}
+{* *! version 25july2023}{...}
 
 {pstd}The examples below use the partially-linear model
 and stacking regression using {helpb pystacked}.

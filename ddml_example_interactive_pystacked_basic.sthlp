@@ -1,5 +1,5 @@
 {smcl}
-{pstd}{ul:Interactive model - Basic example with {help pystacked}}{p_end}
+{* *! version 25july2023}{...}
 
 {pstd}We need to estimate the conditional expectations of E[Y|X,D=0], E[Y|X,D=1] and E[D|X].
 The first two conditional expectations are added jointly.

@@ -1,5 +1,5 @@
 {smcl}
-{pstd}{ul:Partially-linear model - Multiple treatments with {help pystacked}}
+{* *! version 25july2023}{...}
 
 {pstd}We can also run the partially-linear model with multiple treatments. 
 In this simple example, we estimate the effect of both 401k elligibility 

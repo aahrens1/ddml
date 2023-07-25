@@ -1,5 +1,5 @@
 {smcl}
-{pstd}{ul:Flexible partially-linear IV model - Basic example with {help pystacked}}
+{* *! version 25july2023}{...}
 
 {pstd}First load the data, define global macros, set the seed and initialize the model.
 We add learners for E[Y|X] in the usual way.

@@ -1,5 +1,5 @@
 {smcl}
-{pstd}{ul:Cluster sampling with cross-fit folds - Basic example with {help pystacked}}{p_end}
+{* *! version 25july2023}{...}
 
 {pstd}Load the data, define global macros and set the seed.{p_end}
 

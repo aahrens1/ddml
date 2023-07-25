@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 25jul2023}{...}
+{* *! version 25july2023}{...}
 {viewerjumpto "Syntax" "ddml_extract##syntax"}{...}
 {viewerjumpto "Options" "ddml_extract##options"}{...}
 {viewerjumpto "Examples" "ddml_extract##examples"}{...}

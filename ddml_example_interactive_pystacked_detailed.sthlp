@@ -1,5 +1,5 @@
 {smcl}
-{pstd}{ul:Interactive model - Detailed example with {help pystacked}}{p_end}
+{* *! version 25july2023}{...}
 
 {pstd}Preparation: we load the data, define global macros and set the seed.{p_end}
 

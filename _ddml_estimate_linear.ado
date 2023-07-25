@@ -1,5 +1,5 @@
-*! ddml v1.2
-*! last edited: 20 july 2023
+*! ddml v1.4
+*! last edited: 25july2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
