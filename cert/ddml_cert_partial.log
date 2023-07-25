@@ -1,0 +1,2898 @@
+-----------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial.log
+  log type:  text
+ opened on:  25 Jul 2023, 18:23:39
+
+. 
+. which ddml
+C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
+*! ddml v1.2
+*! last edited: 19 july 2023
+*! authors: aa/ms
+
+. mata: whichddml()
+  
+  Mata library for ddml and related programs,
+  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  authors AA/MS
+
+. 
+. use https://statalasso.github.io/dta/AJR.dta, clear
+
+. 
+. // necessary programs for cert; script exits with error if not installed
+. findfile pystacked.ado
+C:\LocalStore\ecomes\Documents\GitHub\pystacked/pystacked.ado
+
+. 
+. set seed 123
+
+. 
+. ******************************************************************************** 
+. **** Partially-linear model                                                                                          
+>            ****
+. ******************************************************************************** 
+. 
+. global Y logpgp95
+
+. global X lat_abst edes1975 temp* humid* steplow-oilres
+
+. global D1 avexpr 
+
+. global D2 democ1 
+
+. global D3 avelf
+
+. 
+. *** pystacked, no SS
+. 
+. *** initialise ddml and select model; 
+. ddml init partial, kfolds(2) reps(2)
+
+. ddml E[Y|X]: pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X]: pystacked $D1 $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X]: pystacked $D2 $X , type(reg)
+Learner D2_pystacked added successfully.
+
+. ddml crossfit
+Cross-fitting E[y|X] equation: logpgp95
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: democ1
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate, robust
+
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE      D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.315    (0.087)  D2_pystacked     0.004    (0.025)
+  st  2  Y1_pystacked  D1_pystacked     0.301    (0.066)  D2_pystacked     0.020    (0.023)
+
+Mean/med    Y learner     D learner         b        SE      D learner         b        SE 
+  st mn  Y1_pystacked  D1_pystacked     0.308    (0.075)  D2_pystacked     0.012    (0.025)
+  st md  Y1_pystacked  D1_pystacked     0.308    (0.078)  D2_pystacked     0.012    (0.025)
+
+Median over 2 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .308196   .0775119     3.98   0.000     .1562755    .4601166
+      democ1 |   .0119515   .0252919     0.47   0.637    -.0376197    .0615228
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3082    0.3009    0.3009    0.3082    0.3154    0.3154
+      democ1      0.0120    0.0041    0.0041    0.0120    0.0198    0.0198
+
+. *** replay
+. ddml estimate, mname(m0) spec(st) rep(1) replay notable
+
+Stacking DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked_1 D2-D2_pystacked_1 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3154464   .0869698     3.63   0.000     .1449888     .485904
+      democ1 |   .0040553   .0253129     0.16   0.873    -.0455571    .0536676
+       _cons |  -.0753477   .0908202    -0.83   0.407     -.253352    .1026567
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit
+Cross-fitting E[y|X] equation: logpgp95
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: democ1
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE      D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.315    (0.067)  D2_pystacked     0.004    (0.024)
+  st  2  Y1_pystacked  D1_pystacked     0.301    (0.062)  D2_pystacked     0.020    (0.022)
+  st  3  Y1_pystacked  D1_pystacked     0.263    (0.064)  D2_pystacked    -0.009    (0.023)
+
+Mean/med    Y learner     D learner         b        SE      D learner         b        SE 
+  st mn  Y1_pystacked  D1_pystacked     0.293    (0.068)  D2_pystacked     0.005    (0.026)
+  st md  Y1_pystacked  D1_pystacked     0.301    (0.069)  D2_pystacked     0.004    (0.027)
+
+Median over 3 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3009457   .0687311     4.38   0.000     .1662351    .4356562
+      democ1 |   .0040553   .0267395     0.15   0.879    -.0483532    .0564637
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2933    0.2634    0.2634    0.3009    0.3154    0.3154
+      democ1      0.0050   -0.0089   -0.0089    0.0041    0.0198    0.0198
+
+. *** replay
+. ddml estimate, mname(m0) spec(st) rep(1) replay notable
+
+Stacking DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked_1 D2-D2_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3154464   .0671841     4.70   0.000     .1837681    .4471248
+      democ1 |   .0040553   .0235941     0.17   0.864    -.0421884    .0502989
+       _cons |  -.0753477   .0878894    -0.86   0.391    -.2476077    .0969124
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(st) rep(2) replay notable
+
+Stacking DDML model (sample=2)
+y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked_2 D2-D2_pystacked_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3009457   .0621937     4.84   0.000     .1790482    .4228431
+      democ1 |   .0198478    .021613     0.92   0.358    -.0225128    .0622084
+       _cons |  -.1150422   .0845355    -1.36   0.174    -.2807288    .0506444
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(st) rep(mn) replay notable
+
+Mean over 3 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2932721    .067755     4.33   0.000     .1604748    .4260694
+      democ1 |   .0050079   .0255414     0.20   0.845    -.0450524    .0550683
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2933    0.2634    0.2634    0.3009    0.3154    0.3154
+      democ1      0.0050   -0.0089   -0.0089    0.0041    0.0198    0.0198
+
+. ddml estimate, mname(m0) spec(st) rep(md) replay notable
+
+Median over 3 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3009457   .0687311     4.38   0.000     .1662351    .4356562
+      democ1 |   .0040553   .0267395     0.15   0.879    -.0483532    .0564637
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2933    0.2634    0.2634    0.3009    0.3154    0.3154
+      democ1      0.0050   -0.0089   -0.0089    0.0041    0.0198    0.0198
+
+. 
+. *** pystacked, SS and PS
+. 
+. *** initialise ddml and select model; 
+. ddml init partial, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X]: pystacked $D1 $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X]: pystacked $D2 $X , type(reg)
+Learner D2_pystacked added successfully.
+
+. ddml crossfit, shortstack poolstack
+Cross-fitting E[y|X] equation: logpgp95
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: avexpr
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: democ1
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. *** estimation of parameter of interest
+. ddml estimate, robust
+
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE      D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.223    (0.031)  D2_pystacked     0.019    (0.026)
+  ss  1  [shortstack]          [ss]     0.243    (0.079)          [ss]    -0.010    (0.022)
+  ps  1   [poolstack]          [ps]     0.239    (0.040)          [ps]     0.003    (0.016)
+  st  2  Y1_pystacked  D1_pystacked     0.410    (0.068)  D2_pystacked    -0.035    (0.024)
+  ss  2  [shortstack]          [ss]     0.296    (0.048)          [ss]    -0.022    (0.018)
+  ps  2   [poolstack]          [ps]     0.226    (0.058)          [ps]     0.002    (0.021)
+
+Mean/med    Y learner     D learner         b        SE      D learner         b        SE 
+  st mn  Y1_pystacked  D1_pystacked     0.317    (0.106)  D2_pystacked    -0.008    (0.037)
+  ss mn  [shortstack]          [ss]     0.269    (0.065)          [ss]    -0.016    (0.021)
+  ps mn   [poolstack]          [ps]     0.233    (0.047)          [ps]     0.003    (0.018)
+  st md  Y1_pystacked  D1_pystacked     0.317    (0.107)  D2_pystacked    -0.008    (0.037)
+  ss md  [shortstack]          [ss]     0.269    (0.070)          [ss]    -0.016    (0.021)
+  ps md   [poolstack]          [ps]     0.233    (0.050)          [ps]     0.003    (0.019)
+
+Shortstack DDML model (median over 2 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2690843   .0704529     3.82   0.000     .1309992    .4071694
+      democ1 |  -.0158912    .021332    -0.74   0.456    -.0577012    .0259189
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2691    0.2426    0.2426    0.2691    0.2956    0.2956
+      democ1     -0.0159   -0.0219   -0.0219   -0.0159   -0.0098   -0.0098
+
+. *** replay
+. ddml estimate, mname(m0) spec(st) rep(1) replay notable
+
+Stacking DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked_1 D2-D2_pystacked_1 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2232983   .0313976     7.11   0.000     .1617602    .2848364
+      democ1 |   .0189835   .0262903     0.72   0.470    -.0325446    .0705116
+       _cons |   .0122662    .096393     0.13   0.899    -.1766607    .2011931
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1)
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ss_1 D2-D_democ1_ss_1 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2426089   .0785912     3.09   0.002     .0885731    .3966448
+      democ1 |  -.0098443   .0223066    -0.44   0.659    -.0535644    .0338758
+       _cons |  -.0196933   .0800445    -0.25   0.806    -.1765776     .137191
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+
+Poolstack DDML model (sample=1)
+y-E[y|X]  = y-Y_logpgp95_ps_1                      Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ps_1 D2-D_democ1_ps_1 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2385914   .0400831     5.95   0.000       .16003    .3171527
+      democ1 |   .0034818   .0163217     0.21   0.831    -.0285081    .0354717
+       _cons |    .019399    .084746     0.23   0.819    -.1467001    .1854982
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit, shortstack poolstack
+Cross-fitting E[y|X] equation: logpgp95
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: avexpr
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: democ1
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE      D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.223    (0.036)  D2_pystacked     0.019    (0.021)
+  ss  1  [shortstack]          [ss]     0.243    (0.057)          [ss]    -0.010    (0.021)
+  ps  1   [poolstack]          [ps]     0.239    (0.042)          [ps]     0.003    (0.018)
+  st  2  Y1_pystacked  D1_pystacked     0.410    (0.047)  D2_pystacked    -0.035    (0.019)
+  ss  2  [shortstack]          [ss]     0.296    (0.048)          [ss]    -0.022    (0.019)
+  ps  2   [poolstack]          [ps]     0.226    (0.043)          [ps]     0.002    (0.020)
+  st  3  Y1_pystacked  D1_pystacked     0.328    (0.062)  D2_pystacked     0.012    (0.023)
+  ss  3  [shortstack]          [ss]     0.352    (0.057)          [ss]     0.003    (0.021)
+  ps  3   [poolstack]          [ps]     0.335    (0.061)          [ps]     0.008    (0.022)
+
+Mean/med    Y learner     D learner         b        SE      D learner         b        SE 
+  st mn  Y1_pystacked  D1_pystacked     0.321    (0.082)  D2_pystacked    -0.001    (0.030)
+  ss mn  [shortstack]          [ss]     0.297    (0.063)          [ss]    -0.010    (0.023)
+  ps mn   [poolstack]          [ps]     0.267    (0.061)          [ps]     0.005    (0.020)
+  st md  Y1_pystacked  D1_pystacked     0.328    (0.094)  D2_pystacked     0.012    (0.023)
+  ss md  [shortstack]          [ss]     0.296    (0.078)          [ss]    -0.010    (0.022)
+  ps md   [poolstack]          [ps]     0.239    (0.045)          [ps]     0.003    (0.020)
+
+Shortstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2955596    .077628     3.81   0.000     .1434115    .4477077
+      democ1 |  -.0098443   .0224378    -0.44   0.661    -.0538215    .0341329
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2969    0.2426    0.2426    0.2956    0.3524    0.3524
+      democ1     -0.0098   -0.0219   -0.0219   -0.0098    0.0025    0.0025
+
+. *** replay
+. ddml estimate, mname(m0) spec(st) rep(1) replay notable
+
+Stacking DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked_1 D2-D2_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2232983   .0364553     6.13   0.000     .1518473    .2947493
+      democ1 |   .0189835   .0207382     0.92   0.360    -.0216627    .0596296
+       _cons |   .0122662   .0922189     0.13   0.894    -.1684795    .1930119
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(st) rep(2) replay notable
+
+Stacking DDML model (sample=2)
+y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked_2 D2-D2_pystacked_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .4101039   .0472613     8.68   0.000     .3174734    .5027344
+      democ1 |  -.0347201   .0194624    -1.78   0.074    -.0728656    .0034254
+       _cons |   -.016657   .0757564    -0.22   0.826    -.1651367    .1318227
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(st) rep(mn) replay notable
+
+Mean over 3 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3206251   .0817949     3.92   0.000     .1603101    .4809402
+      democ1 |  -.0011216   .0301991    -0.04   0.970    -.0603108    .0580676
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3206    0.2233    0.2233    0.3285    0.4101    0.4101
+      democ1     -0.0011   -0.0347   -0.0347    0.0124    0.0190    0.0190
+
+. ddml estimate, mname(m0) spec(st) rep(md) replay notable
+
+Median over 3 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3284732    .094325     3.48   0.000     .1435995    .5133469
+      democ1 |   .0123719   .0227684     0.54   0.587    -.0322533    .0569971
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3206    0.2233    0.2233    0.3285    0.4101    0.4101
+      democ1     -0.0011   -0.0347   -0.0347    0.0124    0.0190    0.0190
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1)
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ss_1 D2-D_democ1_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2426089   .0567656     4.27   0.000     .1313504    .3538675
+      democ1 |  -.0098443   .0213668    -0.46   0.645    -.0517224    .0320338
+       _cons |  -.0196933   .0815706    -0.24   0.809    -.1795688    .1401821
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(2) replay notable
+
+Shortstack DDML model (sample=2)
+y-E[y|X]  = y-Y_logpgp95_ss_2                      Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ss_2 D2-D_democ1_ss_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2955596   .0477382     6.19   0.000     .2019944    .3891248
+      democ1 |   -.021938   .0188996    -1.16   0.246    -.0589806    .0151046
+       _cons |   -.058672   .0624748    -0.94   0.348    -.1811203    .0637763
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
+
+Shortstack DDML model (mean over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2968522   .0628361     4.72   0.000     .1736957    .4200088
+      democ1 |  -.0097501   .0226403    -0.43   0.667    -.0541244    .0346241
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2969    0.2426    0.2426    0.2956    0.3524    0.3524
+      democ1     -0.0098   -0.0219   -0.0219   -0.0098    0.0025    0.0025
+
+. ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+
+Shortstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2955596    .077628     3.81   0.000     .1434115    .4477077
+      democ1 |  -.0098443   .0224378    -0.44   0.661    -.0538215    .0341329
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2969    0.2426    0.2426    0.2956    0.3524    0.3524
+      democ1     -0.0098   -0.0219   -0.0219   -0.0098    0.0025    0.0025
+
+. ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+
+Poolstack DDML model (sample=1)
+y-E[y|X]  = y-Y_logpgp95_ps_1                      Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ps_1 D2-D_democ1_ps_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2385914   .0420211     5.68   0.000     .1562315    .3209512
+      democ1 |   .0034818   .0183502     0.19   0.850     -.032484    .0394476
+       _cons |    .019399   .0807219     0.24   0.810     -.138813    .1776111
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ps) rep(2) replay notable
+
+Poolstack DDML model (sample=2)
+y-E[y|X]  = y-Y_logpgp95_ps_2                      Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ps_2 D2-D_democ1_ps_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2264342   .0429919     5.27   0.000     .1421717    .3106968
+      democ1 |   .0021272   .0200486     0.11   0.916    -.0371673    .0414217
+       _cons |  -.0249489   .0685564    -0.36   0.716     -.159317    .1094192
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ps) rep(mn) replay notable
+
+Poolstack DDML model (mean over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ps                        Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ps D2-D_democ1_ps 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2667021   .0612623     4.35   0.000     .1466303    .3867739
+      democ1 |   .0046982   .0201974     0.23   0.816     -.034888    .0442844
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2667    0.2264    0.2264    0.2386    0.3351    0.3351
+      democ1      0.0047    0.0021    0.0021    0.0035    0.0085    0.0085
+
+. ddml estimate, mname(m0) spec(ps) rep(md) replay notable
+
+Poolstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ps                        Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ps D2-D_democ1_ps 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2385914   .0446777     5.34   0.000     .1510247    .3261581
+      democ1 |   .0034818   .0200943     0.17   0.862    -.0359023    .0428658
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2667    0.2264    0.2264    0.2386    0.3351    0.3351
+      democ1      0.0047    0.0021    0.0021    0.0035    0.0085    0.0085
+
+. 
+. *** multiple learners, no SS
+. ddml init partial, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X]: reg $Y $X 
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner Y2_reg added successfully.
+
+. ddml E[D|X]: pystacked $D1 $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X]: reg $D1 $X 
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner D2_reg added successfully.
+
+. ddml crossfit
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate, robust
+
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+ mse  1  Y1_pystacked  D1_pystacked     0.161    (0.107)
+ mse  2  Y1_pystacked  D1_pystacked     0.142    (0.060)
+mse = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE 
+ mse mn     [min-mse]     [min-mse]     0.152    (0.074)
+ mse md     [min-mse]     [min-mse]     0.152    (0.087)
+
+Median over 2 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1515093   .0872628     1.74   0.083    -.0195227    .3225413
+------------------------------------------------------------------------------
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.1515    0.1423    0.1423    0.1515    0.1608    0.1608
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1607526   .1072782     1.50   0.134    -.0495089    .3710141
+       _cons |  -.0574508   .0915075    -0.63   0.530    -.2368022    .1219006
+------------------------------------------------------------------------------
+
+
+. *** allcombos
+. ddml estimate, allcombos
+
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+*  1  1  Y1_pystacked  D1_pystacked     0.161    (0.052)
+   2  1  Y1_pystacked        D2_reg     0.016    (0.020)
+   3  1        Y2_reg  D1_pystacked     0.218    (0.135)
+   4  1        Y2_reg        D2_reg     0.320    (0.028)
+*  1  2  Y1_pystacked  D1_pystacked     0.142    (0.059)
+   2  2  Y1_pystacked        D2_reg     0.005    (0.006)
+   3  2        Y2_reg  D1_pystacked     0.984    (0.559)
+   4  2        Y2_reg        D2_reg     0.420    (0.017)
+* = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE 
+ mse mn     [min-mse]     [min-mse]     0.152    (0.056)
+ mse md     [min-mse]     [min-mse]     0.152    (0.056)
+
+Median over 2 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1515093   .0563945     2.69   0.007     .0409781    .2620406
+------------------------------------------------------------------------------
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.1515    0.1423    0.1423    0.1515    0.1608    0.1608
+
+. forvalues i=1/4 {
+  2.     ddml estimate, mname(m0) spec(`i') rep(1) replay notable
+  3. }
+
+Min MSE DDML model, specification 1 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1607526   .0517569     3.11   0.002     .0593109    .2621943
+       _cons |  -.0574508   .0913418    -0.63   0.529    -.2364773    .1215758
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D2_reg_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .0156626   .0198081     0.79   0.429    -.0231606    .0544858
+       _cons |  -.0920768   .0976634    -0.94   0.346    -.2834935      .09934
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=1)
+y-E[y|X]  = y-Y2_reg_1                             Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2176102   .1354692     1.61   0.108    -.0479046    .4831251
+       _cons |  -.0858554   .2390791    -0.36   0.720    -.5544419    .3827311
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=1)
+y-E[y|X]  = y-Y2_reg_1                             Number of obs   =        64
+D-E[D|X]  = D-D2_reg_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3199896   .0282104    11.34   0.000     .2646982    .3752809
+       _cons |  -.2695747   .1390906    -1.94   0.053    -.5421873    .0030379
+------------------------------------------------------------------------------
+
+
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit
+Cross-fitting E[y|X] equation: logpgp95
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+ mse  1  Y1_pystacked  D1_pystacked     0.161    (0.052)
+ mse  2  Y1_pystacked  D1_pystacked     0.142    (0.059)
+ mse  3  Y1_pystacked  D1_pystacked     0.359    (0.060)
+mse = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE 
+ mse mn     [min-mse]     [min-mse]     0.221    (0.099)
+ mse md     [min-mse]     [min-mse]     0.161    (0.062)
+
+Median over 3 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1607526   .0620708     2.59   0.010     .0390961    .2824091
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2208    0.1423    0.1423    0.1608    0.3594    0.3594
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1607526   .0517569     3.11   0.002     .0593109    .2621943
+       _cons |  -.0574508   .0913418    -0.63   0.529    -.2364773    .1215758
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(2) replay notable
+
+Min MSE DDML model (sample=2)
+y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1422661    .059254     2.40   0.016     .0261305    .2584017
+       _cons |   .0337087   .0985009     0.34   0.732    -.1593496     .226767
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .220792   .0989448     2.23   0.026     .0268637    .4147203
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2208    0.1423    0.1423    0.1608    0.3594    0.3594
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1607526   .0620708     2.59   0.010     .0390961    .2824091
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2208    0.1423    0.1423    0.1608    0.3594    0.3594
+
+. *** allcombos
+. ddml estimate, allcombos
+
+
+Model:                  partial, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+*  1  1  Y1_pystacked  D1_pystacked     0.161    (0.052)
+   2  1  Y1_pystacked        D2_reg     0.016    (0.020)
+   3  1        Y2_reg  D1_pystacked     0.218    (0.135)
+   4  1        Y2_reg        D2_reg     0.320    (0.028)
+*  1  2  Y1_pystacked  D1_pystacked     0.142    (0.059)
+   2  2  Y1_pystacked        D2_reg     0.005    (0.006)
+   3  2        Y2_reg  D1_pystacked     0.984    (0.559)
+   4  2        Y2_reg        D2_reg     0.420    (0.017)
+*  1  3  Y1_pystacked  D1_pystacked     0.359    (0.060)
+   2  3  Y1_pystacked        D2_reg    -0.013    (0.015)
+   3  3        Y2_reg  D1_pystacked     0.549    (0.811)
+   4  3        Y2_reg        D2_reg     0.708    (0.138)
+* = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE 
+ mse mn     [min-mse]     [min-mse]     0.221    (0.099)
+ mse md     [min-mse]     [min-mse]     0.161    (0.062)
+
+Median over 3 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1607526   .0620708     2.59   0.010     .0390961    .2824091
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2208    0.1423    0.1423    0.1608    0.3594    0.3594
+
+. forvalues i=1/4 {
+  2.         forvalues r=1/2 {
+  3.                 ddml estimate, mname(m0) spec(`i') rep(`r') replay notable
+  4.         }
+  5. }
+
+Min MSE DDML model, specification 1 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1607526   .0517569     3.11   0.002     .0593109    .2621943
+       _cons |  -.0574508   .0913418    -0.63   0.529    -.2364773    .1215758
+------------------------------------------------------------------------------
+
+
+Min MSE DDML model, specification 1 (sample=2)
+y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1422661    .059254     2.40   0.016     .0261305    .2584017
+       _cons |   .0337087   .0985009     0.34   0.732    -.1593496     .226767
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D2_reg_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .0156626   .0198081     0.79   0.429    -.0231606    .0544858
+       _cons |  -.0920768   .0976634    -0.94   0.346    -.2834935      .09934
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=2)
+y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =        64
+D-E[D|X]  = D-D2_reg_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .0045653   .0060289     0.76   0.449    -.0072512    .0163817
+       _cons |   .0146485   .1024221     0.14   0.886    -.1860951    .2153921
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=1)
+y-E[y|X]  = y-Y2_reg_1                             Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2176102   .1354692     1.61   0.108    -.0479046    .4831251
+       _cons |  -.0858554   .2390791    -0.36   0.720    -.5544419    .3827311
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=2)
+y-E[y|X]  = y-Y2_reg_2                             Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .9839125   .5594727     1.76   0.079    -.1126338    2.080459
+       _cons |  -1.155977   .9300407    -1.24   0.214    -2.978823    .6668695
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=1)
+y-E[y|X]  = y-Y2_reg_1                             Number of obs   =        64
+D-E[D|X]  = D-D2_reg_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3199896   .0282104    11.34   0.000     .2646982    .3752809
+       _cons |  -.2695747   .1390906    -1.94   0.053    -.5421873    .0030379
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=2)
+y-E[y|X]  = y-Y2_reg_2                             Number of obs   =        64
+D-E[D|X]  = D-D2_reg_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .4198025   .0172898    24.28   0.000      .385915      .45369
+       _cons |  -.5666703   .2937292    -1.93   0.054    -1.142369    .0090284
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .220792   .0989448     2.23   0.026     .0268637    .4147203
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2208    0.1423    0.1423    0.1608    0.3594    0.3594
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .1607526   .0620708     2.59   0.010     .0390961    .2824091
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2208    0.1423    0.1423    0.1608    0.3594    0.3594
+
+. 
+. *** multiple learners, SS
+. ddml init partial, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X]: reg $Y $X 
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner Y2_reg added successfully.
+
+. ddml E[D|X]: pystacked $D1 $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X]: reg $D1 $X 
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner D2_reg added successfully.
+
+. ddml crossfit, shortstack
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+. ddml estimate, robust
+
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+ mse  1  Y1_pystacked  D1_pystacked     0.234    (0.083)
+  ss  1  [shortstack]          [ss]     0.234    (0.083)
+ mse  2  Y1_pystacked  D1_pystacked     0.340    (0.071)
+  ss  2  [shortstack]          [ss]     0.338    (0.072)
+mse = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE 
+ mse mn     [min-mse]     [min-mse]     0.287    (0.093)
+  ss mn  [shortstack]          [ss]     0.286    (0.093)
+ mse md     [min-mse]     [min-mse]     0.287    (0.094)
+  ss md  [shortstack]          [ss]     0.286    (0.094)
+
+Shortstack DDML model (median over 2 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2856542    .093549     3.05   0.002     .1023015    .4690069
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2857    0.2335    0.2335    0.2857    0.3378    0.3378
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2335178   .0830867     2.81   0.005     .0706708    .3963647
+       _cons |  -.1160891    .088632    -1.31   0.190    -.2898047    .0576265
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1)
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2335178   .0830867     2.81   0.005     .0706708    .3963647
+       _cons |  -.1160891    .088632    -1.31   0.190    -.2898047    .0576265
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. *** allcombos
+. ddml estimate, allcombos
+
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+*  1  1  Y1_pystacked  D1_pystacked     0.234    (0.064)
+   2  1  Y1_pystacked        D2_reg     0.030    (0.020)
+   3  1        Y2_reg  D1_pystacked     0.548    (0.241)
+   4  1        Y2_reg        D2_reg     0.477    (0.036)
+  ss  1  [shortstack]          [ss]     0.234    (0.064)
+*  1  2  Y1_pystacked  D1_pystacked     0.340    (0.064)
+   2  2  Y1_pystacked        D2_reg    -0.002    (0.012)
+   3  2        Y2_reg  D1_pystacked     0.313    (0.591)
+   4  2        Y2_reg        D2_reg     0.601    (0.047)
+  ss  2  [shortstack]          [ss]     0.338    (0.064)
+* = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE 
+ mse mn     [min-mse]     [min-mse]     0.287    (0.083)
+  ss mn  [shortstack]          [ss]     0.286    (0.082)
+ mse md     [min-mse]     [min-mse]     0.287    (0.083)
+  ss md  [shortstack]          [ss]     0.286    (0.082)
+
+Shortstack DDML model (median over 2 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2856542   .0824773     3.46   0.001     .1240016    .4473067
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2857    0.2335    0.2335    0.2857    0.3378    0.3378
+
+. forvalues i=1/4 {
+  2.     ddml estimate, mname(m0) spec(`i') rep(1) replay notable
+  3. }
+
+Min MSE DDML model, specification 1 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2335178    .064004     3.65   0.000     .1080722    .3589634
+       _cons |  -.1160891   .0914748    -1.27   0.204    -.2953764    .0631981
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D2_reg_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .0295428   .0195263     1.51   0.130    -.0087281    .0678136
+       _cons |  -.1025285   .0989297    -1.04   0.300    -.2964271      .09137
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=1)
+y-E[y|X]  = y-Y2_reg_1                             Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .547833   .2407799     2.28   0.023     .0759131    1.019753
+       _cons |   .2129945   .3441234     0.62   0.536     -.461475     .887464
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=1)
+y-E[y|X]  = y-Y2_reg_1                             Number of obs   =        64
+D-E[D|X]  = D-D2_reg_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .4774591   .0362477    13.17   0.000      .406415    .5485033
+       _cons |   .1448287   .1836483     0.79   0.430    -.2151154    .5047729
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1)
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2335178    .064004     3.65   0.000     .1080722    .3589634
+       _cons |  -.1160891   .0914748    -1.27   0.204    -.2953764    .0631981
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit, shortstack
+Cross-fitting E[y|X] equation: logpgp95
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X] equation: avexpr
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+ mse  1  Y1_pystacked  D1_pystacked     0.234    (0.064)
+  ss  1  [shortstack]          [ss]     0.234    (0.064)
+ mse  2  Y1_pystacked  D1_pystacked     0.340    (0.064)
+  ss  2  [shortstack]          [ss]     0.338    (0.064)
+ mse  3  Y1_pystacked  D1_pystacked     0.361    (0.063)
+  ss  3  [shortstack]          [ss]     0.358    (0.064)
+mse = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE 
+ mse mn     [min-mse]     [min-mse]     0.312    (0.081)
+  ss mn  [shortstack]          [ss]     0.310    (0.080)
+ mse md     [min-mse]     [min-mse]     0.340    (0.067)
+  ss md  [shortstack]          [ss]     0.338    (0.067)
+
+Shortstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3377906   .0669069     5.05   0.000     .2066554    .4689258
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3099    0.2335    0.2335    0.3378    0.3583    0.3583
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2335178    .064004     3.65   0.000     .1080722    .3589634
+       _cons |  -.1160891   .0914748    -1.27   0.204    -.2953764    .0631981
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(2) replay notable
+
+Min MSE DDML model (sample=2)
+y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3400039   .0635297     5.35   0.000      .215488    .4645198
+       _cons |  -.0857797   .0807577    -1.06   0.288    -.2440619    .0725025
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3115589   .0808474     3.85   0.000      .153101    .4700168
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3116    0.2335    0.2335    0.3400    0.3612    0.3612
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3400039   .0668095     5.09   0.000     .2090596    .4709482
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3116    0.2335    0.2335    0.3400    0.3612    0.3612
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1)
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2335178    .064004     3.65   0.000     .1080722    .3589634
+       _cons |  -.1160891   .0914748    -1.27   0.204    -.2953764    .0631981
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(2) replay notable
+
+Shortstack DDML model (sample=2)
+y-E[y|X]  = y-Y_logpgp95_ss_2                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3377906    .063813     5.29   0.000     .2127195    .4628617
+       _cons |  -.0824338   .0810416    -1.02   0.309    -.2412724    .0764049
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
+
+Shortstack DDML model (mean over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3098638   .0804883     3.85   0.000     .1521095     .467618
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3099    0.2335    0.2335    0.3378    0.3583    0.3583
+
+. ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+
+Shortstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3377906   .0669069     5.05   0.000     .2066554    .4689258
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3099    0.2335    0.2335    0.3378    0.3583    0.3583
+
+. *** allcombos
+. ddml estimate, allcombos
+
+
+Model:                  partial, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+*  1  1  Y1_pystacked  D1_pystacked     0.234    (0.064)
+   2  1  Y1_pystacked        D2_reg     0.030    (0.020)
+   3  1        Y2_reg  D1_pystacked     0.548    (0.241)
+   4  1        Y2_reg        D2_reg     0.477    (0.036)
+  ss  1  [shortstack]          [ss]     0.234    (0.064)
+*  1  2  Y1_pystacked  D1_pystacked     0.340    (0.064)
+   2  2  Y1_pystacked        D2_reg    -0.002    (0.012)
+   3  2        Y2_reg  D1_pystacked     0.313    (0.591)
+   4  2        Y2_reg        D2_reg     0.601    (0.047)
+  ss  2  [shortstack]          [ss]     0.338    (0.064)
+*  1  3  Y1_pystacked  D1_pystacked     0.361    (0.063)
+   2  3  Y1_pystacked        D2_reg    -0.006    (0.011)
+   3  3        Y2_reg  D1_pystacked     0.506    (0.183)
+   4  3        Y2_reg        D2_reg     0.061    (0.026)
+  ss  3  [shortstack]          [ss]     0.358    (0.064)
+* = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE 
+ mse mn     [min-mse]     [min-mse]     0.312    (0.081)
+  ss mn  [shortstack]          [ss]     0.310    (0.080)
+ mse md     [min-mse]     [min-mse]     0.340    (0.067)
+  ss md  [shortstack]          [ss]     0.338    (0.067)
+
+Shortstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3377906   .0669069     5.05   0.000     .2066554    .4689258
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3099    0.2335    0.2335    0.3378    0.3583    0.3583
+
+. forvalues i=1/4 {
+  2.     forvalues r=1/2 {
+  3.                 ddml estimate, mname(m0) spec(`i') rep(`r') replay notable
+  4.         }
+  5. }
+
+Min MSE DDML model, specification 1 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2335178    .064004     3.65   0.000     .1080722    .3589634
+       _cons |  -.1160891   .0914748    -1.27   0.204    -.2953764    .0631981
+------------------------------------------------------------------------------
+
+
+Min MSE DDML model, specification 1 (sample=2)
+y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3400039   .0635297     5.35   0.000      .215488    .4645198
+       _cons |  -.0857797   .0807577    -1.06   0.288    -.2440619    .0725025
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D2_reg_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .0295428   .0195263     1.51   0.130    -.0087281    .0678136
+       _cons |  -.1025285   .0989297    -1.04   0.300    -.2964271      .09137
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=2)
+y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =        64
+D-E[D|X]  = D-D2_reg_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |  -.0024321   .0116038    -0.21   0.834    -.0251752    .0203111
+       _cons |  -.0914594   .0992347    -0.92   0.357    -.2859559    .1030371
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=1)
+y-E[y|X]  = y-Y2_reg_1                             Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .547833   .2407799     2.28   0.023     .0759131    1.019753
+       _cons |   .2129945   .3441234     0.62   0.536     -.461475     .887464
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=2)
+y-E[y|X]  = y-Y2_reg_2                             Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .312993   .5906224     0.53   0.596    -.8446057    1.470592
+       _cons |  -1.121999   .7507876    -1.49   0.135    -2.593516    .3495174
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=1)
+y-E[y|X]  = y-Y2_reg_1                             Number of obs   =        64
+D-E[D|X]  = D-D2_reg_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .4774591   .0362477    13.17   0.000      .406415    .5485033
+       _cons |   .1448287   .1836483     0.79   0.430    -.2151154    .5047729
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=2)
+y-E[y|X]  = y-Y2_reg_2                             Number of obs   =        64
+D-E[D|X]  = D-D2_reg_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .6005375   .0467457    12.85   0.000     .5089176    .6921573
+       _cons |    -.19838   .3997634    -0.50   0.620    -.9819019    .5851419
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2335178    .064004     3.65   0.000     .1080722    .3589634
+       _cons |  -.1160891   .0914748    -1.27   0.204    -.2953764    .0631981
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(2) replay notable
+
+Min MSE DDML model (sample=2)
+y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3400039   .0635297     5.35   0.000      .215488    .4645198
+       _cons |  -.0857797   .0807577    -1.06   0.288    -.2440619    .0725025
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3115589   .0808474     3.85   0.000      .153101    .4700168
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3116    0.2335    0.2335    0.3400    0.3612    0.3612
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3400039   .0668095     5.09   0.000     .2090596    .4709482
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3116    0.2335    0.2335    0.3400    0.3612    0.3612
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1)
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2335178    .064004     3.65   0.000     .1080722    .3589634
+       _cons |  -.1160891   .0914748    -1.27   0.204    -.2953764    .0631981
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(2) replay notable
+
+Shortstack DDML model (sample=2)
+y-E[y|X]  = y-Y_logpgp95_ss_2                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_2 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3377906    .063813     5.29   0.000     .2127195    .4628617
+       _cons |  -.0824338   .0810416    -1.02   0.309    -.2412724    .0764049
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
+
+Shortstack DDML model (mean over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3098638   .0804883     3.85   0.000     .1521095     .467618
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3099    0.2335    0.2335    0.3378    0.3583    0.3583
+
+. ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+
+Shortstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3377906   .0669069     5.05   0.000     .2066554    .4689258
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3099    0.2335    0.2335    0.3378    0.3583    0.3583
+
+. 
+. ******************************************************************************** 
+. **** Restacking with ddml estimate                                                                                   
+>    ****
+. ******************************************************************************** 
+. 
+. // with pystacked:
+. 
+. // setup
+. set seed 123
+
+. ddml init partial, kfolds(2) reps(1)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X]: pystacked $D1 $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. 
+. // initial = std stack, shortstack, poolstack
+. set seed 123
+
+. ddml crossfit, shortstack poolstack
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+  ss  1  [shortstack]          [ss]     0.312    (0.061)
+  ps  1   [poolstack]          [ps]     0.292    (0.058)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3120206   .0605317     5.15   0.000     .1933806    .4306606
+       _cons |  -.0462351   .0855141    -0.54   0.589    -.2138396    .1213695
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. // save for later comparison
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01809171    .01809171
+  lassocv            2    .58960559    .58960559
+gradboost            3     .3923027     .3923027
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    4.105e-17    4.105e-17
+  lassocv            2    .64988122    .64988122
+gradboost            3    .35011878    .35011878
+
+pool-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .06826544    .06826544
+  lassocv            2    .05742786    .05742786
+gradboost            3     .8743067     .8743067
+
+pool-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01569815    .01569815
+  lassocv            2    .45940433    .45940433
+gradboost            3    .52489752    .52489752
+
+. mat ssw_nnls1 = r(Y_logpgp95_ss)
+
+. mat psw_nnls1 = r(Y_logpgp95_ps)
+
+. mat stsw_nnls1 = r(Y1_pystacked_w_mn)
+
+. // restack shortstack
+. ddml estimate, shortstack ssfinalest(singlebest)
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+  ss  1  [shortstack]          [ss]     0.298    (0.061)
+  ps  1   [poolstack]          [ps]     0.292    (0.058)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2978095   .0607419     4.90   0.000     .1787577    .4168613
+       _cons |  -.0895569   .0895638    -1.00   0.317    -.2650987     .085985
+------------------------------------------------------------------------------
+Stacking final estimator: singlebest
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+pool-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .06826544    .06826544
+  lassocv            2    .05742786    .05742786
+gradboost            3     .8743067     .8743067
+
+pool-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01569815    .01569815
+  lassocv            2    .45940433    .45940433
+gradboost            3    .52489752    .52489752
+
+. mat ssw = r(Y_logpgp95_ss)
+
+. assert el(ssw,1,2)==0
+
+. assert el(ssw,2,2)==1
+
+. assert el(ssw,3,2)==0
+
+. mat psw = r(Y_logpgp95_ps)
+
+. assert el(psw,1,2)~=0
+
+. mat stsw = r(Y1_pystacked_w_mn)
+
+. assert el(stsw,1,2)~=0
+
+. // restack poolstack
+. ddml estimate, poolstack psfinalest(singlebest)
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+  ss  1  [shortstack]          [ss]     0.298    (0.061)
+  ps  1   [poolstack]          [ps]     0.302    (0.065)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2978095   .0607419     4.90   0.000     .1787577    .4168613
+       _cons |  -.0895569   .0895638    -1.00   0.317    -.2650987     .085985
+------------------------------------------------------------------------------
+Stacking final estimator: singlebest
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+pool-stacked weights across resamples for avexpr
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            0            0
+gradboost            3            1            1
+
+pool-stacked weights across resamples for logpgp95
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            0            0
+gradboost            3            1            1
+
+. mat psw = r(Y_logpgp95_ps)
+
+. assert el(psw,1,2)==0
+
+. assert el(psw,2,2)==0
+
+. assert el(psw,3,2)==1
+
+. mat stsw = r(Y1_pystacked_w_mn)
+
+. assert el(stsw,1,2)~=0
+
+. // restack standard stack
+. ddml estimate, stdstack stdfinalest(singlebest)
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.377    (0.066)
+  ss  1  [shortstack]          [ss]     0.298    (0.061)
+  ps  1   [poolstack]          [ps]     0.302    (0.065)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2978095   .0607419     4.90   0.000     .1787577    .4168613
+       _cons |  -.0895569   .0895638    -1.00   0.317    -.2650987     .085985
+------------------------------------------------------------------------------
+Stacking final estimator: singlebest
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2           .5           .5
+gradboost            3           .5           .5
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2           .5           .5
+gradboost            3           .5           .5
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+pool-stacked weights across resamples for avexpr
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            0            0
+gradboost            3            1            1
+
+pool-stacked weights across resamples for logpgp95
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            0            0
+gradboost            3            1            1
+
+. mat stsw = r(Y1_pystacked_w_mn)
+
+. assert el(stsw,1,2)==0
+
+. assert el(stsw,2,2)==0.5
+
+. assert el(stsw,3,2)==0.5
+
+. // all restacked to nnls1
+. ddml estimate, finalest(nnls1)
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+  ss  1  [shortstack]          [ss]     0.312    (0.061)
+  ps  1   [poolstack]          [ps]     0.292    (0.058)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3120206   .0605317     5.15   0.000     .1933806    .4306606
+       _cons |  -.0462351   .0855141    -0.54   0.589    -.2138396    .1213695
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377751    .47377751
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419304    .01419304
+  lassocv            2     .5559015     .5559015
+gradboost            3    .42990545    .42990545
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01809171    .01809171
+  lassocv            2    .58960559    .58960559
+gradboost            3     .3923027     .3923027
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    4.105e-17    4.105e-17
+  lassocv            2    .64988122    .64988122
+gradboost            3    .35011878    .35011878
+
+pool-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .06826544    .06826544
+  lassocv            2    .05742786    .05742786
+gradboost            3     .8743067     .8743067
+
+pool-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01569815    .01569815
+  lassocv            2    .45940433    .45940433
+gradboost            3    .52489752    .52489752
+
+. mat ssw = r(Y_logpgp95_ss)
+
+. mat psw = r(Y_logpgp95_ps)
+
+. mat stsw = r(Y1_pystacked_w_mn)
+
+. assert mreldif(ssw,ssw_nnls1) < 10e-10
+
+. assert mreldif(psw,psw_nnls1) < 10e-10
+
+. // slight differences, possible float/double issue
+. assert mreldif(stsw,stsw_nnls1) < 10e-6
+
+. 
+. // initial = std stack, shortstack, poolstack
+. set seed 123
+
+. ddml crossfit, shortstack poolstack
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+  ss  1  [shortstack]          [ss]     0.312    (0.061)
+  ps  1   [poolstack]          [ps]     0.292    (0.058)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3120206   .0605317     5.15   0.000     .1933806    .4306606
+       _cons |  -.0462351   .0855141    -0.54   0.589    -.2138396    .1213695
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01809171    .01809171
+  lassocv            2    .58960559    .58960559
+gradboost            3     .3923027     .3923027
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    4.105e-17    4.105e-17
+  lassocv            2    .64988122    .64988122
+gradboost            3    .35011878    .35011878
+
+pool-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .06826544    .06826544
+  lassocv            2    .05742786    .05742786
+gradboost            3     .8743067     .8743067
+
+pool-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01569815    .01569815
+  lassocv            2    .45940433    .45940433
+gradboost            3    .52489752    .52489752
+
+. // restack shortstack + poolstack
+. ddml estimate, shortstack ssfinalest(singlebest) poolstack psfinalest(singlebest)
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+  ss  1  [shortstack]          [ss]     0.298    (0.061)
+  ps  1   [poolstack]          [ps]     0.302    (0.065)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2978095   .0607419     4.90   0.000     .1787577    .4168613
+       _cons |  -.0895569   .0895638    -1.00   0.317    -.2650987     .085985
+------------------------------------------------------------------------------
+Stacking final estimator: singlebest
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+pool-stacked weights across resamples for avexpr
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            0            0
+gradboost            3            1            1
+
+pool-stacked weights across resamples for logpgp95
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            0            0
+gradboost            3            1            1
+
+. mat ssw = r(Y_logpgp95_ss)
+
+. assert el(ssw,1,2)==0
+
+. assert el(ssw,2,2)==1
+
+. assert el(ssw,3,2)==0
+
+. mat psw = r(Y_logpgp95_ps)
+
+. assert el(psw,1,2)==0
+
+. assert el(psw,2,2)==0
+
+. assert el(psw,3,2)==1
+
+. 
+. // initial = std stack only
+. set seed 123
+
+. ddml crossfit
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+
+Stacking DDML model
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3365435   .0637517     5.28   0.000     .2115925    .4614945
+       _cons |  -.0598161   .0902323    -0.66   0.507    -.2366681    .1170359
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+error - short-stacked weights for avexpr not available
+
+error - short-stacked weights for logpgp95 not available
+
+error - pool-stacked weights for avexpr not available
+
+error - pool-stacked weights for logpgp95 not available
+
+. // restack - add shortstack
+. ddml estimate, shortstack
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+  ss  1  [shortstack]          [ss]     0.312    (0.061)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3120206   .0605317     5.15   0.000     .1933806    .4306606
+       _cons |  -.0462351   .0855141    -0.54   0.589    -.2138396    .1213695
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01809171    .01809171
+  lassocv            2    .58960559    .58960559
+gradboost            3     .3923027     .3923027
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    4.105e-17    4.105e-17
+  lassocv            2    .64988122    .64988122
+gradboost            3    .35011878    .35011878
+
+error - pool-stacked weights for avexpr not available
+
+error - pool-stacked weights for logpgp95 not available
+
+. 
+. // initial = std stack only
+. set seed 123
+
+. ddml crossfit
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+
+Stacking DDML model
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3365435   .0637517     5.28   0.000     .2115925    .4614945
+       _cons |  -.0598161   .0902323    -0.66   0.507    -.2366681    .1170359
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+error - short-stacked weights for avexpr not available
+
+error - short-stacked weights for logpgp95 not available
+
+error - pool-stacked weights for avexpr not available
+
+error - pool-stacked weights for logpgp95 not available
+
+. // restack - add shortstack
+. ddml estimate, shortstack
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+  ss  1  [shortstack]          [ss]     0.312    (0.061)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3120206   .0605317     5.15   0.000     .1933806    .4306606
+       _cons |  -.0462351   .0855141    -0.54   0.589    -.2138396    .1213695
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01809171    .01809171
+  lassocv            2    .58960559    .58960559
+gradboost            3     .3923027     .3923027
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    4.105e-17    4.105e-17
+  lassocv            2    .64988122    .64988122
+gradboost            3    .35011878    .35011878
+
+error - pool-stacked weights for avexpr not available
+
+error - pool-stacked weights for logpgp95 not available
+
+. 
+. // initial = std stack only
+. set seed 123
+
+. ddml crossfit
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+
+Stacking DDML model
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3365435   .0637517     5.28   0.000     .2115925    .4614945
+       _cons |  -.0598161   .0902323    -0.66   0.507    -.2366681    .1170359
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+error - short-stacked weights for avexpr not available
+
+error - short-stacked weights for logpgp95 not available
+
+error - pool-stacked weights for avexpr not available
+
+error - pool-stacked weights for logpgp95 not available
+
+. // restack - add shortstack with singlebest
+. ddml estimate, shortstack ssfinalest(singlebest)
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+  ss  1  [shortstack]          [ss]     0.298    (0.061)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2978095   .0607419     4.90   0.000     .1787577    .4168613
+       _cons |  -.0895569   .0895638    -1.00   0.317    -.2650987     .085985
+------------------------------------------------------------------------------
+Stacking final estimator: singlebest
+
+
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1     .0747932     .0747932
+  lassocv            2    .47377752    .47377752
+gradboost            3    .45142929    .45142929
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1
+      ols            1    .01419287    .01419287
+  lassocv            2    .55590998    .55590998
+gradboost            3    .42989715    .42989715
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+error - pool-stacked weights for avexpr not available
+
+error - pool-stacked weights for logpgp95 not available
+
+. mat ssw = r(Y_logpgp95_ss)
+
+. assert el(ssw,1,2)==0
+
+. assert el(ssw,2,2)==1
+
+. assert el(ssw,3,2)==0
+
+. 
+. // initial = shortstack, no standard stack
+. set seed 123
+
+. ddml crossfit, shortstack nostdstack
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  ss  1  [shortstack]          [ss]     0.312    (0.061)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3120206   .0605317     5.15   0.000     .1933806    .4306606
+       _cons |  -.0462351   .0855141    -0.54   0.589    -.2138396    .1213695
+------------------------------------------------------------------------------
+Stacking final estimator: 
+
+
+. ddml extract, show(weights)
+
+error - standard stack weights for avexpr not available
+
+error - standard stack weights for logpgp95 not available
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: 
+               learner  mean_weight        rep_1
+      ols            1    .01809171    .01809171
+  lassocv            2    .58960559    .58960559
+gradboost            3     .3923027     .3923027
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: 
+               learner  mean_weight        rep_1
+      ols            1    4.105e-17    4.105e-17
+  lassocv            2    .64988122    .64988122
+gradboost            3    .35011878    .35011878
+
+error - pool-stacked weights for avexpr not available
+
+error - pool-stacked weights for logpgp95 not available
+
+. // restack - shortstack with singlebest
+. ddml estimate, shortstack ssfinalest(singlebest)
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  ss  1  [shortstack]          [ss]     0.298    (0.061)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_logpgp95_ss_1                      Number of obs   =        64
+D-E[D|X]  = D-D_avexpr_ss_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2978095   .0607419     4.90   0.000     .1787577    .4168613
+       _cons |  -.0895569   .0895638    -1.00   0.317    -.2650987     .085985
+------------------------------------------------------------------------------
+Stacking final estimator: singlebest
+
+
+. ddml extract, show(weights)
+
+error - standard stack weights for avexpr not available
+
+error - standard stack weights for logpgp95 not available
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: singlebest
+               learner  mean_weight        rep_1
+      ols            1            0            0
+  lassocv            2            1            1
+gradboost            3            0            0
+
+error - pool-stacked weights for avexpr not available
+
+error - pool-stacked weights for logpgp95 not available
+
+. mat ssw = r(Y_logpgp95_ss)
+
+. assert el(ssw,1,2)==0
+
+. assert el(ssw,2,2)==1
+
+. assert el(ssw,3,2)==0
+
+. 
+. // without pystacked: not currently supported
+. 
+. // setup
+. set seed 123
+
+. ddml init partial, kfolds(2) reps(1)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X]: reg $Y $X
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner Y2_reg added successfully.
+
+. ddml E[D|X]: pystacked $D1 $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X]: reg $D1 $X
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner D2_reg added successfully.
+
+. 
+. // no shortstack
+. set seed 123
+
+. ddml crossfit
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate, allcombos
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+*  1  1  Y1_pystacked  D1_pystacked     0.337    (0.064)
+   2  1  Y1_pystacked        D2_reg    -0.006    (0.015)
+   3  1        Y2_reg  D1_pystacked     0.426    (0.178)
+   4  1        Y2_reg        D2_reg     0.051    (0.035)
+* = minimum MSE specification for that resample.
+
+Min MSE DDML model
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3365435   .0637517     5.28   0.000     .2115925    .4614945
+       _cons |  -.0598161   .0902323    -0.66   0.507    -.2366681    .1170359
+------------------------------------------------------------------------------
+
+
+. // restack - add shortstack
+. cap noi ddml estimate, shortstack
+error - restacking available only if pystacked is the only learner for each conditional expectation
+
+. assert _rc==198
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial.log
+  log type:  text
+ closed on:  25 Jul 2023, 18:26:35
+-----------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,1948 @@
+-----------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_misc.log
+  log type:  text
+ opened on:  25 Jul 2023, 18:19:56
+
+. 
+. which ddml
+C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
+*! ddml v1.2
+*! last edited: 19 july 2023
+*! authors: aa/ms
+
+. mata: whichddml()
+  
+  Mata library for ddml and related programs,
+  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  authors AA/MS
+
+. 
+. use https://statalasso.github.io/dta/AJR.dta, clear
+
+. 
+. // necessary programs for cert; script exits with error if not installed
+. findfile pystacked.ado
+C:\LocalStore\ecomes\Documents\GitHub\pystacked/pystacked.ado
+
+. 
+. set seed 123
+
+. 
+. ******************************************************************************** 
+. **** ddml describe                                                                                                   
+>                    ****
+. ******************************************************************************** 
+. 
+. global Y logpgp95
+
+. global X lat_abst edes1975 temp* humid* steplow-oilres
+
+. global D1 avexpr 
+
+. global D2 democ1 
+
+. 
+. *** pystacked, no SS
+. 
+. *** initialise ddml and select model; 
+. ddml init partial, kfolds(2) reps(2)
+
+. ddml E[Y|X]: pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X]: pystacked $D1 $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X]: pystacked $D2 $X , type(reg)
+Learner D2_pystacked added successfully.
+
+. 
+. ddml describe
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+. ddml describe, learners
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+Y learners (detail):
+ Learner:     Y1_pystacked
+              est cmd: pystacked logpgp95 lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+D learners (detail):
+ Learner:     D1_pystacked
+              est cmd: pystacked avexpr lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+ Learner:     D2_pystacked
+              est cmd: pystacked democ1 lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+
+. ddml describe, sample
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+ID:                     m0_id
+Full sample indic.:     m0_sample (N=64)
+Fold ID:                  m0_fid_1    m0_fid_2  
+Fold sample indic.:     m0_sample_1 m0_sample_2 
+Estimation N:              (n.a.)      (n.a.)   
+
+. ddml describe, all
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+Specifications:         1 possible specs * 2 crossfit splits = 2
+
+ID:                     m0_id
+Full sample indic.:     m0_sample (N=64)
+Fold ID:                  m0_fid_1    m0_fid_2  
+Fold sample indic.:     m0_sample_1 m0_sample_2 
+Estimation N:              (n.a.)      (n.a.)   
+
+Y learners (detail):
+ Learner:     Y1_pystacked
+              est cmd: pystacked logpgp95 lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+D learners (detail):
+ Learner:     D1_pystacked
+              est cmd: pystacked avexpr lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+ Learner:     D2_pystacked
+              est cmd: pystacked democ1 lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+
+No crossfitting results to display.
+
+No estimation results to display.
+
+. // no error, just message that results aren't available
+. ddml describe, crossfit
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+No crossfitting results to display.
+
+. ddml describe, estimates
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+No estimation results to display.
+
+. // crossfit
+. ddml crossfit
+Cross-fitting E[y|X] equation: logpgp95
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: democ1
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml describe, crossfit
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+Crossfit results (detail):
+                                     All    By fold:
+Cond. exp.  Learner      rep         MSE        1         2 
+logpgp95   Y1_pysta~d     1          0.71      0.70      0.72
+           Y1_pysta~d     2          0.75      0.57      0.93
+avexpr     D1_pysta~d     1          1.84      2.15      1.53
+           D1_pysta~d     2          1.96      2.23      1.69
+democ1     D2_pysta~d     1         14.34     17.86     10.69
+           D2_pysta~d     2         16.71     15.46     18.10
+
+. ddml describe, estimates
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+No estimation results to display.
+
+. // estimate
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE      D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.315    (0.067)  D2_pystacked     0.004    (0.024)
+  st  2  Y1_pystacked  D1_pystacked     0.301    (0.062)  D2_pystacked     0.020    (0.022)
+
+Mean/med    Y learner     D learner         b        SE      D learner         b        SE 
+  st mn  Y1_pystacked  D1_pystacked     0.308    (0.065)  D2_pystacked     0.012    (0.024)
+  st md  Y1_pystacked  D1_pystacked     0.308    (0.065)  D2_pystacked     0.012    (0.024)
+
+Median over 2 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .308196   .0651417     4.73   0.000     .1805206    .4358715
+      democ1 |   .0119515   .0239636     0.50   0.618    -.0350162    .0589193
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3082    0.3009    0.3009    0.3082    0.3154    0.3154
+      democ1      0.0120    0.0041    0.0041    0.0120    0.0198    0.0198
+
+. ddml describe, all
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+Specifications:         1 possible specs * 2 crossfit splits = 2
+
+ID:                     m0_id
+Full sample indic.:     m0_sample (N=64)
+Fold ID:                  m0_fid_1    m0_fid_2  
+Fold sample indic.:     m0_sample_1 m0_sample_2 
+Estimation N:                59          59     
+
+Y learners (detail):
+ Learner:     Y1_pystacked
+              est cmd: pystacked logpgp95 lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+D learners (detail):
+ Learner:     D1_pystacked
+              est cmd: pystacked avexpr lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+ Learner:     D2_pystacked
+              est cmd: pystacked democ1 lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+
+Crossfit results (detail):
+                                     All    By fold:
+Cond. exp.  Learner      rep         MSE        1         2 
+logpgp95   Y1_pysta~d     1          0.71      0.70      0.72
+           Y1_pysta~d     2          0.75      0.57      0.93
+avexpr     D1_pysta~d     1          1.84      2.15      1.53
+           D1_pysta~d     2          1.96      2.23      1.69
+democ1     D2_pysta~d     1         14.34     17.86     10.69
+           D2_pysta~d     2         16.71     15.46     18.10
+
+
+Median over 2 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .308196   .0651417     4.73   0.000     .1805206    .4358715
+      democ1 |   .0119515   .0239636     0.50   0.618    -.0350162    .0589193
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3082    0.3009    0.3009    0.3082    0.3154    0.3154
+      democ1      0.0120    0.0041    0.0041    0.0120    0.0198    0.0198
+
+. ddml describe, crossfit
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+Crossfit results (detail):
+                                     All    By fold:
+Cond. exp.  Learner      rep         MSE        1         2 
+logpgp95   Y1_pysta~d     1          0.71      0.70      0.72
+           Y1_pysta~d     2          0.75      0.57      0.93
+avexpr     D1_pysta~d     1          1.84      2.15      1.53
+           D1_pysta~d     2          1.96      2.23      1.69
+democ1     D2_pysta~d     1         14.34     17.86     10.69
+           D2_pysta~d     2         16.71     15.46     18.10
+
+. ddml describe, estimates
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+
+Median over 2 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .308196   .0651417     4.73   0.000     .1805206    .4358715
+      democ1 |   .0119515   .0239636     0.50   0.618    -.0350162    .0589193
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3082    0.3009    0.3009    0.3082    0.3154    0.3154
+      democ1      0.0120    0.0041    0.0041    0.0120    0.0198    0.0198
+
+. 
+. *** multiple learners, SS
+. ddml init partial, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X]: reg $Y $X 
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner Y2_reg added successfully.
+
+. ddml E[D|X]: pystacked $D1 $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X]: reg $D1 $X 
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner D2_reg added successfully.
+
+. 
+. ddml describe
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+. ddml describe, learners
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+Y learners (detail):
+ Learner:     Y1_pystacked
+              est cmd: pystacked logpgp95 lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+ Learner:     Y2_reg
+              est cmd: reg logpgp95 lat_abst edes1975 temp* humid* steplow-oilres
+D learners (detail):
+ Learner:     D1_pystacked
+              est cmd: pystacked avexpr lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+ Learner:     D2_reg
+              est cmd: reg avexpr lat_abst edes1975 temp* humid* steplow-oilres
+
+. ddml describe, sample
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+ID:                     m0_id
+Full sample indic.:     m0_sample (N=64)
+Fold ID:                  m0_fid_1    m0_fid_2  
+Fold sample indic.:     m0_sample_1 m0_sample_2 
+Estimation N:              (n.a.)      (n.a.)   
+
+. ddml describe, all
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+Specifications:         4 possible specs * 2 crossfit splits = 8
+
+ID:                     m0_id
+Full sample indic.:     m0_sample (N=64)
+Fold ID:                  m0_fid_1    m0_fid_2  
+Fold sample indic.:     m0_sample_1 m0_sample_2 
+Estimation N:              (n.a.)      (n.a.)   
+
+Y learners (detail):
+ Learner:     Y1_pystacked
+              est cmd: pystacked logpgp95 lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+ Learner:     Y2_reg
+              est cmd: reg logpgp95 lat_abst edes1975 temp* humid* steplow-oilres
+D learners (detail):
+ Learner:     D1_pystacked
+              est cmd: pystacked avexpr lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+ Learner:     D2_reg
+              est cmd: reg avexpr lat_abst edes1975 temp* humid* steplow-oilres
+
+No crossfitting results to display.
+
+No estimation results to display.
+
+. // no error, just message that results aren't available
+. ddml describe, crossfit
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+No crossfitting results to display.
+
+. ddml describe, estimates
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+No estimation results to display.
+
+. // crossfit
+. ddml crossfit
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml describe, crossfit
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+Crossfit results (detail):
+                                     All    By fold:
+Cond. exp.  Learner      rep         MSE        1         2 
+
+. ddml describe, estimates
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+No estimation results to display.
+
+. // estimate
+. ddml estimate
+
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+ mse  1  Y1_pystacked  D1_pystacked     0.296    (0.062)
+ mse  2  Y1_pystacked  D1_pystacked     0.277    (0.054)
+mse = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE 
+ mse mn     [min-mse]     [min-mse]     0.286    (0.058)
+ mse md     [min-mse]     [min-mse]     0.286    (0.059)
+
+Median over 2 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .286452   .0588814     4.86   0.000     .1710465    .4018574
+------------------------------------------------------------------------------
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2865    0.2771    0.2771    0.2865    0.2958    0.2958
+
+. ddml describe, all
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+Specifications:         4 possible specs * 2 crossfit splits = 8
+
+ID:                     m0_id
+Full sample indic.:     m0_sample (N=64)
+Fold ID:                  m0_fid_1    m0_fid_2  
+Fold sample indic.:     m0_sample_1 m0_sample_2 
+Estimation N:                64          64     
+
+Y learners (detail):
+ Learner:     Y1_pystacked
+              est cmd: pystacked logpgp95 lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+ Learner:     Y2_reg
+              est cmd: reg logpgp95 lat_abst edes1975 temp* humid* steplow-oilres
+D learners (detail):
+ Learner:     D1_pystacked
+              est cmd: pystacked avexpr lat_abst edes1975 temp* humid* steplow-oilres , type(reg)
+ Learner:     D2_reg
+              est cmd: reg avexpr lat_abst edes1975 temp* humid* steplow-oilres
+
+Crossfit results (detail):
+                                     All    By fold:
+Cond. exp.  Learner      rep         MSE        1         2 
+
+
+Median over 2 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .286452   .0588814     4.86   0.000     .1710465    .4018574
+------------------------------------------------------------------------------
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2865    0.2771    0.2771    0.2865    0.2958    0.2958
+
+. ddml describe, crossfit
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+Crossfit results (detail):
+                                     All    By fold:
+Cond. exp.  Learner      rep         MSE        1         2 
+
+. ddml describe, estimates
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked Y2_reg
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked D2_reg
+
+
+Median over 2 min-mse resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |    .286452   .0588814     4.86   0.000     .1710465    .4018574
+------------------------------------------------------------------------------
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2865    0.2771    0.2771    0.2865    0.2958    0.2958
+
+. 
+. 
+. ******************************************************************************** 
+. **** ddml extract                                                                                                    
+>                    ****
+. ******************************************************************************** 
+. 
+. global Y logpgp95
+
+. global X lat_abst edes1975 temp* humid* steplow-oilres
+
+. global D1 avexpr 
+
+. global D2 democ1 
+
+. 
+. *** initialise ddml and select model; 
+. ddml init partial, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X]: pystacked $D1 $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X]: pystacked $D2 $X , type(reg)
+Learner D2_pystacked added successfully.
+
+. ddml crossfit, shortstack poolstack
+Cross-fitting E[y|X] equation: logpgp95
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: avexpr
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: democ1
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. *** estimation of parameter of interest
+. ddml estimate, robust
+
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE      D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.198    (0.055)  D2_pystacked     0.001    (0.020)
+  ss  1  [shortstack]          [ss]     0.228    (0.057)          [ss]    -0.007    (0.017)
+  ps  1   [poolstack]          [ps]     0.216    (0.059)          [ps]    -0.002    (0.020)
+  st  2  Y1_pystacked  D1_pystacked     0.331    (0.072)  D2_pystacked    -0.017    (0.021)
+  ss  2  [shortstack]          [ss]     0.312    (0.071)          [ss]    -0.012    (0.023)
+  ps  2   [poolstack]          [ps]     0.294    (0.099)          [ps]    -0.009    (0.022)
+
+Mean/med    Y learner     D learner         b        SE      D learner         b        SE 
+  st mn  Y1_pystacked  D1_pystacked     0.264    (0.092)  D2_pystacked    -0.008    (0.022)
+  ss mn  [shortstack]          [ss]     0.270    (0.076)          [ss]    -0.009    (0.020)
+  ps mn   [poolstack]          [ps]     0.255    (0.083)          [ps]    -0.005    (0.022)
+  st md  Y1_pystacked  D1_pystacked     0.264    (0.093)  D2_pystacked    -0.008    (0.022)
+  ss md  [shortstack]          [ss]     0.270    (0.077)          [ss]    -0.009    (0.021)
+  ps md   [poolstack]          [ps]     0.255    (0.090)          [ps]    -0.005    (0.022)
+
+Shortstack DDML model (median over 2 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .2701645   .0768468     3.52   0.000     .1195476    .4207814
+      democ1 |   -.009104   .0205631    -0.44   0.658    -.0494068    .0311989
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.2702    0.2279    0.2279    0.2702    0.3125    0.3125
+      democ1     -0.0091   -0.0116   -0.0116   -0.0091   -0.0066   -0.0066
+
+. 
+. // ddml extract - basic usage with show(.) option
+. ddml extract, show(pystacked)
+
+pystacked weights for D1_pystacked (avexpr)
+             learner   resample     fold_1     fold_2
+      ols          1          1          0  6.116e-18
+  lassocv          2          1          1  .28902003
+gradboost          3          1          0  .71097997
+      ols          1          2          0          0
+  lassocv          2          2          1  .33391681
+gradboost          3          2          0  .66608319
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    1.529e-18    3.058e-18            0
+  lassocv            2    .65573421    .64451001    .66695841
+gradboost            3    .34426579    .35548999    .33304159
+
+pystacked MSEs for D1_pystacked (avexpr)
+             learner   resample     fold_1     fold_2
+      ols          1          1  13.403129  14681.629
+  lassocv          2          1  2.2181615  1.5252926
+gradboost          3          1  3.2867911  1.3368142
+      ols          1          2  239.93522  337.01597
+  lassocv          2          2  1.1827743  2.2196638
+gradboost          3          2   1.783816  1.9344436
+
+mean stacking MSEs across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+      ols          1  3817.9957  7347.5159  288.47559
+  lassocv          2   1.786473   1.871727  1.7012191
+gradboost          3  2.0854662  2.3118027  1.8591298
+
+pystacked weights for D2_pystacked (democ1)
+             learner   resample     fold_1     fold_2
+      ols          1          1          0  .00711083
+  lassocv          2          1          1  .99288917
+gradboost          3          1  1.662e-13          0
+      ols          1          2  .01043824  .00481185
+  lassocv          2          2  3.469e-18  .60282375
+gradboost          3          2  .98956176   .3923644
+
+mean stacking weights across folds/resamples for D2_pystacked (democ1)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00559023    .00355541    .00762504
+  lassocv            2    .64892823    .99644459    .30141188
+gradboost            3    .34548154    8.309e-14    .69096308
+
+pystacked MSEs for D2_pystacked (democ1)
+             learner   resample     fold_1     fold_2
+      ols          1          1  374.96352  2210.0109
+  lassocv          2          1  13.858959  13.877594
+gradboost          3          1  19.017348  20.487955
+      ols          1          2  291.35292  338.39619
+  lassocv          2          2  57.420487  23.183281
+gradboost          3          2  15.279243  24.717333
+
+mean stacking MSEs across folds/resamples for D2_pystacked (democ1)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+      ols          1  803.68088  1292.4872  314.87456
+  lassocv          2   27.08508  13.868276  40.301884
+gradboost          3   19.87547  19.752652  19.998288
+
+pystacked weights for Y1_pystacked (logpgp95)
+             learner   resample     fold_1     fold_2
+      ols          1          1  1.084e-18          0
+  lassocv          2          1  .59443172  .30328999
+gradboost          3          1  .40556828  .69671001
+      ols          1          2          0  .01924174
+  lassocv          2          2  .66791653  .98075826
+gradboost          3          2  .33208347  3.097e-16
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00481044    5.421e-19    .00962087
+  lassocv            2    .63659912    .44886086    .82433739
+gradboost            3    .35859044    .55113914    .16604173
+
+pystacked MSEs for Y1_pystacked (logpgp95)
+             learner   resample     fold_1     fold_2
+      ols          1          1  4.9486684  48.451972
+  lassocv          2          1  .90832915  .77356737
+gradboost          3          1  .99063149  .47442505
+      ols          1          2  15.360795  12.803742
+  lassocv          2          2  .30919474  .86436353
+gradboost          3          2  .41142046  1.2735218
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+      ols          1  20.391294   26.70032  14.082268
+  lassocv          2   .7138637  .84094826  .58677914
+gradboost          3  .78749969  .73252827  .84247112
+
+. ddml extract, show(stweights)
+
+mean stacking weights across folds/resamples for D1_pystacked (avexpr)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    1.529e-18    3.058e-18            0
+  lassocv            2    .65573421    .64451001    .66695841
+gradboost            3    .34426579    .35548999    .33304159
+
+mean stacking weights across folds/resamples for D2_pystacked (democ1)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00559023    .00355541    .00762504
+  lassocv            2    .64892823    .99644459    .30141188
+gradboost            3    .34548154    8.309e-14    .69096308
+
+mean stacking weights across folds/resamples for Y1_pystacked (logpgp95)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00481044    5.421e-19    .00962087
+  lassocv            2    .63659912    .44886086    .82433739
+gradboost            3    .35859044    .55113914    .16604173
+
+. ddml extract, show(ssweights)
+
+short-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00379437            0    .00758873
+  lassocv            2    .49228198    .62426945     .3602945
+gradboost            3    .50392366    .37573055    .63211677
+
+short-stacked weights across resamples for democ1
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    6.939e-18            0    1.388e-17
+  lassocv            2    .92073463    .84146926            1
+gradboost            3    .07926537    .15853074            0
+
+short-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .06450745    .12901491    3.092e-17
+  lassocv            2     .3374693    .27630807    .39863054
+gradboost            3    .59802324    .59467702    .60136946
+
+. ddml extract, show(psweights)
+
+pool-stacked weights across resamples for avexpr
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    1.951e-16            0    3.902e-16
+  lassocv            2    .76366453    .90346591    .62386316
+gradboost            3    .23633547    .09653409    .37613684
+
+pool-stacked weights across resamples for democ1
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00132737    .00265473    1.928e-17
+  lassocv            2    .54595262    .99734527    .09455997
+gradboost            3    .45272002            0    .90544003
+
+pool-stacked weights across resamples for logpgp95
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .00026783            0    .00053566
+  lassocv            2    .68931033    .40911283    .96950783
+gradboost            3    .31042184    .59088717    .02995651
+
+. ddml extract, show(mse)
+
+MSEs for avexpr:
+                 rep   full smp      fold 1      fold 2 
+    D1_pystacked   1      2.032       1.816       2.249  
+    D1_pystacked   2      2.267       2.283       2.251  
+     D_avexpr_ps   1      1.851       1.717       1.986  
+     D_avexpr_ps   2      2.373       2.260       2.487  
+     D_avexpr_ss   1      1.797       1.530       2.063  
+     D_avexpr_ss   2      2.282       2.300       2.264  
+
+MSEs for democ1:
+                 rep   full smp      fold 1      fold 2 
+    D2_pystacked   1     14.355      14.117      14.618  
+    D2_pystacked   2     17.138      19.294      15.055  
+     D_democ1_ps   1     14.373      14.152      14.618  
+     D_democ1_ps   2     20.419      18.901      21.887  
+     D_democ1_ss   1     14.223      13.870      14.614  
+     D_democ1_ss   2     14.355      16.866      11.929  
+
+MSEs for logpgp95:
+                 rep   full smp      fold 1      fold 2 
+    Y1_pystacked   1      0.493       0.333       0.653  
+    Y1_pystacked   2      0.758       0.945       0.571  
+   Y_logpgp95_ps   1      0.496       0.334       0.657  
+   Y_logpgp95_ps   2      0.768       0.988       0.549  
+   Y_logpgp95_ss   1      0.465       0.293       0.636  
+   Y_logpgp95_ss   2      0.683       0.932       0.434  
+
+. ddml extract, show(n)
+
+Sample sizes for avexpr:
+                 rep   full smp      fold 1      fold 2 
+    D1_pystacked   1         64          32          32  
+    D1_pystacked   2         64          32          32  
+     D_avexpr_ps   1         64          32          32  
+     D_avexpr_ps   2         64          32          32  
+     D_avexpr_ss   1         64          32          32  
+     D_avexpr_ss   2         64          32          32  
+
+Sample sizes for democ1:
+                 rep   full smp      fold 1      fold 2 
+    D2_pystacked   1         59          31          28  
+    D2_pystacked   2         59          29          30  
+     D_democ1_ps   1         59          31          28  
+     D_democ1_ps   2         59          29          30  
+     D_democ1_ss   1         59          31          28  
+     D_democ1_ss   2         59          29          30  
+
+Sample sizes for logpgp95:
+                 rep   full smp      fold 1      fold 2 
+    Y1_pystacked   1         64          32          32  
+    Y1_pystacked   2         64          32          32  
+   Y_logpgp95_ps   1         64          32          32  
+   Y_logpgp95_ps   2         64          32          32  
+   Y_logpgp95_ss   1         64          32          32  
+   Y_logpgp95_ss   2         64          32          32  
+
+. 
+. // ddml extract - details
+. // mStruct has two AAs:
+. //     (1) eqnAA with all equations; (2) estAA with estimation results
+. //     estAA itself has AAs. each est results is in an AA, plus some misc AAs.
+. // eStruct has two AAs:
+. //     (1) lrnAA with all learners; (2) resAA with all results for learner
+. // info can be extracted using Mata's AA utilities or using ddml extract
+. // nb: all keys are strings but ddml extract does not expect them to be in ""
+. 
+. // all keys for everything (lots of output if many learners)
+. * ddml extract, keys
+. 
+. // working with the estimation results in the model AA
+. mata: (m0.estAA).keys()         // estimation results
+         1    2
+     +-----------+
+   1 |  ss    2  |
+   2 |  ps   md  |
+   3 |  st    2  |
+   4 |  ps    2  |
+   5 |  st   md  |
+   6 |  st   mn  |
+   7 |  ss    1  |
+   8 |  ps   mn  |
+   9 |  ss   md  |
+  10 |  st    1  |
+  11 |  ss   mn  |
+  12 |  ps    1  |
+     +-----------+
+
+. // AA with estimation results for spec st, resample 1
+. mata: (m0.estAA).get(("st","1"))
+  0x42982190
+
+. mata: AA_e2_r1 = (m0.estAA).get(("st","1"))
+
+. mata: AA_e2_r1.keys()
+                                   1                              2
+     +---------------------------------------------------------------+
+   1 |                        znames                          local  |
+   2 |                        dnames                          local  |
+   3 |                         title                          local  |
+   4 |              D2_pystacked_mse                         scalar  |
+   5 |                        depvar                           post  |
+   6 |                           vce                          local  |
+   7 |              Y1_pystacked_mse                         scalar  |
+   8 |        Y1_pystacked_mse_folds                         matrix  |
+   9 |              D1_pystacked_mse                         scalar  |
+  10 |                             V                           post  |
+  11 |                           y_m                          local  |
+  12 |                         yname                          local  |
+  13 |                             N                           post  |
+  14 |  D2_pystacked_stack_final_est                          local  |
+  15 |                             b                           post  |
+  16 |                       vcetype                          local  |
+  17 |        D2_pystacked_mse_folds                         matrix  |
+  18 |                             y                          local  |
+  19 |        D1_pystacked_mse_folds                         matrix  |
+  20 |                           d_m                          local  |
+  21 |                             d                          local  |
+  22 |  D1_pystacked_stack_final_est                          local  |
+  23 |  Y1_pystacked_stack_final_est                          local  |
+     +---------------------------------------------------------------+
+
+. // estimated beta for spec st, resample 1. same output.
+. // key1 = spec st, key2 = resample 1, subkey1 = b, subkey2 = post
+. mata: AA_e2_r1.get(("b","post"))
+                 1             2             3
+    +-------------------------------------------+
+  1 |  .1978143892    .001066685   .0725954246  |
+    +-------------------------------------------+
+
+. ddml extract, mname(m0) key1(st) key2(1) subkey1(b) subkey2(post)
+                 1             2             3
+    +-------------------------------------------+
+  1 |  .1978143892    .001066685   .0725954246  |
+    +-------------------------------------------+
+
+. // save as a Mata object or a Stata object
+. ddml extract bvec, mname(m0) key1(st) key2(1) subkey1(b) subkey2(post)
+
+. mata: bvec
+                 1             2             3
+    +-------------------------------------------+
+  1 |  .1978143892    .001066685   .0725954246  |
+    +-------------------------------------------+
+
+. ddml extract bvec, mname(m0) key1(st) key2(1) subkey1(b) subkey2(post) stata
+
+. mat list r(bvec)
+
+r(bvec)[1,3]
+           c1         c2         c3
+r1  .19781439  .00106669  .07259542
+
+. // scalar example
+. ddml extract D4_mse, mname(m0) key1(st) key2(1) subkey1(D4_pystacked_mse) subkey2(scalar)
+
+. mata: D4_mse
+  
+
+. ddml extract D4_mse, mname(m0) key1(st) key2(1) subkey1(D4_pystacked_mse) subkey2(scalar) stata
+
+. di r(D4_mse)
+.
+
+. // string/local example
+. ddml extract dnames, mname(m0) key1(st) key2(1) subkey1(dnames) subkey2(local)
+
+. mata: dnames
+  avexpr democ1
+
+. ddml extract dnames, mname(m0) key1(st) key2(1) subkey1(dnames) subkey2(local) stata
+
+. di r(dnames)
+avexpr democ1
+
+. 
+. // working with the eqn AAs
+. // all eStructs on the mStruct AA
+. mata: (m0.eqnAA).keys()
+              1
+    +------------+
+  1 |  logpgp95  |
+  2 |    democ1  |
+  3 |    avexpr  |
+    +------------+
+
+. // all keys for avexpr eqn
+. ddml extract, keys vname(avexpr)
+AA keys for eqn avexpr.lrnAA:
+                      1                 2
+     +-------------------------------------+
+   1 |     D1_pystacked               cmd  |
+   2 |     D1_pystacked          est_main  |
+   3 |     D1_pystacked       est_options  |
+   4 |     D1_pystacked           estring  |
+   5 |     D1_pystacked           predopt  |
+   6 |     D1_pystacked    stack_base_est  |
+   7 |     D1_pystacked   stack_final_est  |
+   8 |     D1_pystacked        stack_type  |
+   9 |     D1_pystacked             vtype  |
+  10 |      D_avexpr_ps      ps_final_est  |
+  11 |      D_avexpr_ps    stack_base_est  |
+  12 |      D_avexpr_ps        stack_type  |
+  13 |      D_avexpr_ss      ss_final_est  |
+  14 |      D_avexpr_ss    stack_base_est  |
+  15 |      D_avexpr_ss        stack_type  |
+  16 |              opt                 1  |
+  17 |              opt                 2  |
+     +-------------------------------------+
+AA keys for eqn avexpr.resAA:
+                    1               2               3
+     +-------------------------------------------------+
+   1 |   D1_pystacked             MSE               1  |
+   2 |   D1_pystacked             MSE               2  |
+   3 |   D1_pystacked       MSE_folds               1  |
+   4 |   D1_pystacked       MSE_folds               2  |
+   5 |   D1_pystacked               N               1  |
+   6 |   D1_pystacked               N               2  |
+   7 |   D1_pystacked         N_folds               1  |
+   8 |   D1_pystacked         N_folds               2  |
+   9 |   D1_pystacked      stack_MSEs               1  |
+  10 |   D1_pystacked      stack_MSEs               2  |
+  11 |   D1_pystacked   stack_weights               1  |
+  12 |   D1_pystacked   stack_weights               2  |
+  13 |   D1_pystacked   y_stacking_cv               1  |
+  14 |   D1_pystacked   y_stacking_cv               2  |
+  15 |    D_avexpr_ps             MSE               1  |
+  16 |    D_avexpr_ps             MSE               2  |
+  17 |    D_avexpr_ps       MSE_folds               1  |
+  18 |    D_avexpr_ps       MSE_folds               2  |
+  19 |    D_avexpr_ps               N               1  |
+  20 |    D_avexpr_ps               N               2  |
+  21 |    D_avexpr_ps         N_folds               1  |
+  22 |    D_avexpr_ps         N_folds               2  |
+  23 |    D_avexpr_ps      ps_weights               1  |
+  24 |    D_avexpr_ps      ps_weights               2  |
+  25 |    D_avexpr_ss             MSE               1  |
+  26 |    D_avexpr_ss             MSE               2  |
+  27 |    D_avexpr_ss       MSE_folds               1  |
+  28 |    D_avexpr_ss       MSE_folds               2  |
+  29 |    D_avexpr_ss               N               1  |
+  30 |    D_avexpr_ss               N               2  |
+  31 |    D_avexpr_ss         N_folds               1  |
+  32 |    D_avexpr_ss         N_folds               2  |
+  33 |    D_avexpr_ss      ss_weights               1  |
+  34 |    D_avexpr_ss      ss_weights               2  |
+     +-------------------------------------------------+
+
+. // extract the eStruct for avexpr
+. ddml extract avexpr_eqn, vname(avexpr)
+
+. mata: avexpr_eqn
+  0x44089590
+
+. mata: avexpr_eqn.vname
+  avexpr
+
+. mata: avexpr_eqn.nlearners
+  1
+
+. ddml extract, keys ename(avexpr_eqn)
+AA keys for eqn avexpr_eqn.lrnAA:
+                      1                 2
+     +-------------------------------------+
+   1 |     D1_pystacked               cmd  |
+   2 |     D1_pystacked          est_main  |
+   3 |     D1_pystacked       est_options  |
+   4 |     D1_pystacked           estring  |
+   5 |     D1_pystacked           predopt  |
+   6 |     D1_pystacked    stack_base_est  |
+   7 |     D1_pystacked   stack_final_est  |
+   8 |     D1_pystacked        stack_type  |
+   9 |     D1_pystacked             vtype  |
+  10 |      D_avexpr_ps      ps_final_est  |
+  11 |      D_avexpr_ps    stack_base_est  |
+  12 |      D_avexpr_ps        stack_type  |
+  13 |      D_avexpr_ss      ss_final_est  |
+  14 |      D_avexpr_ss    stack_base_est  |
+  15 |      D_avexpr_ss        stack_type  |
+  16 |              opt                 1  |
+  17 |              opt                 2  |
+     +-------------------------------------+
+AA keys for eqn avexpr_eqn.resAA:
+                    1               2               3
+     +-------------------------------------------------+
+   1 |   D1_pystacked             MSE               1  |
+   2 |   D1_pystacked             MSE               2  |
+   3 |   D1_pystacked       MSE_folds               1  |
+   4 |   D1_pystacked       MSE_folds               2  |
+   5 |   D1_pystacked               N               1  |
+   6 |   D1_pystacked               N               2  |
+   7 |   D1_pystacked         N_folds               1  |
+   8 |   D1_pystacked         N_folds               2  |
+   9 |   D1_pystacked      stack_MSEs               1  |
+  10 |   D1_pystacked      stack_MSEs               2  |
+  11 |   D1_pystacked   stack_weights               1  |
+  12 |   D1_pystacked   stack_weights               2  |
+  13 |   D1_pystacked   y_stacking_cv               1  |
+  14 |   D1_pystacked   y_stacking_cv               2  |
+  15 |    D_avexpr_ps             MSE               1  |
+  16 |    D_avexpr_ps             MSE               2  |
+  17 |    D_avexpr_ps       MSE_folds               1  |
+  18 |    D_avexpr_ps       MSE_folds               2  |
+  19 |    D_avexpr_ps               N               1  |
+  20 |    D_avexpr_ps               N               2  |
+  21 |    D_avexpr_ps         N_folds               1  |
+  22 |    D_avexpr_ps         N_folds               2  |
+  23 |    D_avexpr_ps      ps_weights               1  |
+  24 |    D_avexpr_ps      ps_weights               2  |
+  25 |    D_avexpr_ss             MSE               1  |
+  26 |    D_avexpr_ss             MSE               2  |
+  27 |    D_avexpr_ss       MSE_folds               1  |
+  28 |    D_avexpr_ss       MSE_folds               2  |
+  29 |    D_avexpr_ss               N               1  |
+  30 |    D_avexpr_ss               N               2  |
+  31 |    D_avexpr_ss         N_folds               1  |
+  32 |    D_avexpr_ss         N_folds               2  |
+  33 |    D_avexpr_ss      ss_weights               1  |
+  34 |    D_avexpr_ss      ss_weights               2  |
+     +-------------------------------------------------+
+
+. // extract info from AA with all learners. same output.
+. // 2 keys: key1=learner, key2=main estimation string
+. mata: (avexpr_eqn.lrnAA).get(("D1_pystacked","est_main"))
+  pystacked avexpr lat_abst edes1975 temp* humid* steplow-oilres
+
+. ddml extract, ename(avexpr_eqn) key1(D1_pystacked) key2(est_main)
+  pystacked avexpr lat_abst edes1975 temp* humid* steplow-oilres
+
+. ddml extract, mname(m0) vname(avexpr) key1(D1_pystacked) key2(est_main)
+  pystacked avexpr lat_abst edes1975 temp* humid* steplow-oilres
+
+. // extract info from AA with all estimation results. same output.
+. // 3 keys: key1=learner, key2=output category, key3=resample number
+. mata: (avexpr_eqn.resAA).get(("D1_pystacked","MSE_folds","2"))
+                 1             2
+    +-----------------------------+
+  1 |    2.2830912   2.251258182  |
+    +-----------------------------+
+
+. ddml extract, ename(avexpr_eqn) key1(D1_pystacked) key2(MSE_folds) key3(2)
+                 1             2
+    +-----------------------------+
+  1 |    2.2830912   2.251258182  |
+    +-----------------------------+
+
+. ddml extract, mname(m0) vname(avexpr) key1(D1_pystacked) key2(MSE_folds) key3(2)
+                 1             2
+    +-----------------------------+
+  1 |    2.2830912   2.251258182  |
+    +-----------------------------+
+
+. // save as a Mata object or a Stata object
+. ddml extract MSE_folds, mname(m0) vname(avexpr) key1(D1_pystacked) key2(MSE_folds) key3(2)
+
+. mata: MSE_folds
+                 1             2
+    +-----------------------------+
+  1 |    2.2830912   2.251258182  |
+    +-----------------------------+
+
+. ddml extract MSE_folds, mname(m0) vname(avexpr) key1(D1_pystacked) key2(MSE_folds) key3(2) stata
+
+. mat list r(MSE_folds)
+
+r(MSE_folds)[1,2]
+           c1         c2
+r1  2.2830912  2.2512582
+
+. 
+. 
+. ******************************************************************************** 
+. **** ddml export                                                                                                     
+>                    ****
+. ******************************************************************************** 
+. 
+. // partially linear, pystacked-only, 2 reps
+. 
+. use https://statalasso.github.io/dta/AJR.dta, clear
+
+. global Y logpgp95
+
+. global X lat_abst edes1975 temp* humid* steplow-oilres
+
+. global D1 avexpr 
+
+. global D2 democ1 
+
+. 
+. *** initialise ddml and select model; 
+. ddml init partial, kfolds(2) reps(2) mname(m_export)
+
+. ddml E[Y|X], mname(m_export): pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X], mname(m_export): pystacked $D1 $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X], mname(m_export): pystacked $D2 $X , type(reg)
+Learner D2_pystacked added successfully.
+
+. ddml crossfit, shortstack poolstack mname(m_export)
+Cross-fitting E[y|X] equation: logpgp95
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: avexpr
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: democ1
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. *** estimation of parameter of interest
+. ddml estimate, robust mname(m_export)
+
+
+Model:                  partial, crossfit folds k=2, resamples r=2
+Mata global (mname):    m_export
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (2):        avexpr democ1
+ avexpr learners:       D1_pystacked
+ democ1 learners:       D2_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE      D learner         b        SE 
+  st  1  Y1_pystacked  D1_pystacked     0.319    (0.060)  D2_pystacked     0.018    (0.022)
+  ss  1  [shortstack]          [ss]     0.343    (0.051)          [ss]     0.007    (0.020)
+  ps  1   [poolstack]          [ps]     0.334    (0.054)          [ps]     0.012    (0.020)
+  st  2  Y1_pystacked  D1_pystacked     0.102    (0.082)  D2_pystacked     0.015    (0.020)
+  ss  2  [shortstack]          [ss]     0.260    (0.059)          [ss]    -0.000    (0.018)
+  ps  2   [poolstack]          [ps]     0.036    (0.066)          [ps]     0.027    (0.023)
+
+Mean/med    Y learner     D learner         b        SE      D learner         b        SE 
+  st mn  Y1_pystacked  D1_pystacked     0.210    (0.130)  D2_pystacked     0.016    (0.021)
+  ss mn  [shortstack]          [ss]     0.301    (0.068)          [ss]     0.003    (0.019)
+  ps mn   [poolstack]          [ps]     0.185    (0.161)          [ps]     0.020    (0.023)
+  st md  Y1_pystacked  D1_pystacked     0.210    (0.130)  D2_pystacked     0.016    (0.021)
+  ss md  [shortstack]          [ss]     0.301    (0.069)          [ss]     0.003    (0.019)
+  ps md   [poolstack]          [ps]     0.185    (0.161)          [ps]     0.020    (0.023)
+
+Shortstack DDML model (median over 2 resamples)
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
+------------------------------------------------------------------------------
+             |               Robust
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .3014085   .0686754     4.39   0.000     .1668073    .4360097
+      democ1 |   .0031689   .0193672     0.16   0.870    -.0347901    .0411278
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+      avexpr      0.3014    0.2599    0.2599    0.3014    0.3429    0.3429
+      democ1      0.0032   -0.0004   -0.0004    0.0032    0.0068    0.0068
+
+. 
+. gen stata_id = _n
+
+. 
+. ddml export using cert_ddml_export.csv, mname(m_export) replace addvars(stata_id)
+file cert_ddml_export.csv saved
+
+. local numvars = r(numvars)
+
+. fvexpand m_export_sample-stata_id
+
+. assert `numvars'== `: word count `r(varlist)''
+
+. 
+. // partially linear IV, pystacked-only, no SS or PS, 1 rep
+. 
+. use https://statalasso.github.io/dta/AJR.dta, clear
+
+. global Y logpgp95
+
+. global X edes1975 temp* humid* steplow-oilres
+
+. global D avexpr  
+
+. global Z1 lat_abst
+
+. global Z2 logem4
+
+. 
+. *** initialise ddml and select model; 
+. ddml init iv, kfolds(2) reps(1) mname(m_export)
+warning - model m_export already exists
+all existing model results and variables will
+be dropped and model m_export will be re-initialized
+
+. ddml E[Y|X], mname(m_export): pystacked $Y $X , type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X], mname(m_export): pystacked $D $X , type(reg)
+Learner D1_pystacked added successfully.
+
+. ddml E[Z|X], mname(m_export): pystacked $Z1 $X , type(reg)
+Learner Z1_pystacked added successfully.
+
+. ddml E[Z|X], mname(m_export): pystacked $Z2 $X , type(reg)
+Learner Z2_pystacked added successfully.
+
+. ddml crossfit, mname(m_export)
+Cross-fitting E[y|X] equation: logpgp95
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X] equation: avexpr
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[Z|X]: lat_abst
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[Z|X]: logem4
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate, mname(m_export)
+
+
+Model:                  iv, crossfit folds k=2, resamples r=1
+Mata global (mname):    m_export
+Dependent variable (Y): logpgp95
+ logpgp95 learners:     Y1_pystacked
+D equations (1):        avexpr
+ avexpr learners:       D1_pystacked
+Z equations (2):        lat_abst logem4
+ lat_abst learners:     Z1_pystacked
+ logem4 learners:       Z2_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE      Z learner     Z learner
+  st  1  Y1_pystacked  D1_pystacked     0.825    (0.253)  Z1_pystacked  Z2_pystacked
+
+Stacking DDML model
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
+D-E[D|X]  = D-D1_pystacked_1 
+Z-E[Z|X]  = Z1-Z1_pystacked_1 Z2-Z2_pystacked_1 
+------------------------------------------------------------------------------
+    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      avexpr |   .8253752   .2531499     3.26   0.001     .3292105     1.32154
+       _cons |   .1120388    .176425     0.64   0.525    -.2337478    .4578255
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. 
+. gen stata_id = _n
+
+. 
+. ddml export using cert_ddml_export.csv, mname(m_export) replace addvars(stata_id)
+file cert_ddml_export.csv saved
+
+. local numvars = r(numvars)
+
+. fvexpand m_export_sample-stata_id
+
+. assert `numvars'== `: word count `r(varlist)''
+
+. 
+. // interactive model, pystacked-only
+. 
+. webuse cattaneo2, clear
+(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+
+. keep in 1/1000
+(3,642 observations deleted)
+
+. gen double mage_sq = mage^2
+
+. 
+. global Y bweight
+
+. global D mbsmoke
+
+. global X c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu)
+
+. 
+. ddml init interactive, kfolds(2) reps(2) mname(m_export)
+warning - model m_export already exists
+all existing model results and variables will
+be dropped and model m_export will be re-initialized
+
+. ddml E[Y|X,D], mname(m_export): pystacked $Y $X, type(reg) method(ols gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X], mname(m_export): pystacked $D $X, type(class) method(logit gradboost)
+Learner D1_pystacked added successfully.
+
+. ddml crossfit, shortstack poolstack mname(m_export)
+Cross-fitting E[y|X,D] equation: bweight
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X] equation: mbsmoke
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. ddml estimate, mname(m_export)
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=2
+Mata global (mname):    m_export
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -437.585  (218.235)
+  ss  1  [shortstack]          [ss]          [ss]  -472.426  (218.890)
+  ps  1   [poolstack]          [ps]          [ps]  -316.457  (210.085)
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -184.653  (186.851)
+  ss  2  [shortstack]          [ss]          [ss]  -202.427  (157.705)
+  ps  2   [poolstack]          [ps]          [ps]  -183.080  (161.423)
+
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  -311.119  (237.819)
+  ss mn  [shortstack]          [ss]          [ss]  -337.426  (228.443)
+  ps mn   [poolstack]          [ps]          [ps]  -249.769  (193.591)
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  -311.119  (239.298)
+  ss md  [shortstack]          [ss]          [ss]  -337.426  (233.702)
+  ps md   [poolstack]          [ps]          [ps]  -249.769  (198.856)
+
+Shortstack DDML model (median over 2 resamples) (ATE)
+E[y|X,D=0]   = Y_bweight_ss0                       Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1
+E[D|X]       = D_mbsmoke_ss
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -337.4265   233.7019    -1.44   0.149    -795.4738    120.6208
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+Warning: 2 resamples had propensity scores trimmed to lower limit .01.
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+     mbsmoke   -337.4265 -472.4258 -472.4258 -337.4265 -202.4272 -202.4272
+
+. gen stata_id = _n
+
+. 
+. ddml export using cert_ddml_export.csv, mname(m_export) replace addvars(stata_id)
+file cert_ddml_export.csv saved
+
+. local numvars = r(numvars)
+
+. fvexpand m_export_sample-stata_id
+
+. assert `numvars'== `: word count `r(varlist)''
+
+. 
+. // interactive model, multiple learners
+. 
+. webuse cattaneo2, clear
+(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+
+. keep in 1/1000
+(3,642 observations deleted)
+
+. gen double mage_sq = mage^2
+
+. 
+. global Y bweight
+
+. global D mbsmoke
+
+. global X c.(mmarried mage mage_sq fbaby medu)#c.(mmarried mage mage_sq fbaby medu)
+
+. 
+. ddml init interactive, kfolds(2) reps(2) mname(m_export)
+warning - model m_export already exists
+all existing model results and variables will
+be dropped and model m_export will be re-initialized
+
+. ddml E[Y|X,D], mname(m_export): pystacked $Y $X, type(reg) method(ols gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X,D], mname(m_export): reg $Y $X
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner Y2_reg added successfully.
+
+. ddml E[D|X], mname(m_export): pystacked $D $X, type(class) method(logit gradboost)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X], mname(m_export): logit $D $X
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner D2_logit added successfully.
+
+. ddml crossfit, shortstack mname(m_export)
+Cross-fitting E[y|X,D] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+. ddml estimate, mname(m_export)
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=2
+Mata global (mname):    m_export
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked Y2_reg
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked D2_logit
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse  1  Y1_pystacked  Y1_pystacked      D2_logit  -404.966  (102.485)
+  ss  1  [shortstack]          [ss]          [ss]  -408.750  (106.385)
+ mse  2        Y2_reg  Y1_pystacked  D1_pystacked     8.726  (239.489)
+  ss  2  [shortstack]          [ss]          [ss]     8.726  (239.489)
+mse = minimum MSE specification for that resample.
+
+Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
+ mse mn     [min-mse]     [min-mse]     [min-mse]  -198.120  (263.744)
+  ss mn  [shortstack]          [ss]          [ss]  -200.012  (266.659)
+ mse md     [min-mse]     [min-mse]     [min-mse]  -198.120  (276.973)
+  ss md  [shortstack]          [ss]          [ss]  -200.012  (279.120)
+
+Shortstack DDML model (median over 2 resamples) (ATE)
+E[y|X,D=0]   = Y_bweight_ss0                       Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1
+E[D|X]       = D_mbsmoke_ss
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -200.0123   279.1197    -0.72   0.474    -747.0769    347.0523
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+Warning: 2 resamples had propensity scores trimmed to lower limit .01.
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+     mbsmoke   -200.0123 -408.7502 -408.7502 -200.0123    8.7256    8.7256
+
+. gen stata_id = _n
+
+. 
+. ddml export using cert_ddml_export.csv, mname(m_export) replace addvars(stata_id)
+file cert_ddml_export.csv saved
+
+. local numvars = r(numvars)
+
+. fvexpand m_export_sample-stata_id
+
+. assert `numvars'== `: word count `r(varlist)''
+
+. 
+. // interactiveiv (LATE), pystacked-only
+. 
+. use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
+
+. keep in 1/5000
+(6,204 observations deleted)
+
+. gen lnearnings = log(earnings) 
+(596 missing values generated)
+
+. 
+. global Y lnearnings
+
+. global D training
+
+. global Z assignmt 
+
+. global X sex-age4554
+
+. 
+. ddml init interactiveiv, kfolds(2) reps(2) mname(m_export)
+warning - model m_export already exists
+all existing model results and variables will
+be dropped and model m_export will be re-initialized
+
+. ddml E[Y|X,Z], mname(m_export): pystacked $Y $X, type(reg) method(ols gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X,Z], mname(m_export): pystacked $D $X, type(class) method(logit gradboost)
+Learner D1_pystacked added successfully.
+
+. ddml E[Z|X], mname(m_export): pystacked $Z $X, type(class) method(logit gradboost)
+Learner Z1_pystacked added successfully.
+
+. ddml crossfit, mname(m_export)
+Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] equation: training
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[Z|X]: assignmt
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate, mname(m_export)
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m_export
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked
+D equations (1):        training
+ training learners:     D1_pystacked
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.001)  Z1_pystacked
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.002)  Z1_pystacked
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.002)  Z1_pystacked
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.002)  Z1_pystacked
+
+Median over 2 stacking resamples (LATE)
+E[y|X,Z=0]   = Y1_pystacked0                       Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1
+E[D|X,Z=0]   = D1_pystacked0
+E[D|X,Z=1]   = D1_pystacked1
+E[Z|X]       = Z1_pystacked
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    training |  -.0014046    .001501    -0.94   0.349    -.0043466    .0015374
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0014   -0.0016   -0.0016   -0.0014   -0.0012   -0.0012
+
+. gen stata_id = _n
+
+. 
+. ddml export using cert_ddml_export.csv, mname(m_export) replace addvars(stata_id)
+file cert_ddml_export.csv saved
+
+. local numvars = r(numvars)
+
+. fvexpand m_export_sample-stata_id
+
+. assert `numvars'== `: word count `r(varlist)''
+
+. 
+. // interactiveiv (LATE), multiple learners
+. 
+. use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
+
+. keep in 1/5000
+(6,204 observations deleted)
+
+. gen lnearnings = log(earnings) 
+(596 missing values generated)
+
+. 
+. global Y lnearnings
+
+. global D training
+
+. global Z assignmt 
+
+. global X sex-age4554
+
+. 
+. ddml init interactiveiv, kfolds(2) reps(2) mname(m_export)
+warning - model m_export already exists
+all existing model results and variables will
+be dropped and model m_export will be re-initialized
+
+. ddml E[Y|X,Z], mname(m_export): pystacked $Y $X, type(reg) method(ols gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X,Z], mname(m_export): reg $Y $X
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner Y2_reg added successfully.
+
+. ddml E[D|X,Z], mname(m_export): pystacked $D $X, type(class) method(logit gradboost)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X,Z], mname(m_export): logit $D $X
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner D2_logit added successfully.
+
+. ddml E[Z|X], mname(m_export): pystacked $Z $X, type(class) method(logit gradboost)
+Learner Z1_pystacked added successfully.
+
+. ddml E[Z|X], mname(m_export): logit $Z $X
+Note: previously-added pystacked multilearner now treated as a single learner
+Learner Z2_logit added successfully.
+
+. ddml crossfit, shortstack mname(m_export)
+Cross-fitting E[y|X,Z] equation: lnearnings
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X,Z] equation: training
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[Z|X]: assignmt
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+. ddml estimate, mname(m_export)
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m_export
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked Y2_reg
+D equations (1):        training
+ training learners:     D1_pystacked D2_logit
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked Z2_logit
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+ mse  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.001    (0.002)  Z1_pystacked
+  ss  1  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.002)          [ss]
+ mse  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.001)      Z2_logit
+  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.001)          [ss]
+mse = minimum MSE specification for that resample.
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.001    (0.002)         [mse]
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.002)          [ss]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.001    (0.002)         [mse]
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.002)          [ss]
+
+Shortstack DDML model (median over 2 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      4069
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    training |  -.0010177   .0015754    -0.65   0.518    -.0041055      .00207
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0010   -0.0013   -0.0013   -0.0010   -0.0008   -0.0008
+
+. gen stata_id = _n
+
+. 
+. ddml export using cert_ddml_export.csv, mname(m_export) replace addvars(stata_id)
+file cert_ddml_export.csv saved
+
+. local numvars = r(numvars)
+
+. fvexpand m_export_sample-stata_id
+
+. assert `numvars'== `: word count `r(varlist)''
+
+. 
+. // flexible iv, pystacked-only
+. 
+. use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear
+
+. 
+. global Y share
+
+. global D price
+
+. global X hpwt air mpd space
+
+. global Z sum*
+
+. 
+. ddml init fiv, kfolds(2) reps(2) mname(m_export)
+warning - model m_export already exists
+all existing model results and variables will
+be dropped and model m_export will be re-initialized
+
+. ddml E[Y|X], mname(m_export): pystacked $Y $X, type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|Z,X], learner(Dhat_pystacked) mname(m_export): pystacked $D $X $Z, type(reg)
+Learner Dhat_pystacked added successfully.
+
+. ddml E[D|X], learner(Dhat_pystacked) vname($D) mname(m_export): pystacked {D} $X, type(reg)
+Learner Dhat_pystacked_h added successfully.
+
+. ddml crossfit, mname(m_export)
+Cross-fitting E[y|X,Z] equation: share
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] and E[D|X] equation: price
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate, mname(m_export)
+
+
+Model:                  fiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m_export
+Dependent variable (Y): share
+ share learners:        Y1_pystacked
+D equations (1):        price
+ price learners:        Dhat_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE     DH learner
+  st  1  Y1_pystacked Dhat_pystac~d    -0.100    (0.008) Dhat_pystac~h
+  st  2  Y1_pystacked Dhat_pystac~d    -0.103    (0.008) Dhat_pystac~h
+
+Mean/med    Y learner     D learner         b        SE     DH learner
+  st mn  Y1_pystacked Dhat_pystac~d    -0.101    (0.008) Dhat_pystac~h
+  st md  Y1_pystacked Dhat_pystac~d    -0.101    (0.008) Dhat_pystac~h
+
+Median over 2 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pystacked 
+E[D^|X]   = Dhat_pystacked_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1011691    .008215   -12.32   0.000    -.1172703    -.085068
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1012   -0.1025   -0.1025   -0.1012   -0.0998   -0.0998
+
+. gen stata_id = _n
+
+. 
+. ddml export using cert_ddml_export.csv, mname(m_export) replace addvars(stata_id)
+file cert_ddml_export.csv saved
+
+. local numvars = r(numvars)
+
+. fvexpand m_export_sample-stata_id
+
+. assert `numvars'== `: word count `r(varlist)''
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_misc.log
+  log type:  text
+ closed on:  25 Jul 2023, 18:23:39
+-----------------------------------------------------------------------------------------------------------------------

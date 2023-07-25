@@ -1,9 +1,9 @@
-*! ddml v1.2
-*! last edited: 21 jan 2023
+*! ddml v1.4
+*! last edited: 25july2023
 *! authors: aa/ms
 
 program define _ddml_overlap
-
+	version 16
 	syntax 		, [									///
 				mname(name)							///
 				replist(numlist integer min=1)		/// list of resamples
@@ -30,7 +30,7 @@ program define _ddml_overlap
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
 	
-	if "`model'"~="interactive" & "`model'"~="late" {
+	if "`model'"~="interactive" & "`model'"~="interactiveiv" {
 		di as err "error - overlap supported only for interactive or late models"
 		exit 198
 	}
@@ -44,8 +44,11 @@ program define _ddml_overlap
 	}
 	
 	// default title
-	if "`title'"=="" {
+	if "`title'"=="" & "`model'"=="interactive" {
 		local title "Propensity scores by treatment group"
+	}
+	else {
+		local title "Propensity scores by assignment group"
 	}
 	// default replist, graph subtitle
 	if "`replist'"=="" {

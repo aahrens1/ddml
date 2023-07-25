@@ -1,19 +1,11 @@
-*! ddml v1.2
-*! last edited: 21 jan 2023
+*! ddml v1.4
+*! last edited: 25july2023
 *! authors: aa/ms
-
-* notes:
-* e.command		= tokens(estcmd)[1,1] fails if command string starts with a prefix e.g. capture
-* check for incompatible y variables disabled - can't accommodate prefixes e.g. capture
-* spin off init code into a subroutine?
-* init code current calls _ddml_sample to set fold var, kfolds, etc. Allow options with init?
-
-// (no)prefix option not implemented; prefixes not added (where prefix = `model'_)
 
 program ddml	// no class - some subcommands are eclass, some are rclass
 
-	version 14
-	local lversion 0.5
+	version 16
+	local lversion 1.2
 	
 	if replay() {
 		syntax [, VERsion * ]
@@ -30,11 +22,24 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 	
 		local allargs `0'
 		
-		// split into before/after :
-		tokenize "`allargs'", parse(":")
-		local maincmd `1'
-		macro shift 2
-		local eqn `*'
+		// ddml estimate, overlap, crossfit, describe don't use ":"
+		tokenize `"`allargs'"', parse(",")
+		if		"`1'"=="crossfit"		///
+			|	"`1'"=="estimate"		///
+			|	"`1'"=="describe"		///
+			|	"`1'"=="sample"			///
+			|	"`1'"=="extract"		///
+			|	"`1'"=="overlap"		///
+			{
+				local maincmd `allargs'
+			}
+		else {
+			// split into before/after :
+			tokenize "`allargs'", parse(":")
+			local maincmd `1'
+			macro shift 2
+			local eqn `*'
+		}
 		
 		// parse first part using syntax
 		local 0 "`maincmd'"
@@ -53,6 +58,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 						vtype(string)			///  "double", "float" etc
 						REPlace					///
 						cmdname(name)			///
+						NOIsily					///
 						/* NOPrefix */ 			/// don't add model name as prefix (disabled - interferes with save/use option)
 						*						///
 						]
@@ -142,18 +148,16 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 				di as err "no or wrong model specified." 
 				exit 198
 			}
-			// interactiveiv is synonym of late; internally we use "late"
-			if "`model'"=="interactiveiv" local model late
-				
+			// late is synonym for interactiveiv
+			if "`model'"=="late" local model interactiveiv
+			
 			mata: `mname'=init_mStruct()
-			cap drop `mname'_id
-			qui gen double `mname'_id	= _n
-			mata: `mname'.id			= st_data(., "`mname'_id")
 			// create and store sample indicator; initialized so all obs are used
 			cap drop `mname'_sample
 			// in case total sample limited by if or in:
 			marksample touse
 			qui gen byte `mname'_sample = `touse'
+			label var `mname'_sample "Sample indicator (0/1)"
 			if "`fcluster'"~="" {
 				// fold cluster variable; can be real (missing=.) or string (missing="")
 				cap replace `mname'_sample = 0 if `fcluster'==.			// real
@@ -191,23 +195,23 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 	
 			** check that equation is consistent with model
 			mata: st_local("model",`mname'.model)
-			if ("`model'"=="late"&strpos("E[D|Z,X] E[D|X,Z] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq","`subcmd'")==0) {
+			if ("`model'"=="interactiveiv" & strpos("E[D|Z,X] E[D|X,Z] E[Z|X] E[Y|X,Z] E[Y|Z,X] yeq deq zeq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
-			if ("`model'"=="iv"&strpos("E[Y|X] E[D|X] E[Z|X] yeq deq zeq","`subcmd'")==0) {
+			if ("`model'"=="iv" & strpos("E[Y|X] E[D|X] E[Z|X] yeq deq zeq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
-			if ("`model'"=="partial"&strpos("E[Y|X] E[D|X] yeq deq","`subcmd'")==0) {
+			if ("`model'"=="partial" & strpos("E[Y|X] E[D|X] yeq deq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
-			if ("`model'"=="interactive"&strpos("E[D|X] E[Y|X,D] E[Y|D,X] yeq deq","`subcmd'")==0) {
+			if ("`model'"=="interactive" & strpos("E[D|X] E[Y|X,D] E[Y|D,X] yeq deq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
-			if ("`model'"=="fiv"&strpos("E[D|Z,X] E[D|X,Z] E[Y|X] E[D|X] yeq deq dheq","`subcmd'")==0) {
+			if ("`model'"=="fiv" & strpos("E[D|Z,X] E[D|X,Z] E[Y|X] E[D|X] yeq deq dheq","`subcmd'")==0) {
 				di as err "not allowed; `subcmd' not allowed with `model'"
 				exit 198
 			}
@@ -302,7 +306,8 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 								subcmd(`subcmd')	///
 								posof(`posof')		///
 								estring(`eqn')		///
-								cmdname(`cmdname')
+								cmdname(`cmdname')	///
+								`noisily'
 			
 		}
 	
@@ -310,7 +315,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		if "`subcmd'" =="crossfit" {
 	
 			// crossfit
-			_ddml_crossfit, `options' mname(`mname') 
+			_ddml_crossfit, `options' `noisily' mname(`mname') 
 			
 		}
 	
@@ -320,19 +325,19 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			mata: st_global("r(model)",`mname'.model)
 			// cluster(varname) syntax is for ddml estimate; fcluster(varname) is for ddml define
 			if ("`r(model)'"=="partial") {
-				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
+				_ddml_estimate_linear `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
 			if ("`r(model)'"=="iv") {
-				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
+				_ddml_estimate_linear `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
 			if ("`r(model)'"=="interactive") {
-				_ddml_estimate_ate_late `mname' `if' `in', `options' cluster(`cluster')
+				_ddml_estimate_ate_late `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
-			if ("`r(model)'"=="late") {
-				_ddml_estimate_ate_late `mname' `if' `in', `options' cluster(`cluster')
+			if ("`r(model)'"=="interactiveiv") {
+				_ddml_estimate_ate_late `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
 			if ("`r(model)'"=="fiv") {
-				_ddml_estimate_linear `mname' `if' `in', `options' cluster(`cluster')
+				_ddml_estimate_linear `mname' `if' `in', `options' `noisily' cluster(`cluster')
 			}
 			
 		}
@@ -403,11 +408,11 @@ prog define check_mname
 end
 
 program define add_eqn_to_model, rclass
-
+	version 16
 	syntax [anything],								/// 
-							[						///
 							mname(name)				/// name of mata struct with model
 							vname(varname)			/// name of dep var in equation (to be orthogonalized)
+							[						///
 							vtilde(name)			/// names of tilde variable
 							vtype(string)			///
 							predopt(string asis)	///
@@ -415,10 +420,14 @@ program define add_eqn_to_model, rclass
 							estring(string asis)	/// names of estimation strings
 													/// need asis option in case it includes strings
 							posof(integer 0)		/// position of vname in name list; =0 if a new vname (new eqn)
-							NOIsily					///
 							cmdname(name)			///
+							NOIsily					/// 
+							*						///
 							]
 
+	if "`noisily'"=="" {
+		local qui quietly
+	}
 	// syntax checks
 	mata: st_local("model",`mname'.model)
 	// ATE or LIE with multiple D variables not supported
@@ -433,7 +442,7 @@ program define add_eqn_to_model, rclass
 		}
 	}
 	// LATE with multiple Z variables not supported
-	if "`subcmd'"=="zeq" & "`model'"=="late" {
+	if "`subcmd'"=="zeq" & "`model'"=="interactiveiv" {
 		mata: st_local("nameZ",invtokens(`mname'.nameZ))
 		local nlist `nameZ' `vname'
 		local nlist : list uniq nlist
@@ -444,6 +453,10 @@ program define add_eqn_to_model, rclass
 		}
 	}
 	
+	// if we are adding a new equation, any existing crossfitting and estimation results should be dropped.
+	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
+	if `crossfitted' mata: clear_model_results(`mname')
+
 	// used for temporary Mata object
 	tempname t
 	
@@ -458,6 +471,24 @@ program define add_eqn_to_model, rclass
 	else {
 		// fetch existing eqn struct from model
 		mata: `eqn' = (`mname'.eqnAA).get("`vname'")
+	}
+	
+	// etype is Y, D, DH or Z
+	if "`subcmd'"=="yeq" {
+		mata: `eqn'.etype = "Y"
+	}
+	else if "`subcmd'"=="deq" {
+		mata: `eqn'.etype = "D"
+	}
+	else if "`subcmd'"=="dheq" {
+		mata: `eqn'.etype = "DH"
+	}
+	else if "`subcmd'"=="zeq" {
+		mata: `eqn'.etype = "Z"
+	}
+	else {
+		di as err "internal ddml error - unknown equation type `subcmd'"
+		exit 198
 	}
 	
 	// add vtilde to vtlist if not already there
@@ -486,14 +517,16 @@ program define add_eqn_to_model, rclass
 	local est_options `options'
 	if "`cmdname'"=="" local cmdname: word 1 of `est_main'
 	if "`subcmd'"=="dheq" {
-		mata: st_local("lieflag",strofreal(`eqn'.lieflag))
-		if ("`lieflag'"=="1") di as text "Replacing existing learner `vtilde'_h..."
+		// next line is an error if cmd_h hasn't been stored yet
+		cap mata: return_learner_item(`eqn',"`vtilde'","cmd_h")
+		// so if it's not an error it's a replacement of an existing eqn spec
+		if (_rc==0) di as text "Replacing existing learner `vtilde'_h..."
 		mata: add_learner_item(`eqn',"`vtilde'","cmd_h","`cmdname'")
 		mata: add_learner_item(`eqn',"`vtilde'","estring_h","`0'")
 		mata: add_learner_item(`eqn',"`vtilde'","est_main_h","`est_main'")
 		mata: add_learner_item(`eqn',"`vtilde'","est_options_h","`est_options'")
 		mata: add_learner_item(`eqn',"`vtilde'","predopt_h","`predopt'")
-		mata: add_learner_item(`eqn',"`vtilde'","vtype_h","`vtype'")
+		mata: add_learner_item(`eqn',"`vtilde'","vtype","`vtype'")
 		mata: `eqn'.lieflag = 1
 	}
 	else {
@@ -509,9 +542,76 @@ program define add_eqn_to_model, rclass
 		if "`model'"=="interactive" & "`subcmd'"=="yeq" {
 			mata: `eqn'.ateflag = 1
 		}
-		else if "`model'"=="late" & ("`subcmd'"=="yeq" | "`subcmd'"=="deq") {
+		else if "`model'"=="interactiveiv" & ("`subcmd'"=="yeq" | "`subcmd'"=="deq") {
 			mata: `eqn'.ateflag = 1
 		}
+	}
+
+	mata: st_local("nlearners", strofreal(`eqn'.nlearners))
+	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+	
+	local cmd : word 1 of `est_main'
+	if `pystackedmulti' & (`nlearners'>1) {
+		// treat previous multilearner single pystacked as just another learner
+		mata: `eqn'.pystackedmulti = 0
+		di as text "Note: previously-added pystacked multilearner now treated as a single learner"
+	}
+	else if `nlearners'==1 & "`cmd'"=="pystacked" {
+		// identify if pystacked with multiple learners
+		// if yes, set pystackedmulti=number of base learners (>1)
+		tempname holdname
+		_estimates hold `holdname', nullok
+		`qui' di as text "calling pystacked on full sample with noestimate option..."
+		cap `est_main' , `est_options' noestimate
+		if _rc==0 {
+			`qui' di as text "N=" as res e(N)
+			`qui' di as text "number of learners = " as res `e(mcount)'
+			local mcount = e(mcount)
+			`qui' di as text "Base learners: " _c
+			forvalues j=1/`mcount' {
+				`qui' di as res e(method`j') " " _c
+			}
+			`qui' di
+		}
+		else {
+			`qui' di as text "noestimate option unavailable (consider updating your pystacked)"
+			`qui' di as text "parsing pystacked to obtain count of base learners..."
+			tokenize `"`est_main'"', parse("|")
+			local doublebarsyntax = ("`2'"=="|")*("`3'"=="|")
+			if `doublebarsyntax' {
+				// count pairs of ||s; 3 or more indicates multiple learners
+				local est_main : subinstr local est_main "||" "||", all count(local mcount)
+				// assumes users correctly use || before comma
+				local mcount = `mcount' - 1
+			}
+			else {
+				// count methods
+				local 0 `est_main' , `est_options'
+				syntax [anything(everything)] [ , Methods(string) * ]
+				local mcount : word count `methods'
+				// default is 3 base learners
+				if `mcount'==0 {
+					local mcount 3
+				}
+			}
+			`qui' di as text "number of learners = " as res `mcount'
+		}
+		_estimates unhold `holdname'
+		if `mcount' > 1 {
+			// will be >1 if pystacked is the only learner and #learners>1
+			mata: `eqn'.pystackedmulti = `mcount'
+			`qui' di as text "adding pystacked multilearner..."
+		}
+	}
+	
+	`qui' di as text "number of ddml learners = " as res `nlearners'
+	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+	`qui' di as text "pystackedmulti = " _c
+	if `pystackedmulti'==0 {
+		`qui' di as res `pystackedmulti' as text " (any pystacked call treated as a single learner by ddml)"
+	}
+	else {
+		`qui' di as res `pystackedmulti' as text " (number of pystacked base learners)"
 	}
 
 	// insert eqn struct into model struct
@@ -546,6 +646,7 @@ program define add_eqn_to_model, rclass
 end
 
 program define _ddml_version, eclass
+	version 16
 	syntax , version(string)
 	
 	di as text "`version'"

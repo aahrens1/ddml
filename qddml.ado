@@ -1,8 +1,11 @@
-*! ddml v1.2
-*! last edited: 21 jan 2023
+*! ddml v1.4
+*! last edited: 25july2023
 *! authors: aa/ms
 
-program define qddml, eclass					//  sortpreserve handled in _ivlasso
+program define qddml, eclass sortpreserve
+
+	version 16
+	
 	syntax [anything] [if] [in] [aw pw],		/// note no "/" after pw
 		Model(name)								///
 		[										///
@@ -31,16 +34,44 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		yvtype(string)							///  "double", "float" etc
 		dvtype(string)							///  "double", "float" etc
 		zvtype(string)							///  "double", "float" etc
-		CMDOPTions(string asis)					///
+		CMDOPTions(string asis)					///  will be added on to all learners
+		pystacked(string asis)					///
+		pystacked_y(string asis)				///
+		pystacked_d(string asis)				///
+		pystacked_z(string asis)				///
 		NOIsily 								///
 		REPs(integer 0)							///
 		shortstack 								///
+		poolstack								///
+		stdstack								///
+		ssfinalest(name)						///
+		psfinalest(name)						///
+		stdfinalest(name)						///
+		finalest(name)							///
 		atet 									///
-		NOREG 									///
+		ateu									///
+		cfseed(integer 0)						/// currently undocumented - reset seed prior to crossfitting
+		eseed(integer 0)						/// currently undocumented - reset seed prior to estimation
 		]
+	
+	** indicators for pystacked and stacking methods
+	local pyflag	= "`pystacked'`pystacked_y'`pystacked_d'`pystacked_z'"~="" | "`cmd'`ycmd'`dcmd'`zcmd'"==""
+	local ssflag	= "`shortstack'"~=""
+	local psflag	= "`poolstack'"~=""
+	local stdflag	= "`stdstack'"~=""
+	// if no stacking specified, shortstack
+	if ~`ssflag' & ~`psflag' & ~`stdflag' {
+		local ssflag		=1
+		local shortstack	shortstack
+	}
 
+	// unless specified, finalest sets the final estimator for all stacking methods
+	// if empty, finalest will be the pystacked/ddml default
+	if "`ssfinalest'"==""	local ssfinalest `finalest'
+	if "`psfinalest'"==""	local psfinalest `finalest'
+	if "`stdfinalest'"==""	local stdfinalest `finalest'
+	
 	mata: s_ivparse("`anything'")
-
 	local depvar	`s(depvar)'
 	local dendog	`s(dendog)'
 	local dexog		`s(dexog)'
@@ -60,26 +91,75 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		local pystacked_avail = 0
 	}
 
-	local doreg = "`noreg'"==""
-
 	if "`robust'"!=""	local vce robust
 	if "`cluster'"~=""	local vce cluster `cluster'
-	if "`vverbose'"=="" local qui qui
-	if "`cmd'"=="" local cmd pystacked
-	if "`ycmd'"=="" local ycmd `cmd'
-	if "`dcmd'"=="" local dcmd `cmd'
-	if "`zcmd'"=="" local zcmd `cmd'
+	if "`verbose'"=="" local qui qui
 	if "`yvtype'"=="" local yvtype `vtype'
 	if "`dvtype'"=="" local dvtype `vtype'
 	if "`zvtype'"=="" local zvtype `vtype'
 	if "`ypredopt'"=="" local ypredopt `predopt'
 	if "`dpredopt'"=="" local dpredopt `predopt'
 	if "`zpredopt'"=="" local zpredopt `predopt'
-	local ycmdoptions `ycmdoptions' `cmdoptions'
-	local dcmdoptions `dcmdoptions' `cmdoptions'
-	local zcmdoptions `zcmdoptions' `cmdoptions'
-	local dhcmd `dcmd'
-	local dhcmdoptions `dcmdoptions'
+	
+	if "`foldvar'"!="" {
+		local foldvar foldvar(`foldvar')
+		local kfolds
+	}
+	else if "`kfolds'"!="" {
+		local kfolds kfolds(`kfolds')
+	}
+
+	if `pyflag' {
+		// if no standard or pooled stacking, use voting to avoid unnecessary stacking CV steps
+		// and use nostdstack option so that voting predicted values aren't created
+		if `stdflag'==0 & `psflag'==0 {
+			local nostdstack nostdstack
+		}
+		// commands and options
+		local ycmd		pystacked
+		local dcmd		pystacked
+		local zcmd		pystacked
+		local dhcmd		pystacked
+		if "`pystacked_y'"==""	local ycmdoptions	`pystacked'
+		else					local ycmdoptions	`pystacked_y'
+		if "`pystacked_d'"==""	local dcmdoptions	`pystacked'
+		else					local dcmdoptions	`pystacked_d'
+		if "`pystacked_z'"==""	local zcmdoptions	`pystacked'
+		else					local zcmdoptions	`pystacked_z'
+		local dhcmdoptions		`dcmdoptions'
+		foreach opt in ycmdoptions dcmdoptions zcmdoptions dhcmdoptions {
+			local `opt' : subinstr local `opt' "||" "||", all count(local doublebarsyntax)
+			if `doublebarsyntax'==0 {
+				// no || syntax so add a comma to the start of the options unless one is there already
+				local `opt'		=trim("``opt''")
+				if substr("``opt''",1,1) ~= "," {
+					local `opt'		, ``opt''
+				}
+			}
+			else {
+				// || syntax so check if there is a comma to be followed by options; add a comma if not
+				local `opt' : subinstr local `opt' "," ",", all count(local hascomma)
+				if !`hascomma'	local `opt' ``opt'' ,
+			}
+			// add standard (pystacked) stacking final estimator
+			if "`finalest'"~="" {
+				local `opt' ``opt'' finalest(`finalest')
+			}
+		}
+	}
+	else {
+		// commands and options
+		if "`cmd'"=="" local cmd pystacked
+		if "`ycmd'"=="" local ycmd `cmd'
+		if "`dcmd'"=="" local dcmd `cmd'
+		if "`zcmd'"=="" local zcmd `cmd'
+		local dhcmd `dcmd'
+		// include comma for pystacked compatibility
+		local ycmdoptions	, `ycmdoptions'
+		local dcmdoptions	, `dcmdoptions'
+		local zcmdoptions	, `zcmdoptions'
+		local dhcmdoptions	, `dhcmdoptions'
+	}
 
 	**** syntax checks
 	if ("`model'"=="fiv") {
@@ -90,7 +170,6 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 		if "`xctrl'"=="" {
 			local ycmd regress
 			local ycmdoptions 
-			local doreg = 0
 			local dhcmd regress
 			local dhcmdoptions 
 		}
@@ -105,7 +184,7 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 			exit 198
 		}
 	}
-	else if ("`model'"=="late") {
+	else if ("`model'"=="interactiveiv") {
 		if "`dexog'"!="" {
 			di as error "no exogenous treatments allowed"
 			exit 198
@@ -147,76 +226,108 @@ program define qddml, eclass					//  sortpreserve handled in _ivlasso
 	*** model name
 	if "`mname'"=="" local mname m0		
 
-	*** estimation
-	`qui' ddml init `model', kfolds(`kfolds') reps(`reps') cluster(`cluster') `tabfold' foldvar(`foldvar')
+	*** initialization
+	ddml init `model', mname(`mname') `kfolds' reps(`reps') cluster(`cluster') `tabfold' `foldvar'
 
 	*** IV-HD
-	if ("`model'"=="fiv") {
-		**
-		`qui' if (`doreg') ddml E[Y|X], mname(`mname') vname(`depvar') learner(Y0_reg): reg `depvar' `xctrl' 
-		`qui' if (`doreg') ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D0_reg): reg `dendog' `xctrl' `exexog' 
-		`qui' if (`doreg') ddml E[D|X], mname(`mname') vname(`dendog') learner(D0_reg): reg {D} `xctrl' 
-		**
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions'  
-		`qui' ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl' `exexog', `dcmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'): `dhcmd' {D} `xctrl', `dhcmdoptions' 
-	} 
+	if ("`model'"=="fiv") & `pyflag' {
+		// special treatment for pystacked - split into separate pystacked calls
+		// Y eqn spec
+		`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions' noestimate
+		forvalues m=1/`e(mcount)' {
+			di "Y learner `m':"
+			local globalopt `e(globalopt)'
+			local globalremove noestimate
+			local globalopt : list globalopt - globalremove
+			ddml E[Y|X], mname(`mname') vname(`depvar') learner(Y`m'_`e(method`m')') predopt(`ypredopt') vtype(`yvtype'):		///
+				pystacked `e(depvar)' `e(xvars_o`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
+		}
+		// D eqn spec
+		`dcmd' `dendog' `xctrl' `exexog' `dcmdoptions' `cmdoptions' noestimate
+		forvalues m=1/`e(mcount)' {
+			di "D learner `m':"
+			local globalopt `e(globalopt)'
+			local globalremove noestimate
+			local globalopt : list globalopt - globalremove
+			ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D`m'_`e(method`m')') predopt(`dpredopt') vtype(`dvtype'):		///
+				pystacked `e(depvar)' `e(xvars_o`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
+		}
+		// DH eqn spec
+		`dcmd' `dendog' `xctrl' `dhcmdoptions' `cmdoptions' noestimate
+		forvalues m=1/`e(mcount)' {
+			di "D learner `m':"
+			local globalopt `e(globalopt)'
+			local globalremove noestimate
+			local globalopt : list globalopt - globalremove
+			ddml E[D|X], mname(`mname') vname(`dendog') learner(D`m'_`e(method`m')') predopt(`dpredopt') vtype(`dvtype'):		///
+				pystacked {D} `e(xvars_o`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
+		}
+	}
+	else if ("`model'"=="fiv") {
+	// non-pystacked
+		ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):						///
+			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
+		ddml E[D|X,Z], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'):	///
+			`dcmd' `dendog' `xctrl' `exexog' `dcmdoptions' `cmdoptions'
+		ddml E[D|X], mname(`mname') vname(`dendog') learner(D1_`dcmd') predopt(`dpredopt') vtype(`dvtype'):		///
+			`dhcmd' {D} `xctrl' `dhcmdoptions' `cmdoptions'
+	}
 
 	*** IV 
 	else if ("`model'"=="iv") {
-		`qui' if (`doreg') ddml E[Y|X], mname(`mname') vname(`depvar'): reg `depvar' `xctrl'  
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):	///
+			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
 		local j = 1
 		foreach d of varlist `dendog' {
-			`qui' if (`doreg') ddml E[D|X], mname(`mname') vname(`d'): reg `d' `xctrl'  
-			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `d' `xctrl', `dcmdoptions' 
+			ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'):		///
+				`dcmd' `d' `xctrl' `dcmdoptions' `cmdoptions'
 			local j = `j' + 1
 		}
 		local j = 1
 		foreach z of varlist `exexog' {
-			`qui' if (`doreg') ddml E[Z|X], mname(`mname') vname(`z'): reg `z' `xctrl' 
-			`qui' ddml E[Z|X], mname(`mname') vname(`z') predopt(`zpredopt') vtype(`zvtype'): `zcmd' `z' `xctrl', `zcmdoptions' 
+			ddml E[Z|X], mname(`mname') vname(`z') predopt(`zpredopt') vtype(`zvtype'):	///
+				`zcmd' `z' `xctrl' `zcmdoptions' `cmdoptions'
 			local j = `j' + 1
 		}
 	}
 
-	*** late / interactive IV
-	else if ("`model'"=="late"|"`model'"=="interactiveiv") {
-		**
-		`qui' if (`doreg') ddml E[Y|Z,X], mname(`mname') vname(`depvar'): reg `depvar' `xctrl' 
-		`qui' if (`doreg') ddml E[D|Z,X], mname(`mname') vname(`dendog'): reg `dendog' `xctrl' 
-		`qui' if (`doreg') ddml E[Z|X], mname(`mname') vname(`exexog'): reg `exexog' `xctrl' 
-		**
-		`qui' ddml E[Y|Z,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
-		`qui' ddml E[D|Z,X], mname(`mname') vname(`dendog') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dendog' `xctrl', `dcmdoptions' 
-		`qui' ddml E[Z|X], mname(`mname') vname(`exexog') predopt(`zpredopt') vtype(`zvtype'): `zcmd' `exexog' `xctrl', `zcmdoptions' 
+	*** late / interactive IV ("late" is a synonym for "interactiveiv")
+	else if ("`model'"=="late" | "`model'"=="interactiveiv") {
+		ddml E[Y|Z,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):	///
+			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
+		ddml E[D|Z,X], mname(`mname') vname(`dendog') predopt(`dpredopt') vtype(`dvtype'):	///
+			`dcmd' `dendog' `xctrl' `dcmdoptions' `cmdoptions'
+		ddml E[Z|X], mname(`mname') vname(`exexog') predopt(`zpredopt') vtype(`zvtype'):		///
+			`zcmd' `exexog' `xctrl' `zcmdoptions' `cmdoptions'
 	}
 
 	*** partial linear model
 	else if ("`model'"=="partial") {
-		`qui' if (`doreg') ddml E[Y|X], mname(`mname') vname(`depvar'): reg `depvar' `xctrl'  
-		`qui' ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
+		ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):		///
+			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
 		local j = 1
 		foreach d of varlist `dexog' {
-			`qui' if (`doreg') ddml E[D|X], mname(`mname') vname(`d'): reg `d' `xctrl'
-			`qui' ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `d' `xctrl', `dcmdoptions' 
+			ddml E[D|X], mname(`mname') vname(`d') predopt(`dpredopt') vtype(`dvtype'):		///
+				`dcmd' `d' `xctrl' `dcmdoptions' `cmdoptions'
 			local j = `j' + 1
 		}
 	}
 
 	*** interactive model
 	else if ("`model'"=="interactive") {
-		**
-		`qui' if (`doreg') ddml E[Y|D,X], mname(`mname') vname(`depvar'): reg `depvar' `xctrl' 
-		`qui' if (`doreg') ddml E[D|X], mname(`mname') vname(`dexog'): reg `dexog' `xctrl' 
-		**
-		`qui' ddml E[Y|D,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'): `ycmd' `depvar' `xctrl', `ycmdoptions' 
-		`qui' ddml E[D|X], mname(`mname') vname(`dexog') predopt(`dpredopt') vtype(`dvtype'): `dcmd' `dexog' `xctrl', `dcmdoptions' 
+		ddml E[Y|D,X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):	///
+			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
+		ddml E[D|X], mname(`mname') vname(`dexog') predopt(`dpredopt') vtype(`dvtype'):		///
+			`dcmd' `dexog' `xctrl' `dcmdoptions' `cmdoptions'
 	}	
-		
-	`qui' ddml crossfit, `noisily' `shortstack'
-	if "`verbose'"!="" ddml desc
-	ddml estimate, vce(`vce') `atet'
+	
+	// manual resetting of seed prior to cross-fitting
+	if `cfseed'			set seed `cfseed'
+	ddml crossfit, mname(`mname') `noisily' `shortstack' `poolstack' `nostdstack' ssfinalest(`ssfinalest') psfinalest(`psfinalest')
+	if "`verbose'"!=""	ddml desc, mname(`mname')
+	// manual resetting of seed prior to estimation
+	if `eseed'			set seed `eseed'
+	ddml estimate, mname(`mname') vce(`vce') `atet' `ateu'
 
 end 
 

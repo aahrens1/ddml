@@ -1,9 +1,9 @@
-*! ddml v1.2
-*! last edited: 21 jan 2023
+*! ddml v1.4
+*! last edited: 25july2023
 *! authors: aa/ms
 
 program define _ddml_allcombos, rclass
-	version 13
+	version 16
 	
 	syntax anything , [ putlast(string) ///
 						debug ///  
@@ -38,6 +38,7 @@ program define _ddml_allcombos, rclass
 	// put one specific order at the end (intended for optimal model)
 	mata: `out' = put_last(`out',"`putlast'")
 	if ("`debug'"!="") {
+		di as text "_ddml_all_combos:"
 		mata: `out'
 	}
 
@@ -185,8 +186,7 @@ void mat_to_colstring(string matrix inmat,string scalar sep,string scalar prefix
 
 // replicate elements of a vector, while maintaining order
 string matrix Jsort(string matrix mat,
-				real scalar rep
-)
+				real scalar rep)
 {
 	r = rows(mat)
 	for (i=1;i<=r;i++) {

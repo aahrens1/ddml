@@ -1,0 +1,1480 @@
+-----------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_fiv.log
+  log type:  text
+ opened on:  25 Jul 2023, 18:11:43
+
+. 
+. which ddml
+C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
+*! ddml v1.2
+*! last edited: 19 july 2023
+*! authors: aa/ms
+
+. mata: whichddml()
+  
+  Mata library for ddml and related programs,
+  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  authors AA/MS
+
+. 
+. use https://github.com/aahrens1/ddml/raw/master/data/BLP.dta, clear
+
+. 
+. // necessary programs for cert; script exits with error if not installed
+. findfile pystacked.ado
+C:\LocalStore\ecomes\Documents\GitHub\pystacked/pystacked.ado
+
+. 
+. set seed 123
+
+. 
+. ******************************************************************************** 
+. **** Flexible IV                                                                                                     
+>            ****
+. ******************************************************************************** 
+. 
+. global Y share
+
+. global D price
+
+. global X hpwt air mpd space
+
+. global Z sum*
+
+. 
+. // single learner = pystacked
+. ddml init fiv, kfolds(2) reps(2)
+
+. ddml E[Y|X]: pystacked $Y $X, type(reg)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|Z,X], learner(Dhat_pystacked): pystacked $D $X $Z, type(reg)
+Learner Dhat_pystacked added successfully.
+
+. ddml E[D|X], learner(Dhat_pystacked) vname($D): pystacked {D} $X, type(reg)
+Learner Dhat_pystacked_h added successfully.
+
+. ddml crossfit
+Cross-fitting E[y|X,Z] equation: share
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] and E[D|X] equation: price
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  fiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): share
+ share learners:        Y1_pystacked
+D equations (1):        price
+ price learners:        Dhat_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE     DH learner
+  st  1  Y1_pystacked Dhat_pystac~d    -0.108    (0.008) Dhat_pystac~h
+  st  2  Y1_pystacked Dhat_pystac~d    -0.101    (0.008) Dhat_pystac~h
+
+Mean/med    Y learner     D learner         b        SE     DH learner
+  st mn  Y1_pystacked Dhat_pystac~d    -0.104    (0.009) Dhat_pystac~h
+  st md  Y1_pystacked Dhat_pystac~d    -0.104    (0.009) Dhat_pystac~h
+
+Median over 2 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pystacked 
+E[D^|X]   = Dhat_pystacked_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1041662   .0086374   -12.06   0.000    -.1210952   -.0872373
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1042   -0.1076   -0.1076   -0.1042   -0.1007   -0.1007
+
+. ddml estimate, mname(m0) spec(st) rep(1) replay notable
+
+Stacking DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pystacked_1 
+E[D^|X]   = Dhat_pystacked_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1076037   .0082844   -12.99   0.000    -.1238409   -.0913665
+       _cons |   .0003447   .0221142     0.02   0.988    -.0429983    .0436877
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml extract, show(stweights)
+
+mean stacking weights across folds/resamples for Dhat_pystacked (price)
+final stacking estimator: nnls1
+               learner        h=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .01292186    .02584372    7.598e-16
+  lassocv            2            0    1.544e-17    3.089e-17            0
+gradboost            3            0    .98707814    .97415628            1
+      ols            1            1    .01101253    .02202506            0
+  lassocv            2            1    8.462e-18    1.692e-17            0
+gradboost            3            1    .98898747    .97797494            1
+
+mean stacking weights across folds/resamples for Y1_pystacked (share)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .05189334    .07113894    .03264774
+  lassocv            2    1.952e-18    3.036e-18    8.674e-19
+gradboost            3    .94810666    .92886106    .96735226
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Dhat_pystacked (price)
+             learner          h   resample     fold_1     fold_2
+      ols          1          0          1  1.284e-16  .05168744
+  lassocv          2          0          1          0  6.177e-17
+gradboost          3          0          1          1  .94831256
+      ols          1          0          2  1.520e-15          0
+  lassocv          2          0          2          0          0
+gradboost          3          0          2          1          1
+      ols          1          1          1          0  .04405013
+  lassocv          2          1          1          0  3.385e-17
+gradboost          3          1          1          1  .95594987
+      ols          1          1          2          0          0
+  lassocv          2          1          2          0          0
+gradboost          3          1          2          1          1
+
+mean stacking weights across folds/resamples for Dhat_pystacked (price)
+final stacking estimator: nnls1
+               learner        h=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .01292186    .02584372    7.598e-16
+  lassocv            2            0    1.544e-17    3.089e-17            0
+gradboost            3            0    .98707814    .97415628            1
+      ols            1            1    .01101253    .02202506            0
+  lassocv            2            1    8.462e-18    1.692e-17            0
+gradboost            3            1    .98898747    .97797494            1
+
+pystacked MSEs for Dhat_pystacked (price)
+             learner          h   resample     fold_1     fold_2
+      ols          1          0          1  29.601258  27.567405
+  lassocv          2          0          1  29.486182  27.418188
+gradboost          3          0          1  13.972661  12.535805
+      ols          1          0          2  28.242818  28.694189
+  lassocv          2          0          2  28.095981  28.651877
+gradboost          3          0          2   13.66995  11.749715
+      ols          1          1          1  22.703521   20.74046
+  lassocv          2          1          1  22.704472  20.729858
+gradboost          3          1          1  10.398402  8.4312557
+      ols          1          1          2   22.67543  23.353678
+  lassocv          2          1          2  22.713653   23.35508
+gradboost          3          1          2  10.296549  8.9067805
+
+mean stacking MSEs across folds/resamples for Dhat_pystacked (price)
+final stacking estimator: nnls1
+             learner      h=0/1   mean_MSE      rep_1      rep_2
+      ols          1          0  28.526418  28.584332  28.468503
+  lassocv          2          0  28.413057  28.452185  28.373929
+gradboost          3          0  12.982033  13.254233  12.709833
+      ols          1          1  22.368272  21.721991  23.014554
+  lassocv          2          1  22.375766  21.717165  23.034366
+gradboost          3          1  9.5082467  9.4148289  9.6016646
+
+pystacked weights for Y1_pystacked (share)
+             learner   resample     fold_1     fold_2
+      ols          1          1          0  .14227788
+  lassocv          2          1          0  6.072e-18
+gradboost          3          1          1  .85772212
+      ols          1          2   .0161017  .04919379
+  lassocv          2          2  1.735e-18          0
+gradboost          3          2   .9838983  .95080621
+
+mean stacking weights across folds/resamples for Y1_pystacked (share)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+      ols            1    .05189334    .07113894    .03264774
+  lassocv            2    1.952e-18    3.036e-18    8.674e-19
+gradboost            3    .94810666    .92886106    .96735226
+
+pystacked MSEs for Y1_pystacked (share)
+             learner   resample     fold_1     fold_2
+      ols          1          1  1.5197976  1.3645544
+  lassocv          2          1  1.5198932  1.3646814
+gradboost          3          1  1.2031303  1.2233741
+      ols          1          2  1.4580414  1.4089006
+  lassocv          2          2  1.4579988  1.4090236
+gradboost          3          2  1.1900187  1.2163575
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (share)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+      ols          1  1.4378235   1.442176   1.433471
+  lassocv          2  1.4378992  1.4422873  1.4335112
+gradboost          3  1.2082202  1.2132522  1.2031881
+
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit
+Cross-fitting E[y|X,Z] equation: share
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] and E[D|X] equation: price
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  fiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): share
+ share learners:        Y1_pystacked
+D equations (1):        price
+ price learners:        Dhat_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE     DH learner
+  st  1  Y1_pystacked Dhat_pystac~d    -0.108    (0.008) Dhat_pystac~h
+  st  2  Y1_pystacked Dhat_pystac~d    -0.101    (0.008) Dhat_pystac~h
+  st  3  Y1_pystacked Dhat_pystac~d    -0.092    (0.008) Dhat_pystac~h
+
+Mean/med    Y learner     D learner         b        SE     DH learner
+  st mn  Y1_pystacked Dhat_pystac~d    -0.100    (0.010) Dhat_pystac~h
+  st md  Y1_pystacked Dhat_pystac~d    -0.101    (0.011) Dhat_pystac~h
+
+Median over 3 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pystacked 
+E[D^|X]   = Dhat_pystacked_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1007287   .0107656    -9.36   0.000    -.1218289   -.0796286
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1001   -0.1076   -0.1076   -0.1007   -0.0920   -0.0920
+
+. *** replay
+. ddml estimate, mname(m0) spec(st) rep(1) replay notable
+
+Stacking DDML model (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pystacked_1 
+E[D^|X]   = Dhat_pystacked_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1076037   .0082844   -12.99   0.000    -.1238409   -.0913665
+       _cons |   .0003447   .0221142     0.02   0.988    -.0429983    .0436877
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(st) rep(2) replay notable
+
+Stacking DDML model (sample=2)
+y-E[y|X]  = y-Y1_pystacked_2                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pystacked_2 
+E[D^|X]   = Dhat_pystacked_h_2
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1007287   .0075461   -13.35   0.000    -.1155188   -.0859387
+       _cons |   -.006026   .0217092    -0.28   0.781    -.0485753    .0365233
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(st) rep(mn) replay notable
+
+Mean over 3 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pystacked 
+E[D^|X]   = Dhat_pystacked_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1001114   .0095209   -10.51   0.000    -.1187721   -.0814507
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1001   -0.1076   -0.1076   -0.1007   -0.0920   -0.0920
+
+. ddml estimate, mname(m0) spec(st) rep(md) replay notable
+
+Median over 3 stacking resamples
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pystacked 
+E[D^|X]   = Dhat_pystacked_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1007287   .0107656    -9.36   0.000    -.1218289   -.0796286
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1001   -0.1076   -0.1076   -0.1007   -0.0920   -0.0920
+
+. 
+. // multiple learners = pystacked+gradboost, pystacked+lassocv, pystacked+rf
+. ddml init fiv, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: pystacked $Y $X, type(reg) m(gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X]: pystacked $Y $X, type(reg) m(lassocv)
+Learner Y2_pystacked added successfully.
+
+. ddml E[Y|X]: pystacked $Y $X, type(reg) m(rf)
+Learner Y3_pystacked added successfully.
+
+. ddml E[D|Z,X], learner(Dhat_psgradboost): pystacked $D $X $Z, type(reg) m(gradboost)
+Learner Dhat_psgradboost added successfully.
+
+. ddml E[D|X], learner(Dhat_psgradboost) vname($D): pystacked {D} $X, type(reg) m(gradboost)
+Learner Dhat_psgradboost_h added successfully.
+
+. ddml E[D|Z,X], learner(Dhat_pslassocv): pystacked $D $X $Z, type(reg) m(lassocv)
+Learner Dhat_pslassocv added successfully.
+
+. ddml E[D|X], learner(Dhat_pslassocv) vname($D): pystacked {D} $X, type(reg) m(lassocv)
+Learner Dhat_pslassocv_h added successfully.
+
+. ddml E[D|Z,X], learner(Dhat_rf): pystacked $D $X $Z, type(reg) m(rf)
+Learner Dhat_rf added successfully.
+
+. ddml E[D|X], learner(Dhat_rf) vname($D): pystacked {D} $X, type(reg) m(rf)
+Learner Dhat_rf_h added successfully.
+
+. ddml crossfit
+Cross-fitting E[y|X,Z] equation: share
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] and E[D|X] equation: price
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  fiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): share
+ share learners:        Y1_pystacked Y2_pystacked Y3_pystacked
+D equations (1):        price
+ price learners:        Dhat_psgradboost Dhat_pslassocv Dhat_rf
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE     DH learner
+ mse  1  Y3_pystacked       Dhat_rf    -0.101    (0.009)     Dhat_rf_h
+ mse  2  Y3_pystacked       Dhat_rf    -0.107    (0.008)     Dhat_rf_h
+mse = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE     DH learner
+ mse mn     [min-mse]     [min-mse]    -0.104    (0.009)     [min-mse]
+ mse md     [min-mse]     [min-mse]    -0.104    (0.009)     [min-mse]
+
+Median over 2 min-mse resamples
+y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf 
+E[D^|X]   = Dhat_rf_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |   -.103958   .0090695   -11.46   0.000    -.1217339   -.0861822
+------------------------------------------------------------------------------
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1040   -0.1068   -0.1068   -0.1040   -0.1011   -0.1011
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1010663   .0087533   -11.55   0.000    -.1182224   -.0839101
+       _cons |  -.0164787   .0215552    -0.76   0.445    -.0587262    .0257687
+------------------------------------------------------------------------------
+
+
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit
+Cross-fitting E[y|X,Z] equation: share
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] and E[D|X] equation: price
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  fiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): share
+ share learners:        Y1_pystacked Y2_pystacked Y3_pystacked
+D equations (1):        price
+ price learners:        Dhat_psgradboost Dhat_pslassocv Dhat_rf
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE     DH learner
+ mse  1  Y3_pystacked       Dhat_rf    -0.101    (0.009)     Dhat_rf_h
+ mse  2  Y3_pystacked       Dhat_rf    -0.107    (0.008)     Dhat_rf_h
+ mse  3  Y3_pystacked       Dhat_rf    -0.095    (0.010)     Dhat_rf_h
+mse = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE     DH learner
+ mse mn     [min-mse]     [min-mse]    -0.101    (0.010)     [min-mse]
+ mse md     [min-mse]     [min-mse]    -0.101    (0.010)     [min-mse]
+
+Median over 3 min-mse resamples
+y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf 
+E[D^|X]   = Dhat_rf_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1010663   .0102282    -9.88   0.000    -.1211131   -.0810194
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1011   -0.1068   -0.1068   -0.1011   -0.0955   -0.0955
+
+. *** replay
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1010663   .0087533   -11.55   0.000    -.1182224   -.0839101
+       _cons |  -.0164787   .0215552    -0.76   0.445    -.0587262    .0257687
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(2) replay notable
+
+Min MSE DDML model (sample=2)
+y-E[y|X]  = y-Y3_pystacked_2                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_2 
+E[D^|X]   = Dhat_rf_h_2
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1068498    .008436   -12.67   0.000     -.123384   -.0903156
+       _cons |  -.0084848   .0213157    -0.40   0.691    -.0502627    .0332931
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse resamples
+y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf 
+E[D^|X]   = Dhat_rf_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |   -.101137   .0098993   -10.22   0.000    -.1205394   -.0817347
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1011   -0.1068   -0.1068   -0.1011   -0.0955   -0.0955
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse resamples
+y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf 
+E[D^|X]   = Dhat_rf_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1010663   .0102282    -9.88   0.000    -.1211131   -.0810194
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1011   -0.1068   -0.1068   -0.1011   -0.0955   -0.0955
+
+. 
+. 
+. // as above, with shortstacking
+. // multiple learners = pystacked+gradboost, pystacked+lassocv, pystacked+rf
+. ddml init fiv, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X]: pystacked $Y $X, type(reg) m(gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X]: pystacked $Y $X, type(reg) m(lassocv)
+Learner Y2_pystacked added successfully.
+
+. ddml E[Y|X]: pystacked $Y $X, type(reg) m(rf)
+Learner Y3_pystacked added successfully.
+
+. ddml E[D|Z,X], learner(Dhat_psgradboost): pystacked $D $X $Z, type(reg) m(gradboost)
+Learner Dhat_psgradboost added successfully.
+
+. ddml E[D|X], learner(Dhat_psgradboost) vname($D): pystacked {D} $X, type(reg) m(gradboost)
+Learner Dhat_psgradboost_h added successfully.
+
+. ddml E[D|Z,X], learner(Dhat_pslassocv): pystacked $D $X $Z, type(reg) m(lassocv)
+Learner Dhat_pslassocv added successfully.
+
+. ddml E[D|X], learner(Dhat_pslassocv) vname($D): pystacked {D} $X, type(reg) m(lassocv)
+Learner Dhat_pslassocv_h added successfully.
+
+. ddml E[D|Z,X], learner(Dhat_rf): pystacked $D $X $Z, type(reg) m(rf)
+Learner Dhat_rf added successfully.
+
+. ddml E[D|X], learner(Dhat_rf) vname($D): pystacked {D} $X, type(reg) m(rf)
+Learner Dhat_rf_h added successfully.
+
+. ddml crossfit, shortstack
+Cross-fitting E[y|X,Z] equation: share
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X,Z] and E[D|X] equation: price
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+. ddml estimate
+
+
+Model:                  fiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): share
+ share learners:        Y1_pystacked Y2_pystacked Y3_pystacked
+D equations (1):        price
+ price learners:        Dhat_psgradboost Dhat_pslassocv Dhat_rf
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE     DH learner
+ mse  1  Y3_pystacked       Dhat_rf    -0.107    (0.008)     Dhat_rf_h
+  ss  1  [shortstack]          [ss]    -0.101    (0.008)          [ss]
+ mse  2  Y3_pystacked Dhat_psgrad~t    -0.075    (0.008)     Dhat_rf_h
+  ss  2  [shortstack]          [ss]    -0.088    (0.008)          [ss]
+mse = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE     DH learner
+ mse mn     [min-mse]     [min-mse]    -0.091    (0.018)     [min-mse]
+  ss mn  [shortstack]          [ss]    -0.094    (0.010)          [ss]
+ mse md     [min-mse]     [min-mse]    -0.091    (0.018)     [min-mse]
+  ss md  [shortstack]          [ss]    -0.094    (0.010)          [ss]
+
+Shortstack DDML model (median over 2 resamples)
+y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss 
+E[D^|X]   = D_price_h_ss
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0943598   .0100487    -9.39   0.000    -.1140549   -.0746647
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.0944   -0.1007   -0.1007   -0.0944   -0.0880   -0.0880
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1)
+y-E[y|X]  = y-Y_share_ss_1                         Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss_1 
+E[D^|X]   = D_price_h_ss_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1006893   .0078788   -12.78   0.000    -.1161314   -.0852471
+       _cons |    .008106   .0210713     0.38   0.700    -.0331931     .049405
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml extract, show(ssweights)
+
+short-stacked weights across resamples for price
+final stacking estimator: nnls1
+                  learner        h=0/1  mean_weight        rep_1        rep_2
+Dhat_psgra~t            1            0    .49226723    .46442069    .52011377
+Dhat_pslas~v            2            0    1.540e-15    1.117e-16    2.967e-15
+     Dhat_rf            3            0    .50773277    .53557931    .47988623
+Dhat_psgra~h            1            1    .20187036      .150443    .25329772
+Dhat_pslas~h            2            1    .02609407    .00550543    .04668271
+   Dhat_rf_h            3            1    .77203557    .84405157    .70001957
+
+short-stacked weights across resamples for share
+final stacking estimator: nnls1
+                  learner  mean_weight        rep_1        rep_2
+Y1_pystacked            1    .18091017    .15340265     .2084177
+Y2_pystacked            2    .04566254    .05851007      .032815
+Y3_pystacked            3    .77342729    .78808729    .75876729
+
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit, shortstack
+Cross-fitting E[y|X,Z] equation: share
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X,Z] and E[D|X] equation: price
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+. ddml estimate
+
+
+Model:                  fiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): share
+ share learners:        Y1_pystacked Y2_pystacked Y3_pystacked
+D equations (1):        price
+ price learners:        Dhat_psgradboost Dhat_pslassocv Dhat_rf
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE     DH learner
+ mse  1  Y3_pystacked       Dhat_rf    -0.107    (0.008)     Dhat_rf_h
+  ss  1  [shortstack]          [ss]    -0.101    (0.008)          [ss]
+ mse  2  Y3_pystacked Dhat_psgrad~t    -0.075    (0.008)     Dhat_rf_h
+  ss  2  [shortstack]          [ss]    -0.088    (0.008)          [ss]
+ mse  3  Y3_pystacked       Dhat_rf    -0.116    (0.009)     Dhat_rf_h
+  ss  3  [shortstack]          [ss]    -0.113    (0.009)          [ss]
+mse = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE     DH learner
+ mse mn     [min-mse]     [min-mse]    -0.099    (0.016)     [min-mse]
+  ss mn  [shortstack]          [ss]    -0.101    (0.011)          [ss]
+ mse md     [min-mse]     [min-mse]    -0.107    (0.013)     [min-mse]
+  ss md  [shortstack]          [ss]    -0.101    (0.015)          [ss]
+
+Shortstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss 
+E[D^|X]   = D_price_h_ss
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1006893   .0148325    -6.79   0.000    -.1297605   -.0716181
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1006   -0.1130   -0.1130   -0.1007   -0.0880   -0.0880
+
+. ddml extract, show(ssweights)
+
+short-stacked weights across resamples for price
+final stacking estimator: nnls1
+                  learner        h=0/1  mean_weight        rep_1        rep_2        rep_3
+Dhat_psgra~t            1            0    .45750454    .46442069    .52011377    .38797915
+Dhat_pslas~v            2            0    1.026e-15    1.117e-16    2.967e-15            0
+     Dhat_rf            3            0    .54249546    .53557931    .47988623    .61202085
+Dhat_psgra~h            1            1    .19448496      .150443    .25329772    .17971417
+Dhat_pslas~h            2            1    .01739605    .00550543    .04668271    3.353e-19
+   Dhat_rf_h            3            1    .78811899    .84405157    .70001957    .82028583
+
+short-stacked weights across resamples for share
+final stacking estimator: nnls1
+                  learner  mean_weight        rep_1        rep_2        rep_3
+Y1_pystacked            1    .15085465    .15340265     .2084177     .0907436
+Y2_pystacked            2    .04592971    .05851007      .032815    .04646405
+Y3_pystacked            3    .80321564    .78808729    .75876729    .86279235
+
+. *** replay
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1073408   .0082324   -13.04   0.000     -.123476   -.0912056
+       _cons |   .0045351   .0212857     0.21   0.831    -.0371842    .0462544
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(2) replay notable
+
+Min MSE DDML model (sample=2)
+y-E[y|X]  = y-Y3_pystacked_2                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_2 
+E[D^|X]   = Dhat_rf_h_2
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |   -.074949   .0081974    -9.14   0.000    -.0910157   -.0588824
+       _cons |  -.0207168    .021268    -0.97   0.330    -.0624012    .0209677
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse resamples
+y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf 
+E[D^|X]   = Dhat_rf_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0994615   .0158274    -6.28   0.000    -.1304827   -.0684403
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.0995   -0.1161   -0.1161   -0.1073   -0.0749   -0.0749
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse resamples
+y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf 
+E[D^|X]   = Dhat_rf_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1073408    .012647    -8.49   0.000    -.1321285    -.082553
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.0995   -0.1161   -0.1161   -0.1073   -0.0749   -0.0749
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1)
+y-E[y|X]  = y-Y_share_ss_1                         Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss_1 
+E[D^|X]   = D_price_h_ss_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1006893   .0078788   -12.78   0.000    -.1161314   -.0852471
+       _cons |    .008106   .0210713     0.38   0.700    -.0331931     .049405
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(2) replay notable
+
+Shortstack DDML model (sample=2)
+y-E[y|X]  = y-Y_share_ss_2                         Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss_2 
+E[D^|X]   = D_price_h_ss_2
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0880302   .0077299   -11.39   0.000    -.1031806   -.0728799
+       _cons |  -.0169228   .0210814    -0.80   0.422    -.0582416    .0243959
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
+
+Shortstack DDML model (mean over 3 resamples)
+y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss 
+E[D^|X]   = D_price_h_ss
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1005709   .0109469    -9.19   0.000    -.1220264   -.0791153
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1006   -0.1130   -0.1130   -0.1007   -0.0880   -0.0880
+
+. ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+
+Shortstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss 
+E[D^|X]   = D_price_h_ss
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1006893   .0148325    -6.79   0.000    -.1297605   -.0716181
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1006   -0.1130   -0.1130   -0.1007   -0.0880   -0.0880
+
+. *** allcombos
+. ddml estimate, allcombos
+
+
+Model:                  fiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): share
+ share learners:        Y1_pystacked Y2_pystacked Y3_pystacked
+D equations (1):        price
+ price learners:        Dhat_psgradboost Dhat_pslassocv Dhat_rf
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE     DH learner
+   1  1  Y1_pystacked Dhat_psgrad~t    -0.096    (0.008) Dhat_psgrad~h
+   2  1  Y1_pystacked Dhat_psgrad~t    -0.042    (0.005) Dhat_pslass~h
+   3  1  Y1_pystacked Dhat_psgrad~t    -0.079    (0.009)     Dhat_rf_h
+   4  1  Y1_pystacked Dhat_pslass~v    -0.132    (0.031) Dhat_psgrad~h
+   5  1  Y1_pystacked Dhat_pslass~v    -0.105    (0.011) Dhat_pslass~h
+   6  1  Y1_pystacked Dhat_pslass~v    -0.072    (0.038)     Dhat_rf_h
+   7  1  Y1_pystacked       Dhat_rf    -0.102    (0.008) Dhat_psgrad~h
+   8  1  Y1_pystacked       Dhat_rf    -0.048    (0.005) Dhat_pslass~h
+   9  1  Y1_pystacked       Dhat_rf    -0.101    (0.009)     Dhat_rf_h
+  10  1  Y2_pystacked Dhat_psgrad~t    -0.108    (0.008) Dhat_psgrad~h
+  11  1  Y2_pystacked Dhat_psgrad~t    -0.093    (0.005) Dhat_pslass~h
+  12  1  Y2_pystacked Dhat_psgrad~t    -0.086    (0.010)     Dhat_rf_h
+  13  1  Y2_pystacked Dhat_pslass~v     0.139    (0.044) Dhat_psgrad~h
+  14  1  Y2_pystacked Dhat_pslass~v    -0.140    (0.011) Dhat_pslass~h
+  15  1  Y2_pystacked Dhat_pslass~v     0.275    (0.070)     Dhat_rf_h
+  16  1  Y2_pystacked       Dhat_rf    -0.113    (0.008) Dhat_psgrad~h
+  17  1  Y2_pystacked       Dhat_rf    -0.098    (0.005) Dhat_pslass~h
+  18  1  Y2_pystacked       Dhat_rf    -0.110    (0.009)     Dhat_rf_h
+  19  1  Y3_pystacked Dhat_psgrad~t    -0.078    (0.007) Dhat_psgrad~h
+  20  1  Y3_pystacked Dhat_psgrad~t    -0.035    (0.005) Dhat_pslass~h
+  21  1  Y3_pystacked Dhat_psgrad~t    -0.090    (0.008)     Dhat_rf_h
+  22  1  Y3_pystacked Dhat_pslass~v    -0.120    (0.029) Dhat_psgrad~h
+  23  1  Y3_pystacked Dhat_pslass~v    -0.092    (0.010) Dhat_pslass~h
+  24  1  Y3_pystacked Dhat_pslass~v    -0.150    (0.037)     Dhat_rf_h
+  25  1  Y3_pystacked       Dhat_rf    -0.080    (0.007) Dhat_psgrad~h
+  26  1  Y3_pystacked       Dhat_rf    -0.038    (0.005) Dhat_pslass~h
+* 27  1  Y3_pystacked       Dhat_rf    -0.107    (0.008)     Dhat_rf_h
+  ss  1  [shortstack]          [ss]    -0.101    (0.008)          [ss]
+   1  2  Y1_pystacked Dhat_psgrad~t    -0.091    (0.008) Dhat_psgrad~h
+   2  2  Y1_pystacked Dhat_psgrad~t    -0.044    (0.005) Dhat_pslass~h
+   3  2  Y1_pystacked Dhat_psgrad~t    -0.063    (0.009)     Dhat_rf_h
+   4  2  Y1_pystacked Dhat_pslass~v    -0.105    (0.033) Dhat_psgrad~h
+   5  2  Y1_pystacked Dhat_pslass~v    -0.104    (0.011) Dhat_pslass~h
+   6  2  Y1_pystacked Dhat_pslass~v    -0.017    (0.030)     Dhat_rf_h
+   7  2  Y1_pystacked       Dhat_rf    -0.095    (0.008) Dhat_psgrad~h
+   8  2  Y1_pystacked       Dhat_rf    -0.049    (0.005) Dhat_pslass~h
+   9  2  Y1_pystacked       Dhat_rf    -0.085    (0.009)     Dhat_rf_h
+  10  2  Y2_pystacked Dhat_psgrad~t    -0.108    (0.008) Dhat_psgrad~h
+  11  2  Y2_pystacked Dhat_psgrad~t    -0.092    (0.005) Dhat_pslass~h
+  12  2  Y2_pystacked Dhat_psgrad~t    -0.060    (0.009)     Dhat_rf_h
+  13  2  Y2_pystacked Dhat_pslass~v     0.158    (0.050) Dhat_psgrad~h
+  14  2  Y2_pystacked Dhat_pslass~v    -0.140    (0.011) Dhat_pslass~h
+  15  2  Y2_pystacked Dhat_pslass~v     0.238    (0.049)     Dhat_rf_h
+  16  2  Y2_pystacked       Dhat_rf    -0.114    (0.008) Dhat_psgrad~h
+  17  2  Y2_pystacked       Dhat_rf    -0.099    (0.005) Dhat_pslass~h
+  18  2  Y2_pystacked       Dhat_rf    -0.086    (0.009)     Dhat_rf_h
+  19  2  Y3_pystacked Dhat_psgrad~t    -0.070    (0.008) Dhat_psgrad~h
+  20  2  Y3_pystacked Dhat_psgrad~t    -0.031    (0.005) Dhat_pslass~h
+* 21  2  Y3_pystacked Dhat_psgrad~t    -0.075    (0.008)     Dhat_rf_h
+  22  2  Y3_pystacked Dhat_pslass~v    -0.109    (0.032) Dhat_psgrad~h
+  23  2  Y3_pystacked Dhat_pslass~v    -0.085    (0.011) Dhat_pslass~h
+  24  2  Y3_pystacked Dhat_pslass~v    -0.095    (0.028)     Dhat_rf_h
+  25  2  Y3_pystacked       Dhat_rf    -0.065    (0.008) Dhat_psgrad~h
+  26  2  Y3_pystacked       Dhat_rf    -0.032    (0.005) Dhat_pslass~h
+  27  2  Y3_pystacked       Dhat_rf    -0.087    (0.008)     Dhat_rf_h
+  ss  2  [shortstack]          [ss]    -0.088    (0.008)          [ss]
+   1  3  Y1_pystacked Dhat_psgrad~t    -0.117    (0.008) Dhat_psgrad~h
+   2  3  Y1_pystacked Dhat_psgrad~t    -0.047    (0.005) Dhat_pslass~h
+   3  3  Y1_pystacked Dhat_psgrad~t    -0.093    (0.010)     Dhat_rf_h
+   4  3  Y1_pystacked Dhat_pslass~v    -0.155    (0.048) Dhat_psgrad~h
+   5  3  Y1_pystacked Dhat_pslass~v    -0.105    (0.011) Dhat_pslass~h
+   6  3  Y1_pystacked Dhat_pslass~v    -0.013    (0.059)     Dhat_rf_h
+   7  3  Y1_pystacked       Dhat_rf    -0.119    (0.008) Dhat_psgrad~h
+   8  3  Y1_pystacked       Dhat_rf    -0.053    (0.005) Dhat_pslass~h
+   9  3  Y1_pystacked       Dhat_rf    -0.122    (0.010)     Dhat_rf_h
+  10  3  Y2_pystacked Dhat_psgrad~t    -0.124    (0.009) Dhat_psgrad~h
+  11  3  Y2_pystacked Dhat_psgrad~t    -0.095    (0.005) Dhat_pslass~h
+  12  3  Y2_pystacked Dhat_psgrad~t    -0.091    (0.011)     Dhat_rf_h
+  13  3  Y2_pystacked Dhat_pslass~v     0.275    (0.088) Dhat_psgrad~h
+  14  3  Y2_pystacked Dhat_pslass~v    -0.144    (0.012) Dhat_pslass~h
+  15  3  Y2_pystacked Dhat_pslass~v     0.523    (0.150)     Dhat_rf_h
+  16  3  Y2_pystacked       Dhat_rf    -0.130    (0.009) Dhat_psgrad~h
+  17  3  Y2_pystacked       Dhat_rf    -0.102    (0.005) Dhat_pslass~h
+  18  3  Y2_pystacked       Dhat_rf    -0.125    (0.010)     Dhat_rf_h
+  19  3  Y3_pystacked Dhat_psgrad~t    -0.086    (0.008) Dhat_psgrad~h
+  20  3  Y3_pystacked Dhat_psgrad~t    -0.034    (0.005) Dhat_pslass~h
+  21  3  Y3_pystacked Dhat_psgrad~t    -0.095    (0.010)     Dhat_rf_h
+  22  3  Y3_pystacked Dhat_pslass~v    -0.126    (0.045) Dhat_psgrad~h
+  23  3  Y3_pystacked Dhat_pslass~v    -0.077    (0.011) Dhat_pslass~h
+  24  3  Y3_pystacked Dhat_pslass~v    -0.120    (0.055)     Dhat_rf_h
+  25  3  Y3_pystacked       Dhat_rf    -0.086    (0.008) Dhat_psgrad~h
+  26  3  Y3_pystacked       Dhat_rf    -0.037    (0.005) Dhat_pslass~h
+* 27  3  Y3_pystacked       Dhat_rf    -0.116    (0.009)     Dhat_rf_h
+  ss  3  [shortstack]          [ss]    -0.113    (0.009)          [ss]
+* = minimum MSE specification for that resample.
+
+Mean/med    Y learner     D learner         b        SE     DH learner
+ mse mn     [min-mse]     [min-mse]    -0.099    (0.016)     [min-mse]
+  ss mn  [shortstack]          [ss]    -0.101    (0.011)          [ss]
+ mse md     [min-mse]     [min-mse]    -0.107    (0.013)     [min-mse]
+  ss md  [shortstack]          [ss]    -0.101    (0.015)          [ss]
+
+Shortstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss 
+E[D^|X]   = D_price_h_ss
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1006893   .0148325    -6.79   0.000    -.1297605   -.0716181
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1006   -0.1130   -0.1130   -0.1007   -0.0880   -0.0880
+
+. forvalues i=1/27 {
+  2.     ddml estimate, mname(m0) spec(`i') rep(1) replay notable
+  3. }
+
+DDML model, specification 1 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_1 
+E[D^|X]   = Dhat_psgradboost_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0959808   .0075891   -12.65   0.000    -.1108551   -.0811065
+       _cons |   .0185342   .0221063     0.84   0.402    -.0247934    .0618618
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_1 
+E[D^|X]   = Dhat_pslassocv_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0424118   .0048954    -8.66   0.000    -.0520066   -.0328171
+       _cons |   .0218336   .0224992     0.97   0.332     -.022264    .0659312
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0785797   .0087704    -8.96   0.000    -.0957693     -.06139
+       _cons |   .0137807   .0222816     0.62   0.536    -.0298904    .0574518
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pslassocv_1 
+E[D^|X]   = Dhat_psgradboost_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1324796   .0305367    -4.34   0.000    -.1923304   -.0726288
+       _cons |   .0171103   .0226252     0.76   0.449    -.0272342    .0614548
+------------------------------------------------------------------------------
+
+
+DDML model, specification 5 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pslassocv_1 
+E[D^|X]   = Dhat_pslassocv_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1045647   .0109742    -9.53   0.000    -.1260737   -.0830558
+       _cons |   .0211814   .0232812     0.91   0.363    -.0244489    .0668116
+------------------------------------------------------------------------------
+
+
+DDML model, specification 6 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pslassocv_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0723346   .0377539    -1.92   0.055    -.1463308    .0016616
+       _cons |   .0144561   .0226416     0.64   0.523    -.0299207    .0588329
+------------------------------------------------------------------------------
+
+
+DDML model, specification 7 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_psgradboost_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |   -.101621   .0075611   -13.44   0.000    -.1164404   -.0868016
+       _cons |   .0183142   .0221465     0.83   0.408    -.0250922    .0617206
+------------------------------------------------------------------------------
+
+
+DDML model, specification 8 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_pslassocv_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0475399   .0048622    -9.78   0.000    -.0570697   -.0380101
+       _cons |   .0217798   .0224678     0.97   0.332    -.0222562    .0658159
+------------------------------------------------------------------------------
+
+
+DDML model, specification 9 (sample=1)
+y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1012519   .0086519   -11.70   0.000    -.1182093   -.0842945
+       _cons |   .0113288   .0223704     0.51   0.613    -.0325164     .055174
+------------------------------------------------------------------------------
+
+
+DDML model, specification 10 (sample=1)
+y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_1 
+E[D^|X]   = Dhat_psgradboost_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1082832   .0082519   -13.12   0.000    -.1244567   -.0921097
+       _cons |  -.0061156   .0240372    -0.25   0.799    -.0532276    .0409964
+------------------------------------------------------------------------------
+
+
+DDML model, specification 11 (sample=1)
+y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_1 
+E[D^|X]   = Dhat_pslassocv_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0926499   .0050431   -18.37   0.000    -.1025341   -.0827657
+       _cons |  -.0028635    .023178    -0.12   0.902    -.0482915    .0425646
+------------------------------------------------------------------------------
+
+
+DDML model, specification 12 (sample=1)
+y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0863193   .0095491    -9.04   0.000    -.1050353   -.0676034
+       _cons |  -.0112262     .02426    -0.46   0.644     -.058775    .0363226
+------------------------------------------------------------------------------
+
+
+DDML model, specification 13 (sample=1)
+y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pslassocv_1 
+E[D^|X]   = Dhat_psgradboost_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |   .1388516   .0440413     3.15   0.002     .0525322     .225171
+       _cons |   .0035258    .032631     0.11   0.914    -.0604297    .0674813
+------------------------------------------------------------------------------
+
+
+DDML model, specification 14 (sample=1)
+y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pslassocv_1 
+E[D^|X]   = Dhat_pslassocv_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1403452   .0113354   -12.38   0.000    -.1625621   -.1181283
+       _cons |   -.003364   .0240475    -0.14   0.889    -.0504962    .0437681
+------------------------------------------------------------------------------
+
+
+DDML model, specification 15 (sample=1)
+y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pslassocv_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |   .2747078   .0695109     3.95   0.000      .138469    .4109465
+       _cons |   .0278172   .0416869     0.67   0.505    -.0538876    .1095219
+------------------------------------------------------------------------------
+
+
+DDML model, specification 16 (sample=1)
+y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_psgradboost_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1134501   .0082198   -13.80   0.000    -.1295605   -.0973397
+       _cons |  -.0063172   .0240759    -0.26   0.793    -.0535051    .0408707
+------------------------------------------------------------------------------
+
+
+DDML model, specification 17 (sample=1)
+y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_pslassocv_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0984754   .0050223   -19.61   0.000     -.108319   -.0886318
+       _cons |  -.0029246   .0232076    -0.13   0.900    -.0484107    .0425615
+------------------------------------------------------------------------------
+
+
+DDML model, specification 18 (sample=1)
+y-E[y|X]  = y-Y2_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1100939   .0094154   -11.69   0.000    -.1285479     -.09164
+       _cons |  -.0137973   .0243447    -0.57   0.571     -.061512    .0339174
+------------------------------------------------------------------------------
+
+
+DDML model, specification 19 (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_1 
+E[D^|X]   = Dhat_psgradboost_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0781552   .0072964   -10.71   0.000    -.0924559   -.0638546
+       _cons |   .0130944   .0212537     0.62   0.538    -.0285621    .0547509
+------------------------------------------------------------------------------
+
+
+DDML model, specification 20 (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_1 
+E[D^|X]   = Dhat_pslassocv_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0345651   .0047015    -7.35   0.000    -.0437798   -.0253504
+       _cons |   .0157808    .021608     0.73   0.465    -.0265702    .0581317
+------------------------------------------------------------------------------
+
+
+DDML model, specification 21 (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0902038   .0083261   -10.83   0.000    -.1065227   -.0738849
+       _cons |   .0063884    .021153     0.30   0.763    -.0350707    .0478474
+------------------------------------------------------------------------------
+
+
+DDML model, specification 22 (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pslassocv_1 
+E[D^|X]   = Dhat_psgradboost_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1202918   .0294105    -4.09   0.000    -.1779354   -.0626483
+       _cons |   .0114506   .0217907     0.53   0.599    -.0312585    .0541596
+------------------------------------------------------------------------------
+
+
+DDML model, specification 23 (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pslassocv_1 
+E[D^|X]   = Dhat_pslassocv_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0924946    .010494    -8.81   0.000    -.1130625   -.0719267
+       _cons |   .0151728   .0222626     0.68   0.496     -.028461    .0588066
+------------------------------------------------------------------------------
+
+
+DDML model, specification 24 (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_pslassocv_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1504991   .0374566    -4.02   0.000    -.2239127   -.0770854
+       _cons |  -.0001323   .0224634    -0.01   0.995    -.0441597    .0438952
+------------------------------------------------------------------------------
+
+
+DDML model, specification 25 (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_psgradboost_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0798583   .0072582   -11.00   0.000    -.0940842   -.0656324
+       _cons |    .013028   .0212596     0.61   0.540    -.0286401    .0546961
+------------------------------------------------------------------------------
+
+
+DDML model, specification 26 (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_pslassocv_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0375758   .0046713    -8.04   0.000    -.0467314   -.0284203
+       _cons |   .0157492   .0215854     0.73   0.466    -.0265575    .0580558
+------------------------------------------------------------------------------
+
+
+Min MSE DDML model, specification 27 (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1073408   .0082324   -13.04   0.000     -.123476   -.0912056
+       _cons |   .0045351   .0212857     0.21   0.831    -.0371842    .0462544
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1)
+y-E[y|X]  = y-Y3_pystacked_1                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf_1 
+E[D^|X]   = Dhat_rf_h_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1073408   .0082324   -13.04   0.000     -.123476   -.0912056
+       _cons |   .0045351   .0212857     0.21   0.831    -.0371842    .0462544
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(2) replay notable
+
+Min MSE DDML model (sample=2)
+y-E[y|X]  = y-Y3_pystacked_2                       Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_psgradboost_2 
+E[D^|X]   = Dhat_rf_h_2
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |   -.074949   .0081974    -9.14   0.000    -.0910157   -.0588824
+       _cons |  -.0207168    .021268    -0.97   0.330    -.0624012    .0209677
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse resamples
+y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf 
+E[D^|X]   = Dhat_rf_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0994615   .0158274    -6.28   0.000    -.1304827   -.0684403
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.0995   -0.1161   -0.1161   -0.1073   -0.0749   -0.0749
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse resamples
+y-E[y|X]  = y-Y3_pystacked                         Number of obs   =      2217
+E[D|X,Z]  = D-Dhat_rf 
+E[D^|X]   = Dhat_rf_h
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1073408    .012647    -8.49   0.000    -.1321285    -.082553
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.0995   -0.1161   -0.1161   -0.1073   -0.0749   -0.0749
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1)
+y-E[y|X]  = y-Y_share_ss_1                         Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss_1 
+E[D^|X]   = D_price_h_ss_1
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1006893   .0078788   -12.78   0.000    -.1161314   -.0852471
+       _cons |    .008106   .0210713     0.38   0.700    -.0331931     .049405
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(2) replay notable
+
+Shortstack DDML model (sample=2)
+y-E[y|X]  = y-Y_share_ss_2                         Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss_2 
+E[D^|X]   = D_price_h_ss_2
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.0880302   .0077299   -11.39   0.000    -.1031806   -.0728799
+       _cons |  -.0169228   .0210814    -0.80   0.422    -.0582416    .0243959
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
+
+Shortstack DDML model (mean over 3 resamples)
+y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss 
+E[D^|X]   = D_price_h_ss
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1005709   .0109469    -9.19   0.000    -.1220264   -.0791153
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1006   -0.1130   -0.1130   -0.1007   -0.0880   -0.0880
+
+. ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+
+Shortstack DDML model (median over 3 resamples)
+y-E[y|X]  = y-Y_share_ss                           Number of obs   =      2217
+E[D|X,Z]  = D-D_price_ss 
+E[D^|X]   = D_price_h_ss
+Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
+------------------------------------------------------------------------------
+       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       price |  -.1006893   .0148325    -6.79   0.000    -.1297605   -.0716181
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+       price     -0.1006   -0.1130   -0.1130   -0.1007   -0.0880   -0.0880
+
+. 
+. // poolstacking not supported with multiple calls to pystacked
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_fiv.log
+  log type:  text
+ closed on:  25 Jul 2023, 18:13:10
+-----------------------------------------------------------------------------------------------------------------------

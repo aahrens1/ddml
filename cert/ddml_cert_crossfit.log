@@ -1,0 +1,114 @@
+-----------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_crossfit.log
+  log type:  text
+ opened on:  25 Jul 2023, 18:11:31
+
+. 
+. which ddml
+C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
+*! ddml v1.2
+*! last edited: 19 july 2023
+*! authors: aa/ms
+
+. mata: whichddml()
+  
+  Mata library for ddml and related programs,
+  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  authors AA/MS
+
+. which crossfit
+C:\LocalStore\ecomes\Documents\GitHub\ddml\crossfit.ado
+*! crossfit v0.6
+*! last edited: 20 july 2023
+*! authors: aa/ms
+
+. 
+. use http://fmwww.bc.edu/repec/bocode/j/jtpa.dta, clear
+
+. global X sex age married black hispanic
+
+. 
+. set seed 42
+
+. crossfit, estring(reg earnings $X) gen(yhat) kfolds(3)
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+
+. sum earnings yhat_1
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+    earnings |     11,204    15815.29    16767.05          0     155760
+      yhat_1 |     11,204     15812.1    3774.255   6123.432   23867.51
+
+. 
+. set seed 42
+
+. crossfit, estring(pystacked earnings $X) gen(yhat) kfolds(3)
+calling pystacked on full sample with noestimate option...
+N=11204
+number of learners = 3
+Base learners: ols lassocv gradboost 
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+
+. sum earnings yhat*
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+    earnings |     11,204    15815.29    16767.05          0     155760
+   yhat_L1_1 |     11,204     15812.1    3774.255   6123.432   23867.51
+   yhat_L2_1 |     11,204    15812.11    3768.449   6145.505   23851.63
+   yhat_L3_1 |     11,204    15810.33    4477.315   76.66996   31094.56
+      yhat_1 |     11,204    15810.67    4147.604   2560.435   28328.63
+
+. 
+. set seed 42
+
+. crossfit, estring(reg earnings $X) gen(yhat) kfolds(3) reps(5)
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+Cross-fitting fold 1 2 3 ...completed cross-fitting
+
+. sum earnings yhat*
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+    earnings |     11,204    15815.29    16767.05          0     155760
+   yhat_L1_1 |     11,204     15812.1    3774.255   6123.432   23867.51
+   yhat_L2_1 |     11,204    15812.11    3768.449   6145.505   23851.63
+   yhat_L3_1 |     11,204    15810.33    4477.315   76.66996   31094.56
+      yhat_1 |     11,204     15812.1    3774.255   6123.432   23867.51
+-------------+---------------------------------------------------------
+      yhat_2 |     11,204    15817.76    3772.003   5660.687   24048.23
+      yhat_3 |     11,204    15811.39    3776.824   5764.323   24005.49
+      yhat_4 |     11,204    15818.01    3777.579   5495.782      24012
+      yhat_5 |     11,204    15811.81    3777.137   5751.744   23775.22
+
+. 
+. // check that norandom is equivalent to provided fold identifier
+. count
+  11,204
+
+. gen fid = _n<=(r(N)/2)
+
+. set seed 42
+
+. crossfit, estring(reg earnings $X) gen(noran) kfolds(2) norandom
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. set seed 42
+
+. crossfit, estring(reg earnings $X) gen(foldv) foldvar(fid)
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. assert noran==foldv
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_crossfit.log
+  log type:  text
+ closed on:  25 Jul 2023, 18:11:43
+-----------------------------------------------------------------------------------------------------------------------
