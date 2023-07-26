@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 25july2023}{...}
+{* *! version 26july2023}{...}
 {viewerjumpto "Examples" "ddml_iv##examples"}{...}
 {viewerjumpto "Installation" "ddml_iv##installation"}{...}
 {viewerjumpto "References" "ddml_iv##references"}{...}
@@ -7,7 +7,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_iv##also_see"}{...}
 {hline}
-{cmd:help ddml iv, help ddml fiv}{right: v1.2}
+{cmd:help ddml iv, help ddml fiv}{right: v1.4}
 {hline}
 
 {title:ddml - estimation of partially-linear IV models in Double Debiased Machine Learning}

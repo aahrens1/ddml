@@ -1,5 +1,7 @@
 {smcl}
-{* *! version 25july2023}{...}
+{* *! version 26july2023}{...}
+{smcl}
+{pstd}{ul:Interactive IV model (LATE) - Basic example with {help pystacked}}
 
 {pstd}We use {help pystacked} with two base learners for each reduced form equation.{p_end}
 

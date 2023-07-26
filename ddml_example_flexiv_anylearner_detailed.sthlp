@@ -1,5 +1,7 @@
 {smcl}
-{* *! version 25july2023}{...}
+{* *! version 26july2023}{...}
+{smcl}
+{pstd}{ul:Flexible partially-linear IV model - Detailed example with {help pystacked}}
 
 {pstd}Here will illustrate how to do standard- and short-stacking with the flexible IV model.{p_end}
 

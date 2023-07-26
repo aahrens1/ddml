@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 25july2023}{...}
+{* *! version 26july2023}{...}
 {viewerjumpto "Syntax" "crossfit##syntax"}{...}
 {viewerjumpto "Summary" "crossfit##summary"}{...}
 {viewerjumpto "Compatible programs" "crossfit##compatibility"}{...}
@@ -12,7 +12,7 @@
 {vieweralsosee "ddml stacking" "ddml stacking"}{...}
 {vieweralsosee "Other" "crossfit##also_see"}{...}
 {hline}
-{cmd:help crossfit}{right: v1.2}
+{cmd:help crossfit}{right: v1.4}
 {hline}
 
 

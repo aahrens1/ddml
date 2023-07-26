@@ -1,5 +1,7 @@
 {smcl}
-{* *! version 25july2023}{...}
+{* *! version 26july2023}{...}
+{smcl}
+{pstd}{ul:Partially-linear model - Detailed example with stacking regression using {help pystacked}}
 
 {pstd}Preparation: we load the data, define global macros and set the seed.{p_end}
 

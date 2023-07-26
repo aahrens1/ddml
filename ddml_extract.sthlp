@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 25july2023}{...}
+{* *! version 26july2023}{...}
 {viewerjumpto "Syntax" "ddml_extract##syntax"}{...}
 {viewerjumpto "Options" "ddml_extract##options"}{...}
 {viewerjumpto "Examples" "ddml_extract##examples"}{...}
@@ -9,7 +9,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_extract##also_see"}{...}
 {hline}
-{cmd:help ddml extract}{right: v1.2}
+{cmd:help ddml extract}{right: v1.4}
 {hline}
 
 {title:ddml extract utility for Double Debiased Machine Learning}

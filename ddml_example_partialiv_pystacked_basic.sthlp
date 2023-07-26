@@ -1,5 +1,7 @@
 {smcl}
-{* *! version 25july2023}{...}
+{* *! version 26july2023}{...}
+{smcl}
+{pstd}{ul:Partially-linear IV model - Basic example with {help pystacked}} 
 
 {pstd}The model has three conditional expectations: E[Y|X], E[D|X] and E[Z|X].
 For each reduced form equation, we use {help pystacked}'s default learners: 

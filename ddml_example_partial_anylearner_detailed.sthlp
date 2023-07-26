@@ -1,5 +1,7 @@
 {smcl}
-{* *! version 25july2023}{...}
+{* *! version 26july2023}{...}
+{smcl}
+{pstd}{ul:Partially-linear model - Detailed general example with multiple learners} 
 
 {pstd}Here we used {opt ddml} to add learners. This allows use of learners not supported by,
 or as alternatives to, those available via {help pystacked}.
