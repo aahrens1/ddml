@@ -1,5 +1,5 @@
 {smcl}
-{* *! {version 26july2023}{...}
+{* *! version 26july2023}{...}
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_stacking##also_see"}{...}
 {hline}

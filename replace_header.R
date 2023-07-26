@@ -22,7 +22,7 @@ for (i in 1:length(all.files)) {
   txt <- readLines(all.files[i])
   for (j in 1:20) {
   if (!is.na(txt[j])) {
-    txt[j] <- str_replace(txt[j],"version 25jul2023","{version 26july2023")
+    txt[j] <- str_replace(txt[j],"version 25jul2023","version 26july2023")
     txt[j] <- str_replace(txt[j],"\\{right: v1.2\\}","\\{right: v1.4\\}")
   }
   }

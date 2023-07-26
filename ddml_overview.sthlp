@@ -1,5 +1,5 @@
 {smcl}
-{* *! {version 26july2023}{...}
+{* *! version 26july2023}{...}
 {marker models}{...}
 {title:Models}
 

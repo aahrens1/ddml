@@ -1,5 +1,5 @@
 {smcl}
-{* *! {version 26july2023}{...}
+{* *! version 26july2023}{...}
 {viewerjumpto "Syntax" "ddml_estimate##syntax"}{...}
 {viewerjumpto "Cross-fit options" "ddml_estimate##crossfit"}{...}
 {viewerjumpto "Estimation options" "ddml_estimate##estimation"}{...}

@@ -1,5 +1,5 @@
 {smcl}
-{* *! {version 26july2023}{...}
+{* *! version 26july2023}{...}
 {viewerjumpto "Stacking" "ddml_stacking##stacking"}{...}
 {viewerjumpto "Standard stacking with pystacked" "ddml_stacking##std_stack"}{...}
 {viewerjumpto "Pooled stacking" "ddml_stacking##pool_stack"}{...}
