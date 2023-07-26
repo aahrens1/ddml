@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 25july2023}{...}
+{pstd}{ul:ddml export utility - Basic example with {help pystacked}}{p_end}
 
 {pstd}Load the data, define global macros, set the seed and initialize the model.
 Use 2-fold cross-fitting with two repetitions (resamples)

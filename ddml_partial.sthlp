@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 25july2023}{...}
+{* *! {version 26july2023}{...}
 {viewerjumpto "Examples" "ddml_partial##examples"}{...}
 {viewerjumpto "Installation" "ddml_partial##installation"}{...}
 {viewerjumpto "References" "ddml_partial##references"}{...}
@@ -7,7 +7,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_partial##also_see"}{...}
 {hline}
-{cmd:help ddml partial}{right: v1.2}
+{cmd:help ddml partial}{right: v1.4}
 {hline}
 
 {title:ddml - estimation of the partially-linear model in Double Debiased Machine Learning}

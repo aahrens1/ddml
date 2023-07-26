@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 25july2023}{...}
+{* *! {version 26july2023}{...}
 {viewerjumpto "Syntax" "ddml_export##syntax"}{...}
 {viewerjumpto "Examples" "ddml_export##examples"}{...}
 {viewerjumpto "Installation" "ddml_export##installation"}{...}
@@ -9,7 +9,7 @@
 {vieweralsosee "ddml interactive" "ddml interactive"}{...}
 {vieweralsosee "Other" "ddml_export##also_see"}{...}
 {hline}
-{cmd:help ddml overlap}{right: v1.2}
+{cmd:help ddml overlap}{right: v1.4}
 {hline}
 
 {title:ddml overlap commands for Double Debiased Machine Learning}

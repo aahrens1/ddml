@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 25july2023}{...}
+{pstd}{ul:Partially-linear IV model - Basic example with various learners} 
 
 {pstd}Preparation: we load the data, define global macros and set the seed.{p_end}
 

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 25july2023}{...}
+{pstd}{ul:Partially-linear model with {help pystacked} and stacking}:{p_end}
 
 {pstd}Preparation: load the data, define global macros, set the seed and initialize the model.{p_end}
 
