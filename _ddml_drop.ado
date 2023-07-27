@@ -25,6 +25,7 @@ program _ddml_drop, eclass
 	forvalues i=1/`numeqnD' {
 		local vlist `vlist' `r(D`i')' `r(D`i'_L)' `r(D`i'_h)'
 	}
+	
 	// collect names of Z variables
 	forvalues i=1/`numeqnZ' {
 		local vlist `vlist' `r(Z`i')' `r(Z`i'_L)'
@@ -37,7 +38,7 @@ program _ddml_drop, eclass
 		}
 	}
 
-	// drop vars may not exist yet, so use capture
+	// drop vars may not exist, so use capture
 	foreach vn in `vreplist' {
 		cap drop `vn'
 	}

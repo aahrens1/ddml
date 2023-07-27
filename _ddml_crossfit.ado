@@ -298,7 +298,7 @@ program _ddml_crossfit, eclass sortpreserve
 		}
 		
 		// create sample dfn variable by resample
-		create_sample_indicators, mname(`mname') stdflag(`stdflag') ssflag(`ssflag') psflag(`psflag')
+		create_sample_indicators, mname(`mname')
 		
 		// set flag on model struct
 		// reps=resamplings to be done, crossfitted=resamplings done so far
@@ -322,102 +322,35 @@ end
 // same naming as main sample variable but with a _m resample subscript
 program create_sample_indicators
 	version 16
-	syntax [anything], mname(name) [ stdflag(integer 1) ssflag(integer 1) psflag(integer 1) ]
+	syntax [anything], mname(name)
 	
-	// blank eqn - declare this way so that it's a struct and not transmorphic
-	tempname eqn
-	mata: `eqn' = init_eStruct()
-	
-	mata: st_local("model",`mname'.model)
-	mata: st_local("nreps",strofreal(`mname'.nreps))
-	mata: st_local("nameY",invtokens(`mname'.nameY))
-	mata: st_local("nameD",invtokens(`mname'.nameD))
-	mata: st_local("nameZ",invtokens(`mname'.nameZ))
-	local numeqnD	: word count `nameD'
-	local numeqnZ	: word count `nameZ'
-	
-	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
-	mata: st_local("shortstack", `eqn'.shortstack)
-	mata: st_local("poolstack", `eqn'.poolstack)
-	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
-	if `ssflag'		local vtlistY `vtlistY' `shortstack'_ss
-	if `psflag'		local vtlistY `vtlistY' `poolstack'_ps
-	
-	local lieflag = 0
-	if `numeqnD' {
-		foreach var of varlist `nameD' {
-			mata: `eqn' = (`mname'.eqnAA).get("`var'")
-			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
-			mata: st_local("shortstack", `eqn'.shortstack)
-			mata: st_local("poolstack", `eqn'.poolstack)
-			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
-			if `ssflag'		local vtlistD `vtlistD' `shortstack'_ss
-			if `psflag'		local vtlistD `vtlistD' `poolstack'_ps
-			local Dt_list `Dt_list' `vtlistD'
-		}
-	}
-	
-	if `numeqnD' & `lieflag' {
-		foreach var of varlist `nameD' {
-			mata: `eqn' = (`mname'.eqnAA).get("`var'")
-			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
-			mata: st_local("shortstack", `eqn'.shortstack)
-			mata: st_local("poolstack", `eqn'.poolstack)
-			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
-			foreach vn in `vtlistD' {
-				local vtlistD_h `vtlistD_h' `vn'_h
-			}
-			if `ssflag'	local vtlistD_h `vtlistD_h' `shortstack'_h_ss
-			if `psflag'	local vtlistD_h `vtlistD_h' `poolstack'_h_ps
-			local DHt_list `DHt_list' `vtlistD_h'
-		}
-	}
-	
-	if `numeqnZ' {
-		foreach var of varlist `nameZ' {
-			mata: `eqn' = (`mname'.eqnAA).get("`var'")
-			mata: st_local("shortstack", `eqn'.shortstack)
-			mata: st_local("poolstack", `eqn'.poolstack)
-			mata: st_local("vtlistZ",invtokens(`eqn'.vtlist))
-			if `ssflag'		local vtlistZ `vtlistZ' `shortstack'_ss
-			if `psflag'		local vtlistZ `vtlistZ' `poolstack'_ps
-			local Zt_list `Zt_list' `vtlistZ'
-		}
+	*** extract details of estimation
+	mata: model_chars(`mname')
+	local nreps		= r(nreps)
+	local numeqnD	= r(numeqnD)
+	local numeqnZ	= r(numeqnZ)
+
+	// collect names of Y variables
+	local vlist `r(Y)' `r(Y_L)'
+
+	// collect names of D variables
+	forvalues i=1/`numeqnD' {
+		local vlist `vlist' `r(D`i')' `r(D`i'_L)' `r(D`i'_h)'
 	}
 
+	// collect names of Z variables
+	forvalues i=1/`numeqnZ' {
+		local vlist `vlist' `r(Z`i')' `r(Z`i'_L)'
+	}
+	
 	forvalues m=1/`nreps' {
-		
-		// reset local
-		local vtlist
-		
 		cap drop `mname'_sample_`m' 
 		qui gen byte `mname'_sample_`m' = `mname'_sample
 		label var `mname'_sample_`m' "Sample indicator for rep `m'"
-				
-		// Y
-		if "`model'"=="interactive" | "`model'"=="interactiveiv" {
-			foreach vt in `vtlistY' {
-				local vtlist `vtlist' `vt'0
-				local vtlist `vtlist' `vt'1
-			}
-		}
-		else {
-			local vtlist `vtlistY'
-		}
-		// D and Z
-		if "`model'"=="interactiveiv" {
-			foreach vt in `vtlistD' {
-				local vtlist `vtlist' `vt'0
-				local vtlist `vtlist' `vt'1
-			}
-			local vtlist `vtlist' `Zt_list'
-		}
-		else {
-			local vtlist `vtlist' `Dt_list' `DHt_list' `Zt_list'
-		}
-		
 		foreach vt in `vtlist' {
-			qui replace `mname'_sample_`m' = 0 if `vt'_`m'==.
+			// check that variable exists (may not if e.g. no std stacking with pystacked)
+			cap confirm variable `vt', exact
+			if _rc==0	qui replace `mname'_sample_`m' = 0 if `vt'_`m'==.
 		}
 	}
 	
@@ -431,9 +364,6 @@ program create_sample_indicators
 		cap drop `mname'_sample_md
 		qui gen byte `mname'_sample_md = `mname'_sample_mn
 	}
-	
-	// no longer needed
-	mata: mata drop `eqn'
 	
 end
 
