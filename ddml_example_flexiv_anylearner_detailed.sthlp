@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 26july2023}{...}
+{* *! version 27july2023}{...}
 {smcl}
 {pstd}{ul:Flexible partially-linear IV model - Detailed example with {help pystacked}}
 

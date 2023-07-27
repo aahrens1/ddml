@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 26july2023}{...}
+{* *! version 27july2023}{...}
 {smcl}
 {pstd}{ul:Interactive IV model (LATE) - Detailed example with {help pystacked}}
 
