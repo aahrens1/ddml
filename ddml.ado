@@ -1,11 +1,11 @@
 *! ddml v1.4
-*! last edited: 25july2023
+*! last edited: 27july2023
 *! authors: aa/ms
 
 program ddml	// no class - some subcommands are eclass, some are rclass
 
 	version 16
-	local lversion 1.2
+	local lversion 1.4
 	
 	if replay() {
 		syntax [, VERsion * ]
@@ -59,7 +59,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 						REPlace					///
 						cmdname(name)			///
 						NOIsily					///
-						/* NOPrefix */ 			/// don't add model name as prefix (disabled - interferes with save/use option)
+						prefix		 			/// add model name + "_" as prefix
 						*						///
 						]
 		// now parse main args; first element is subcmd
@@ -165,6 +165,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			}
 			// fill by hand
 			mata: `mname'.model			= "`model'"
+			mata: `mname'.prefixflag	= "`prefix'"~=""
 			mata: `mname'.fclustvar		= "`fcluster'"
 			// initialize with default fold var, kfolds, number of resamplings
 			_ddml_sample `if' `in' , mname(`mname') `options'
@@ -250,6 +251,8 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 					di as err "ddml equation error - subcmd `subcmd'"
 					exit 198
 				}
+				mata: st_local("prefixflag",strofreal(`mname'.prefixflag))
+				if `prefixflag'		local prefix `mname'_`prefix'
 				tokenize `"`eqn'"'
 				local learner `prefix'_`1'
 			}

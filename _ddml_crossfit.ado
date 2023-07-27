@@ -1,5 +1,5 @@
 *! ddml v1.4
-*! last edited: 25july2023
+*! last edited: 27july2023
 *! authors: aa/ms
 
 *** ddml cross-fitting
@@ -54,6 +54,8 @@ program _ddml_crossfit, eclass sortpreserve
 	mata: st_local("reps",strofreal(`mname'.nreps))
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
+	mata: st_local("prefixflag",strofreal(`mname'.prefixflag))
+	if `prefixflag'		local prefix `mname'_
 	local touse `mname'_sample
 	
 	local firstrep	= `crossfitted'+1
@@ -201,9 +203,9 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
 		
 		// shortstack and poolstack variable names
-		if `ssflag'		mata: `eqn'.shortstack = "Y_`nameY'"
+		if `ssflag'		mata: `eqn'.shortstack = "`prefix'Y_`nameY'"
 		else			mata: `eqn'.shortstack = ""
-		if `psflag'		mata: `eqn'.poolstack = "Y_`nameY'"
+		if `psflag'		mata: `eqn'.poolstack = "`prefix'Y_`nameY'"
 		else			mata: `eqn'.poolstack = ""
 	
 		// set/clear treatvar macro
@@ -250,9 +252,9 @@ program _ddml_crossfit, eclass sortpreserve
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
 				mata: st_local("numlnrD",strofreal(cols(`eqn'.vtlist)))
 				// shortstack and poolstack variable names
-				if `ssflag'		mata: `eqn'.shortstack = "D_`var'"				
+				if `ssflag'		mata: `eqn'.shortstack = "`prefix'D_`var'"				
 				else			mata: `eqn'.shortstack = ""
-				if `psflag'		mata: `eqn'.poolstack = "D_`var'"				
+				if `psflag'		mata: `eqn'.poolstack = "`prefix'D_`var'"				
 				else			mata: `eqn'.poolstack = ""
 				if ("`model'"=="partial") di as text "Cross-fitting E[D|X] equation: `var'"
 				if ("`model'"=="interactiveiv") di as text "Cross-fitting E[D|X,Z] equation: `var'"
@@ -278,9 +280,9 @@ program _ddml_crossfit, eclass sortpreserve
 				mata: `eqn' = (`mname'.eqnAA).get("`var'")
 				mata: st_local("numlnrZ",strofreal(cols(`eqn'.vtlist)))
 				// shortstack and poolstack variable names
-				if `ssflag'		mata: `eqn'.shortstack = "Z_`var'"				
+				if `ssflag'		mata: `eqn'.shortstack = "`prefix'Z_`var'"				
 				else			mata: `eqn'.shortstack = ""
-				if `psflag'		mata: `eqn'.poolstack = "Z_`var'"				
+				if `psflag'		mata: `eqn'.poolstack = "`prefix'Z_`var'"				
 				else			mata: `eqn'.poolstack = ""
 				di as text "Cross-fitting E[Z|X]: `var'"
 				// All learners for each Z eqn

@@ -102,6 +102,7 @@ struct mStruct {
 	real matrix						matDatavars		// matrix with values of Stata variables
 	real scalar						crossfitted   	// =number of reps for which crossfitting; 0 if not
 	real scalar						estimated		// =1 if estimation has been done; 0 if not
+	real scalar						prefixflag		// =1 if model name to be added as prefix to vars
 	real scalar						ycounter		// counter for default y learners
 	real scalar						dcounter		// counter for default d learners
 	real scalar						zcounter		// counter for default z learners
@@ -128,6 +129,7 @@ struct mStruct init_mStruct()
 	m.matDatavars		= J(0,0,.)
 	m.crossfitted		= 0
 	m.estimated			= 0
+	m.prefixflag		= 0
 	m.allpystackedmulti	= 0
 	
 	(m.eqnAA).reinit("string",1)
@@ -294,6 +296,7 @@ transmorphic model_chars(struct mStruct m)
 	st_global("r(model)",			m.model)
 	st_numscalar("r(crossfitted)",	m.crossfitted)
 	st_numscalar("r(estimated)",	m.estimated)
+	st_numscalar("r(prefixflag)",	m.prefixflag)
 	st_numscalar("r(ncombos)",		m.ncombos)
 	st_numscalar("r(kfolds)",		m.kfolds)
 	st_numscalar("r(nreps)",		m.nreps)
