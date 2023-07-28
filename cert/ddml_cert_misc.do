@@ -200,7 +200,7 @@ local numvars = r(numvars)
 fvexpand m_export_sample-stata_id
 assert `numvars'== `: word count `r(varlist)''
 
-// partially linear IV, pystacked-only, no SS or PS, 1 rep
+// partially linear IV, pystacked-only, no SS or PS, 1 rep, prefix
 
 use https://statalasso.github.io/dta/AJR.dta, clear
 global Y logpgp95
@@ -210,7 +210,7 @@ global Z1 lat_abst
 global Z2 logem4
 
 *** initialise ddml and select model; 
-ddml init iv, kfolds(2) reps(1) mname(m_export)
+ddml init iv, kfolds(2) reps(1) mname(m_export) prefix
 ddml E[Y|X], mname(m_export): pystacked $Y $X , type(reg)
 ddml E[D|X], mname(m_export): pystacked $D $X , type(reg)
 ddml E[Z|X], mname(m_export): pystacked $Z1 $X , type(reg)
@@ -221,9 +221,13 @@ ddml estimate, mname(m_export)
 gen stata_id = _n
 
 ddml export using cert_ddml_export.csv, mname(m_export) replace addvars(stata_id)
+local vreplist = r(vreplist)
 local numvars = r(numvars)
+local vreplist : subinstr local vreplist "m_export_" "m_export_", all count(local nvreplist)
+// number of vars = total minus sample, 2 fold varis and stata_id=4
+assert `nvreplist' == `numvars'-4
 fvexpand m_export_sample-stata_id
-assert `numvars'== `: word count `r(varlist)''
+assert `numvars' == `: word count `r(varlist)''
 
 // interactive model, pystacked-only
 
