@@ -1,5 +1,5 @@
 *! ddml v1.4
-*! last edited: 27july2023
+*! last edited: 28july2023
 *! authors: aa/ms
 
 program _ddml_drop, eclass
@@ -40,7 +40,8 @@ program _ddml_drop, eclass
 
 	// drop vars may not exist, so use capture
 	foreach vn in `vreplist' {
-		cap drop `vn'
+		cap confirm variable `vn', exact
+		if _rc==0	drop `vn'
 	}
 	
 	*** drop id, fold id, sample var
