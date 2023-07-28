@@ -7,7 +7,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_interactiveiv##also_see"}{...}
 {hline}
-{cmd:help ddml interactiveiv}{right: v1.4}
+{cmd:help ddml interactiveiv}{right: v1.4.1}
 {hline}
 
 {title:ddml - estimation of the interactive IV (LATE) model in Double Debiased Machine Learning}

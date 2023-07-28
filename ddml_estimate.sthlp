@@ -11,7 +11,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_estimate##also_see"}{...}
 {hline}
-{cmd:help ddml crossfit, ddml estimate}{right: v1.4}
+{cmd:help ddml crossfit, ddml estimate}{right: v1.4.1}
 {hline}
 
 {title:ddml crossfit and estimate commands for Double Debiased Machine Learning}

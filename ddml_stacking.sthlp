@@ -13,7 +13,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_stacking##also_see"}{...}
 {hline}
-{cmd:help ddml stacking}{right: v1.4}
+{cmd:help ddml stacking}{right: v1.4.1}
 {hline}
 
 {title:ddml - Stata package for Double Debiased Machine Learning}

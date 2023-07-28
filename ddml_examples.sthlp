@@ -3,7 +3,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_stacking##also_see"}{...}
 {hline}
-{cmd:help ddml examples}{right: v1.4}
+{cmd:help ddml examples}{right: v1.4.1}
 {hline}
 
 {title:ddml examples for Double Debiased Machine Learning}

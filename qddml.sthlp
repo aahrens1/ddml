@@ -11,7 +11,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "qddml##also_see"}{...}
 {hline}
-{cmd:help qddml}{right: v1.4}
+{cmd:help qddml}{right: v1.4.1}
 {hline}
 
 {title:ddml, qddml - Stata package for Double Debiased Machine Learning}

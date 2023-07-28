@@ -1,5 +1,5 @@
-*! ddml v1.4
-*! last edited: 27july2023
+*! ddml v1.4.1
+*! last edited: 28july2023
 *! authors: aa/ms
 
 program ddml	// no class - some subcommands are eclass, some are rclass

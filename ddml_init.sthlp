@@ -8,7 +8,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_init##also_see"}{...}
 {hline}
-{cmd:help ddml init, ddml eq, ddml sample}{right: v1.4}
+{cmd:help ddml init, ddml eq, ddml sample}{right: v1.4.1}
 {hline}
 
 {title:ddml init, eq and sample commands for Double Debiased Machine Learning}

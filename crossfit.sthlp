@@ -12,7 +12,7 @@
 {vieweralsosee "ddml stacking" "ddml stacking"}{...}
 {vieweralsosee "Other" "crossfit##also_see"}{...}
 {hline}
-{cmd:help crossfit}{right: v1.4}
+{cmd:help crossfit}{right: v1.4.1}
 {hline}
 
 

@@ -7,7 +7,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_interactive##also_see"}{...}
 {hline}
-{cmd:help ddml interactive}{right: v1.4}
+{cmd:help ddml interactive}{right: v1.4.1}
 {hline}
 
 {title:ddml - estimation of the interactive (ATE, ATET) model in Double Debiased Machine Learning}

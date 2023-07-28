@@ -7,7 +7,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_partial##also_see"}{...}
 {hline}
-{cmd:help ddml partial}{right: v1.4}
+{cmd:help ddml partial}{right: v1.4.1}
 {hline}
 
 {title:ddml - estimation of the partially-linear model in Double Debiased Machine Learning}

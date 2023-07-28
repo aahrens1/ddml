@@ -9,7 +9,7 @@
 {vieweralsosee "ddml interactive" "ddml interactive"}{...}
 {vieweralsosee "Other" "ddml_export##also_see"}{...}
 {hline}
-{cmd:help ddml overlap}{right: v1.4}
+{cmd:help ddml overlap}{right: v1.4.1}
 {hline}
 
 {title:ddml overlap commands for Double Debiased Machine Learning}
