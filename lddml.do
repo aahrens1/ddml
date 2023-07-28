@@ -102,6 +102,7 @@ struct mStruct {
 	real matrix						matDatavars		// matrix with values of Stata variables
 	real scalar						crossfitted   	// =number of reps for which crossfitting; 0 if not
 	real scalar						estimated		// =1 if estimation has been done; 0 if not
+	real scalar						prefixflag		// =1 if model name to be added as prefix to vars
 	real scalar						ycounter		// counter for default y learners
 	real scalar						dcounter		// counter for default d learners
 	real scalar						zcounter		// counter for default z learners
@@ -128,6 +129,7 @@ struct mStruct init_mStruct()
 	m.matDatavars		= J(0,0,.)
 	m.crossfitted		= 0
 	m.estimated			= 0
+	m.prefixflag		= 0
 	m.allpystackedmulti	= 0
 	
 	(m.eqnAA).reinit("string",1)
@@ -294,6 +296,10 @@ transmorphic model_chars(struct mStruct m)
 	st_global("r(model)",			m.model)
 	st_numscalar("r(crossfitted)",	m.crossfitted)
 	st_numscalar("r(estimated)",	m.estimated)
+	st_numscalar("r(stdflag)",		m.stdflag)
+	st_numscalar("r(ssflag)",		m.ssflag)
+	st_numscalar("r(psflag)",		m.psflag)
+	st_numscalar("r(prefixflag)",	m.prefixflag)
 	st_numscalar("r(ncombos)",		m.ncombos)
 	st_numscalar("r(kfolds)",		m.kfolds)
 	st_numscalar("r(nreps)",		m.nreps)
@@ -308,42 +314,63 @@ transmorphic model_chars(struct mStruct m)
 		allpystackedmulti			= 0
 	}
 
-	// Y eqns
-	e = (m.eqnAA).get(m.nameY)
-	shortstack						= e.shortstack
-	poolstack						= e.poolstack
-	numlrnY							= cols(e.vtlist)
-	vtlistY							= invtokens(e.vtlist)
-	if (shortstack~="") {
-	    vtlistY = vtlistY + " " + shortstack + "_ss"
-	}
-	if (poolstack~="") {
-	    vtlistY = vtlistY + " " + poolstack + "_ps"
-	}
-	if ((m.model=="interactive") | (m.model=="interactiveiv")) {
-	    vtlistY01 = ""
-	    vtlistY_tk = tokens(vtlistY)
-		numvt = cols(vtlistY_tk)
-		for (j=1;j<=numvt;j++) {
-			vtlistY01 = vtlistY01 + " " + vtlistY_tk[j] + "0"
-			vtlistY01 = vtlistY01 + " " + vtlistY_tk[j] + "1"
+	// Y eqns; possible no Y eqn exists yet so check first
+	if (m.nameY~="") {
+		e = (m.eqnAA).get(m.nameY)
+		shortstack						= e.shortstack
+		poolstack						= e.poolstack
+		numlrnY							= cols(e.vtlist)
+		vtlistY							= invtokens(e.vtlist)
+		if (shortstack~="") {
+			vtlistY = vtlistY + " " + shortstack + "_ss"
 		}
-		vtlistY = strtrim(vtlistY01)
-	}
-	st_global("r(Y)",vtlistY)
-	st_numscalar("r(numlrnY)",		numlrnY)
-	// pystacked as only learner
-	if (numlrnY==1) {
-		est_main					= return_learner_item(e,e.vtlist,"est_main")
-		est_options					= return_learner_item(e,e.vtlist,"est_options")
-		if ((tokens(est_main)[1]=="pystacked") & (e.pystackedmulti>0)) {
-			st_numscalar("r(numpslrnY)", e.pystackedmulti)
+		if (poolstack~="") {
+			vtlistY = vtlistY + " " + poolstack + "_ps"
 		}
-		else if (tokens(est_main)[1]=="pystacked") {
-			st_numscalar("r(numpslearnY)", 1)
-			// if not pystacked, goes to general code
-			// if pystacked with one learner, goes to general code
-			allpystackedmulti			= 0
+		if ((m.model=="interactive") | (m.model=="interactiveiv")) {
+			vtlistY01 = ""
+			vtlistY_tk = tokens(vtlistY)
+			numvt = cols(vtlistY_tk)
+			for (j=1;j<=numvt;j++) {
+				vtlistY01 = vtlistY01 + " " + vtlistY_tk[j] + "0"
+				vtlistY01 = vtlistY01 + " " + vtlistY_tk[j] + "1"
+			}
+			vtlistY = strtrim(vtlistY01)
+		}
+		st_global("r(Y)",vtlistY)
+		st_numscalar("r(numlrnY)",		numlrnY)
+		// pystacked as only learner
+		if (numlrnY==1) {
+			est_main					= return_learner_item(e,e.vtlist,"est_main")
+			est_options					= return_learner_item(e,e.vtlist,"est_options")
+			if ((tokens(est_main)[1]=="pystacked") & (e.pystackedmulti>0)) {
+				st_numscalar("r(numpslrnY)", e.pystackedmulti)
+			}
+			else if (tokens(est_main)[1]=="pystacked") {
+				st_numscalar("r(numpslearnY)", 1)
+				// if not pystacked, goes to general code
+				// if pystacked with one learner, goes to general code
+				allpystackedmulti			= 0
+			}
+			else {
+				st_numscalar("r(numpslrnY)", 0)
+				// if not pystacked, goes to general code
+				// if pystacked with one learner, goes to general code
+				allpystackedmulti			= 0
+			}
+			if ((e.pystackedmulti>0) & (m.model~="fiv")) {
+				vtlistY_L = ""
+				for (j=1;j<=e.pystackedmulti;j++) {
+					if ((m.model=="interactive") | (m.model=="interactiveiv")) {
+						vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "0_L" + strofreal(j)
+						vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "1_L" + strofreal(j)
+					}
+					else {
+						vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "_L" + strofreal(j)
+					}
+				}
+				st_global("r(Y_L)", strtrim(vtlistY_L))
+			}
 		}
 		else {
 			st_numscalar("r(numpslrnY)", 0)
@@ -351,25 +378,6 @@ transmorphic model_chars(struct mStruct m)
 			// if pystacked with one learner, goes to general code
 			allpystackedmulti			= 0
 		}
-		if ((e.pystackedmulti>0) & (m.model~="fiv")) {
-		    vtlistY_L = ""
-		    for (j=1;j<=e.pystackedmulti;j++) {
-				if ((m.model=="interactive") | (m.model=="interactiveiv")) {
-					vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "0_L" + strofreal(j)
-					vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "1_L" + strofreal(j)
-				}
-				else {
-					vtlistY_L = vtlistY_L + " " + invtokens(e.vtlist) + "_L" + strofreal(j)
-				}
-			}
-			st_global("r(Y_L)", strtrim(vtlistY_L))
-		}
-	}
-	else {
-		st_numscalar("r(numpslrnY)", 0)
-		// if not pystacked, goes to general code
-		// if pystacked with one learner, goes to general code
-		allpystackedmulti			= 0
 	}
 
 	// D eqns

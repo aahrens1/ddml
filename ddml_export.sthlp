@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 26july2023}{...}
+{* *! version 28july2023}{...}
 {viewerjumpto "Syntax" "ddml_export##syntax"}{...}
 {viewerjumpto "Examples" "ddml_export##examples"}{...}
 {viewerjumpto "Installation" "ddml_export##installation"}{...}
@@ -8,7 +8,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_export##also_see"}{...}
 {hline}
-{cmd:help ddml export}{right: v1.4}
+{cmd:help ddml export}{right: v1.4.1}
 {hline}
 
 {title:ddml export utility for Double Debiased Machine Learning}

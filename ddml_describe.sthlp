@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 26july2023}{...}
+{* *! version 28july2023}{...}
 {viewerjumpto "Syntax" "ddml_describe##syntax"}{...}
 {viewerjumpto "Examples" "ddml_describe##examples"}{...}
 {viewerjumpto "Installation" "ddml_describe##installation"}{...}
@@ -8,7 +8,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_describe##also_see"}{...}
 {hline}
-{cmd:help ddml describe}{right: v1.4}
+{cmd:help ddml describe}{right: v1.4.1}
 {hline}
 
 {title:ddml describe utility for Double Debiased Machine Learning}

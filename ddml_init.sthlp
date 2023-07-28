@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 26july2023}{...}
+{* *! version 28july2023}{...}
 {viewerjumpto "Syntax" "ddml_init##syntax"}{...}
 {viewerjumpto "Options" "ddml_init##options"}{...}
 {viewerjumpto "Installation" "ddml_init##installation"}{...}
@@ -8,7 +8,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_init##also_see"}{...}
 {hline}
-{cmd:help ddml init, ddml eq, ddml sample}{right: v1.4}
+{cmd:help ddml init, ddml eq, ddml sample}{right: v1.4.1}
 {hline}
 
 {title:ddml init, eq and sample commands for Double Debiased Machine Learning}
@@ -39,16 +39,23 @@ and {it:command} is a supported supervised ML program.
 
 {p 8 14}{cmd:ddml init}
 {it:model} [if] [in]
-[ , {opt mname(name)} {opt kfolds(integer)}
+[ , {opt mname(name)}
+{opt prefix}
+{opt kfolds(integer)}
 {opt fcluster(varname)}
-{opt foldvar(varlist)} {opt reps(integer)} 
-{opt norandom} {opt tabfold} {opt vars(varlist)}{bind: ]}
+{opt foldvar(varlist)}
+{opt reps(integer)} 
+{opt norandom}
+{opt tabfold}
+{opt vars(varlist)}{bind: ]}
 
 {pstd}
 where {it:model} is either {it:partial}, {it:iv}, {it:interactive}, {it:fiv}, {it:interactiveiv}.
 
 {p 8 14}{cmd:ddml} {it:eq} 
-[ , {opt mname(name)} {opt vname(varname)} {opt l:earner(varname)}
+[ , {opt mname(name)}
+{opt vname(varname)}
+{opt l:earner(varname)}
 {opt vtype(string)}
 {opt predopt(string)}{bind: ] :}
 {it:command} {it:depvar} {it:vars} [ , {it:cmdopt}{bind: ]}
@@ -80,6 +87,11 @@ or by {opt append} and the cross-fit fold identifiers in {opt foldvar(varlist)}.
 name of the DDML model. Allows to run multiple DDML
 models simultaneously. Defaults to {it:m0}.
 {p_end}
+{synopt:{opt prefix}}
+tells {opt ddml} to prefix the names of all created variables
+with name of the DDML model.
+Default is to prefix only the created sample and fold ID variables.
+{p_end}
 {synopt:{opt kfolds(integer)}}
 number of cross-fitting folds. The default is 5.
 {p_end}
@@ -100,6 +112,11 @@ repeated on randomly generated folds.
 {p_end}
 {synopt:{opt tabfold}}
 prints a table with frequency of observations by fold.
+{p_end}
+{synopt:{opt vars(varlist)}}
+tells {opt ddml} that the variables in {it:varlist} are used in the estimation.
+Useful if you want the fold split to take account of
+observations dropped because of missing values.
 {p_end}
 {synoptline}
 {p2colreset}{...}

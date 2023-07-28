@@ -1,5 +1,5 @@
-*! ddml v1.4
-*! last edited: 26july2023
+*! ddml v1.4.1
+*! last edited: 28july2023
 *! authors: aa/ms
 
 program _ddml_export, rclass
@@ -47,6 +47,13 @@ program _ddml_export, rclass
 			local vreplist `vreplist' `vn'_`m'
 		}
 	}
+	
+	// some vars may not exist (e.g. pystacked with no std stacking); remove these
+	foreach vn in `vreplist' {
+		cap confirm variable `vn', exact
+		if _rc==0	local tlist `tlist' `vn'
+	}
+	local vreplist `tlist'
 
 	// preserve, drop unneeded vars, rename, export, restore
 	preserve

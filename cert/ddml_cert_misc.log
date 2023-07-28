@@ -2,19 +2,19 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_misc.log
   log type:  text
- opened on:  25 Jul 2023, 18:19:56
+ opened on:  28 Jul 2023, 13:46:43
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.2
-*! last edited: 19 july 2023
+*! ddml v1.4
+*! last edited: 27july2023
 *! authors: aa/ms
 
 . mata: whichddml()
   
   Mata library for ddml and related programs,
-  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  compiled 28 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
 . 
@@ -230,7 +230,7 @@ Mean/med    Y learner     D learner         b        SE      D learner         b
   st md  Y1_pystacked  D1_pystacked     0.308    (0.065)  D2_pystacked     0.012    (0.024)
 
 Median over 2 stacking resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -260,7 +260,7 @@ ID:                     m0_id
 Full sample indic.:     m0_sample (N=64)
 Fold ID:                  m0_fid_1    m0_fid_2  
 Fold sample indic.:     m0_sample_1 m0_sample_2 
-Estimation N:                59          59     
+Estimation N:                64          64     
 
 Y learners (detail):
  Learner:     Y1_pystacked
@@ -283,7 +283,7 @@ democ1     D2_pysta~d     1         14.34     17.86     10.69
 
 
 Median over 2 stacking resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -330,7 +330,7 @@ D equations (2):        avexpr democ1
 
 
 Median over 2 stacking resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -691,7 +691,7 @@ Mean/med    Y learner     D learner         b        SE      D learner         b
   ps md   [poolstack]          [ps]     0.255    (0.090)          [ps]    -0.005    (0.022)
 
 Shortstack DDML model (median over 2 resamples)
-y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
 D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
 ------------------------------------------------------------------------------
              |               Robust
@@ -967,7 +967,7 @@ Sample sizes for logpgp95:
 
 . // AA with estimation results for spec st, resample 1
 . mata: (m0.estAA).get(("st","1"))
-  0x42982190
+  0x453df5f0
 
 . mata: AA_e2_r1 = (m0.estAA).get(("st","1"))
 
@@ -1129,7 +1129,7 @@ AA keys for eqn avexpr.resAA:
 . ddml extract avexpr_eqn, vname(avexpr)
 
 . mata: avexpr_eqn
-  0x44089590
+  0x40e33aa0
 
 . mata: avexpr_eqn.vname
   avexpr
@@ -1325,7 +1325,7 @@ Mean/med    Y learner     D learner         b        SE      D learner         b
   ps md   [poolstack]          [ps]     0.185    (0.161)          [ps]     0.020    (0.023)
 
 Shortstack DDML model (median over 2 resamples)
-y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
 D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
 ------------------------------------------------------------------------------
              |               Robust
@@ -1355,7 +1355,7 @@ file cert_ddml_export.csv saved
 . assert `numvars'== `: word count `r(varlist)''
 
 . 
-. // partially linear IV, pystacked-only, no SS or PS, 1 rep
+. // partially linear IV, pystacked-only, no SS or PS, 1 rep, prefix
 . 
 . use https://statalasso.github.io/dta/AJR.dta, clear
 
@@ -1371,22 +1371,22 @@ file cert_ddml_export.csv saved
 
 . 
 . *** initialise ddml and select model; 
-. ddml init iv, kfolds(2) reps(1) mname(m_export)
+. ddml init iv, kfolds(2) reps(1) mname(m_export) prefix
 warning - model m_export already exists
 all existing model results and variables will
 be dropped and model m_export will be re-initialized
 
 . ddml E[Y|X], mname(m_export): pystacked $Y $X , type(reg)
-Learner Y1_pystacked added successfully.
+Learner m_export_Y1_pystacked added successfully.
 
 . ddml E[D|X], mname(m_export): pystacked $D $X , type(reg)
-Learner D1_pystacked added successfully.
+Learner m_export_D1_pystacked added successfully.
 
 . ddml E[Z|X], mname(m_export): pystacked $Z1 $X , type(reg)
-Learner Z1_pystacked added successfully.
+Learner m_export_Z1_pystacked added successfully.
 
 . ddml E[Z|X], mname(m_export): pystacked $Z2 $X , type(reg)
-Learner Z2_pystacked added successfully.
+Learner m_export_Z2_pystacked added successfully.
 
 . ddml crossfit, mname(m_export)
 Cross-fitting E[y|X] equation: logpgp95
@@ -1404,28 +1404,28 @@ Cross-fitting fold 1 2 ...completed cross-fitting
 Model:                  iv, crossfit folds k=2, resamples r=1
 Mata global (mname):    m_export
 Dependent variable (Y): logpgp95
- logpgp95 learners:     Y1_pystacked
+ logpgp95 learners:     m_export_Y1_pystacked
 D equations (1):        avexpr
- avexpr learners:       D1_pystacked
+ avexpr learners:       m_export_D1_pystacked
 Z equations (2):        lat_abst logem4
- lat_abst learners:     Z1_pystacked
- logem4 learners:       Z2_pystacked
+ lat_abst learners:     m_export_Z1_pystacked
+ logem4 learners:       m_export_Z2_pystacked
 
 DDML estimation results:
 spec  r     Y learner     D learner         b        SE      Z learner     Z learner
-  st  1  Y1_pystacked  D1_pystacked     0.825    (0.253)  Z1_pystacked  Z2_pystacked
+  st  1 m_export_Y1~d m_export_D1~d     0.825    (0.253) m_export_Z1~d m_export_Z2~d
 
 Stacking DDML model
-y-E[y|X]  = y-Y1_pystacked_1                       Number of obs   =        64
-D-E[D|X]  = D-D1_pystacked_1 
-Z-E[Z|X]  = Z1-Z1_pystacked_1 Z2-Z2_pystacked_1 
+y-E[y|X]  = y-m_export_Y1_pystacked_1              Number of obs   =        64
+D-E[D|X]  = D-m_export_D1_pystacked_1 
+Z-E[Z|X]  = Z1-m_export_Z1_pystacked_1 Z2-m_export_Z2_pystacked_1 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
       avexpr |   .8253752   .2531499     3.26   0.001     .3292105     1.32154
        _cons |   .1120388    .176425     0.64   0.525    -.2337478    .4578255
 ------------------------------------------------------------------------------
-Stacking final estimator: nnls1
+Stacking final estimator: 
 
 
 . 
@@ -1435,11 +1435,18 @@ Stacking final estimator: nnls1
 . ddml export using cert_ddml_export.csv, mname(m_export) replace addvars(stata_id)
 file cert_ddml_export.csv saved
 
+. local vreplist = r(vreplist)
+
 . local numvars = r(numvars)
+
+. local vreplist : subinstr local vreplist "m_export_" "m_export_", all count(local nvreplist)
+
+. // number of vars = total minus sample, 2 fold varis and stata_id=4
+. assert `nvreplist' == `numvars'-4
 
 . fvexpand m_export_sample-stata_id
 
-. assert `numvars'== `: word count `r(varlist)''
+. assert `numvars' == `: word count `r(varlist)''
 
 . 
 . // interactive model, pystacked-only
@@ -1712,7 +1719,7 @@ Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b       
   st md  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.002)  Z1_pystacked
 
 Median over 2 stacking resamples (LATE)
-E[y|X,Z=0]   = Y1_pystacked0                       Number of obs   =      4404
+E[y|X,Z=0]   = Y1_pystacked0                       Number of obs   =      5000
 E[y|X,Z=1]   = Y1_pystacked1
 E[D|X,Z=0]   = D1_pystacked0
 E[D|X,Z=1]   = D1_pystacked1
@@ -1826,7 +1833,7 @@ Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b       
   ss md  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.002)          [ss]
 
 Shortstack DDML model (median over 2 resamples) (LATE)
-E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      4069
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
 E[y|X,Z=1]   = Y_lnearnings_ss1
 E[D|X,Z=0]   = D_training_ss0
 E[D|X,Z=1]   = D_training_ss1
@@ -1944,5 +1951,5 @@ file cert_ddml_export.csv saved
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_misc.log
   log type:  text
- closed on:  25 Jul 2023, 18:23:39
+ closed on:  28 Jul 2023, 13:50:40
 -----------------------------------------------------------------------------------------------------------------------

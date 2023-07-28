@@ -1,4 +1,6 @@
 {smcl}
+{* *! version 28july2023}{...}
+{smcl}
 {pstd}{ul:ddml describe utility - Basic example with {help pystacked}}{p_end}
 
 {pstd}Load the data, define global macros, set the seed and initialize the model.

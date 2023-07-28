@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 26july2023}{...}
+{* *! version 28july2023}{...}
 {viewerjumpto "Examples" "ddml_interactive##examples"}{...}
 {viewerjumpto "Installation" "ddml_interactive##installation"}{...}
 {viewerjumpto "References" "ddml_interactive##references"}{...}
@@ -7,7 +7,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_interactive##also_see"}{...}
 {hline}
-{cmd:help ddml interactive}{right: v1.4}
+{cmd:help ddml interactive}{right: v1.4.1}
 {hline}
 
 {title:ddml - estimation of the interactive (ATE, ATET) model in Double Debiased Machine Learning}

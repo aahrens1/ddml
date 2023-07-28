@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 26july2023}{...}
+{* *! version 28july2023}{...}
 {viewerjumpto "Syntax" "ddml_estimate##syntax"}{...}
 {viewerjumpto "Cross-fit options" "ddml_estimate##crossfit"}{...}
 {viewerjumpto "Estimation options" "ddml_estimate##estimation"}{...}
@@ -11,7 +11,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_estimate##also_see"}{...}
 {hline}
-{cmd:help ddml crossfit, ddml estimate}{right: v1.4}
+{cmd:help ddml crossfit, ddml estimate}{right: v1.4.1}
 {hline}
 
 {title:ddml crossfit and estimate commands for Double Debiased Machine Learning}

@@ -2,14 +2,14 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\qddml_cert.log
   log type:  text
- opened on:  25 Jul 2023, 18:56:22
+ opened on:  28 Jul 2023, 16:48:47
 
 . 
 . * global tol = 0.0001
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.2
-*! last edited: 19 july 2023
+*! ddml v1.4
+*! last edited: 27july2023
 *! authors: aa/ms
 
 . which pystacked
@@ -30,9 +30,49 @@ C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
 . global X tw age inc fsize educ db marr twoearn pira hown
 
 . 
+. // basic qddml usage with no std stacking and default settings
+. set seed 42
+
+. qddml $Y $D ($X), kfolds(2) model(partial)
+Learner Y1_pystacked added successfully.
+Learner D1_pystacked added successfully.
+Cross-fitting E[y|X] equation: net_tfa
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X] equation: e401
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+
+Model:                  partial, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): net_tfa
+ net_tfa learners:      Y1_pystacked
+D equations (1):        e401
+ e401 learners:         D1_pystacked
+
+DDML estimation results:
+spec  r     Y learner     D learner         b        SE 
+  ss  1  [shortstack]          [ss]  6992.984  (804.595)
+
+Shortstack DDML model
+y-E[y|X]  = y-Y_net_tfa_ss_1                       Number of obs   =      9915
+D-E[D|X]  = D-D_e401_ss_1 
+------------------------------------------------------------------------------
+     net_tfa |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        e401 |   6992.984   804.5954     8.69   0.000     5416.006    8569.962
+       _cons |  -10.65561    356.163    -0.03   0.976    -708.7223    687.4111
+------------------------------------------------------------------------------
+Stacking final estimator: 
+
+
+. 
+. // replication example
 . set seed 42
 
 . ddml init partial, kfolds(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
 
 . ddml E[Y|X]: pystacked $Y $X, type(reg)
 Learner Y1_pystacked added successfully.
@@ -298,6 +338,48 @@ Z-E[Z|X]  = Z-Z1_rforest_1
 . global pystacked_d_options type(class) method(rf gradboost)
 
 . 
+. // basic qddml usage with no std stacking and default settings
+. set seed 42
+
+. qddml $Y $D ($X), kfolds(2) model(interactive)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+Learner Y1_pystacked added successfully.
+Learner D1_pystacked added successfully.
+Cross-fitting E[y|X,D] equation: bweight
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X] equation: mbsmoke
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+
+Model:                  interactive, crossfit folds k=2, resamples r=1
+Mata global (mname):    m0
+Dependent variable (Y): bweight
+ bweight learners:      Y1_pystacked
+D equations (1):        mbsmoke
+ mbsmoke learners:      D1_pystacked
+
+DDML estimation results (ATE):
+spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
+  ss  1  [shortstack]          [ss]          [ss]  -160.963  (168.190)
+
+Shortstack DDML model (ATE)
+E[y|X,D=0]   = Y_bweight_ss0_1                     Number of obs   =      1000
+E[y|X,D=1]   = Y_bweight_ss1
+E[D|X]       = D_mbsmoke_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     mbsmoke |  -160.9635     168.19    -0.96   0.339    -490.6099    168.6829
+------------------------------------------------------------------------------
+Stacking final estimator: 
+Warning: 63 propensity scores trimmed to lower limit .01.
+
+
+. 
+. // replication example
 . set seed 42
 
 . ddml init interactive, kfolds(2) reps(2)
@@ -1146,5 +1228,5 @@ Y3_gradboost            3            1            1
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\qddml_cert.log
   log type:  text
- closed on:  25 Jul 2023, 19:00:21
+ closed on:  28 Jul 2023, 16:54:07
 -----------------------------------------------------------------------------------------------------------------------

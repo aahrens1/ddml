@@ -1,4 +1,6 @@
 {smcl}
+{* *! version 28july2023}{...}
+{smcl}
 {pstd}{ul:Flexible partially-linear IV model - Basic example with {help pystacked}}
 
 {pstd}First load the data, define global macros, set the seed and initialize the model.

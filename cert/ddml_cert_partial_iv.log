@@ -2,19 +2,19 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial_iv.log
   log type:  text
- opened on:  25 Jul 2023, 18:26:35
+ opened on:  28 Jul 2023, 13:53:42
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.2
-*! last edited: 19 july 2023
+*! ddml v1.4
+*! last edited: 27july2023
 *! authors: aa/ms
 
 . mata: whichddml()
   
   Mata library for ddml and related programs,
-  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  compiled 28 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
 . 
@@ -1866,5 +1866,5 @@ Summary over 3 resamples:
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial_iv.log
   log type:  text
- closed on:  25 Jul 2023, 18:28:58
+ closed on:  28 Jul 2023, 13:56:20
 -----------------------------------------------------------------------------------------------------------------------

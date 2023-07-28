@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 26july2023}{...}
+{* *! version 28july2023}{...}
 {viewerjumpto "Stacking" "ddml_stacking##stacking"}{...}
 {viewerjumpto "Standard stacking with pystacked" "ddml_stacking##std_stack"}{...}
 {viewerjumpto "Pooled stacking" "ddml_stacking##pool_stack"}{...}
@@ -13,7 +13,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_stacking##also_see"}{...}
 {hline}
-{cmd:help ddml stacking}{right: v1.4}
+{cmd:help ddml stacking}{right: v1.4.1}
 {hline}
 
 {title:ddml - Stata package for Double Debiased Machine Learning}

@@ -19,6 +19,11 @@ global Y net_tfa
 global D e401
 global X tw age inc fsize educ db marr twoearn pira hown
 
+// basic qddml usage with no std stacking and default settings
+set seed 42
+qddml $Y $D ($X), kfolds(2) model(partial)
+
+// replication example
 set seed 42
 ddml init partial, kfolds(2)
 ddml E[Y|X]: pystacked $Y $X, type(reg)
@@ -74,6 +79,11 @@ global X mage prenatal1 mmarried fbaby mage medu
 global pystacked_y_options type(reg) method(rf gradboost)
 global pystacked_d_options type(class) method(rf gradboost)
 
+// basic qddml usage with no std stacking and default settings
+set seed 42
+qddml $Y $D ($X), kfolds(2) model(interactive)
+
+// replication example
 set seed 42
 ddml init interactive, kfolds(2) reps(2)
 ddml E[Y|X,D]: pystacked $Y $X, $pystacked_y_options
