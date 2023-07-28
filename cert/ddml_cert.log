@@ -2,7 +2,7 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert.log
   log type:  text
- opened on:  25 Jul 2023, 18:05:28
+ opened on:  28 Jul 2023, 13:30:49
 
 . 
 . // net install ddml, from(https://raw.githubusercontent.com/aahrens1/ddml/dev/) replace
@@ -22,8 +22,8 @@ C:\LocalStore\ecomes\ado\plus/r/rforest.ado
 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.2
-*! last edited: 19 july 2023
+*! ddml v1.4
+*! last edited: 27july2023
 *! authors: aa/ms
 
 . which pystacked
@@ -1537,20 +1537,20 @@ Z equations (1):        assignmt
 
 DDML estimation results (LATE):
 spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
- mse  1        Y1_reg        Y1_reg  D2_pystacked  D2_pystacked  3163.761 (2047.744)      Z1_logit
+ mse  1        Y1_reg        Y1_reg  D2_pystacked  D2_pystacked  1485.567 (1811.562)      Z1_logit
   ss  1  [shortstack]          [ss]          [ss]          [ss]  3066.864 (2025.604)          [ss]
- mse  2  Y2_pystacked        Y1_reg  D2_pystacked      D1_logit   466.272 (2067.600)  Z2_pystacked
+ mse  2  Y2_pystacked        Y1_reg  D2_pystacked      D1_logit  1181.885 (1807.462)  Z2_pystacked
   ss  2  [shortstack]          [ss]          [ss]          [ss]   361.795 (2075.749)          [ss]
 mse = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
- mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]  1815.016 (2460.274)         [mse]
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]  1333.726 (1815.868)         [mse]
   ss mn  [shortstack]          [ss]          [ss]          [ss]  1714.330 (2456.318)          [ss]
- mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]  1815.016 (2460.330)         [mse]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]  1333.726 (1815.873)         [mse]
   ss md  [shortstack]          [ss]          [ss]          [ss]  1714.330 (2456.675)          [ss]
 
 Shortstack DDML model (median over 2 resamples) (LATE)
-E[y|X,Z=0]   = Y_earnings_ss0                      Number of obs   =       718
+E[y|X,Z=0]   = Y_earnings_ss0                      Number of obs   =      1000
 E[y|X,Z=1]   = Y_earnings_ss1
 E[D|X,Z=0]   = D_training_ss0
 E[D|X,Z=1]   = D_training_ss1
@@ -1829,5 +1829,5 @@ Instruments:   Zopt
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert.log
   log type:  text
- closed on:  25 Jul 2023, 18:11:31
+ closed on:  28 Jul 2023, 13:37:23
 -----------------------------------------------------------------------------------------------------------------------

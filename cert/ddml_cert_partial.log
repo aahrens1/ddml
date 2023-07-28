@@ -2,19 +2,19 @@
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial.log
   log type:  text
- opened on:  25 Jul 2023, 18:23:39
+ opened on:  28 Jul 2023, 13:50:40
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.2
-*! last edited: 19 july 2023
+*! ddml v1.4
+*! last edited: 27july2023
 *! authors: aa/ms
 
 . mata: whichddml()
   
   Mata library for ddml and related programs,
-  compiled 19 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  compiled 28 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
 . 
@@ -97,7 +97,7 @@ Mean/med    Y learner     D learner         b        SE      D learner         b
   st md  Y1_pystacked  D1_pystacked     0.308    (0.078)  D2_pystacked     0.012    (0.025)
 
 Median over 2 stacking resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
              |               Robust
@@ -166,7 +166,7 @@ Mean/med    Y learner     D learner         b        SE      D learner         b
   st md  Y1_pystacked  D1_pystacked     0.301    (0.069)  D2_pystacked     0.004    (0.027)
 
 Median over 3 stacking resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -215,7 +215,7 @@ Stacking final estimator: nnls1
 . ddml estimate, mname(m0) spec(st) rep(mn) replay notable
 
 Mean over 3 stacking resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -233,7 +233,7 @@ Summary over 3 resamples:
 . ddml estimate, mname(m0) spec(st) rep(md) replay notable
 
 Median over 3 stacking resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -313,7 +313,7 @@ Mean/med    Y learner     D learner         b        SE      D learner         b
   ps md   [poolstack]          [ps]     0.233    (0.050)          [ps]     0.003    (0.019)
 
 Shortstack DDML model (median over 2 resamples)
-y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
 D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
 ------------------------------------------------------------------------------
              |               Robust
@@ -424,7 +424,7 @@ Mean/med    Y learner     D learner         b        SE      D learner         b
   ps md   [poolstack]          [ps]     0.239    (0.045)          [ps]     0.003    (0.020)
 
 Shortstack DDML model (median over 3 resamples)
-y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
 D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -473,7 +473,7 @@ Stacking final estimator: nnls1
 . ddml estimate, mname(m0) spec(st) rep(mn) replay notable
 
 Mean over 3 stacking resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -491,7 +491,7 @@ Summary over 3 resamples:
 . ddml estimate, mname(m0) spec(st) rep(md) replay notable
 
 Median over 3 stacking resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        59
+y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -539,7 +539,7 @@ Stacking final estimator: nnls1
 . ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
 
 Shortstack DDML model (mean over 3 resamples)
-y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
 D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -557,7 +557,7 @@ Summary over 3 resamples:
 . ddml estimate, mname(m0) spec(ss) rep(md) replay notable
 
 Shortstack DDML model (median over 3 resamples)
-y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        59
+y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
 D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -605,7 +605,7 @@ Stacking final estimator: nnls1
 . ddml estimate, mname(m0) spec(ps) rep(mn) replay notable
 
 Poolstack DDML model (mean over 3 resamples)
-y-E[y|X]  = y-Y_logpgp95_ps                        Number of obs   =        59
+y-E[y|X]  = y-Y_logpgp95_ps                        Number of obs   =        64
 D-E[D|X]  = D1-D_avexpr_ps D2-D_democ1_ps 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -623,7 +623,7 @@ Summary over 3 resamples:
 . ddml estimate, mname(m0) spec(ps) rep(md) replay notable
 
 Poolstack DDML model (median over 3 resamples)
-y-E[y|X]  = y-Y_logpgp95_ps                        Number of obs   =        59
+y-E[y|X]  = y-Y_logpgp95_ps                        Number of obs   =        64
 D-E[D|X]  = D1-D_avexpr_ps D2-D_democ1_ps 
 ------------------------------------------------------------------------------
     logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
@@ -2894,5 +2894,5 @@ error - restacking available only if pystacked is the only learner for each cond
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_partial.log
   log type:  text
- closed on:  25 Jul 2023, 18:26:35
+ closed on:  28 Jul 2023, 13:53:41
 -----------------------------------------------------------------------------------------------------------------------
