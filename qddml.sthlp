@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {viewerjumpto "Syntax" "qddml##syntax"}{...}
 {viewerjumpto "Options" "qddml##options"}{...}
 {viewerjumpto "Models" "qddml##models"}{...}

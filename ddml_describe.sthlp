@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {viewerjumpto "Syntax" "ddml_describe##syntax"}{...}
 {viewerjumpto "Examples" "ddml_describe##examples"}{...}
 {viewerjumpto "Installation" "ddml_describe##installation"}{...}

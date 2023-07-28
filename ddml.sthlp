@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {viewerjumpto "Links to detailed help files" "ddml##help"}{...}
 {viewerjumpto "Models" "ddml##models"}{...}
 {viewerjumpto "Estimation steps" "ddml##estimation"}{...}
