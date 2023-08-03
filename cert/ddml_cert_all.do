@@ -7,7 +7,7 @@ do ddml_cert
 do ddml_cert_crossfit
 do ddml_cert_fiv
 do ddml_cert_interactive
-do ddml_cert_late
+do ddml_cert_interactiveiv
 do ddml_cert_misc
 do ddml_cert_partial
 do ddml_cert_partial_iv

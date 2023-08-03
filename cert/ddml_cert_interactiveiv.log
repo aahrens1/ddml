@@ -1,14 +1,15 @@
------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
-       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_late.log
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactiveiv.log
   log type:  text
- opened on:  28 Jul 2023, 13:41:15
+ opened on:   3 Aug 2023, 15:00:10
 
 . 
-. which ddml
+. which ddml, all
+
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.4
-*! last edited: 27july2023
+*! ddml v1.4.1
+*! last edited: 28july2023
 *! authors: aa/ms
 
 . mata: whichddml()
@@ -17,6 +18,13 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
   compiled 28 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
 
+. which pystacked, all
+
+C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
+*! pystacked v0.7.4
+*! last edited: 23july2023
+*! authors: aa/ms
+
 . 
 . use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
 
@@ -24,31 +32,12 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 (6,204 observations deleted)
 
 . 
-. 
-. which ddml
-C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.4
-*! last edited: 27july2023
-*! authors: aa/ms
-
-. which pystacked
-C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
-*! pystacked v0.7.4
-*! last edited: 23july2023
-*! authors: aa/ms
-
-. 
-. // necessary programs for cert; script exits with error if not installed
-. findfile pystacked.ado
-C:\LocalStore\ecomes\Documents\GitHub\pystacked/pystacked.ado
-
-. 
 . set seed 123
 
 . 
 . ********************************************************************************
-. *** LATE                                                                                                             
->                            ****
+. *** interactiveiv                                                                                               
+>                         ****
 . ********************************************************************************
 . 
 . gen lnearnings = log(earnings) 
@@ -78,6 +67,7 @@ Learner D1_pystacked added successfully.
 Learner Z1_pystacked added successfully.
 
 . ddml crossfit
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
 Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
@@ -155,6 +145,7 @@ Stacking final estimator: nnls1
 . ddml sample, append(1)
 
 . ddml crossfit
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
 Resample 3...
 Cross-fitting fold 1 2 ...completed cross-fitting
@@ -280,6 +271,167 @@ Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
     training     -0.0019   -0.0027   -0.0027   -0.0026   -0.0005   -0.0005
 
+. *** ddml extract
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .90458996    .86468009     .9912067    .85788308
+gradboost            2    .09541004    .13531991     .0087933    .14211692
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00177778    .00228428            0    .00304907
+gradboost            2            0    .99822222    .99771572            1    .99695093
+      ols            1            1    .00076729    .00182452    .00047736            0
+gradboost            2            1    .99923271    .99817548    .99952264            1
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0    .71795812    .74260718    .70523979    .70602739
+gradboost            2            0    .28204188    .25739282    .29476021    .29397261
+    logit            1            1    .50118417    .53601328     .4713906    .49614863
+gradboost            2            1    .49881583    .46398672     .5286094    .50385137
+
+error - short-stacked weights for assignmt not available
+
+error - short-stacked weights for lnearnings not available
+
+error - short-stacked weights for training not available
+
+error - pool-stacked weights for assignmt not available
+
+error - pool-stacked weights for lnearnings not available
+
+error - pool-stacked weights for training not available
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .93951006  .78985012
+gradboost          2          1  .06048994  .21014988
+    logit          1          2          1   .9824134
+gradboost          2          2  1.952e-18   .0175866
+    logit          1          3  .90267547  .81309068
+gradboost          2          3  .09732453  .18690932
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .90458996    .86468009     .9912067    .85788308
+gradboost            2    .09541004    .13531991     .0087933    .14211692
+
+pystacked MSEs for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .22269669  .22446312
+gradboost          2          1  .22815448  .22891956
+    logit          1          2  .22265348  .22420206
+gradboost          2          2  .23058796  .23167457
+    logit          1          3  .22402015  .22151725
+gradboost          2          3  .22970945   .2258095
+
+mean stacking MSEs across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2      rep_3
+    logit          1  .22325879   .2235799  .22342777   .2227687
+gradboost          2  .22914259  .22853702  .23113126  .22775947
+
+pystacked weights for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .00456856  1.613e-16
+gradboost          2          0          1  .99543144          1
+      ols          1          0          2          0          0
+gradboost          2          0          2          1          1
+      ols          1          0          3  .00609814          0
+gradboost          2          0          3  .99390186          1
+      ols          1          1          1  .00154424  .00210479
+gradboost          2          1          1  .99845576  .99789521
+      ols          1          1          2          0  .00095472
+gradboost          2          1          2          1  .99904528
+      ols          1          1          3          0          0
+gradboost          2          1          3          1          1
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00177778    .00228428            0    .00304907
+gradboost            2            0    .99822222    .99771572            1    .99695093
+      ols            1            1    .00076729    .00182452    .00047736            0
+gradboost            2            1    .99923271    .99817548    .99952264            1
+
+pystacked MSEs for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .87852107  .97871021
+gradboost          2          0          1  .00061042  .00205651
+      ols          1          0          2  .88332599  .97745751
+gradboost          2          0          2  .00157052  .00073721
+      ols          1          0          3  .90207153  .94022536
+gradboost          2          0          3  .00071794  .00111948
+      ols          1          1          1  .89826625  1.0918523
+gradboost          2          1          1  .00038102  .00223041
+      ols          1          1          2  1.0183185  .99718448
+gradboost          2          1          2  .00374523  .00081301
+      ols          1          1          3  1.0214655  .96133133
+gradboost          2          1          3  .00384266  .00044668
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2      rep_3
+      ols          1          0  .92671861  .92861564  .93039175  .92114844
+gradboost          2          0  .00113535  .00133347  .00115386  .00091871
+      ols          1          1  .99806972  .99505928  1.0077515  .99139841
+gradboost          2          1  .00190984  .00130572  .00227912  .00214467
+
+pystacked weights for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1   .8166692  .66854517
+gradboost          2          0          1   .1833308  .33145483
+    logit          1          0          2   .8546918  .55578777
+gradboost          2          0          2   .1453082  .44421223
+    logit          1          0          3  .94435315  .46770163
+gradboost          2          0          3  .05564685  .53229837
+    logit          1          1          1  .54727852  .52474803
+gradboost          2          1          1  .45272148  .47525197
+    logit          1          1          2  .58333367  .35944753
+gradboost          2          1          2  .41666633  .64055247
+    logit          1          1          3  .57999387  .41230338
+gradboost          2          1          3  .42000613  .58769662
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0    .71795812    .74260718    .70523979    .70602739
+gradboost            2            0    .28204188    .25739282    .29476021    .29397261
+    logit            1            1    .50118417    .53601328     .4713906    .49614863
+gradboost            2            1    .49881583    .46398672     .5286094    .50385137
+
+pystacked MSEs for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .01301123   .0204968
+gradboost          2          0          1  .01530629  .02103978
+    logit          1          0          2  .02000378  .01497096
+gradboost          2          0          2  .02345748  .01538503
+    logit          1          0          3  .01462366  .01908187
+gradboost          2          0          3  .01927896  .01898525
+    logit          1          1          1  .21474822   .2243913
+gradboost          2          1          1  .21619289   .2251489
+    logit          1          1          2  .22402158  .21808897
+gradboost          2          1          2  .22626105  .21336374
+    logit          1          1          3   .2218442  .21711664
+gradboost          2          1          3  .22417189  .21428248
+
+mean stacking MSEs across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2      rep_3
+    logit          1          0  .01703138  .01675402  .01748737  .01685276
+gradboost          2          0   .0189088  .01817304  .01942126   .0191321
+    logit          1          1  .22003515  .21956976  .22105528  .21948042
+gradboost          2          1  .21990349   .2206709   .2198124  .21922718
+
 . 
 . *** pystacked, SS
 . 
@@ -299,6 +451,7 @@ Learner D1_pystacked added successfully.
 Learner Z1_pystacked added successfully.
 
 . ddml crossfit, shortstack poolstack
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
 Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
@@ -414,11 +567,185 @@ E[Z|X]       = Z_assignmt_ps_1
 Stacking final estimator: nnls1
 
 
+. *** ddml extract
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .91920512    .87501756    .96339268
+gradboost            2    .08079488    .12498244    .03660732
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .00257647    .00253187    .00262108
+gradboost            2            0    .99742353    .99746813    .99737892
+      ols            1            1    .00199168    2.673e-17    .00398336
+gradboost            2            1    .99800832            1    .99601664
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+    logit            1            0    .78144529    .70742248    .85546811
+gradboost            2            0    .21855471    .29257752    .14453189
+    logit            1            1    .64014526    .67591843    .60437208
+gradboost            2            1    .35985474    .32408157    .39562792
+
+short-stacked weights across resamples for assignmt
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .99621356            1    .99242713
+gradboost            2    .00378644    3.903e-18    .00757287
+
+short-stacked weights across resamples for lnearnings
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .00110693    .00221386            0
+gradboost            2            0    .99889307    .99778614            1
+      ols            1            1    .00079195    .00158389            0
+gradboost            2            1    .99920805    .99841611            1
+
+short-stacked weights across resamples for training
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+    logit            1            0    .77029315    .76091156    .77967474
+gradboost            2            0    .22970685    .23908844    .22032526
+    logit            1            1    .53395587    .54384762    .52406411
+gradboost            2            1    .46604413    .45615238    .47593589
+
+pool-stacked weights across resamples for assignmt
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .93706409    .87594547     .9981827
+gradboost            2    .06293591    .12405453     .0018173
+
+pool-stacked weights across resamples for lnearnings
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .00221252    .00257597    .00184907
+gradboost            2            0    .99778748    .99742403    .99815093
+      ols            1            1      .001979            0    .00395799
+gradboost            2            1      .998021            1    .99604201
+
+pool-stacked weights across resamples for training
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+    logit            1            0    .78830564    .71136563    .86524564
+gradboost            2            0    .21169436    .28863437    .13475436
+    logit            1            1    .63545845    .67799086    .59292605
+gradboost            2            1    .36454155    .32200914    .40707395
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .99033586  .75969926
+gradboost          2          1  .00966414  .24030074
+    logit          1          2          1  .92678537
+gradboost          2          2  3.645e-17  .07321463
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .91920512    .87501756    .96339268
+gradboost            2    .08079488    .12498244    .03660732
+
+pystacked MSEs for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .22300665  .22201711
+gradboost          2          1  .23057944   .2259759
+    logit          1          2   .2236796  .22442762
+gradboost          2          2  .23224081   .2311261
+
+mean stacking MSEs across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+    logit          1  .22328275  .22251188  .22405361
+gradboost          2  .22998056  .22827767  .23168345
+
+pystacked weights for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1   .0010158  .00404795
+gradboost          2          0          1   .9989842  .99595205
+      ols          1          0          2  6.359e-18  .00524215
+gradboost          2          0          2          1  .99475785
+      ols          1          1          1  5.347e-17          0
+gradboost          2          1          1          1          1
+      ols          1          1          2  .00344287  .00452385
+gradboost          2          1          2  .99655713  .99547615
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .00257647    .00253187    .00262108
+gradboost            2            0    .99742353    .99746813    .99737892
+      ols            1            1    .00199168    2.673e-17    .00398336
+gradboost            2            1    .99800832            1    .99601664
+
+pystacked MSEs for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .89383683  .99241212
+gradboost          2          0          1  .00108256  .00070156
+      ols          1          0          2  1.0297618  .81948947
+gradboost          2          0          2  .00110604  .00098528
+      ols          1          1          1  .91522841  1.0568325
+gradboost          2          1          1  .00366804  .00102781
+      ols          1          1          2  1.0163523  .97910314
+gradboost          2          1          2  .00048727  .00220856
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2
+      ols          1          0  .93387506  .94312447  .92462566
+gradboost          2          0  .00096886  .00089206  .00104566
+      ols          1          1  .99187909  .98603047  .99772771
+gradboost          2          1  .00184792  .00234793  .00134792
+
+pystacked weights for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .66044302  .75440193
+gradboost          2          0          1  .33955698  .24559807
+    logit          1          0          2  .82474616  .88619007
+gradboost          2          0          2  .17525384  .11380993
+    logit          1          1          1  .71530753  .63652933
+gradboost          2          1          1  .28469247  .36347067
+    logit          1          1          2  .71483988  .49390429
+gradboost          2          1          2  .28516012  .50609571
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+    logit            1            0    .78144529    .70742248    .85546811
+gradboost            2            0    .21855471    .29257752    .14453189
+    logit            1            1    .64014526    .67591843    .60437208
+gradboost            2            1    .35985474    .32408157    .39562792
+
+pystacked MSEs for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .01853639  .01594501
+gradboost          2          0          1  .01954995  .01786293
+    logit          1          0          2  .01402761   .0203014
+gradboost          2          0          2  .01593187  .02458424
+    logit          1          1          1  .21775286  .22147936
+gradboost          2          1          1  .22429688  .22529014
+    logit          1          1          2  .21869803  .21791376
+gradboost          2          1          2  .22436361  .21771433
+
+mean stacking MSEs across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2
+    logit          1          0   .0172026   .0172407  .01716451
+gradboost          2          0  .01948225  .01870644  .02025805
+    logit          1          1    .218961  .21961611  .21830589
+gradboost          2          1  .22291624  .22479351  .22103897
+
 . 
 . *** append, estimate, replay
 . ddml sample, append(1)
 
 . ddml crossfit, shortstack poolstack
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
 Resample 3...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
@@ -702,6 +1029,199 @@ Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
     training     -0.0006   -0.0020   -0.0020   -0.0002    0.0004    0.0004
 
+. *** ddml extract
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .90638462    .87501756    .96339268    .88074363
+gradboost            2    .09361538    .12498244    .03660732    .11925637
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00242071    .00253187    .00262108    .00210917
+gradboost            2            0    .99757929    .99746813    .99737892    .99789083
+      ols            1            1    .00173662    2.673e-17    .00398336    .00122649
+gradboost            2            1    .99826338            1    .99601664    .99877351
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0    .71080878    .70742248    .85546811    .56953576
+gradboost            2            0    .28919122    .29257752    .14453189    .43046424
+    logit            1            1      .608494    .67591843    .60437208    .54519148
+gradboost            2            1      .391506    .32408157    .39562792    .45480852
+
+short-stacked weights across resamples for assignmt
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .97380811            1    .99242713    .92899719
+gradboost            2    .02619189    3.903e-18    .00757287    .07100281
+
+short-stacked weights across resamples for lnearnings
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00073795    .00221386            0            0
+gradboost            2            0    .99926205    .99778614            1            1
+      ols            1            1    .00052796    .00158389            0            0
+gradboost            2            1    .99947204    .99841611            1            1
+
+short-stacked weights across resamples for training
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0    .79939288    .76091156    .77967474    .85759233
+gradboost            2            0    .20060712    .23908844    .22032526    .14240767
+    logit            1            1    .53280896    .54384762    .52406411    .53051514
+gradboost            2            1    .46719104    .45615238    .47593589    .46948486
+
+pool-stacked weights across resamples for assignmt
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .91829625    .87594547     .9981827    .88076056
+gradboost            2    .08170375    .12405453     .0018173    .11923944
+
+pool-stacked weights across resamples for lnearnings
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00147501    .00257597    .00184907            0
+gradboost            2            0    .99852499    .99742403    .99815093            1
+      ols            1            1    .00131933            0    .00395799            0
+gradboost            2            1    .99868067            1    .99604201            1
+
+pool-stacked weights across resamples for training
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0     .7324667    .71136563    .86524564    .62078881
+gradboost            2            0     .2675333    .28863437    .13475436    .37921119
+    logit            1            1    .60470942    .67799086    .59292605    .54321134
+gradboost            2            1    .39529058    .32200914    .40707395    .45678866
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .99033586  .75969926
+gradboost          2          1  .00966414  .24030074
+    logit          1          2          1  .92678537
+gradboost          2          2  3.645e-17  .07321463
+    logit          1          3  .89268686  .86880041
+gradboost          2          3  .10731314  .13119959
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .90638462    .87501756    .96339268    .88074363
+gradboost            2    .09361538    .12498244    .03660732    .11925637
+
+pystacked MSEs for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .22300665  .22201711
+gradboost          2          1  .23057944   .2259759
+    logit          1          2   .2236796  .22442762
+gradboost          2          2  .23224081   .2311261
+    logit          1          3  .22245979  .22316447
+gradboost          2          3  .22821332  .22878791
+
+mean stacking MSEs across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2      rep_3
+    logit          1  .22312587  .22251188  .22405361  .22281213
+gradboost          2  .22948724  .22827767  .23168345  .22850061
+
+pystacked weights for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1   .0010158  .00404795
+gradboost          2          0          1   .9989842  .99595205
+      ols          1          0          2  6.359e-18  .00524215
+gradboost          2          0          2          1  .99475785
+      ols          1          0          3  .00421834  3.547e-16
+gradboost          2          0          3  .99578166          1
+      ols          1          1          1  5.347e-17          0
+gradboost          2          1          1          1          1
+      ols          1          1          2  .00344287  .00452385
+gradboost          2          1          2  .99655713  .99547615
+      ols          1          1          3          0  .00245299
+gradboost          2          1          3          1  .99754701
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00242071    .00253187    .00262108    .00210917
+gradboost            2            0    .99757929    .99746813    .99737892    .99789083
+      ols            1            1    .00173662    2.673e-17    .00398336    .00122649
+gradboost            2            1    .99826338            1    .99601664    .99877351
+
+pystacked MSEs for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .89383683  .99241212
+gradboost          2          0          1  .00108256  .00070156
+      ols          1          0          2  1.0297618  .81948947
+gradboost          2          0          2  .00110604  .00098528
+      ols          1          0          3  .91189597   .9811706
+gradboost          2          0          3  .00054469  .00111062
+      ols          1          1          1  .91522841  1.0568325
+gradboost          2          1          1  .00366804  .00102781
+      ols          1          1          2  1.0163523  .97910314
+gradboost          2          1          2  .00048727  .00220856
+      ols          1          1          3  .97464176  1.0219551
+gradboost          2          1          3  .00467866  .00060227
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2      rep_3
+      ols          1          0  .93809447  .94312447  .92462566  .94653328
+gradboost          2          0  .00092179  .00089206  .00104566  .00082766
+      ols          1          1  .99401887  .98603047  .99772771  .99829843
+gradboost          2          1   .0021121  .00234793  .00134792  .00264047
+
+pystacked weights for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .66044302  .75440193
+gradboost          2          0          1  .33955698  .24559807
+    logit          1          0          2  .82474616  .88619007
+gradboost          2          0          2  .17525384  .11380993
+    logit          1          0          3  .77221161   .3668599
+gradboost          2          0          3  .22778839   .6331401
+    logit          1          1          1  .71530753  .63652933
+gradboost          2          1          1  .28469247  .36347067
+    logit          1          1          2  .71483988  .49390429
+gradboost          2          1          2  .28516012  .50609571
+    logit          1          1          3  .60955204  .48083093
+gradboost          2          1          3  .39044796  .51916907
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0    .71080878    .70742248    .85546811    .56953576
+gradboost            2            0    .28919122    .29257752    .14453189    .43046424
+    logit            1            1      .608494    .67591843    .60437208    .54519148
+gradboost            2            1      .391506    .32408157    .39562792    .45480852
+
+pystacked MSEs for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .01853639  .01594501
+gradboost          2          0          1  .01954995  .01786293
+    logit          1          0          2  .01402761   .0203014
+gradboost          2          0          2  .01593187  .02458424
+    logit          1          0          3  .01282398  .02177417
+gradboost          2          0          3  .01454064   .0212771
+    logit          1          1          1  .21775286  .22147936
+gradboost          2          1          1  .22429688  .22529014
+    logit          1          1          2  .21869803  .21791376
+gradboost          2          1          2  .22436361  .21771433
+    logit          1          1          3  .22151778   .2194017
+gradboost          2          1          3  .22469097  .21881998
+
+mean stacking MSEs across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2      rep_3
+    logit          1          0  .01723476   .0172407  .01716451  .01729907
+gradboost          2          0  .01895779  .01870644  .02025805  .01790887
+    logit          1          1  .21946058  .21961611  .21830589  .22045974
+gradboost          2          1  .22252932  .22479351  .22103897  .22175548
+
 . 
 . *** multiple learners, no SS
 . 
@@ -733,14 +1253,21 @@ Note: previously-added pystacked multilearner now treated as a single learner
 Learner Z2_logit added successfully.
 
 . ddml crossfit
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting
 Cross-fitting E[D|X,Z] equation: training
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting
 Cross-fitting E[Z|X]: assignmt
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting
 
 . ddml estimate
@@ -1020,6 +1547,7 @@ E[Z|X]       = Z2_logit_1
 . ddml sample, append(1)
 
 . ddml crossfit
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
 Resample 3...
 Cross-fitting fold 1 2 ...completed cross-fitting
@@ -1461,14 +1989,21 @@ Note: previously-added pystacked multilearner now treated as a single learner
 Learner Z2_logit added successfully.
 
 . ddml crossfit, shortstack
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 Cross-fitting E[D|X,Z] equation: training
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 Cross-fitting E[Z|X]: assignmt
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 . ddml estimate
@@ -1488,14 +2023,14 @@ spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b       
  mse  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)  Z1_pystacked
   ss  1  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
  mse  2  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)  Z1_pystacked
-  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
 mse = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
  mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)         [mse]
-  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
  mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)         [mse]
-  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
 
 Shortstack DDML model (median over 2 resamples) (LATE)
 E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
@@ -1507,13 +2042,13 @@ E[Z|X]       = Z_assignmt_ss
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0019975    .001714    -1.17   0.244    -.0053569    .0013619
+    training |  -.0017691    .001447    -1.22   0.221    -.0046053     .001067
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-    training     -0.0020   -0.0021   -0.0021   -0.0020   -0.0019   -0.0019
+    training     -0.0018   -0.0019   -0.0019   -0.0018   -0.0017   -0.0017
 
 . ddml estimate, mname(m0) spec(mse) rep(1) replay notable
 
@@ -1534,7 +2069,7 @@ E[Z|X]       = Z1_pystacked_1
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 
 Shortstack DDML model (sample=1) (LATE)
-E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      3792
+E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      4404
 E[y|X,Z=1]   = Y_lnearnings_ss1_1
 E[D|X,Z=0]   = D_training_ss0_1
 E[D|X,Z=1]   = D_training_ss1_1
@@ -1543,7 +2078,7 @@ E[Z|X]       = Z_assignmt_ss_1
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0018516   .0017587    -1.05   0.292    -.0052986    .0015955
+    training |  -.0016501   .0015471    -1.07   0.286    -.0046824    .0013821
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
@@ -1628,14 +2163,14 @@ spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b       
   30  2        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.026    (0.055)      Z2_logit
   31  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.026    (0.055)  Z1_pystacked
   32  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.026    (0.055)      Z2_logit
-  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
 * = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
  mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)         [mse]
-  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
  mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)         [mse]
-  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
 
 Shortstack DDML model (median over 2 resamples) (LATE)
 E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
@@ -1647,13 +2182,13 @@ E[Z|X]       = Z_assignmt_ss
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0019975    .001714    -1.17   0.244    -.0053569    .0013619
+    training |  -.0017691    .001447    -1.22   0.221    -.0046053     .001067
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-    training     -0.0020   -0.0021   -0.0021   -0.0020   -0.0019   -0.0019
+    training     -0.0018   -0.0019   -0.0019   -0.0018   -0.0017   -0.0017
 
 . forvalues i=1/8 {
   2.     ddml estimate, mname(m0) spec(`i') rep(1) replay notable
@@ -1774,7 +2309,7 @@ E[Z|X]       = Z2_logit_1
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 
 Shortstack DDML model (sample=1) (LATE)
-E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      3792
+E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      4404
 E[y|X,Z=1]   = Y_lnearnings_ss1_1
 E[D|X,Z=0]   = D_training_ss0_1
 E[D|X,Z=1]   = D_training_ss1_1
@@ -1783,7 +2318,7 @@ E[Z|X]       = Z_assignmt_ss_1
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0018516   .0017587    -1.05   0.292    -.0052986    .0015955
+    training |  -.0016501   .0015471    -1.07   0.286    -.0046824    .0013821
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
@@ -1792,6 +2327,7 @@ Stacking final estimator: nnls1
 . ddml sample, append(1)
 
 . ddml crossfit, shortstack
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
 Resample 3...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
@@ -1819,16 +2355,16 @@ spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b       
  mse  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)  Z1_pystacked
   ss  1  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
  mse  2  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)  Z1_pystacked
-  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
  mse  3  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)  Z1_pystacked
-  ss  3  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss  3  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.001)          [ss]
 mse = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
  mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)         [mse]
-  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
  mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)         [mse]
-  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
 
 Shortstack DDML model (median over 3 resamples) (LATE)
 E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
@@ -1840,13 +2376,13 @@ E[Z|X]       = Z_assignmt_ss
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0018516   .0016808    -1.10   0.271    -.0051459    .0014428
+    training |  -.0016501   .0014251    -1.16   0.247    -.0044432     .001143
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-    training     -0.0019   -0.0021   -0.0021   -0.0019   -0.0017   -0.0017
+    training     -0.0016   -0.0019   -0.0019   -0.0017   -0.0014   -0.0014
 
 . ddml estimate, mname(m0) spec(mse) rep(1) replay notable
 
@@ -1921,7 +2457,7 @@ Summary over 3 resamples:
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 
 Shortstack DDML model (sample=1) (LATE)
-E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      3792
+E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      4404
 E[y|X,Z=1]   = Y_lnearnings_ss1_1
 E[D|X,Z=0]   = D_training_ss0_1
 E[D|X,Z=1]   = D_training_ss1_1
@@ -1930,7 +2466,7 @@ E[Z|X]       = Z_assignmt_ss_1
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0018516   .0017587    -1.05   0.292    -.0052986    .0015955
+    training |  -.0016501   .0015471    -1.07   0.286    -.0046824    .0013821
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
@@ -1938,7 +2474,7 @@ Stacking final estimator: nnls1
 . ddml estimate, mname(m0) spec(ss) rep(2) replay notable
 
 Shortstack DDML model (sample=2) (LATE)
-E[y|X,Z=0]   = Y_lnearnings_ss0_2                  Number of obs   =      3363
+E[y|X,Z=0]   = Y_lnearnings_ss0_2                  Number of obs   =      4404
 E[y|X,Z=1]   = Y_lnearnings_ss1_2
 E[D|X,Z=0]   = D_training_ss0_2
 E[D|X,Z=1]   = D_training_ss1_2
@@ -1947,7 +2483,7 @@ E[Z|X]       = Z_assignmt_ss_2
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0021435   .0016553    -1.29   0.195    -.0053877    .0011007
+    training |  -.0018881   .0013289    -1.42   0.155    -.0044928    .0007165
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
@@ -1964,13 +2500,13 @@ E[Z|X]       = Z_assignmt_ss
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0018858   .0016709    -1.13   0.259    -.0051606    .0013891
+    training |  -.0016366   .0014341    -1.14   0.254    -.0044475    .0011742
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-    training     -0.0019   -0.0021   -0.0021   -0.0019   -0.0017   -0.0017
+    training     -0.0016   -0.0019   -0.0019   -0.0017   -0.0014   -0.0014
 
 . ddml estimate, mname(m0) spec(ss) rep(md) replay notable
 
@@ -1984,13 +2520,13 @@ E[Z|X]       = Z_assignmt_ss
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0018516   .0016808    -1.10   0.271    -.0051459    .0014428
+    training |  -.0016501   .0014251    -1.16   0.247    -.0044432     .001143
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-    training     -0.0019   -0.0021   -0.0021   -0.0019   -0.0017   -0.0017
+    training     -0.0016   -0.0019   -0.0019   -0.0017   -0.0014   -0.0014
 
 . *** allcombos
 . ddml estimate, allcombos
@@ -2072,7 +2608,7 @@ spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b       
   30  2        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.026    (0.055)      Z2_logit
   31  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.026    (0.055)  Z1_pystacked
   32  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.026    (0.055)      Z2_logit
-  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
    1  3  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.001)  Z1_pystacked
    2  3  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.001)      Z2_logit
    3  3  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.001    (0.001)  Z1_pystacked
@@ -2105,14 +2641,14 @@ spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b       
   30  3        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.005    (0.052)      Z2_logit
   31  3        Y2_reg        Y2_reg      D2_logit      D2_logit     0.003    (0.052)  Z1_pystacked
   32  3        Y2_reg        Y2_reg      D2_logit      D2_logit     0.005    (0.052)      Z2_logit
-  ss  3  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss  3  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.001)          [ss]
 * = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
  mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)         [mse]
-  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
  mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)         [mse]
-  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
 
 Shortstack DDML model (median over 3 resamples) (LATE)
 E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
@@ -2124,13 +2660,13 @@ E[Z|X]       = Z_assignmt_ss
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0018516   .0016808    -1.10   0.271    -.0051459    .0014428
+    training |  -.0016501   .0014251    -1.16   0.247    -.0044432     .001143
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-    training     -0.0019   -0.0021   -0.0021   -0.0019   -0.0017   -0.0017
+    training     -0.0016   -0.0019   -0.0019   -0.0017   -0.0014   -0.0014
 
 . forvalues i=1/8 {
   2.     forvalues r=1/2 {
@@ -2435,7 +2971,7 @@ Summary over 3 resamples:
 . ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 
 Shortstack DDML model (sample=1) (LATE)
-E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      3792
+E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      4404
 E[y|X,Z=1]   = Y_lnearnings_ss1_1
 E[D|X,Z=0]   = D_training_ss0_1
 E[D|X,Z=1]   = D_training_ss1_1
@@ -2444,7 +2980,7 @@ E[Z|X]       = Z_assignmt_ss_1
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0018516   .0017587    -1.05   0.292    -.0052986    .0015955
+    training |  -.0016501   .0015471    -1.07   0.286    -.0046824    .0013821
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
@@ -2452,7 +2988,7 @@ Stacking final estimator: nnls1
 . ddml estimate, mname(m0) spec(ss) rep(2) replay notable
 
 Shortstack DDML model (sample=2) (LATE)
-E[y|X,Z=0]   = Y_lnearnings_ss0_2                  Number of obs   =      3363
+E[y|X,Z=0]   = Y_lnearnings_ss0_2                  Number of obs   =      4404
 E[y|X,Z=1]   = Y_lnearnings_ss1_2
 E[D|X,Z=0]   = D_training_ss0_2
 E[D|X,Z=1]   = D_training_ss1_2
@@ -2461,7 +2997,7 @@ E[Z|X]       = Z_assignmt_ss_2
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0021435   .0016553    -1.29   0.195    -.0053877    .0011007
+    training |  -.0018881   .0013289    -1.42   0.155    -.0044928    .0007165
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
@@ -2478,13 +3014,13 @@ E[Z|X]       = Z_assignmt_ss
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0018858   .0016709    -1.13   0.259    -.0051606    .0013891
+    training |  -.0016366   .0014341    -1.14   0.254    -.0044475    .0011742
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-    training     -0.0019   -0.0021   -0.0021   -0.0019   -0.0017   -0.0017
+    training     -0.0016   -0.0019   -0.0019   -0.0017   -0.0014   -0.0014
 
 . ddml estimate, mname(m0) spec(ss) rep(md) replay notable
 
@@ -2498,13 +3034,38 @@ E[Z|X]       = Z_assignmt_ss
              |               Robust
   lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
 -------------+----------------------------------------------------------------
-    training |  -.0018516   .0016808    -1.10   0.271    -.0051459    .0014428
+    training |  -.0016501   .0014251    -1.16   0.247    -.0044432     .001143
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
 Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
-    training     -0.0019   -0.0021   -0.0021   -0.0019   -0.0017   -0.0017
+    training     -0.0016   -0.0019   -0.0019   -0.0017   -0.0014   -0.0014
+
+. *** ddml extract
+. ddml extract, show(ssweights)
+
+short-stacked weights across resamples for assignmt
+final stacking estimator: nnls1
+                  learner  mean_weight        rep_1        rep_2        rep_3
+Z1_pystacked            1    .74684299    .99934436    .59775257    .64343205
+    Z2_logit            2    .25315701    .00065564    .40224743    .35656795
+
+short-stacked weights across resamples for lnearnings
+final stacking estimator: nnls1
+                  learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+Y1_pystacked            1            0            1            1            1            1
+      Y2_reg            2            0            0            0            0            0
+Y1_pystacked            1            1    .99825397    .99804474    .99909857    .99761861
+      Y2_reg            2            1    .00174603    .00195526    .00090143    .00238139
+
+short-stacked weights across resamples for training
+final stacking estimator: nnls1
+                  learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+D1_pystacked            1            0            .            .            .            .
+    D2_logit            2            0            .            .            .            .
+D1_pystacked            1            1    .94030098    .87201274    .94889021            1
+    D2_logit            2            1    .05969902    .12798726    .05110979            0
 
 . 
 . *** ddml overlap
@@ -2523,6 +3084,7 @@ Learner D1_pystacked added successfully.
 Learner Z1_pystacked added successfully.
 
 . ddml crossfit
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
 Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
@@ -2593,7 +3155,7 @@ Summary over 2 resamples:
 . 
 . log close
       name:  <unnamed>
-       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_late.log
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactiveiv.log
   log type:  text
- closed on:  28 Jul 2023, 13:46:42
------------------------------------------------------------------------------------------------------------------------
+ closed on:   3 Aug 2023, 15:05:15
+------------------------------------------------------------------------------------------------------------------

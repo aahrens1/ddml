@@ -1,5 +1,5 @@
 *! ddml v1.4.1
-*! last edited: 28july2023
+*! last edited: 3aug2023
 *! authors: aa/ms
 
 *** ddml cross-fitting
@@ -78,6 +78,22 @@ program _ddml_crossfit, eclass sortpreserve
 	if `numeqnZ'==0 & ("`model'"=="interactiveiv" | "`model'"=="iv") {
 		di as err "error - no Z learner defined"
 		exit 198
+	}
+	
+	// check interactive IV (LATE) model
+	if "`model'"=="interactiveiv" {
+		if `numeqnD' > 1 {
+			di as err "error - interactiveiv model allows only one D variable"
+			exit 198
+		}
+		if `numeqnZ' > 1 {
+			di as err "error - interactiveiv model allows only one Z variable"
+			exit 198
+		}
+		qui count if `nameD'==1 & `nameZ'==0
+		if r(N)>0 {
+			di as text "note: treatment (`nameD') = 1 in `r(N)' cases when assignment (`nameZ') = 0"
+		}
 	}
 	
 	// equations and learners

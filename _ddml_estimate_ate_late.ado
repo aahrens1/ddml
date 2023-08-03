@@ -1,5 +1,5 @@
 *! ddml v1.4.1
-*! last edited: 28july2023
+*! last edited: 2aug2023
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -410,12 +410,21 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				tempvar yhat yhat_k
 				if `ssflag' {
 					// shortstacking uses crossfit predictions
-					`qui' _ddml_nnls `vname' `learner_list' if `touse' & `treatvar'==`t', finalest(`finalest') stype(`stype')
-					`qui' di as res "N=" e(N)
-					// since original finalest could be default (blank)
-					local finalest		`e(finalest)'
-					mat `sweights'		= e(b)
-					qui predict double `yhat'
+					// possible in LATE model that D is always =0 if Z=0 (perfect assignment to treatment)
+					// check estimation sample for this and handle as a special case (no estimation took place)
+					qui count if `vname'!=0 & `treatvar'==0 & `touse'
+					if (r(N)==0 & "`etype'"=="D" & `t'==0) {
+						qui gen double `yhat' = 0
+						mat `sweights'		= J(1,`nlearners',.)
+					}
+					else {
+						`qui' _ddml_nnls `vname' `learner_list' if `touse' & `treatvar'==`t', finalest(`finalest') stype(`stype')
+						`qui' di as res "N=" e(N)
+						// since original finalest could be default (blank)
+						local finalest		`e(finalest)'
+						mat `sweights'		= e(b)
+						qui predict double `yhat'
+					}
 				}
 				else if `stdflag' {
 					// standard stacking uses stacking CV predictions, stored in a mata struct
@@ -425,24 +434,42 @@ program _ddml_estimate_stacking, eclass sortpreserve
 					cap mat drop `stdweights'
 					qui frame pwf
 					local cframe `r(currentframe)'
+					// create temporary frame where saved stacking CV values etc. will be
 					frame create `tframe'
 					frame change `tframe'
 					mata: `y_stacking_cv' = return_result_item(`eqn',"`vtilde'","y_stacking_cv`t'", "`m'")
 					getmata (`fid' `fidtouse' `vname' `learner_list')=`y_stacking_cv', force replace
 					forvalues k=1/`kfolds' {
+						// return to temporary frame at start of loop
 						frame change `tframe'
-						`qui' _ddml_nnls `vname' `learner_list' if `fidtouse'==`k', finalest(`finalest') stype(`stype')
-						`qui' di as res "N=" e(N)
-						// since original finalest could be default (blank)
-						local finalest	`e(finalest)'
-						mata: `sweights' = st_matrix("e(b)")
-						frame change `cframe'
-						mata: st_matrix("`sweights'",`sweights')
-						mat colnames `sweights' =  `learner_list'
-						qui replace `yhat_k' = .
-						mat score `yhat_k' = `sweights' if `touse' & `mname'_fid_`m'==`k', replace
-						qui replace `yhat' = `yhat_k' if `mname'_fid_`m'==`k'
-						mat `stdweights' = nullmat(`stdweights') , `sweights''
+						// data will be all treatvar=0 or all treatvar=1
+						// possible in LATE model that D is always =0 if Z=0 (perfect assignment to treatment)
+						// check estimation sample for this and handle as a special case (no estimation took place)
+						qui count if `vname'!=0 & `fidtouse'==`k'
+						if (r(N)==0 & "`etype'"=="D" & `t'==0) {
+							// case where, if Z=0, D=0 always, so just created fitted values =0 instead of estimating
+							// and set stacking weights to missing
+							// change back to main frame and create predicted Dhat for this fold
+							frame change `cframe'
+							qui replace `yhat' = 0 if `mname'_fid_`m'==`k'
+							mat `sweights'		= J(1,`nlearners',.)
+							mat `stdweights' = nullmat(`stdweights') , `sweights''
+						}
+						else {
+							`qui' _ddml_nnls `vname' `learner_list' if `fidtouse'==`k', finalest(`finalest') stype(`stype')
+							`qui' di as res "N=" e(N)
+							// since original finalest could be default (blank)
+							local finalest	`e(finalest)'
+							mata: `sweights' = st_matrix("e(b)")
+							// change back to main frame and create predicted Dhat for this fold
+							frame change `cframe'
+							mata: st_matrix("`sweights'",`sweights')
+							mat colnames `sweights' =  `learner_list'
+							qui replace `yhat_k' = .
+							mat score `yhat_k' = `sweights' if `touse' & `mname'_fid_`m'==`k', replace
+							qui replace `yhat' = `yhat_k' if `mname'_fid_`m'==`k'
+							mat `stdweights' = nullmat(`stdweights') , `sweights''
+						}
 					}
 					frame change `cframe'
 					frame drop `tframe'
@@ -451,26 +478,37 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				}
 				else {
 					// poolstacking uses stacking CV predictions, stored in a mata struct
-					tempname tframe y_stacking_cv
-					qui frame pwf
-					local cframe `r(currentframe)'
-					frame create `tframe'
-					frame change `tframe'
-					mata: `y_stacking_cv' = return_result_item(`eqn',"`vtilde'","y_stacking_cv`t'", "`m'")				
-					// touse ignored at weights stage
-					getmata (`fid' `fidtouse' `vname' `learner_list')=`y_stacking_cv', force replace
-					`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') stype(`stype')
-					`qui' di as res "N=" e(N)
-					// since original finalest could be default (blank)
-					local finalest	`e(finalest)'
-					mata: `sweights' = st_matrix("e(b)")
-					frame change `cframe'
-					frame drop `tframe'
-					mata: st_matrix("`sweights'",`sweights')
-					mat colnames `sweights' =  `learner_list'
-					mat score double `yhat' = `sweights' if `touse'
-					cap mata: mata drop `y_stacking_cv'
-					cap mata: mata drop `sweights'
+					// possible in LATE model that D is always =0 if Z=0 (perfect assignment to treatment)
+					// check estimation sample for this and handle as a special case (no estimation took place)
+					qui count if `vname'!=0 & `treatvar'==0 & `touse'
+					if (r(N)==0 & "`etype'"=="D" & `t'==0) {
+						// if late and Z==0, then the predicted Dhat is 0
+						// and set stacking weights to missing
+						qui gen double `yhat' = 0
+						mat `sweights' = J(1,`nlearners',.)
+					}
+					else {
+						tempname tframe y_stacking_cv
+						qui frame pwf
+						local cframe `r(currentframe)'
+						frame create `tframe'
+						frame change `tframe'
+						mata: `y_stacking_cv' = return_result_item(`eqn',"`vtilde'","y_stacking_cv`t'", "`m'")				
+						// touse ignored at weights stage
+						getmata (`fid' `fidtouse' `vname' `learner_list')=`y_stacking_cv', force replace
+						`qui' _ddml_nnls `vname' `learner_list', finalest(`finalest') stype(`stype')
+						`qui' di as res "N=" e(N)
+						// since original finalest could be default (blank)
+						local finalest	`e(finalest)'
+						mata: `sweights' = st_matrix("e(b)")
+						frame change `cframe'
+						frame drop `tframe'
+						mata: st_matrix("`sweights'",`sweights')
+						mat colnames `sweights' =  `learner_list'
+						mat score double `yhat' = `sweights' if `touse'
+						cap mata: mata drop `y_stacking_cv'
+						cap mata: mata drop `sweights'
+					}
 				}
 				// Name of newly-stacked variable depends on stacking method.
 				if `stdflag' {

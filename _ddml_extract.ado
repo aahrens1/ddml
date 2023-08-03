@@ -1,5 +1,5 @@
 *! ddml v1.4.1
-*! last edited: 28july2023
+*! last edited: 3aug2023
 *! authors: aa/ms
 
 program define _ddml_extract, rclass
@@ -633,7 +633,7 @@ function pystacked_extract(									///
 								real scalar detailflag		///
 								)
 {
-	
+
 	nreps = d.nreps
 	kfolds = d.kfolds
 	// kstrings = key string, "weights" or "MSEs"
@@ -673,7 +673,7 @@ function pystacked_extract(									///
 			rmat_all = J(0,3+d.kfolds,0)
 		}
 		rstripe = J(0,1,"")
-		
+
 		for (k=1;k<=rows(vkeys_i);k++) {
 			if (strpos(vkeys_i[k,2],"stack_"+kstrings)) {
 				swflag = 1		// stack weights/MSEs encountered
@@ -724,9 +724,13 @@ function pystacked_extract(									///
 				}
 			}
 		}
-			
+
 		// process if any stacking weights encountered
 		if (rows(rmat_all) > 0) {
+		
+			// possible that some weights are missing; treat as zeros when taking means
+			rmat_all_z = editmissing(rmat_all,0)
+
 			nlearners = rows(base_est)
 			if (detailflag) {
 				// rmat_all has full set of weights for all learners
@@ -762,7 +766,8 @@ function pystacked_extract(									///
 				rmean_all = J(nlearners,(2+nreps),.)
 				for (ll=1;ll<=nlearners;ll++) {
 					rmean_all[ll,1] = ll
-					rlearner = select(rmat_all,rmat_all[.,1]:==ll)
+					// treat missings as zeros
+					rlearner = select(rmat_all_z,rmat_all_z[.,1]:==ll)
 					// mean across all folds and resamples
 					rmean_all[ll,2] = mean(mean(rlearner[.,(3..cols(rlearner))]')')
 					// mean across folds by resample
@@ -789,8 +794,9 @@ function pystacked_extract(									///
 				rmean_all_0 = J(0,nreps,.)
 				rmean_all_1 = J(0,nreps,.)
 				rstripe = J(0,2,"")
-				rmat0 = select(rmat_all,rmat_all[.,2]:==0)
-				rmat1 = select(rmat_all,rmat_all[.,2]:==1)
+				// treat missings as zeros
+				rmat0 = select(rmat_all_z,rmat_all_z[.,2]:==0)
+				rmat1 = select(rmat_all_z,rmat_all_z[.,2]:==1)
 				for (ll=1;ll<=nlearners;ll++) {
 					pre_rmean_all[ll,1]				= ll
 					pre_rmean_all[nlearners+ll,1]	= ll
@@ -798,9 +804,18 @@ function pystacked_extract(									///
 					pre_rmean_all[nlearners+ll,2]	= 1
 					rlearner_0 = select(rmat0,(rmat0[.,1]:==ll))
 					rlearner_0 = rlearner_0[.,4..cols(rlearner_0)]'
+					// possible no weights saved if Z==0 (so D is always 0)
+					if (cols(rlearner_0)==0) {
+						rlearner_0 = J(rows(rlearner_0),nreps,.)
+					}
 					rmean_all_0 = rmean_all_0 \ mean(rlearner_0)
 					rlearner_1 = select(rmat1,rmat1[.,1]:==ll)
+
 					rlearner_1 = rlearner_1[.,4..cols(rlearner_1)]'
+					// no weights shouldn't happen if Z==1 but include to catch errors
+					if (cols(rlearner_1)==0) {
+						rlearner_1 = J(rows(rlearner_1),nreps,.)
+					}
 					rmean_all_1 = rmean_all_1 \ mean(rlearner_1)
 				}
 				rmean_all_0 = mean(rmean_all_0')', rmean_all_0

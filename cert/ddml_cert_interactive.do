@@ -11,8 +11,9 @@ cap cd "C:\LocalStore\ecomes\Documents\GitHub\ddml\cert"
 cap log close
 log using "ddml_cert_interactive", replace text
 
-which ddml
+which ddml, all
 mata: whichddml()
+which pystacked, all
 
 webuse cattaneo2, clear
 keep in 1/1000
@@ -20,10 +21,6 @@ keep in 1/1000
 gen double mage_sq = mage^2
 
 which ddml
-which pystacked
-
-// necessary programs for cert; script exits with error if not installed
-findfile pystacked.ado
 
 set seed 123
 
@@ -54,6 +51,9 @@ ddml estimate, mname(m0) spec(st) rep(1) replay notable
 ddml estimate, mname(m0) spec(st) rep(2) replay notable
 ddml estimate, mname(m0) spec(st) rep(mn) replay notable
 ddml estimate, mname(m0) spec(st) rep(md) replay notable
+*** ddml extract
+ddml extract, show(weights)
+ddml extract, show(pystacked)
 
 *** pystacked, SS and PS
 
@@ -67,6 +67,9 @@ ddml estimate
 ddml estimate, mname(m0) spec(st) rep(1) replay notable
 ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+*** ddml extract
+ddml extract, show(weights)
+ddml extract, show(pystacked)
 
 *** append, estimate, replay
 ddml sample, append(1)
@@ -85,6 +88,9 @@ ddml estimate, mname(m0) spec(ps) rep(1) replay notable
 ddml estimate, mname(m0) spec(ps) rep(2) replay notable
 ddml estimate, mname(m0) spec(ps) rep(mn) replay notable
 ddml estimate, mname(m0) spec(ps) rep(md) replay notable
+*** ddml extract
+ddml extract, show(weights)
+ddml extract, show(pystacked)
 
 *** multiple learners, no SS
 

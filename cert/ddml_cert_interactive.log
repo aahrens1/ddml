@@ -1,14 +1,15 @@
------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactive.log
   log type:  text
- opened on:  28 Jul 2023, 13:39:05
+ opened on:   3 Aug 2023, 14:57:20
 
 . 
-. which ddml
+. which ddml, all
+
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.4
-*! last edited: 27july2023
+*! ddml v1.4.1
+*! last edited: 28july2023
 *! authors: aa/ms
 
 . mata: whichddml()
@@ -16,6 +17,13 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
   Mata library for ddml and related programs,
   compiled 28 Jul 2023 under Stata 15.1 born 26 Aug 2019.
   authors AA/MS
+
+. which pystacked, all
+
+C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
+*! pystacked v0.7.4
+*! last edited: 23july2023
+*! authors: aa/ms
 
 . 
 . webuse cattaneo2, clear
@@ -30,28 +38,17 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.4
-*! last edited: 27july2023
+*! ddml v1.4.1
+*! last edited: 28july2023
 *! authors: aa/ms
-
-. which pystacked
-C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
-*! pystacked v0.7.4
-*! last edited: 23july2023
-*! authors: aa/ms
-
-. 
-. // necessary programs for cert; script exits with error if not installed
-. findfile pystacked.ado
-C:\LocalStore\ecomes\Documents\GitHub\pystacked/pystacked.ado
 
 . 
 . set seed 123
 
 . 
 . ********************************************************************************
-. **** Interactive model                                                                                               
->            ****
+. **** Interactive model                                                                                          
+>                 ****
 . ********************************************************************************
 . 
 . global Y bweight
@@ -256,6 +253,109 @@ Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
      mbsmoke   -316.2309 -555.5500 -555.5500 -263.5745 -129.5682 -129.5682
 
+. *** ddml extract
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .88270935    .86340686    .87301573    .91170546
+gradboost            2            0    .11729065    .13659314    .12698427    .08829454
+      ols            1            1    .43374151    .72280339    .38978844    .18863269
+gradboost            2            1    .56625849    .27719661    .61021156    .81136731
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .79388833    .73333025    .71755583    .93077891
+gradboost            2    .20611167    .26666975    .28244417    .06922109
+
+error - short-stacked weights for bweight not available
+
+error - short-stacked weights for mbsmoke not available
+
+error - pool-stacked weights for bweight not available
+
+error - pool-stacked weights for mbsmoke not available
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Y1_pystacked (bweight)
+             learner      D=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .95018463  .77662908
+gradboost          2          0          1  .04981537  .22337092
+      ols          1          0          2          1  .74603145
+gradboost          2          0          2          0  .25396855
+      ols          1          0          3  .96068162  .86272929
+gradboost          2          0          3  .03931838  .13727071
+      ols          1          1          1          1  .44560678
+gradboost          2          1          1  3.398e-14  .55439322
+      ols          1          1          2   .3739794  .40559748
+gradboost          2          1          2   .6260206  .59440252
+      ols          1          1          3  .02530073  .35196466
+gradboost          2          1          3  .97469927  .64803534
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .88270935    .86340686    .87301573    .91170546
+gradboost            2            0    .11729065    .13659314    .12698427    .08829454
+      ols            1            1    .43374151    .72280339    .38978844    .18863269
+gradboost            2            1    .56625849    .27719661    .61021156    .81136731
+
+pystacked MSEs for Y1_pystacked (bweight)
+             learner      D=0/1   resample     fold_1     fold_2
+      ols          1          0          1  386043.04  301543.96
+gradboost          2          0          1  456739.17  343582.31
+      ols          1          0          2  268847.47  378449.77
+gradboost          2          0          2  337032.91  416632.93
+      ols          1          0          3  305957.34  356366.28
+gradboost          2          0          3  357014.38  407122.57
+      ols          1          1          1   467233.9  568604.56
+gradboost          2          1          1  657643.95  535678.42
+      ols          1          1          2  471701.92  645045.76
+gradboost          2          1          2  410991.15  566121.58
+      ols          1          1          3  1032132.6  570210.44
+gradboost          2          1          3  432143.32   498098.1
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+             learner      D=0/1   mean_MSE      rep_1      rep_2      rep_3
+      ols          1          0  332867.98   343793.5  323648.62  331161.81
+gradboost          2          0  386354.05  400160.74  376832.92  382068.47
+      ols          1          1  625821.53  517919.23  558373.84  801171.51
+gradboost          2          1  516779.42  596661.18  488556.36  465120.71
+
+pystacked weights for D1_pystacked (mbsmoke)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .58920574  .87745476
+gradboost          2          1  .41079426  .12254524
+    logit          1          2  .72652872  .70858294
+gradboost          2          2  .27347128  .29141706
+    logit          1          3  .96882763  .89273019
+gradboost          2          3  .03117237  .10726981
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .79388833    .73333025    .71755583    .93077891
+gradboost            2    .20611167    .26666975    .28244417    .06922109
+
+pystacked MSEs for D1_pystacked (mbsmoke)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .15786121  .14620027
+gradboost          2          1  .16299605  .16404594
+    logit          1          2  .13978192  .14377898
+gradboost          2          2  .15281674  .15365353
+    logit          1          3   .1426224  .14996534
+gradboost          2          3  .16180083  .16914714
+
+mean stacking MSEs across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2      rep_3
+    logit          1  .14670169  .15203074  .14178045  .14629387
+gradboost          2  .16074337    .163521  .15323513  .16547398
+
 . 
 . *** pystacked, SS and PS
 . 
@@ -375,6 +475,117 @@ E[D|X]       = D_mbsmoke_ps_1
 Stacking final estimator: nnls1
 Warning: 54 propensity scores trimmed to lower limit .01.
 
+
+. *** ddml extract
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .87310111    .90910848    .83709373
+gradboost            2            0    .12689889    .09089152    .16290627
+      ols            1            1    .65988127    .57303301    .74672953
+gradboost            2            1    .34011873    .42696699    .25327047
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .86087362    .87640818    .84533907
+gradboost            2    .13912638    .12359182    .15466093
+
+short-stacked weights across resamples for bweight
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .79634883    .78964694    .80305072
+gradboost            2            0    .20365117    .21035306    .19694928
+      ols            1            1    .65117091    .75958576    .54275605
+gradboost            2            1    .34882909    .24041424    .45724395
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .78278949    .78691008     .7786689
+gradboost            2    .21721051    .21308992     .2213311
+
+pool-stacked weights across resamples for bweight
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .90605165      .954841    .85726231
+gradboost            2            0    .09394835      .045159    .14273769
+      ols            1            1    .64432404    .54446601    .74418207
+gradboost            2            1    .35567596    .45553399    .25581793
+
+pool-stacked weights across resamples for mbsmoke
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .89869572    .90041244      .896979
+gradboost            2    .10130428    .09958756      .103021
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Y1_pystacked (bweight)
+             learner      D=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .81821697          1
+gradboost          2          0          1  .18178303  3.161e-14
+      ols          1          0          2  .74672345  .92746401
+gradboost          2          0          2  .25327655  .07253599
+      ols          1          1          1   .8201077  .32595832
+gradboost          2          1          1   .1798923  .67404168
+      ols          1          1          2  .63624058  .85721848
+gradboost          2          1          2  .36375942  .14278152
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .87310111    .90910848    .83709373
+gradboost            2            0    .12689889    .09089152    .16290627
+      ols            1            1    .65988127    .57303301    .74672953
+gradboost            2            1    .34011873    .42696699    .25327047
+
+pystacked MSEs for Y1_pystacked (bweight)
+             learner      D=0/1   resample     fold_1     fold_2
+      ols          1          0          1  315651.55  342300.34
+gradboost          2          0          1  355484.03  418982.69
+      ols          1          0          2  326066.93  356364.43
+gradboost          2          0          2  355054.68  433107.57
+      ols          1          1          1  518049.64  510832.66
+gradboost          2          1          1  683247.18  382753.96
+      ols          1          1          2  346023.13  490797.92
+gradboost          2          1          2  381234.59  590459.36
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+             learner      D=0/1   mean_MSE      rep_1      rep_2
+      ols          1          0  335095.81  328975.94  341215.68
+gradboost          2          0  390657.24  387233.36  394081.13
+      ols          1          1  466425.84  514441.15  418410.52
+gradboost          2          1  509423.77  533000.57  485846.97
+
+pystacked weights for D1_pystacked (mbsmoke)
+             learner   resample     fold_1     fold_2
+    logit          1          1          1  .75281636
+gradboost          2          1          0  .24718364
+    logit          1          2  .69067814          1
+gradboost          2          2  .30932186          0
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .86087362    .87640818    .84533907
+gradboost            2    .13912638    .12359182    .15466093
+
+pystacked MSEs for D1_pystacked (mbsmoke)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .13451163  .15059088
+gradboost          2          1  .15840338  .16430612
+    logit          1          2  .13712866  .14379727
+gradboost          2          2  .14797093  .17338514
+
+mean stacking MSEs across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+    logit          1  .14150711  .14255126  .14046297
+gradboost          2   .1610164  .16135475  .16067804
 
 . 
 . *** append, estimate, replay
@@ -646,6 +857,129 @@ Summary over 3 resamples:
        D eqn      mean       min       p25       p50       p75       max
      mbsmoke   -334.8257 -444.3715 -444.3715 -410.5655 -149.5402 -149.5402
 
+. *** ddml extract
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .87873184    .90910848    .83709373    .88999332
+gradboost            2            0    .12126816    .09089152    .16290627    .11000668
+      ols            1            1      .716454    .57303301    .74672953    .82959945
+gradboost            2            1      .283546    .42696699    .25327047    .17040055
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .85367962    .87640818    .84533907    .83929161
+gradboost            2    .14632038    .12359182    .15466093    .16070839
+
+short-stacked weights across resamples for bweight
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .86423255    .78964694    .80305072            1
+gradboost            2            0    .13576745    .21035306    .19694928            0
+      ols            1            1     .7054378    .75958576    .54275605    .81397159
+gradboost            2            1     .2945622    .24041424    .45724395    .18602841
+
+short-stacked weights across resamples for mbsmoke
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .74438743    .78691008     .7786689    .66758332
+gradboost            2    .25561257    .21308992     .2213311    .33241668
+
+pool-stacked weights across resamples for bweight
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .90059531      .954841    .85726231    .88968264
+gradboost            2            0    .09940469      .045159    .14273769    .11031736
+      ols            1            1    .68740325    .54446601    .74418207    .77356167
+gradboost            2            1    .31259675    .45553399    .25581793    .22643833
+
+pool-stacked weights across resamples for mbsmoke
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .87792341    .90041244      .896979    .83637879
+gradboost            2    .12207659    .09958756      .103021    .16362121
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Y1_pystacked (bweight)
+             learner      D=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .81821697          1
+gradboost          2          0          1  .18178303  3.161e-14
+      ols          1          0          2  .74672345  .92746401
+gradboost          2          0          2  .25327655  .07253599
+      ols          1          0          3  .88725272  .89273391
+gradboost          2          0          3  .11274728  .10726609
+      ols          1          1          1   .8201077  .32595832
+gradboost          2          1          1   .1798923  .67404168
+      ols          1          1          2  .63624058  .85721848
+gradboost          2          1          2  .36375942  .14278152
+      ols          1          1          3          1   .6591989
+gradboost          2          1          3  3.042e-15   .3408011
+
+mean stacking weights across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+               learner        D=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .87873184    .90910848    .83709373    .88999332
+gradboost            2            0    .12126816    .09089152    .16290627    .11000668
+      ols            1            1      .716454    .57303301    .74672953    .82959945
+gradboost            2            1      .283546    .42696699    .25327047    .17040055
+
+pystacked MSEs for Y1_pystacked (bweight)
+             learner      D=0/1   resample     fold_1     fold_2
+      ols          1          0          1  315651.55  342300.34
+gradboost          2          0          1  355484.03  418982.69
+      ols          1          0          2  326066.93  356364.43
+gradboost          2          0          2  355054.68  433107.57
+      ols          1          0          3  381392.99  278043.52
+gradboost          2          0          3  437090.48   321696.5
+      ols          1          1          1  518049.64  510832.66
+gradboost          2          1          1  683247.18  382753.96
+      ols          1          1          2  346023.13  490797.92
+gradboost          2          1          2  381234.59  590459.36
+      ols          1          1          3  351754.36   599810.5
+gradboost          2          1          3  467446.71  688810.86
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (bweight)
+final stacking estimator: nnls1
+             learner      D=0/1   mean_MSE      rep_1      rep_2      rep_3
+      ols          1          0   333303.3  328975.94  341215.68  329718.26
+gradboost          2          0  386902.66  387233.36  394081.13  379393.49
+      ols          1          1   469544.7  514441.15  418410.52  475782.43
+gradboost          2          1  532325.44  533000.57  485846.97  578128.78
+
+pystacked weights for D1_pystacked (mbsmoke)
+             learner   resample     fold_1     fold_2
+    logit          1          1          1  .75281636
+gradboost          2          1          0  .24718364
+    logit          1          2  .69067814          1
+gradboost          2          2  .30932186          0
+    logit          1          3  .81460272  .86398051
+gradboost          2          3  .18539728  .13601949
+
+mean stacking weights across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .85367962    .87640818    .84533907    .83929161
+gradboost            2    .14632038    .12359182    .15466093    .16070839
+
+pystacked MSEs for D1_pystacked (mbsmoke)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .13451163  .15059088
+gradboost          2          1  .15840338  .16430612
+    logit          1          2  .13712866  .14379727
+gradboost          2          2  .14797093  .17338514
+    logit          1          3  .14669558  .14182165
+gradboost          2          3  .16048241   .1544062
+
+mean stacking MSEs across folds/resamples for D1_pystacked (mbsmoke)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2      rep_3
+    logit          1  .14242428  .14255126  .14046297  .14425862
+gradboost          2   .1598257  .16135475  .16067804  .15744431
+
 . 
 . *** multiple learners, no SS
 . 
@@ -671,10 +1005,14 @@ Learner D2_logit added successfully.
 
 . ddml crossfit
 Cross-fitting E[y|X,D] equation: bweight
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting
 Cross-fitting E[D|X] equation: mbsmoke
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting
 
 . ddml estimate
@@ -1231,10 +1569,14 @@ Learner D2_logit added successfully.
 
 . ddml crossfit, shortstack
 Cross-fitting E[y|X,D] equation: bweight
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 Cross-fitting E[D|X] equation: mbsmoke
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 . ddml estimate
@@ -2169,8 +2511,8 @@ Summary over 2 resamples:
 
 . 
 . ******************************************************************************** 
-. **** Restacking with ddml estimate                                                                                   
->    ****
+. **** Restacking with ddml estimate                                                                              
+>         ****
 . ******************************************************************************** 
 . 
 . set seed 123
@@ -3359,5 +3701,5 @@ error - restacking available only if pystacked is the only learner for each cond
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactive.log
   log type:  text
- closed on:  28 Jul 2023, 13:41:15
------------------------------------------------------------------------------------------------------------------------
+ closed on:   3 Aug 2023, 14:59:35
+------------------------------------------------------------------------------------------------------------------

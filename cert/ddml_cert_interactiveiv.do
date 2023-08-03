@@ -9,25 +9,19 @@ cap cd "/Users/kahrens/MyProjects/ddml/cert"
 cap cd "C:\LocalStore\ecomes\Documents\GitHub\ddml\cert"
 
 cap log close
-log using "ddml_cert_late", replace text
+log using "ddml_cert_interactiveiv", replace text
 
-which ddml
+which ddml, all
 mata: whichddml()
+which pystacked, all
 
 use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
 keep in 1/5000
 
-
-which ddml
-which pystacked
-
-// necessary programs for cert; script exits with error if not installed
-findfile pystacked.ado
-
 set seed 123
 
 ********************************************************************************
-*** LATE				 													****
+*** interactiveiv															****
 ********************************************************************************
 
 gen lnearnings = log(earnings) 
@@ -56,6 +50,9 @@ ddml estimate, mname(m0) spec(st) rep(1) replay notable
 ddml estimate, mname(m0) spec(st) rep(2) replay notable
 ddml estimate, mname(m0) spec(st) rep(mn) replay notable
 ddml estimate, mname(m0) spec(st) rep(md) replay notable
+*** ddml extract
+ddml extract, show(weights)
+ddml extract, show(pystacked)
 
 *** pystacked, SS
 
@@ -70,6 +67,9 @@ ddml estimate
 ddml estimate, mname(m0) spec(st) rep(1) replay notable
 ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+*** ddml extract
+ddml extract, show(weights)
+ddml extract, show(pystacked)
 
 *** append, estimate, replay
 ddml sample, append(1)
@@ -88,6 +88,9 @@ ddml estimate, mname(m0) spec(ps) rep(1) replay notable
 ddml estimate, mname(m0) spec(ps) rep(2) replay notable
 ddml estimate, mname(m0) spec(ps) rep(mn) replay notable
 ddml estimate, mname(m0) spec(ps) rep(md) replay notable
+*** ddml extract
+ddml extract, show(weights)
+ddml extract, show(pystacked)
 
 *** multiple learners, no SS
 
@@ -172,6 +175,8 @@ ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 ddml estimate, mname(m0) spec(ss) rep(2) replay notable
 ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
 ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+*** ddml extract
+ddml extract, show(ssweights)
 
 *** ddml overlap
 ddml init interactiveiv, kfolds(2) reps(2)

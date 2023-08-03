@@ -1,5 +1,5 @@
 *! ddml v1.4.1
-*! last edited: 28july2023
+*! last edited: 3aug2023
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 
@@ -174,6 +174,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 	mata: st_local("shortstack", `ename'.shortstack)
 	mata: st_local("poolstack", `ename'.poolstack)
 	mata: st_local("lieflag", strofreal(`ename'.lieflag))
+	mata: st_local("etype", `ename'.etype)	// "Y", "D" or "Z"
 	
 	** error check
 	if `lieflag' {
@@ -467,6 +468,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				// outcome equation so estimate separately for treated and untreated
 	
 				// for treatvar = 1
+				
 				// estimate excluding kth fold
 				`qui' `est_main' if `fid'!=`k' & `treatvar' == 1 & `touse', `est_options' `stdfinalestopt'
 				`qui' di as text "N=" as res e(N)
@@ -519,26 +521,44 @@ program define _crossfit_pystacked, rclass sortpreserve
 				if `stdflag' {
 					// in-sample CV base learner predicted values
 					// accumulated in mata along with corresponding values of dep var
-					qui replace `tomata' = `fid'!=`k' & `touse'
-					qui replace `fidtouse1' = (`k'*`touse')
+					qui replace `tomata' = `fid'!=`k' & `touse' & (`treatvar'==1)
+					qui replace `fidtouse1' = (`k'*`touse')*(`treatvar'==1)
 					fvexpand `stacking_p_cv'*
 					mata: `y_stacking_cv1' = `y_stacking_cv1' \ st_data(., "`fid' `fidtouse1' `vname' `r(varlist)'", "`tomata'")
 				}
-				
 				// for treatvar = 0
 
-				// first, we need to account for D always = 0 if Z=0
-				// check if dvar is always 0
-				qui count if `treatvar'==0 & `vname'!=0 & `fid'==`k' & `touse' 
-
-				if (`r(N)'==0 & "`allowallzero'"!="") {
-					// create fitted values = eps (appx 0) for kth fold
-					`qui' gen `vhat0_k'=10e-12  if `fid'==`k' & `touse' 
-					// OOS (crossfit) base learner predicted values
-					forvalues j=1/`nlearners' {
-						qui replace `vtilde'0_L`j'_`m' = 10e-12 if `fid'==`k' & `touse'
+				// possible in LATE model that D is always =0 if Z=0 (perfect assignment to treatment)
+				// check estimation sample for this and handle as a special case (do not estimate)
+				qui count if `treatvar'==0 & `vname'!=0 & `fid'~=`k' & `touse'
+				if (r(N)==0 & "`etype'"=="D") {
+					// case where, if Z=0, D=0 always, so just created fitted values =0 instead of estimating
+					// create fitted values = 0 for kth fold
+					`qui' gen `vhat0_k'=0  if `fid'==`k' & `touse' 
+					if `stdflag' {
+						// OOS (crossfit) base learner predicted values
+						forvalues j=1/`nlearners' {
+							qui replace `vtilde'0_L`j'_`m' = 0 if `fid'==`k' & `touse'
+						}
+						// in-sample CV base learner predicted values
+						tempvar stacking_p_cv
+						forvalues j=1/`nlearners' {
+							cap drop `stacking_p_cv'`j'
+							qui gen double `stacking_p_cv'`j' = 0 if `fid'~=`k' & `touse' & `treatvar'==0
+						}
+						// don't need in-sample CV base learner predicted values for poolstacking
+						// save pystacked weights (all missings) and MSEs (all zeros) if #learners>1
+						if (`k'==1) {
+							mat `pysw0' = J(`nlearners',1,.)
+							mat `pysm0' = J(`nlearners',1,0)
+						}
+						else {
+							mat `pysw0_temp' = J(`nlearners',1,.)
+							mat `pysm0_temp' = J(`nlearners',1,0)
+							mat `pysw0' = `pysw0' , `pysw0_temp'
+							mat `pysm0' = `pysm0' , `pysm0_temp'
+						}
 					}
-					// don't need in-sample CV base learner predicted values for poolstacking
 				} 
 				else {
 					// estimate excluding kth fold
@@ -563,7 +583,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 						qui predict double `stacking_p_cv', basexb cv
 						// save pystacked weights and MSEs if #learners>1
 						if e(mcount)>1 & e(mcount)<. {
-							qui pystacked, table(rmspe)		// create rmspe matrix
+							qui pystacked, table(rmspe)		// create weights and rmspe matrices
 							if (`k'==1) {
 								mat `pysw0' = e(weights)
 								mat `pysm0_temp' = e(rmspe)
@@ -594,8 +614,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				// in-sample CV base learner predicted values
 				// accumulated in mata along with corresponding values of dep var
 				if `stdflag' {
-					qui replace `tomata' = `fid'!=`k' & `touse'
-					qui replace `fidtouse0' = (`k'*`touse')
+					qui replace `tomata' = `fid'!=`k' & `touse' & (`treatvar'==0)
+					qui replace `fidtouse0' = (`k'*`touse')*(`treatvar'==0)
 					fvexpand `stacking_p_cv'*
 					mata: `y_stacking_cv0' = `y_stacking_cv0' \ st_data(., "`fid' `fidtouse0' `vname' `r(varlist)'", "`tomata'")
 				}
@@ -629,23 +649,35 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat score double `shortstack'_ss_`m' = `ssw' if `touse'
 			}
 			else {	// case 2: interactive models
+				tempname ssw1 ssw0
+				
+				// treatvar == 1
 				`qui' di
 				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=1):"
 				`qui' _ddml_nnls `vname' `vtilde1_list' if `touse' & `treatvar'==1, finalest(`ssfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
-				tempname ssw1
 				mat `ssw1' = e(b)
 				cap drop `shortstack'_ss1_`m'
 				mat score double `shortstack'_ss1_`m' = `ssw1' if `touse'
+				
 				// treatvar == 0
-				`qui' di
-				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=0):"
-				`qui' _ddml_nnls `vname' `vtilde0_list' if `touse' & `treatvar'==0, finalest(`ssfinalest') stype(`stype') `noisily'
-				`qui' di as text "N=" as res e(N)
-				tempname ssw0
-				mat `ssw0' = e(b)
-				cap drop `shortstack'_ss0_`m'
-				mat score double `shortstack'_ss0_`m' = `ssw0' if `touse'
+				// possible in LATE model that D is always =0 if Z=0 (perfect assignment to treatment)
+				// check estimation sample for this and handle as a special case
+				qui count if `vname'!=0 & `treatvar'==0 & `touse'
+				if (r(N)==0 & "`etype'"=="D") {
+					cap drop `shortstack'_ss0_`m'
+					qui gen double `shortstack'_ss0_`m' = 0
+					mat `ssw0'		= J(1,`nlearners',.)
+				}
+				else {
+					`qui' di
+					`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=0):"
+					`qui' _ddml_nnls `vname' `vtilde0_list' if `touse' & `treatvar'==0, finalest(`ssfinalest') stype(`stype') `noisily'
+					`qui' di as text "N=" as res e(N)
+					mat `ssw0' = e(b)
+					cap drop `shortstack'_ss0_`m'
+					mat score double `shortstack'_ss0_`m' = `ssw0' if `touse'
+				}
 			}
 		}
 	
@@ -664,7 +696,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 			
 			// mata object y_stacking_cv has y and predicted yhats of all learners in all crossfits
 			if ~`tvflag' { // case 1
-				tempname tframe
+				tempname psw tframe
 				qui frame pwf
 				local cframe `r(currentframe)'
 				frame create `tframe'
@@ -674,7 +706,6 @@ program define _crossfit_pystacked, rclass sortpreserve
 				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (additive model):"
 				`qui' _ddml_nnls `vname' `vtilde_list', finalest(`psfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
-				tempname psw
 				mata: `psw' = st_matrix("e(b)")
 				frame change `cframe'
 				frame drop `tframe'
@@ -685,18 +716,18 @@ program define _crossfit_pystacked, rclass sortpreserve
 			}
 			else {	// case 2: interactive models
 			
+				tempname psw1 psw0 tframe
+				
 				// treatvar=1
-				tempname tframe
 				qui frame pwf
 				local cframe `r(currentframe)'
 				frame create `tframe'
 				frame change `tframe'
 				getmata (`fid' `fidtouse' `vname' `vtilde1_list')=`y_stacking_cv1', force replace
 				`qui' di
-				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (additive model):"
+				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (interactive model):"
 				`qui' _ddml_nnls `vname' `vtilde1_list', finalest(`psfinalest') stype(`stype') `noisily'
 				`qui' di as text "N=" as res e(N)
-				tempname psw1
 				mata: `psw1' = st_matrix("e(b)")
 				frame change `cframe'
 				frame drop `tframe'
@@ -706,24 +737,32 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat score double `poolstack'_ps1_`m' = `psw1' if `touse'
 
 				// treatvar=0
-				tempname tframe
-				qui frame pwf
-				local cframe `r(currentframe)'
-				frame create `tframe'
-				frame change `tframe'
-				getmata (`fid' `fidtouse' `vname' `vtilde0_list')=`y_stacking_cv0', force replace
-				`qui' di
-				`qui' di as text "Pooled-stacking, finalest=`psfinalest' (additive model):"
-				`qui' _ddml_nnls `vname' `vtilde0_list', finalest(`psfinalest') stype(`stype') `noisily'
-				`qui' di as text "N=" as res e(N)
-				tempname psw0
-				mata: `psw0' = st_matrix("e(b)")
-				frame change `cframe'
-				frame drop `tframe'
-				mata: st_matrix("`psw0'",`psw0')
-				mat colnames `psw0' =  `vtilde0_list'
-				cap drop `poolstack'_ps0_`m'
-				mat score double `poolstack'_ps0_`m' = `psw0' if `touse'
+				// possible in LATE model that D is always =0 if Z=0 (perfect assignment to treatment)
+				// check estimation sample for this and handle as a special case (no estimation took place)
+				qui count if `vname'!=0 & `treatvar'==0 & `touse'
+				if (r(N)==0 & "`etype'"=="D") {
+					cap drop `poolstack'_ps0_`m'
+					qui gen double `poolstack'_ps0_`m' = 0
+					mat `psw0'		= J(1,`nlearners',.)
+				}
+				else {
+					qui frame pwf
+					local cframe `r(currentframe)'
+					frame create `tframe'
+					frame change `tframe'
+					getmata (`fid' `fidtouse' `vname' `vtilde0_list')=`y_stacking_cv0', force replace
+					`qui' di
+					`qui' di as text "Pooled-stacking, finalest=`psfinalest' (interactive model):"
+					`qui' _ddml_nnls `vname' `vtilde0_list', finalest(`psfinalest') stype(`stype') `noisily'
+					`qui' di as text "N=" as res e(N)
+					mata: `psw0' = st_matrix("e(b)")
+					frame change `cframe'
+					frame drop `tframe'
+					mata: st_matrix("`psw0'",`psw0')
+					mat colnames `psw0' =  `vtilde0_list'
+					cap drop `poolstack'_ps0_`m'
+					mat score double `poolstack'_ps0_`m' = `psw0' if `touse'
+				}
 			}
 		}
 		if `psflag' {
@@ -1143,6 +1182,8 @@ program define _crossfit_other, rclass sortpreserve
 	mata: st_local("shortstack", `ename'.shortstack)
 	mata: st_local("poolstack", `ename'.poolstack)
 	mata: st_local("lieflag", strofreal(`ename'.lieflag))
+	mata: st_local("etype", `ename'.etype)	// "Y", "D" or "Z"
+
 	** indicator for short-stacking
 	local ssflag	= "`shortstack'"~=""
 	** indicator for pooled-stacking
@@ -1227,7 +1268,7 @@ program define _crossfit_other, rclass sortpreserve
 		// case 3: `lieflag'==1
 		// nb: `tvflag'==1 & `lieflag'==1 is impossible
 	
-		if `firstrep'>1 {
+		if `lastrep'>1 {
 			di as text "Resample `m'..."
 		}
 
@@ -1406,7 +1447,7 @@ program define _crossfit_other, rclass sortpreserve
 					if (`r(N)'==0 & "`allowallzero'"!="") {
 						// get fitted values for kth fold	
 						tempvar vhat_k	
-						`qui' gen double `vhat_k'=10e-12  if `fid'==`k' & `touse' 	
+						`qui' gen double `vhat_k'=0  if `fid'==`k' & `touse' 	
 					} 
 					else {
 						// estimate excluding kth fold
@@ -1552,6 +1593,7 @@ program define _crossfit_other, rclass sortpreserve
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 				local vhats1 
 				local vhats0
+				tempname ssw1 ssw0
 				
 				// treatvar == 1
 				forvalues j=1/`nlearners' {
@@ -1562,25 +1604,30 @@ program define _crossfit_other, rclass sortpreserve
 				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=1):"
 				`qui' _ddml_nnls `vname' `vhats1' if `treatvar'==1, finalest(`ssfinalest') `noisily'
 				`qui' di as text "N=" as res e(N)
-				tempname ssw1
 				mat `ssw1' = e(b)
 				qui predict double `vtemp'
 				qui replace `shortstack'_ss1_`m'=`vtemp'
 					
 				// treatvar == 0
-				forvalues j=1/`nlearners' {
-					local vhats0 `vhats0' `vhat0`j''
+				// if late and Z==0, we know Dhat should be 0 (eps = appx 0)
+				if "`etype'"=="D" {
+					cap drop `shortstack'_ss0_`m'
+					qui gen double `shortstack'_ss0_`m' = 0
+					mat `ssw0' = J(1,`nlearners',.)
 				}
-				tempvar vtemp
-				`qui' di
-				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=0):"
-				`qui' _ddml_nnls `vname' `vhats0' if `treatvar'==0, finalest(`ssfinalest') `noisily'
-				`qui' di as text "N=" as res e(N)
-				tempname ssw0
-				mat `ssw0' = e(b)
-				qui predict double `vtemp'
-				qui replace `shortstack'_ss0_`m'=`vtemp'
-		
+				else {
+					forvalues j=1/`nlearners' {
+						local vhats0 `vhats0' `vhat0`j''
+					}
+					tempvar vtemp
+					`qui' di
+					`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=0):"
+					`qui' _ddml_nnls `vname' `vhats0' if `treatvar'==0, finalest(`ssfinalest') `noisily'
+					`qui' di as text "N=" as res e(N)
+					mat `ssw0' = e(b)
+					qui predict double `vtemp'
+					qui replace `shortstack'_ss0_`m'=`vtemp'
+				}
 			}
 			else if `lieflag' {
 				// apply short-stacking to cross-fitted (out-of-sample) predicted values of E[D|XZ]
