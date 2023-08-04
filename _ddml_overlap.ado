@@ -1,5 +1,5 @@
 *! ddml v1.4.1
-*! last edited: 2aug2023
+*! last edited: 4aug2023
 *! authors: aa/ms
 
 program define _ddml_overlap
@@ -104,6 +104,8 @@ program define _ddml_overlap
 	foreach dtilde in `pslist' {
 		// gname is individual dtilde graph
 		local gname `dtilde'
+		// reset gcmd local
+		local gcmd
 		// loop through resamples
 		foreach r of numlist `replist' {
 			tempvar x0`r' x1`r' ps0`r' ps1`r' ps`r'
