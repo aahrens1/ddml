@@ -1,5 +1,5 @@
 *! ddml v1.4.1
-*! last edited: 2aug2023
+*! last edited: 6aug2023
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -1165,23 +1165,23 @@ program _ddml_estimate_main
 			// numbered/stacking estimates
 			if `numspecflag' {
 				local title "Mean over `nreps' `sttext'`msetext'resamples (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(mn) title(`title') te(`teffect')
 				local title "Median over `nreps' `sttext'`msetext'resamples (`teffect')"
- 				`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(md) title(`title') vce(`vce') te(`teffect')
+ 				`qui' medmean_and_store, mname(`mname') spec(`spectext') medmean(md) title(`title') te(`teffect')
  			}
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean over `nreps' resamples) (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(mn) title(`title') te(`teffect')
 				local title "Shortstack DDML model (median over `nreps' resamples) (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(md) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(md) title(`title') te(`teffect')
 			}
 			// poolstack
 			if `psflag' {
 				local title "Poolstack DDML model (mean over `nreps' resamples) (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(mn) title(`title') te(`teffect')
 				local title "Poolstack DDML model (median over `nreps' resamples) (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(md) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(md) title(`title') te(`teffect')
 			}
 		}
 		
@@ -1402,29 +1402,39 @@ program _ddml_estimate_main
 		// aggregate across resamplings
 		if `nreps' > 1 {
 			local title "Mean over `nreps' min-mse specifications (`teffect')"
- 			`qui' medmean_and_store, mname(`mname') spec(mse) medmean(mn) title(`title') vce(`vce') te(`teffect')
+ 			`qui' medmean_and_store, mname(`mname') spec(mse) medmean(mn) title(`title') te(`teffect')
  			local title "Median over `nreps' min-mse specifications (`teffect')"
- 			`qui' medmean_and_store, mname(`mname') spec(mse) medmean(md) title(`title') vce(`vce') te(`teffect')
+ 			`qui' medmean_and_store, mname(`mname') spec(mse) medmean(md) title(`title') te(`teffect')
 			// numbered specifications
 			forvalues i = 1/`ncombos' {
 				local title "DDML model, specification `i' (mean over `nreps' resamples) (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(`i') medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(`i') medmean(mn) title(`title') te(`teffect')
 				local title "DDML model, specification `i' (median over `nreps' resamples) (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(`i') medmean(md) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(`i') medmean(md) title(`title') te(`teffect')
 			}
 			// shortstack
 			if `ssflag' {
 				local title "Shortstack DDML model (mean over `nreps' resamples) (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(mn) title(`title') te(`teffect')
 				local title "Shortstack DDML model (median over `nreps' resamples) (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(md) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ss) medmean(md) title(`title') te(`teffect')
 			}
 			// poolstack
 			if `psflag' {
 				local title "Poolstack DDML model (mean over `nreps' resamples) (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(mn) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(mn) title(`title') te(`teffect')
 				local title "Poolstack DDML model (median over `nreps' resamples) (`teffect')"
-				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(md) title(`title') vce(`vce') te(`teffect')
+				`qui' medmean_and_store, mname(`mname') spec(ps) medmean(md) title(`title') te(`teffect')
+			}
+		}
+		
+		// if multiple resamples, get mean/median for each specification
+		if `nreps'>1 & `ncombos' > 1 {
+			forvalues i = 1/`ncombos' {
+				local title "Mean over `nreps' resamples"
+				`qui' medmean_and_store, mname(`mname') spec(`i') medmean(mn) title(`title') te(`teffect')
+				local title "Median over `nreps' resamples"
+				`qui' medmean_and_store, mname(`mname') spec(`i') medmean(md) title(`title') te(`teffect')
 			}
 		}
 		
@@ -1506,7 +1516,7 @@ program _ddml_estimate_main
 				}
 			}
 			else {
-				// only mse/ss specs available/reported
+				// only mse/stacking specs available/reported
 				if `numspecflag' {
 					`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`m')
 					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
@@ -1616,6 +1626,7 @@ program _ddml_estimate_main
 	}
 		
 	if `nreps' > 1 & `tableflag' {
+		** mean and median
 		di
 		di as text "Mean/med Y(0) learner" _c
 		di as text               %14s "Y(1) learner" _c
@@ -1632,6 +1643,46 @@ program _ddml_estimate_main
 			di as text           %14s "Z learner" _c
 		}
 		di
+		if `doallcombos' {
+			// all combos available, so loop through
+			forvalues i=1/`ncombos' {
+				foreach medmean in mn md {
+					`qui' replay_estimate, mname(`mname') spec(`i') rep(`medmean')
+					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+					mat `btemp' = e(b)
+					mat `Vtemp' = e(V)
+					local yt0		`e(y0)'
+					local yt1		`e(y1)'
+					local dt		`e(d)'
+					local dt0		`e(d0)'
+					local dt1		`e(d1)'
+					local zt		`e(z)'
+					local specrep "`: di %4s "`i'" %3s "`medmean'"'"
+					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`medmean') notable replay
+					di %6s "{`rcmd':`specrep'}" _c
+					di as res %14s abbrev("`yt0'",13) _c
+					di as res %14s abbrev("`yt1'",13) _c
+					if `ateflag' {
+						di as res %14s abbrev("`dt'",13) _c
+					}
+					else {
+						di as res %14s abbrev("`dt0'",13) _c
+						di as res %14s abbrev("`dt1'",13) _c
+					}
+					// precede with a space
+					di as res " " %9.3f el(`btemp',1,1) _c
+					local se = sqrt(el(`Vtemp',1,1))
+					local se = strtrim("`: di %8.3f `se''")
+					local pse (`se')
+					// precede with a space
+					di as res " " %10s "`pse'" _c
+					if ~`ateflag' {
+						di as res %14s abbrev("`zt'",13) _c				
+					}
+					di
+				}
+			}
+		}
 		foreach medmean in mn md {
 			** mean and median over mse
 			if `numspecflag' {
@@ -1680,7 +1731,7 @@ program _ddml_estimate_main
 				di as res " " %10s "`pse'" _c
 				if ~`ateflag' & `poss_combos'>1 {
 					// learner is min-mse learner
-					di as res %14s "[mse]" _c
+					di as res %14s "[min-mse]" _c
 				}
 				else if ~`ateflag' {
 					// only one learner so use the name
@@ -2222,7 +2273,6 @@ program medmean_and_store, eclass
 							spec(string)		///
 							title(string)		///
 							medmean(string)		///
-							vce(string) 		///
 							TEffect(name)		/// either ATE, ATET or ATEU
 						]
 		
@@ -2266,6 +2316,11 @@ program medmean_and_store, eclass
 			foreach obj in `list_scalar' {
 				mata: st_local("`obj'",strofreal(`B'.get(("`obj'","scalar"))))
 			}
+		}
+		// collect list of vars used
+		foreach obj in y0 y1 d d0 d1 z {
+			mata: st_local("vname",`B'.get(("`obj'_m","local")))
+			local `obj'_`medmean' ``obj'_`medmean'' `vname'
 		}
 		// possible that different estimation samples have different #obs
 		qui count if `mname'_sample_`m'==1
@@ -2374,21 +2429,43 @@ program medmean_and_store, eclass
 	mata: `A'.put(("b_resamples","matrix"),`bvec')
 	
 	// store locals
-	local list_local title yvar dvar y0 y1 vce vcetype teffect
+	local list_local title yvar dvar y0 y1 vce vcetype teffect y0_`medmean' y1_`medmean'
 	if "`model'"=="interactive" {
-		local list_local `list_local' d
+		local list_local `list_local' d d_`medmean'
 	}
 	else {
-		local list_local `list_local' d0 d1 z
+		local list_local `list_local' d0 d1 z d0_`medmean' d1_`medmean' z_`medmean'
 	}
 	if "`clustvar'"~=""		local list_local `list_local' clustvar
 	foreach obj in `list_local' {
 		mata: `A'.put(("`obj'","local"),"``obj''")
 	}
+	
 	// special case - "_m" subscript doesn't apply to mean/median over resamplings
 	// so store without resample subscript
 	foreach obj in title y0 y1 d d0 d1 z {
 		mata: `A'.put(("`obj'_m","local"),"``obj''")
+	}
+	// special case - min mse specification
+	// min mse can vary across resamples, so varnames for y, d, etc.
+	// are original varnames with mse suffix
+	if "`spec'"=="mse" {
+		mata: `A'.put(("y0","local"),   "`medmean'_`nameY'0_mse")
+		mata: `A'.put(("y0_m","local"), "`medmean'_`nameY'0_mse")
+		mata: `A'.put(("y1","local"),   "`medmean'_`nameY'1_mse")
+		mata: `A'.put(("y1_m","local"), "`medmean'_`nameY'1_mse")
+		if "`model'"=="interactive" {
+			mata: `A'.put(("d","local"),   "`medmean'_`nameD'_mse")
+			mata: `A'.put(("d_m","local"), "`medmean'_`nameD'_mse")
+		}
+		else {
+			mata: `A'.put(("d0","local"),   "`medmean'_`nameD'0_mse")
+			mata: `A'.put(("d0_m","local"), "`medmean'_`nameD'0_mse")
+			mata: `A'.put(("d1","local"),   "`medmean'_`nameD'1_mse")
+			mata: `A'.put(("d1_m","local"), "`medmean'_`nameD'1_mse")
+			mata: `A'.put(("z","local"),    "`medmean'_`nameZ'_mse")
+			mata: `A'.put(("z_m","local"),  "`medmean'_`nameZ'_mse")
+		}
 	}
 	
 	// store scalars
