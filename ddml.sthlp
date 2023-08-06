@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 28july2023}{...}
+{* *! version 6aug2023}{...}
 {viewerjumpto "Links to detailed help files" "ddml##help"}{...}
 {viewerjumpto "Models" "ddml##models"}{...}
 {viewerjumpto "Estimation steps" "ddml##estimation"}{...}
@@ -76,7 +76,7 @@ but offers less flexibility.
 {p 2}Help files: auxiliary programs{p_end}
 {p2col:{help ddml describe}} Report information about the model setup and/or results.{p_end}
 {p2col:{help ddml extract}} Report information about saved results e.g. stacking weigths.{p_end}
-{p2col:{help ddml sample}} Report information about the estimation sample, folds, etc.{p_end}
+{p2col:{help ddml sample}} Add cross-fitting repetitions to an existing model.{p_end}
 {p2col:{help ddml export}} Save the {opt ddml} estimated conditional expectations to a csv file.{p_end}
 {p2col:{help ddml overlap}} (interactive models only) Generate overlap plots for propensity-score-based models{p_end}
 {p2col:{help crossfit}} Use {opt crossfit} as a standalone program for cross-fitting and cross-validation.{p_end}

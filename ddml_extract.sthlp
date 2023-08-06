@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 28july2023}{...}
+{* *! version 3aug2023}{...}
 {viewerjumpto "Syntax" "ddml_extract##syntax"}{...}
 {viewerjumpto "Options" "ddml_extract##options"}{...}
 {viewerjumpto "Examples" "ddml_extract##examples"}{...}
@@ -77,7 +77,7 @@ Extracts standard stacking ({opt pystacked}) weights.
 {synopt:{opt show(ssweights)}}
 Extracts {opt shortstack} weights.
 {p_end}
-{synopt:{opt show(sweights)}}
+{synopt:{opt show(pweights)}}
 Extracts {opt poolstack} weights.
 {p_end}
 {synopt:{opt show(weights)}}
