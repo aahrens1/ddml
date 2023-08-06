@@ -96,11 +96,11 @@ ddml extract, show(pystacked)
 
 *** initialise ddml and select model; 
 ddml init interactiveiv, kfolds(2) reps(2)
-ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(ols gradboost)
+ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(gradboost)
 ddml E[Y|X,Z]: reg $Y $X
-ddml E[D|X,Z]: pystacked $D $X, type(class) method(logit gradboost)
+ddml E[D|X,Z]: pystacked $D $X, type(class) method(gradboost)
 ddml E[D|X,Z]: logit $D $X
-ddml E[Z|X]: pystacked $Z $X, type(class) method(logit gradboost)
+ddml E[Z|X]: pystacked $Z $X, type(class) method(gradboost)
 ddml E[Z|X]: logit $Z $X
 ddml crossfit
 ddml estimate
@@ -132,11 +132,11 @@ ddml estimate, mname(m0) spec(mse) rep(md) replay notable
 
 *** initialise ddml and select model; 
 ddml init interactiveiv, kfolds(2) reps(2)
-ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(ols gradboost)
+ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(gradboost)
 ddml E[Y|X,Z]: reg $Y $X
-ddml E[D|X,Z]: pystacked $D $X, type(class) method(logit gradboost)
+ddml E[D|X,Z]: pystacked $D $X, type(class) method(gradboost)
 ddml E[D|X,Z]: logit $D $X
-ddml E[Z|X]: pystacked $Z $X, type(class) method(logit gradboost)
+ddml E[Z|X]: pystacked $Z $X, type(class) method(gradboost)
 ddml E[Z|X]: logit $Z $X
 ddml crossfit, shortstack
 ddml estimate

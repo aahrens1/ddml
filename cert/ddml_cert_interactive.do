@@ -96,9 +96,9 @@ ddml extract, show(pystacked)
 
 *** initialise ddml and select model; 
 ddml init interactive, kfolds(2) reps(2)
-ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(ols gradboost)
+ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(gradboost)
 ddml E[Y|X,D]: reg $Y $X
-ddml E[D|X]: pystacked $D $X, type(class) method(logit gradboost)
+ddml E[D|X]: pystacked $D $X, type(class) method(gradboost)
 ddml E[D|X]: logit $D $X
 ddml crossfit
 ddml estimate
@@ -130,9 +130,9 @@ ddml estimate, mname(m0) spec(mse) rep(md) replay notable
 
 *** initialise ddml and select model; 
 ddml init interactive, kfolds(2) reps(2)
-ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(ols gradboost)
+ddml E[Y|X,D]: pystacked $Y $X, type(reg) method(gradboost)
 ddml E[Y|X,D]: reg $Y $X
-ddml E[D|X]: pystacked $D $X, type(class) method(logit gradboost)
+ddml E[D|X]: pystacked $D $X, type(class) method(gradboost)
 ddml E[D|X]: logit $D $X
 ddml crossfit, shortstack
 ddml estimate
