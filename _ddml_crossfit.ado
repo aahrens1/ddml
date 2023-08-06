@@ -1,5 +1,5 @@
 *! ddml v1.4.1
-*! last edited: 3aug2023
+*! last edited: 6aug2023
 *! authors: aa/ms
 
 *** ddml cross-fitting
@@ -80,6 +80,19 @@ program _ddml_crossfit, eclass sortpreserve
 		exit 198
 	}
 	
+	// check interactive model
+	if "`model'"=="interactive" {
+		if `numeqnD' > 1 {
+			di as err "error - interactive model allows only one D variable"
+			exit 198
+		}
+		qui count if (`nameD'~=1 | `nameD'~=0) & `touse'
+		if r(N) > 0 {
+			di as err "error - interactive model supported only for D=0 or D=1"
+			exit 198
+		}
+	}
+	
 	// check interactive IV (LATE) model
 	if "`model'"=="interactiveiv" {
 		if `numeqnD' > 1 {
@@ -90,7 +103,17 @@ program _ddml_crossfit, eclass sortpreserve
 			di as err "error - interactiveiv model allows only one Z variable"
 			exit 198
 		}
-		qui count if `nameD'==1 & `nameZ'==0
+		qui count if (`nameD'~=1 | `nameD'~=0) & `touse'
+		if r(N) > 0 {
+			di as err "error - interactiveiv model supported only for D=0 or D=1"
+			exit 198
+		}
+		qui count if (`nameZ'~=1 | `nameZ'~=0) & `touse'
+		if r(N) > 0 {
+			di as err "error - interactiveiv model supported only for Z=0 or Z=1"
+			exit 198
+		}
+		qui count if `nameD'==1 & `nameZ'==0 & `touse'
 		if r(N)>0 {
 			di as text "note: treatment (`nameD') = 1 in `r(N)' cases when assignment (`nameZ') = 0"
 		}
