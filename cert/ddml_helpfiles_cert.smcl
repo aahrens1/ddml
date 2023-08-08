@@ -3,12 +3,12 @@
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 16:54:38
+ {txt}opened on:  {res} 8 Aug 2023, 11:12:57
 {txt}
 {com}. which ddml
 {txt}C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-{res}*! ddml v1.4
-*! last edited: 27july2023
+{res}*! ddml v1.4.1
+*! last edited: 28july2023
 *! authors: aa/ms
 {txt}
 {com}. mata: whichddml()
@@ -19,27 +19,27 @@
 {txt}
 {com}. which qddml
 {txt}C:\LocalStore\ecomes\Documents\GitHub\ddml\qddml.ado
-{res}*! ddml v1.4
-*! last edited: 25july2023
+{res}*! ddml v1.4.1
+*! last edited: 28july2023
 *! authors: aa/ms
 {txt}
 {com}. which crossfit
 {txt}C:\LocalStore\ecomes\Documents\GitHub\ddml\crossfit.ado
-{res}*! ddml v1.4
-*! last edited: 25july2023
+{res}*! ddml v1.4.1
+*! last edited: 3aug2023
 *! authors: aa/ms
 {txt}
 {com}. which pystacked
 {txt}C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
-{res}*! pystacked v0.7.4
-*! last edited: 23july2023
+{res}*! pystacked v0.7.5
+*! last edited: 7aug2023
 *! authors: aa/ms
 {txt}
 {com}. log close
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 16:54:38
+ {txt}closed on:  {res} 8 Aug 2023, 11:12:57
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -47,19 +47,19 @@
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 16:54:38
+ {txt}opened on:  {res} 8 Aug 2023, 11:12:57
 
 Help file: ddml_example_partial_pystacked_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 16:54:38
+ {txt}closed on:  {res} 8 Aug 2023, 11:12:57
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Partially-linear model - Basic example with {help pystacked}}{p_end}
 
@@ -115,8 +115,8 @@ spec  r     Y learner     D learner         b        SE
 {stata ddml estimate, mname(m0) spec(st) rep(2) notable replay:  st  2}  Y1_pystacked  D1_pystacked  7381.502  (856.397)
 
 {txt}Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay:  st mn}{res}  Y1_pystacked  D1_pystacked  7017.494  (916.573)
-{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay:  st md}  Y1_pystacked  D1_pystacked  7017.494  (916.980)
+{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay noconstant:  st mn}{res}  Y1_pystacked  D1_pystacked  7017.494  (916.573)
+{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay noconstant:  st md}  Y1_pystacked  D1_pystacked  7017.494  (916.980)
 
 {txt}Median over 2 stacking resamples
 y-E[y|X]{col 11}= {res}y-Y1_pystacked{txt}{col 52}Number of obs   ={col 70}{res}     9915
@@ -182,19 +182,19 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 16:55:22
+ {txt}opened on:  {res} 8 Aug 2023, 11:13:35
 
 Help file: ddml_example_partial_pystacked_detailed.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 16:55:22
+ {txt}closed on:  {res} 8 Aug 2023, 11:13:35
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Partially-linear model - Detailed example with stacking regression using {help pystacked}}
 
@@ -320,9 +320,9 @@ spec  r     Y learner     D learner         b        SE
 {stata ddml estimate, mname(m0) spec(ss) rep(2) notable replay:  ss  2}  [shortstack]          [ss]  7159.673  (887.218)
 
 {txt}Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay:  st mn}{res}  Y1_pystacked  D1_pystacked  7239.702  (957.628)
+{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay noconstant:  st mn}{res}  Y1_pystacked  D1_pystacked  7239.702  (957.628)
 {stata ddml estimate, mname(m0) spec(ss) rep(mn) notable replay noconstant:  ss mn}  [shortstack]          [ss]  7305.668  (923.048)
-{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay:  st md}  Y1_pystacked  D1_pystacked  7239.702  (958.036)
+{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay noconstant:  st md}  Y1_pystacked  D1_pystacked  7239.702  (958.036)
 {stata ddml estimate, mname(m0) spec(ss) rep(md) notable replay noconstant:  ss md}  [shortstack]          [ss]  7305.668  (924.390)
 
 {txt}Shortstack DDML model (median over 2 resamples)
@@ -477,14 +477,14 @@ Then replicate by hand.{p_end}
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 16:56:36
+ {txt}opened on:  {res} 8 Aug 2023, 11:14:39
 
 Help file: ddml_example_partial_anylearner_detailed.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 16:56:36
+ {txt}closed on:  {res} 8 Aug 2023, 11:14:39
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -504,7 +504,7 @@ This enables having multiple estimations available for comparison.
 We also use the {opt prefix} option of {help ddml init}
 so that all the estimated conditional expectations will be prefixed with the model name,
 i.e., the names of all created variables will start with "m1".
-This avoids overwriting any variables created some other model using default naming.
+This avoids overwriting any variables created for some other model using default naming.
 Also specify 5 resamplings.{p_end}
 
 {input}. use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear
@@ -577,17 +577,27 @@ with the lowest out-of-sample MSPE:{p_end}
 
 {input}. ddml crossfit, mname(m1)
 {res}{txt}Cross-fitting E[y|X] equation: net_tfa
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 1...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 2...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 3...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 4...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 5...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
 {res}{txt}Cross-fitting E[D|X] equation: e401
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 1...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 2...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 3...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 4...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 5...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}...completed cross-fitting
 {res}{txt}
 {input}. ddml estimate, mname(m1) robust
 {res}
@@ -609,12 +619,12 @@ spec  r     Y learner     D learner         b        SE
 {txt}mse = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m1) spec(mse) rep(mn) notable replay: mse mn}     {res}[min-mse]     [min-mse]  6874.562 (1080.461)
-{stata ddml estimate, mname(m1) spec(mse) rep(md) notable replay: mse md}     [min-mse]     [min-mse]  6763.292 (1128.673)
+{stata ddml estimate, mname(m1) spec(mse) rep(mn) notable replay noconstant: mse mn}     {res}[min-mse]     [min-mse]  6874.562 (1080.461)
+{stata ddml estimate, mname(m1) spec(mse) rep(md) notable replay noconstant: mse md}     [min-mse]     [min-mse]  6763.292 (1128.673)
 
 {txt}Median over 5 min-mse resamples
-y-E[y|X]{col 11}= {res}y-m1_Y2_pystacked{txt}{col 52}Number of obs   ={col 70}{res}     9915
-{txt}D-E[D|X]{col 11}= {res}D-m1_D1_reg 
+y-E[y|X]{col 11}= {res}y-md_net_tfa_mse{txt}{col 52}Number of obs   ={col 70}{res}     9915
+{txt}D-E[D|X]{col 11}= {res}D-md_e401_mse 
 {txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
 {col 14}{c |}{col 26}    Robust
 {col 1}     net_tfa{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
@@ -664,12 +674,20 @@ spec  r     Y learner     D learner         b        SE
 *{txt} = minimum MSE specification for that resample.
 
 Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m1) spec(mse) rep(mn) notable replay: mse mn}     {res}[min-mse]     [min-mse]  6874.562 (1080.461)
-{stata ddml estimate, mname(m1) spec(mse) rep(md) notable replay: mse md}     [min-mse]     [min-mse]  6763.292 (1128.673)
+{stata ddml estimate, mname(m1) spec(1) rep(mn) notable replay noconstant:   1 mn}     {res}m1_Y1_reg     m1_D1_reg  5030.919 (1136.789)
+{stata ddml estimate, mname(m1) spec(1) rep(md) notable replay noconstant:   1 md}     m1_Y1_reg     m1_D1_reg  5054.250 (1117.872)
+{stata ddml estimate, mname(m1) spec(2) rep(mn) notable replay noconstant:   2 mn}     m1_Y1_reg m1_D2_pysta~d  6364.027  (921.100)
+{stata ddml estimate, mname(m1) spec(2) rep(md) notable replay noconstant:   2 md}     m1_Y1_reg m1_D2_pysta~d  6305.684  (928.774)
+{stata ddml estimate, mname(m1) spec(3) rep(mn) notable replay noconstant:   3 mn} m1_Y2_pysta~d     m1_D1_reg  6874.562 (1080.461)
+{stata ddml estimate, mname(m1) spec(3) rep(md) notable replay noconstant:   3 md} m1_Y2_pysta~d     m1_D1_reg  6763.292 (1128.673)
+{stata ddml estimate, mname(m1) spec(4) rep(mn) notable replay noconstant:   4 mn} m1_Y2_pysta~d m1_D2_pysta~d  6701.032  (878.130)
+{stata ddml estimate, mname(m1) spec(4) rep(md) notable replay noconstant:   4 md} m1_Y2_pysta~d m1_D2_pysta~d  6914.925  (874.286)
+{stata ddml estimate, mname(m1) spec(mse) rep(mn) notable replay noconstant: mse mn}     [min-mse]     [min-mse]  6874.562 (1080.461)
+{stata ddml estimate, mname(m1) spec(mse) rep(md) notable replay noconstant: mse md}     [min-mse]     [min-mse]  6763.292 (1128.673)
 
 {txt}Median over 5 min-mse resamples
-y-E[y|X]{col 11}= {res}y-m1_Y2_pystacked{txt}{col 52}Number of obs   ={col 70}{res}     9915
-{txt}D-E[D|X]{col 11}= {res}D-m1_D1_reg 
+y-E[y|X]{col 11}= {res}y-md_net_tfa_mse{txt}{col 52}Number of obs   ={col 70}{res}     9915
+{txt}D-E[D|X]{col 11}= {res}D-md_e401_mse 
 {txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
 {col 14}{c |}{col 26}    Robust
 {col 1}     net_tfa{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
@@ -777,8 +795,8 @@ Cond. exp.{col 13}Learner{col 26}rep{col 38}MSE        1         2
 {res}
 
 {txt}Median over 5 min-mse resamples
-y-E[y|X]{col 11}= {res}y-m1_Y2_pystacked{txt}{col 52}Number of obs   ={col 70}{res}     9915
-{txt}D-E[D|X]{col 11}= {res}D-m1_D1_reg 
+y-E[y|X]{col 11}= {res}y-md_net_tfa_mse{txt}{col 52}Number of obs   ={col 70}{res}     9915
+{txt}D-E[D|X]{col 11}= {res}D-md_e401_mse 
 {txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
 {col 14}{c |}{col 26}    Robust
 {col 1}     net_tfa{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
@@ -812,9 +830,9 @@ spec  r     Y learner     D learner         b        SE
 {stata ddml estimate, mname(m0) spec(ss) rep(2) notable replay:  ss  2}  [shortstack]          [ss]  7159.673  (887.218)
 
 {txt}Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m0) spec(ss) rep(mn) notable replay:  ss mn}{res}  Y1_pystacked  D1_pystacked  7305.668  (923.048)
+{stata ddml estimate, mname(m0) spec(ss) rep(mn) notable replay noconstant:  ss mn}{res}  Y1_pystacked  D1_pystacked  7305.668  (923.048)
 {stata ddml estimate, mname(m0) spec(ss) rep(mn) notable replay noconstant:  ss mn}  [shortstack]          [ss]  7305.668  (923.048)
-{stata ddml estimate, mname(m0) spec(ss) rep(md) notable replay:  ss md}  Y1_pystacked  D1_pystacked  7305.668  (924.390)
+{stata ddml estimate, mname(m0) spec(ss) rep(md) notable replay noconstant:  ss md}  Y1_pystacked  D1_pystacked  7305.668  (924.390)
 {stata ddml estimate, mname(m0) spec(ss) rep(md) notable replay noconstant:  ss md}  [shortstack]          [ss]  7305.668  (924.390)
 
 {txt}Shortstack DDML model (median over 2 resamples)
@@ -838,19 +856,19 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 16:57:40
+ {txt}opened on:  {res} 8 Aug 2023, 11:16:21
 
 Help file: ddml_example_partial_pystacked_multitreat.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 16:57:40
+ {txt}closed on:  {res} 8 Aug 2023, 11:16:21
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Partially-linear model - Multiple treatments with {help pystacked}}
 
@@ -1017,19 +1035,19 @@ ols {res}         1  1.541e+09  1.541e+09
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 16:58:52
+ {txt}opened on:  {res} 8 Aug 2023, 11:18:10
 
 Help file: ddml_example_interactive_pystacked_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 16:58:52
+ {txt}closed on:  {res} 8 Aug 2023, 11:18:10
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Interactive model - Basic example with {help pystacked}}{p_end}
 
@@ -1162,19 +1180,19 @@ Summary over 2 resamples:
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 16:59:46
+ {txt}opened on:  {res} 8 Aug 2023, 11:20:56
 
 Help file: ddml_example_interactive_pystacked_detailed.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 16:59:46
+ {txt}closed on:  {res} 8 Aug 2023, 11:20:56
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Interactive model - Detailed example with {help pystacked}}{p_end}
 
@@ -1455,19 +1473,19 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:02:35
+ {txt}opened on:  {res} 8 Aug 2023, 11:27:50
 
 Help file: ddml_example_partialiv_pystacked_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:02:35
+ {txt}closed on:  {res} 8 Aug 2023, 11:27:50
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Partially-linear IV model - Basic example with {help pystacked}} 
 
@@ -1576,8 +1594,8 @@ Compare using {opt ddml estimate, replay}.{p_end}
 {space 6}Dresid {c |}{col 14}{res}{space 2}  2.37577{col 26}{space 2} 2.826037{col 37}{space 1}    0.84{col 46}{space 3}0.404{col 54}{space 4}-3.273398{col 67}{space 3} 8.024938
 {txt}{space 7}_cons {c |}{col 14}{res}{space 2} .1790394{col 26}{space 2} .5070894{col 37}{space 1}    0.35{col 46}{space 3}0.725{col 54}{space 4}-.8346178{col 67}{space 3} 1.192697
 {txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
-{p 0 15 43}Instrumented:{space 2}Dresid{p_end}
-{p 0 15 43}Instruments:{space 3}Zresid{p_end}
+{p 0 15 38}Instrumented:{space 2}Dresid{p_end}
+{p 0 15 38}Instruments:{space 3}Zresid{p_end}
 {hline 78}
 {txt}
 {input}. ddml estimate, mname(m0) spec(st) rep(1) notable replay
@@ -1602,68 +1620,19 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:05:20
+ {txt}opened on:  {res} 8 Aug 2023, 11:32:56
 
 Help file: ddml_example_partialiv_anylearner_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:05:20
+ {txt}closed on:  {res} 8 Aug 2023, 11:32:56
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
-{smcl}
-{pstd}{ul:Partially-linear IV model - Basic example with various learners} 
-
-{pstd}Preparation: we load the data, define global macros and set the seed.{p_end}
-
-{input}. use https://statalasso.github.io/dta/AJR.dta, clear
-remote connection failed -- see help {help r(677)} for troubleshooting
-{err}                 stata():  3598  Stata returned error
-             m_loghelp():     -  function returned error
-                 <istmt>:     -  function returned error
-{txt}{search r(3598), local:r(3598);}
-
-end of do-file
-{search r(3598), local:r(3598);}
-
-end of do-file
-
-{search r(3598), local:r(3598);}
-
-{com}. do "C:\Users\ecomes\AppData\Local\Temp\STD6014_000000.tmp"
-{txt}
-{com}. // do file to run all clickable examples in ddml help files
-. // this file requires the Stata program loghelp
-. // install from SSC if available or from github:
-. // net install loghelp, ///
-. //   from(https://raw.githubusercontent.com/markeschaffer/stata-utilities/master) ///
-. //   replace
-. 
-. 
-. log close
-{smcl}
-{com}{sf}{ul off}{smcl}
-{com}{sf}{ul off}{txt}{.-}
-      name:  {res}<unnamed>
-       {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
-  {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:07:53
-
-Help file: ddml_example_partialiv_anylearner_basic.sthlp
-
-      {txt}name:  {res}<unnamed>
-       {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
-  {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:07:53
-{txt}{.-}
-{smcl}
-{txt}{sf}{ul off}{smcl}
-{txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Partially-linear IV model - Basic example with various learners} 
 
@@ -1776,19 +1745,19 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:08:07
+ {txt}opened on:  {res} 8 Aug 2023, 11:33:14
 
 Help file: ddml_example_flexiv_anylearner_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:08:07
+ {txt}closed on:  {res} 8 Aug 2023, 11:33:14
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Flexible partially-linear IV model - Basic example with {help pystacked}}
 
@@ -1885,19 +1854,19 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:08:46
+ {txt}opened on:  {res} 8 Aug 2023, 11:34:09
 
 Help file: ddml_example_flexiv_anylearner_detailed.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:08:46
+ {txt}closed on:  {res} 8 Aug 2023, 11:34:09
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Flexible partially-linear IV model - Detailed example with {help pystacked}}
 
@@ -2112,8 +2081,8 @@ Note this is only the case if {help pystacked} is the single learner in each equ
 {space 6}Dtilde {c |}{col 14}{res}{space 2}-.0978842{col 26}{space 2} .0075085{col 37}{space 1}  -13.04{col 46}{space 3}0.000{col 54}{space 4}-.1126087{col 67}{space 3}-.0831598
 {txt}{space 7}_cons {c |}{col 14}{res}{space 2} .0032566{col 26}{space 2} .0215627{col 37}{space 1}    0.15{col 46}{space 3}0.880{col 54}{space 4}-.0390286{col 67}{space 3} .0455418
 {txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
-{p 0 15 43}Instrumented:{space 2}Dtilde{p_end}
-{p 0 15 43}Instruments:{space 3}Zopt{p_end}
+{p 0 15 38}Instrumented:{space 2}Dtilde{p_end}
+{p 0 15 38}Instruments:{space 3}Zopt{p_end}
 {hline 78}
 {txt}
 
@@ -2238,19 +2207,19 @@ Y1_pystacked {res}           1            0            0
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:09:42
+ {txt}opened on:  {res} 8 Aug 2023, 11:35:47
 
 Help file: ddml_example_interactiveiv_pystacked_basic.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:09:42
+ {txt}closed on:  {res} 8 Aug 2023, 11:35:47
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 3august2023}{...}
 {smcl}
 {pstd}{ul:Interactive IV model (LATE) - Basic example with {help pystacked}}
 
@@ -2266,6 +2235,29 @@ Help file: ddml_example_interactiveiv_pystacked_basic.sthlp
 {txt}
 {input}. global X sex age married black hispanic
 {txt}
+
+{pstd}Drop observations where treatment=1 even though assignment=0.
+(Up to the user how to handle such observations;
+{opt ddml} can handle these cases,
+and we drop them here only to illustrate how this is reflected in the stacking weights.){p_end}
+
+{input}. tab $D $Z
+
+{txt}Enrollment {c |}     Assignment to
+        in {c |}       Training
+  Training {c |}         0          1 {c |}     Total
+{hline 11}{c +}{hline 22}{c +}{hline 10}
+         0 {c |}{res}     3,663      2,683 {txt}{c |}{res}     6,346 
+{txt}         1 {c |}{res}        54      4,804 {txt}{c |}{res}     4,858 
+{txt}{hline 11}{c +}{hline 22}{c +}{hline 10}
+     Total {c |}{res}     3,717      7,487 {txt}{c |}{res}    11,204 
+{txt}
+{input}. drop if $D==1 & $Z==0
+{txt}(54 observations deleted)
+{txt}
+
+{pstd}Set the seed, initialize, cross-fit and estimate:{p_end}
+
 {input}. set seed 42
 {txt}
 {input}. ddml init interactiveiv
@@ -2304,10 +2296,10 @@ be dropped and model m0 will be re-initialized
 
 {txt}DDML estimation results (LATE):
 spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
-{stata ddml estimate, mname(m0) spec(st) rep(1) notable replay:  st  1}{res}  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked  1817.232  (512.772)  Z1_pystacked
+{stata ddml estimate, mname(m0) spec(st) rep(1) notable replay:  st  1}{res}  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked  1735.381  (501.153)  Z1_pystacked
 
 {txt}Stacking DDML model (LATE)
-E[y|X,Z=0]{col 14}= {res}Y1_pystacked0_1{txt}{col 52}Number of obs   ={col 70}{res}    11204
+E[y|X,Z=0]{col 14}= {res}Y1_pystacked0_1{txt}{col 52}Number of obs   ={col 70}{res}    11150
 {txt}E[y|X,Z=1]{col 14}= {res}Y1_pystacked1_1
 {txt}E[D|X,Z=0]{col 14}= {res}D1_pystacked0_1
 {txt}E[D|X,Z=1]{col 14}= {res}D1_pystacked1_1
@@ -2316,30 +2308,58 @@ E[y|X,Z=0]{col 14}= {res}Y1_pystacked0_1{txt}{col 52}Number of obs   ={col 70}{r
 {col 14}{c |}{col 26}    Robust
 {col 1}    earnings{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
 {hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
-{space 4}training {c |}{col 14}{res}{space 2} 1817.232{col 26}{space 2} 512.7721{col 37}{space 1}    3.54{col 46}{space 3}0.000{col 54}{space 4} 812.2173{col 67}{space 3} 2822.247
+{space 4}training {c |}{col 14}{res}{space 2} 1735.381{col 26}{space 2} 501.1529{col 37}{space 1}    3.46{col 46}{space 3}0.001{col 54}{space 4} 753.1392{col 67}{space 3} 2717.622
 {txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
 Stacking final estimator: {res}nnls1
 
 {txt}
+
+{pstd}Report the stacking weights.
+Note that the weights for the non-existent case (treatment=1, assignment=0) are missing.{p_end}
+
+{input}. ddml extract, show(stweights)
+{res}
+{res}mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+{res}final stacking estimator: nnls1
+{txt}             learner  mean_weight        rep_1
+  logit {res}           1    .21337055    .21337055
+{txt}lassocv {res}           2    .78662945    .78662945
+{reset}
+{res}mean stacking weights across folds/resamples for Y1_pystacked (earnings)
+{res}final stacking estimator: nnls1
+{txt}             learner        Z=0/1  mean_weight        rep_1
+    ols {res}           1            0    .86435554    .86435554
+{txt}lassocv {res}           2            0    .13564446    .13564446
+{txt}    ols {res}           1            1     .9345463     .9345463
+{txt}lassocv {res}           2            1     .0654537     .0654537
+{reset}
+{res}mean stacking weights across folds/resamples for D1_pystacked (training)
+{res}final stacking estimator: nnls1
+{txt}             learner        Z=0/1  mean_weight        rep_1
+  logit {res}           1            0            0            0
+{txt}lassocv {res}           2            0            0            0
+{txt}  logit {res}           1            1    .93657404    .93657404
+{txt}lassocv {res}           2            1    .06342596    .06342596
+{reset}{res}{txt}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{.-}
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:12:48
+ {txt}opened on:  {res} 8 Aug 2023, 11:39:30
 
 Help file: ddml_example_interactiveiv_pystacked_detailed.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:12:48
+ {txt}closed on:  {res} 8 Aug 2023, 11:39:30
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Interactive IV model (LATE) - Detailed example with {help pystacked}}
 
@@ -2383,6 +2403,7 @@ whereas E[D|X,Z] and E[Z|X] are classification problems.{p_end}
 {pstd}Cross-fitting and estimation, with short-stacking implemented via {opt ddml}.{p_end}
 
 {input}. ddml crossfit, shortstack
+{res}{txt}note: treatment (training) = 1 in 54 cases when assignment (assignmt) = 0
 {res}{txt}Cross-fitting E[y|X,Z] equation: earnings
 {res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting...completed short-stacking
 {res}{txt}Cross-fitting E[D|X,Z] equation: training
@@ -2450,6 +2471,7 @@ We re-set the seed for comparability.{p_end}
 {input}. set seed 42
 {txt}
 {input}. ddml crossfit, shortstack nostdstack
+{res}{txt}note: treatment (training) = 1 in 54 cases when assignment (assignmt) = 0
 {res}{txt}Cross-fitting E[y|X,Z] equation: earnings
 {res}{txt}Cross-fitting fold 1 2 3 4 5 ...completed cross-fitting...completed short-stacking
 {res}{txt}Cross-fitting E[D|X,Z] equation: training
@@ -2494,19 +2516,19 @@ Stacking final estimator: {res}
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:18:11
+ {txt}opened on:  {res} 8 Aug 2023, 11:50:16
 
 Help file: ddml_example_extract.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:18:11
+ {txt}closed on:  {res} 8 Aug 2023, 11:50:16
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 31july2023}{...}
 {smcl}
 {pstd}{ul:ddml extract utility: Extracting stored information from ddml associative arrays}
 
@@ -2584,9 +2606,9 @@ spec  r     Y learner     D learner         b        SE
 {stata ddml estimate, mname(m0) spec(ss) rep(5) notable replay:  ss  5}  [shortstack]          [ss]  6985.731  (882.863)
 
 {txt}Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay:  st mn}{res}  Y1_pystacked  D1_pystacked  7227.248 (1000.026)
+{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay noconstant:  st mn}{res}  Y1_pystacked  D1_pystacked  7227.248 (1000.026)
 {stata ddml estimate, mname(m0) spec(ss) rep(mn) notable replay noconstant:  ss mn}  [shortstack]          [ss]  7211.760  (949.927)
-{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay:  st md}  Y1_pystacked  D1_pystacked  7103.917  (941.490)
+{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay noconstant:  st md}  Y1_pystacked  D1_pystacked  7103.917  (941.490)
 {stata ddml estimate, mname(m0) spec(ss) rep(md) notable replay noconstant:  ss md}  [shortstack]          [ss]  7302.977  (938.132)
 
 {txt}Shortstack DDML model (median over 5 resamples)
@@ -2937,16 +2959,18 @@ AAs that have sets of estimation results, or objects with information about the 
    6 {c |}  {res}           b_resamples                   matrix{txt}  {c |}
    7 {c |}  {res}                     d                    local{txt}  {c |}
    8 {c |}  {res}                   d_m                    local{txt}  {c |}
-   9 {c |}  {res}                depvar                     post{txt}  {c |}
-  10 {c |}  {res}                  dh_m                    local{txt}  {c |}
-  11 {c |}  {res}                dnames                    local{txt}  {c |}
-  12 {c |}  {res}                 title                    local{txt}  {c |}
-  13 {c |}  {res}                   vce                    local{txt}  {c |}
-  14 {c |}  {res}               vcetype                    local{txt}  {c |}
-  15 {c |}  {res}                     y                    local{txt}  {c |}
-  16 {c |}  {res}                   y_m                    local{txt}  {c |}
-  17 {c |}  {res}                 yname                    local{txt}  {c |}
-  18 {c |}  {res}                   z_m                    local{txt}  {c |}
+   9 {c |}  {res}                  d_md                    local{txt}  {c |}
+  10 {c |}  {res}                depvar                     post{txt}  {c |}
+  11 {c |}  {res}                  dh_m                    local{txt}  {c |}
+  12 {c |}  {res}                dnames                    local{txt}  {c |}
+  13 {c |}  {res}                 title                    local{txt}  {c |}
+  14 {c |}  {res}                   vce                    local{txt}  {c |}
+  15 {c |}  {res}               vcetype                    local{txt}  {c |}
+  16 {c |}  {res}                     y                    local{txt}  {c |}
+  17 {c |}  {res}                   y_m                    local{txt}  {c |}
+  18 {c |}  {res}                  y_md                    local{txt}  {c |}
+  19 {c |}  {res}                 yname                    local{txt}  {c |}
+  20 {c |}  {res}                   z_m                    local{txt}  {c |}
      {c BLC}{hline 51}{c BRC}
 {txt}AA keys for m0.estAA, key 1=ss and key 2=mn:
                              1                        2
@@ -2959,16 +2983,18 @@ AAs that have sets of estimation results, or objects with information about the 
    6 {c |}  {res}           b_resamples                   matrix{txt}  {c |}
    7 {c |}  {res}                     d                    local{txt}  {c |}
    8 {c |}  {res}                   d_m                    local{txt}  {c |}
-   9 {c |}  {res}                depvar                     post{txt}  {c |}
-  10 {c |}  {res}                  dh_m                    local{txt}  {c |}
-  11 {c |}  {res}                dnames                    local{txt}  {c |}
-  12 {c |}  {res}                 title                    local{txt}  {c |}
-  13 {c |}  {res}                   vce                    local{txt}  {c |}
-  14 {c |}  {res}               vcetype                    local{txt}  {c |}
-  15 {c |}  {res}                     y                    local{txt}  {c |}
-  16 {c |}  {res}                   y_m                    local{txt}  {c |}
-  17 {c |}  {res}                 yname                    local{txt}  {c |}
-  18 {c |}  {res}                   z_m                    local{txt}  {c |}
+   9 {c |}  {res}                  d_mn                    local{txt}  {c |}
+  10 {c |}  {res}                depvar                     post{txt}  {c |}
+  11 {c |}  {res}                  dh_m                    local{txt}  {c |}
+  12 {c |}  {res}                dnames                    local{txt}  {c |}
+  13 {c |}  {res}                 title                    local{txt}  {c |}
+  14 {c |}  {res}                   vce                    local{txt}  {c |}
+  15 {c |}  {res}               vcetype                    local{txt}  {c |}
+  16 {c |}  {res}                     y                    local{txt}  {c |}
+  17 {c |}  {res}                   y_m                    local{txt}  {c |}
+  18 {c |}  {res}                  y_mn                    local{txt}  {c |}
+  19 {c |}  {res}                 yname                    local{txt}  {c |}
+  20 {c |}  {res}                   z_m                    local{txt}  {c |}
      {c BLC}{hline 51}{c BRC}
 {txt}AA keys for m0.estAA, key 1=st and key 2=1:
                                    1                              2
@@ -3101,16 +3127,18 @@ AAs that have sets of estimation results, or objects with information about the 
    6 {c |}  {res}                 b_resamples                         matrix{txt}  {c |}
    7 {c |}  {res}                           d                          local{txt}  {c |}
    8 {c |}  {res}                         d_m                          local{txt}  {c |}
-   9 {c |}  {res}                      depvar                           post{txt}  {c |}
-  10 {c |}  {res}                        dh_m                          local{txt}  {c |}
-  11 {c |}  {res}                      dnames                          local{txt}  {c |}
-  12 {c |}  {res}                       title                          local{txt}  {c |}
-  13 {c |}  {res}                         vce                          local{txt}  {c |}
-  14 {c |}  {res}                     vcetype                          local{txt}  {c |}
-  15 {c |}  {res}                           y                          local{txt}  {c |}
-  16 {c |}  {res}                         y_m                          local{txt}  {c |}
-  17 {c |}  {res}                       yname                          local{txt}  {c |}
-  18 {c |}  {res}                         z_m                          local{txt}  {c |}
+   9 {c |}  {res}                        d_md                          local{txt}  {c |}
+  10 {c |}  {res}                      depvar                           post{txt}  {c |}
+  11 {c |}  {res}                        dh_m                          local{txt}  {c |}
+  12 {c |}  {res}                      dnames                          local{txt}  {c |}
+  13 {c |}  {res}                       title                          local{txt}  {c |}
+  14 {c |}  {res}                         vce                          local{txt}  {c |}
+  15 {c |}  {res}                     vcetype                          local{txt}  {c |}
+  16 {c |}  {res}                           y                          local{txt}  {c |}
+  17 {c |}  {res}                         y_m                          local{txt}  {c |}
+  18 {c |}  {res}                        y_md                          local{txt}  {c |}
+  19 {c |}  {res}                       yname                          local{txt}  {c |}
+  20 {c |}  {res}                         z_m                          local{txt}  {c |}
      {c BLC}{hline 63}{c BRC}
 {txt}AA keys for m0.estAA, key 1=st and key 2=mn:
                                    1                              2
@@ -3123,16 +3151,18 @@ AAs that have sets of estimation results, or objects with information about the 
    6 {c |}  {res}                 b_resamples                         matrix{txt}  {c |}
    7 {c |}  {res}                           d                          local{txt}  {c |}
    8 {c |}  {res}                         d_m                          local{txt}  {c |}
-   9 {c |}  {res}                      depvar                           post{txt}  {c |}
-  10 {c |}  {res}                        dh_m                          local{txt}  {c |}
-  11 {c |}  {res}                      dnames                          local{txt}  {c |}
-  12 {c |}  {res}                       title                          local{txt}  {c |}
-  13 {c |}  {res}                         vce                          local{txt}  {c |}
-  14 {c |}  {res}                     vcetype                          local{txt}  {c |}
-  15 {c |}  {res}                           y                          local{txt}  {c |}
-  16 {c |}  {res}                         y_m                          local{txt}  {c |}
-  17 {c |}  {res}                       yname                          local{txt}  {c |}
-  18 {c |}  {res}                         z_m                          local{txt}  {c |}
+   9 {c |}  {res}                        d_mn                          local{txt}  {c |}
+  10 {c |}  {res}                      depvar                           post{txt}  {c |}
+  11 {c |}  {res}                        dh_m                          local{txt}  {c |}
+  12 {c |}  {res}                      dnames                          local{txt}  {c |}
+  13 {c |}  {res}                       title                          local{txt}  {c |}
+  14 {c |}  {res}                         vce                          local{txt}  {c |}
+  15 {c |}  {res}                     vcetype                          local{txt}  {c |}
+  16 {c |}  {res}                           y                          local{txt}  {c |}
+  17 {c |}  {res}                         y_m                          local{txt}  {c |}
+  18 {c |}  {res}                        y_mn                          local{txt}  {c |}
+  19 {c |}  {res}                       yname                          local{txt}  {c |}
+  20 {c |}  {res}                         z_m                          local{txt}  {c |}
      {c BLC}{hline 63}{c BRC}
 {res}{txt}
 
@@ -3429,16 +3459,18 @@ various resamples or the mean/median across resamples.
    6 {c |}  {res}           b_resamples                   matrix{txt}  {c |}
    7 {c |}  {res}                     d                    local{txt}  {c |}
    8 {c |}  {res}                   d_m                    local{txt}  {c |}
-   9 {c |}  {res}                depvar                     post{txt}  {c |}
-  10 {c |}  {res}                  dh_m                    local{txt}  {c |}
-  11 {c |}  {res}                dnames                    local{txt}  {c |}
-  12 {c |}  {res}                 title                    local{txt}  {c |}
-  13 {c |}  {res}                   vce                    local{txt}  {c |}
-  14 {c |}  {res}               vcetype                    local{txt}  {c |}
-  15 {c |}  {res}                     y                    local{txt}  {c |}
-  16 {c |}  {res}                   y_m                    local{txt}  {c |}
-  17 {c |}  {res}                 yname                    local{txt}  {c |}
-  18 {c |}  {res}                   z_m                    local{txt}  {c |}
+   9 {c |}  {res}                  d_md                    local{txt}  {c |}
+  10 {c |}  {res}                depvar                     post{txt}  {c |}
+  11 {c |}  {res}                  dh_m                    local{txt}  {c |}
+  12 {c |}  {res}                dnames                    local{txt}  {c |}
+  13 {c |}  {res}                 title                    local{txt}  {c |}
+  14 {c |}  {res}                   vce                    local{txt}  {c |}
+  15 {c |}  {res}               vcetype                    local{txt}  {c |}
+  16 {c |}  {res}                     y                    local{txt}  {c |}
+  17 {c |}  {res}                   y_m                    local{txt}  {c |}
+  18 {c |}  {res}                  y_md                    local{txt}  {c |}
+  19 {c |}  {res}                 yname                    local{txt}  {c |}
+  20 {c |}  {res}                   z_m                    local{txt}  {c |}
      {c BLC}{hline 51}{c BRC}
 {txt}AA keys for m0.estAA, key 1=ss and key 2=mn:
                              1                        2
@@ -3451,16 +3483,18 @@ various resamples or the mean/median across resamples.
    6 {c |}  {res}           b_resamples                   matrix{txt}  {c |}
    7 {c |}  {res}                     d                    local{txt}  {c |}
    8 {c |}  {res}                   d_m                    local{txt}  {c |}
-   9 {c |}  {res}                depvar                     post{txt}  {c |}
-  10 {c |}  {res}                  dh_m                    local{txt}  {c |}
-  11 {c |}  {res}                dnames                    local{txt}  {c |}
-  12 {c |}  {res}                 title                    local{txt}  {c |}
-  13 {c |}  {res}                   vce                    local{txt}  {c |}
-  14 {c |}  {res}               vcetype                    local{txt}  {c |}
-  15 {c |}  {res}                     y                    local{txt}  {c |}
-  16 {c |}  {res}                   y_m                    local{txt}  {c |}
-  17 {c |}  {res}                 yname                    local{txt}  {c |}
-  18 {c |}  {res}                   z_m                    local{txt}  {c |}
+   9 {c |}  {res}                  d_mn                    local{txt}  {c |}
+  10 {c |}  {res}                depvar                     post{txt}  {c |}
+  11 {c |}  {res}                  dh_m                    local{txt}  {c |}
+  12 {c |}  {res}                dnames                    local{txt}  {c |}
+  13 {c |}  {res}                 title                    local{txt}  {c |}
+  14 {c |}  {res}                   vce                    local{txt}  {c |}
+  15 {c |}  {res}               vcetype                    local{txt}  {c |}
+  16 {c |}  {res}                     y                    local{txt}  {c |}
+  17 {c |}  {res}                   y_m                    local{txt}  {c |}
+  18 {c |}  {res}                  y_mn                    local{txt}  {c |}
+  19 {c |}  {res}                 yname                    local{txt}  {c |}
+  20 {c |}  {res}                   z_m                    local{txt}  {c |}
      {c BLC}{hline 51}{c BRC}
 {txt}AA keys for m0.estAA, key 1=st and key 2=1:
                                    1                              2
@@ -3593,16 +3627,18 @@ various resamples or the mean/median across resamples.
    6 {c |}  {res}                 b_resamples                         matrix{txt}  {c |}
    7 {c |}  {res}                           d                          local{txt}  {c |}
    8 {c |}  {res}                         d_m                          local{txt}  {c |}
-   9 {c |}  {res}                      depvar                           post{txt}  {c |}
-  10 {c |}  {res}                        dh_m                          local{txt}  {c |}
-  11 {c |}  {res}                      dnames                          local{txt}  {c |}
-  12 {c |}  {res}                       title                          local{txt}  {c |}
-  13 {c |}  {res}                         vce                          local{txt}  {c |}
-  14 {c |}  {res}                     vcetype                          local{txt}  {c |}
-  15 {c |}  {res}                           y                          local{txt}  {c |}
-  16 {c |}  {res}                         y_m                          local{txt}  {c |}
-  17 {c |}  {res}                       yname                          local{txt}  {c |}
-  18 {c |}  {res}                         z_m                          local{txt}  {c |}
+   9 {c |}  {res}                        d_md                          local{txt}  {c |}
+  10 {c |}  {res}                      depvar                           post{txt}  {c |}
+  11 {c |}  {res}                        dh_m                          local{txt}  {c |}
+  12 {c |}  {res}                      dnames                          local{txt}  {c |}
+  13 {c |}  {res}                       title                          local{txt}  {c |}
+  14 {c |}  {res}                         vce                          local{txt}  {c |}
+  15 {c |}  {res}                     vcetype                          local{txt}  {c |}
+  16 {c |}  {res}                           y                          local{txt}  {c |}
+  17 {c |}  {res}                         y_m                          local{txt}  {c |}
+  18 {c |}  {res}                        y_md                          local{txt}  {c |}
+  19 {c |}  {res}                       yname                          local{txt}  {c |}
+  20 {c |}  {res}                         z_m                          local{txt}  {c |}
      {c BLC}{hline 63}{c BRC}
 {txt}AA keys for m0.estAA, key 1=st and key 2=mn:
                                    1                              2
@@ -3615,16 +3651,18 @@ various resamples or the mean/median across resamples.
    6 {c |}  {res}                 b_resamples                         matrix{txt}  {c |}
    7 {c |}  {res}                           d                          local{txt}  {c |}
    8 {c |}  {res}                         d_m                          local{txt}  {c |}
-   9 {c |}  {res}                      depvar                           post{txt}  {c |}
-  10 {c |}  {res}                        dh_m                          local{txt}  {c |}
-  11 {c |}  {res}                      dnames                          local{txt}  {c |}
-  12 {c |}  {res}                       title                          local{txt}  {c |}
-  13 {c |}  {res}                         vce                          local{txt}  {c |}
-  14 {c |}  {res}                     vcetype                          local{txt}  {c |}
-  15 {c |}  {res}                           y                          local{txt}  {c |}
-  16 {c |}  {res}                         y_m                          local{txt}  {c |}
-  17 {c |}  {res}                       yname                          local{txt}  {c |}
-  18 {c |}  {res}                         z_m                          local{txt}  {c |}
+   9 {c |}  {res}                        d_mn                          local{txt}  {c |}
+  10 {c |}  {res}                      depvar                           post{txt}  {c |}
+  11 {c |}  {res}                        dh_m                          local{txt}  {c |}
+  12 {c |}  {res}                      dnames                          local{txt}  {c |}
+  13 {c |}  {res}                       title                          local{txt}  {c |}
+  14 {c |}  {res}                         vce                          local{txt}  {c |}
+  15 {c |}  {res}                     vcetype                          local{txt}  {c |}
+  16 {c |}  {res}                           y                          local{txt}  {c |}
+  17 {c |}  {res}                         y_m                          local{txt}  {c |}
+  18 {c |}  {res}                        y_mn                          local{txt}  {c |}
+  19 {c |}  {res}                       yname                          local{txt}  {c |}
+  20 {c |}  {res}                         z_m                          local{txt}  {c |}
      {c BLC}{hline 63}{c BRC}
 {res}{txt}
 
@@ -3698,7 +3736,7 @@ so this step is unnecessary when using this command.{p_end}
 {input}. ddml extract AA_e401, vname(e401)
 {res}{txt}
 {input}. mata: AA_e401
-{res}  0x3faacab0
+{res}  0x34c22ec0
 {txt}
 
 {pstd}Examples of working with this equation associative array.
@@ -3711,7 +3749,7 @@ Note that the {opt ename} option must be used.{p_end}
 {res}  .1961356595
 {txt}
 
-{pstd}{ul:Using Mtata's associative array commands}{p_end}
+{pstd}{ul:Using Mata's associative array commands}{p_end}
 
 {pstd}If preferred, Mata's associative array commands can be used directly.
 Note that all keys are strings.{p_end}
@@ -3775,19 +3813,19 @@ Note that all keys are strings.{p_end}
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:21:15
+ {txt}opened on:  {res} 8 Aug 2023, 11:54:31
 
 Help file: ddml_example_stacking.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:21:15
+ {txt}closed on:  {res} 8 Aug 2023, 11:54:31
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Partially-linear model with {help pystacked} and stacking}:{p_end}
 
@@ -3859,10 +3897,10 @@ spec  r     Y learner     D learner         b        SE
 {stata ddml estimate, mname(m0) spec(ps) rep(2) notable replay:  ps  2}   [poolstack]          [ps]  7013.319  (910.084)
 
 {txt}Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay:  st mn}{res}  Y1_pystacked  D1_pystacked  7017.494 (1046.569)
+{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay noconstant:  st mn}{res}  Y1_pystacked  D1_pystacked  7017.494 (1046.569)
 {stata ddml estimate, mname(m0) spec(ss) rep(mn) notable replay noconstant:  ss mn}  [shortstack]          [ss]  7253.775  (948.082)
 {stata ddml estimate, mname(m0) spec(ps) rep(mn) notable replay noconstant:  ps mn}   [poolstack]          [ps]  6926.973  (945.891)
-{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay:  st md}  Y1_pystacked  D1_pystacked  7017.494 (1047.070)
+{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay noconstant:  st md}  Y1_pystacked  D1_pystacked  7017.494 (1047.070)
 {stata ddml estimate, mname(m0) spec(ss) rep(md) notable replay noconstant:  ss md}  [shortstack]          [ss]  7253.775  (950.443)
 {stata ddml estimate, mname(m0) spec(ps) rep(md) notable replay noconstant:  ps md}   [poolstack]          [ps]  6926.973  (948.257)
 
@@ -3960,10 +3998,10 @@ spec  r     Y learner     D learner         b        SE
 {stata ddml estimate, mname(m0) spec(ps) rep(2) notable replay:  ps  2}   [poolstack]          [ps]  6496.931  (997.313)
 
 {txt}Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay:  st mn}{res}  Y1_pystacked  D1_pystacked  7166.339 (1226.365)
+{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay noconstant:  st mn}{res}  Y1_pystacked  D1_pystacked  7166.339 (1226.365)
 {stata ddml estimate, mname(m0) spec(ss) rep(mn) notable replay noconstant:  ss mn}  [shortstack]          [ss]  7465.672 (1001.535)
 {stata ddml estimate, mname(m0) spec(ps) rep(mn) notable replay noconstant:  ps mn}   [poolstack]          [ps]  6785.690 (1043.574)
-{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay:  st md}  Y1_pystacked  D1_pystacked  7166.339 (1226.371)
+{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay noconstant:  st md}  Y1_pystacked  D1_pystacked  7166.339 (1226.371)
 {stata ddml estimate, mname(m0) spec(ss) rep(md) notable replay noconstant:  ss md}  [shortstack]          [ss]  7465.672 (1001.942)
 {stata ddml estimate, mname(m0) spec(ps) rep(md) notable replay noconstant:  ps md}   [poolstack]          [ps]  6785.690 (1043.629)
 
@@ -4169,9 +4207,9 @@ spec  r     Y learner     D learner         b        SE
 {stata ddml estimate, mname(m0) spec(ss) rep(2) notable replay:  ss  2}  [shortstack]          [ss]  7234.312  (972.221)
 
 {txt}Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay:  st mn}{res}  Y1_pystacked  D1_pystacked  7204.528 (1023.142)
+{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay noconstant:  st mn}{res}  Y1_pystacked  D1_pystacked  7204.528 (1023.142)
 {stata ddml estimate, mname(m0) spec(ss) rep(mn) notable replay noconstant:  ss mn}  [shortstack]          [ss]  7140.563  (980.171)
-{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay:  st md}  Y1_pystacked  D1_pystacked  7204.528 (1023.517)
+{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay noconstant:  st md}  Y1_pystacked  D1_pystacked  7204.528 (1023.517)
 {stata ddml estimate, mname(m0) spec(ss) rep(md) notable replay noconstant:  ss md}  [shortstack]          [ss]  7140.563  (980.195)
 
 {txt}Shortstack DDML model (median over 2 resamples)
@@ -4238,19 +4276,19 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:23:17
+ {txt}opened on:  {res} 8 Aug 2023, 11:56:39
 
 Help file: ddml_example_describe.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:23:17
+ {txt}closed on:  {res} 8 Aug 2023, 11:56:39
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:ddml describe utility - Basic example with {help pystacked}}{p_end}
 
@@ -4307,8 +4345,8 @@ spec  r     Y learner     D learner         b        SE
 {stata ddml estimate, mname(m0) spec(st) rep(2) notable replay:  st  2}  Y1_pystacked  D1_pystacked  7381.502  (856.397)
 
 {txt}Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay:  st mn}{res}  Y1_pystacked  D1_pystacked  7017.494  (916.573)
-{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay:  st md}  Y1_pystacked  D1_pystacked  7017.494  (916.980)
+{stata ddml estimate, mname(m0) spec(st) rep(mn) notable replay noconstant:  st mn}{res}  Y1_pystacked  D1_pystacked  7017.494  (916.573)
+{stata ddml estimate, mname(m0) spec(st) rep(md) notable replay noconstant:  st md}  Y1_pystacked  D1_pystacked  7017.494  (916.980)
 
 {txt}Median over 2 stacking resamples
 y-E[y|X]{col 11}= {res}y-Y1_pystacked{txt}{col 52}Number of obs   ={col 70}{res}     9915
@@ -4514,14 +4552,14 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:24:09
+ {txt}opened on:  {res} 8 Aug 2023, 11:57:21
 
 Help file: ddml_example_export.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:24:09
+ {txt}closed on:  {res} 8 Aug 2023, 11:57:21
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
@@ -4586,8 +4624,8 @@ spec  r     Y learner     D learner         b        SE
 {stata ddml estimate, mname(m_sip1991) spec(st) rep(2) notable replay:  st  2} m_sip1991_Y~d m_sip1991_D~d  7381.502  (856.397)
 
 {txt}Mean/med    Y learner     D learner         b        SE 
-{stata ddml estimate, mname(m_sip1991) spec(st) rep(mn) notable replay:  st mn}{res} m_sip1991_Y~d m_sip1991_D~d  7017.494  (916.573)
-{stata ddml estimate, mname(m_sip1991) spec(st) rep(md) notable replay:  st md} m_sip1991_Y~d m_sip1991_D~d  7017.494  (916.980)
+{stata ddml estimate, mname(m_sip1991) spec(st) rep(mn) notable replay noconstant:  st mn}{res} m_sip1991_Y~d m_sip1991_D~d  7017.494  (916.573)
+{stata ddml estimate, mname(m_sip1991) spec(st) rep(md) notable replay noconstant:  st md} m_sip1991_Y~d m_sip1991_D~d  7017.494  (916.980)
 
 {txt}Median over 2 stacking resamples
 y-E[y|X]{col 11}= {res}y-m_sip1991_Y1_pystacked{txt}{col 52}Number of obs   ={col 70}{res}     9915
@@ -4632,19 +4670,19 @@ m_sip1991_Y1_pystacked m_sip1991_Y1_pystacked_L1 m_sip1991_Y1_pystacked_L2 m_sip
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:24:56
+ {txt}opened on:  {res} 8 Aug 2023, 11:58:00
 
 Help file: ddml_example_overlap.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:24:56
+ {txt}closed on:  {res} 8 Aug 2023, 11:58:00
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:ddml overlap utility - Overlap plots with interactive models (ATE etc.)}{p_end}
 
@@ -4757,19 +4795,19 @@ and combine the two into a single graph:{p_end}
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:26:13
+ {txt}opened on:  {res} 8 Aug 2023, 11:59:16
 
 Help file: ddml_example_fcluster.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:26:13
+ {txt}closed on:  {res} 8 Aug 2023, 11:59:16
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {smcl}
 {pstd}{ul:Cluster sampling with cross-fit folds - Basic example with {help pystacked}}{p_end}
 
@@ -4972,19 +5010,19 @@ Stacking final estimator: {res}nnls1
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:27:07
+ {txt}opened on:  {res} 8 Aug 2023, 12:00:32
 
 Help file: qddml.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:27:07
+ {txt}closed on:  {res} 8 Aug 2023, 12:00:32
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 8aug2023}{...}
 {viewerjumpto "Syntax" "qddml##syntax"}{...}
 {viewerjumpto "Options" "qddml##options"}{...}
 {viewerjumpto "Models" "qddml##models"}{...}
@@ -4996,7 +5034,7 @@ Help file: qddml.sthlp
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "qddml##also_see"}{...}
 {hline}
-{cmd:help qddml}{right: v1.4}
+{cmd:help qddml}{right: v1.4.1}
 {hline}
 
 {title:ddml, qddml - Stata package for Double Debiased Machine Learning}
@@ -5463,17 +5501,27 @@ be dropped and model m0 will be re-initialized
 {res}{txt}Learner D1_pystacked added successfully.
 {res}{txt}shortstack  requested but must have multiple learners in all equations; option ignored
 {res}{txt}Cross-fitting E[y|X,D] equation: bweight
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 1...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 2...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 3...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 4...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 5...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
 {res}{txt}Cross-fitting E[D|X] equation: mbsmoke
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 1...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 2...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 3...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 4...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 5...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
 {res}
 
 {txt}Model:{col 25}{res}interactive, crossfit folds k=5, resamples r=5
@@ -5580,6 +5628,7 @@ be dropped and model m0 will be re-initialized
 {txt}Learner Y1_pystacked added successfully.
 {res}{txt}Learner D1_pystacked added successfully.
 {res}{txt}Learner Z1_pystacked added successfully.
+{res}{txt}note: treatment (training) = 1 in 54 cases when assignment (assignmt) = 0
 {res}{txt}shortstack  requested but must have multiple learners in all equations; option ignored
 {res}{txt}Cross-fitting E[y|X,Z] equation: earnings
 {res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}4 {res}{txt}5 {res}{txt}...completed cross-fitting
@@ -5803,9 +5852,9 @@ and with no intermediate calculations that would affect Stata's random number se
 {pstd}We specify 5 base learners: OLS, cross-validated lasso and ridge, and two random forests.
 We will use the same specification for both conditional expectations E[Y|X] and E[D|X].{p_end}
 
-{input}. global rflow max_features(5) min_samples_leaf(1) max_samples(.7)
+{input}. global rflow max_features(4) min_samples_leaf(1) max_samples(.7)
 {txt}
-{input}. global rfhigh max_features(5) min_samples_leaf(10) max_samples(.7)
+{input}. global rfhigh max_features(4) min_samples_leaf(10) max_samples(.7)
 {txt}
 {input}. global psoptions method(ols lassocv ridgecv rf rf) cmdopt4($rflow) cmdopt5($rfhigh) type(reg)
 {txt}
@@ -5955,19 +6004,19 @@ INCLUDE help ddml_install_ref_auth
       name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}28 Jul 2023, 17:30:54
+ {txt}opened on:  {res} 8 Aug 2023, 12:06:30
 
 Help file: crossfit.sthlp
 
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_helpfiles_cert.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}28 Jul 2023, 17:30:54
+ {txt}closed on:  {res} 8 Aug 2023, 12:06:30
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}{smcl}
 {txt}{sf}{ul off}{res}{txt}{smcl}
-{* *! version 27july2023}{...}
+{* *! version 28july2023}{...}
 {viewerjumpto "Syntax" "crossfit##syntax"}{...}
 {viewerjumpto "Summary" "crossfit##summary"}{...}
 {viewerjumpto "Compatible programs" "crossfit##compatibility"}{...}
@@ -5980,7 +6029,7 @@ Help file: crossfit.sthlp
 {vieweralsosee "ddml stacking" "ddml stacking"}{...}
 {vieweralsosee "Other" "crossfit##also_see"}{...}
 {hline}
-{cmd:help crossfit}{right: v1.4}
+{cmd:help crossfit}{right: v1.4.1}
 {hline}
 
 
@@ -6128,11 +6177,16 @@ See {help ddml##compatibility:here}.
 {pstd}As above but using 5 resamples.{p_end}
 
 {input}. crossfit, estring(reg earnings $X) gen(yhat) kfolds(3) reps(5)
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 1...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 2...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 3...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 4...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 5...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
 {res}{txt}
 {input}. sum earnings yhat*
 
@@ -6201,7 +6255,8 @@ Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fittin
 {input}. ssc install lassopack
 {txt}checking {hilite:lassopack} consistency and verifying not already installed...
 {smcl}
-all files already exist and are up to date.
+installing into C:\LocalStore\ecomes\ado\plus\...
+installation complete.
 {txt}
 We estimate using the following values of the lambda parameter: 2000, 1000, 500, 250.
 Each time we call {opt crossfit} to obtain the predicted values.
@@ -6211,11 +6266,16 @@ The specification that minimizes the MSPE for all 5 resamples is lambda=250.
 {p_end}
 
 {input}. crossfit, estring(lasso2 earnings $X, lglmnet lambda(2000)) gen(yhat2000) kfolds(3) reps(5)
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 1...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 2...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 3...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 4...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 5...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
 {res}{txt}
 {input}. mat list r(mse_list)
 {res}
@@ -6228,11 +6288,16 @@ resample_1 {res} 2.758e+08
 {txt}resample_5 {res} 2.758e+08
 {reset}{txt}
 {input}. crossfit, estring(lasso2 earnings $X, lglmnet lambda(1000)) gen(yhat1000) kfolds(3) reps(5)
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 1...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 2...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 3...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 4...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 5...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
 {res}{txt}
 {input}. mat list r(mse_list)
 {res}
@@ -6245,11 +6310,16 @@ resample_1 {res} 2.710e+08
 {txt}resample_5 {res} 2.709e+08
 {reset}{txt}
 {input}. crossfit, estring(lasso2 earnings $X, lglmnet lambda(500)) gen(yhat500) kfolds(3) reps(5)
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 1...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 2...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 3...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 4...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 5...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
 {res}{txt}
 {input}. mat list r(mse_list)
 {res}
@@ -6262,11 +6332,16 @@ resample_1 {res} 2.684e+08
 {txt}resample_5 {res} 2.684e+08
 {reset}{txt}
 {input}. crossfit, estring(lasso2 earnings $X, lglmnet lambda(250)) gen(yhat250) kfolds(3) reps(5)
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
-{res}{txt}Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 1...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 2...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 3...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 4...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
+{res}{txt}Resample 5...
+Cross-fitting fold 1 {res}{txt}2 {res}{txt}3 {res}{txt}...completed cross-fitting
 {res}{txt}
 {input}. mat list r(mse_list)
 {res}

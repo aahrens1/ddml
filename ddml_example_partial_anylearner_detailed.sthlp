@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 28july2023}{...}
+{* *! version 8aug2023}{...}
 {smcl}
 {pstd}{ul:Partially-linear model - Detailed general example with multiple learners} 
 
@@ -14,7 +14,7 @@ This enables having multiple estimations available for comparison.
 We also use the {opt prefix} option of {help ddml init}
 so that all the estimated conditional expectations will be prefixed with the model name,
 i.e., the names of all created variables will start with "m1".
-This avoids overwriting any variables created some other model using default naming.
+This avoids overwriting any variables created for some other model using default naming.
 Also specify 5 resamplings.{p_end}
 
 {phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}

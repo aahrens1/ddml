@@ -1,5 +1,5 @@
-*! ddml v1.4.1
-*! last edited: 28july2023
+*! ddml v1.4.2
+*! last edited: 8aug2023
 *! authors: aa/ms
 
 program define _ddml_overlap
@@ -31,7 +31,7 @@ program define _ddml_overlap
 	local numeqnZ : word count `nameZ'
 	
 	if "`model'"~="interactive" & "`model'"~="interactiveiv" {
-		di as err "error - overlap supported only for interactive or late models"
+		di as err "error - overlap supported only for interactive or interactiveiv (LATE) models"
 		exit 198
 	}
 	if "`model'"=="interactive" & `numeqnD'>1 {
@@ -47,9 +47,10 @@ program define _ddml_overlap
 	if "`title'"=="" & "`model'"=="interactive" {
 		local title "Propensity scores by treatment group"
 	}
-	else {
+	else if "`title'"=="" {
 		local title "Propensity scores by assignment group"
 	}
+	
 	// default replist, graph subtitle
 	if "`replist'"=="" {
 		local replist 1/`nreps'
@@ -103,6 +104,8 @@ program define _ddml_overlap
 	foreach dtilde in `pslist' {
 		// gname is individual dtilde graph
 		local gname `dtilde'
+		// reset gcmd local
+		local gcmd
 		// loop through resamples
 		foreach r of numlist `replist' {
 			tempvar x0`r' x1`r' ps0`r' ps1`r' ps`r'

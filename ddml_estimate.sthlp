@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 28july2023}{...}
+{* *! version 8aug2023}{...}
 {viewerjumpto "Syntax" "ddml_estimate##syntax"}{...}
 {viewerjumpto "Cross-fit options" "ddml_estimate##crossfit"}{...}
 {viewerjumpto "Estimation options" "ddml_estimate##estimation"}{...}
@@ -11,7 +11,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_estimate##also_see"}{...}
 {hline}
-{cmd:help ddml crossfit, ddml estimate}{right: v1.4.1}
+{cmd:help ddml crossfit, ddml estimate}{right: v1.4.2}
 {hline}
 
 {title:ddml crossfit and estimate commands for Double Debiased Machine Learning}
@@ -160,7 +160,9 @@ See {help pystacked} for alternative stacking final estimators.
 {synopthdr:Replay}
 {synoptline}
 {synopt:{opt spec(integer/string)}}
-select specification. This can either be the specification number, {it:mse} for minimum-MSE specification (the default) or {it:ss} for short-stacking. 
+select specification. This can either be the specification number,
+{it:mse} for minimum-MSE specification (the default with non-{help pystacked} multiple learners),
+or {it:st}, {it:ss} or {it:ps} for standard stacking (via {help pystacked}), short-stacking or pooled stacking, respectively.
 {p_end}
 {synopt:{opt rep(integer/string)}}
 select resampling iteration. This can either be the cross-fit repetition number, {it:mn} for mean aggregation or {it:md} for median aggregation (the default).

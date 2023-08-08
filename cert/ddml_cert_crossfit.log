@@ -1,14 +1,14 @@
------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_crossfit.log
   log type:  text
- opened on:  28 Jul 2023, 13:37:23
+ opened on:   8 Aug 2023, 00:16:06
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.4
-*! last edited: 27july2023
+*! ddml v1.4.1
+*! last edited: 28july2023
 *! authors: aa/ms
 
 . mata: whichddml()
@@ -19,8 +19,8 @@ C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
 
 . which crossfit
 C:\LocalStore\ecomes\Documents\GitHub\ddml\crossfit.ado
-*! ddml v1.4
-*! last edited: 25july2023
+*! ddml v1.4.1
+*! last edited: 3aug2023
 *! authors: aa/ms
 
 . 
@@ -36,7 +36,7 @@ Cross-fitting fold 1 2 3 ...completed cross-fitting
 
 . sum earnings yhat_1
 
-    Variable |        Obs        Mean    Std. Dev.       Min        Max
+    Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
     earnings |     11,204    15815.29    16767.05          0     155760
       yhat_1 |     11,204     15812.1    3774.255   6123.432   23867.51
@@ -53,27 +53,32 @@ Cross-fitting fold 1 2 3 ...completed cross-fitting
 
 . sum earnings yhat*
 
-    Variable |        Obs        Mean    Std. Dev.       Min        Max
+    Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
     earnings |     11,204    15815.29    16767.05          0     155760
    yhat_L1_1 |     11,204     15812.1    3774.255   6123.432   23867.51
    yhat_L2_1 |     11,204    15812.11    3768.449   6145.505   23851.63
    yhat_L3_1 |     11,204    15810.33    4477.315   76.66996   31094.56
-      yhat_1 |     11,204    15810.67    4147.604   2560.435   28328.63
+      yhat_1 |     11,204    15810.67    4147.574   2560.112   28327.45
 
 . 
 . set seed 42
 
 . crossfit, estring(reg earnings $X) gen(yhat) kfolds(3) reps(5)
+Resample 1...
 Cross-fitting fold 1 2 3 ...completed cross-fitting
+Resample 2...
 Cross-fitting fold 1 2 3 ...completed cross-fitting
+Resample 3...
 Cross-fitting fold 1 2 3 ...completed cross-fitting
+Resample 4...
 Cross-fitting fold 1 2 3 ...completed cross-fitting
+Resample 5...
 Cross-fitting fold 1 2 3 ...completed cross-fitting
 
 . sum earnings yhat*
 
-    Variable |        Obs        Mean    Std. Dev.       Min        Max
+    Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
     earnings |     11,204    15815.29    16767.05          0     155760
    yhat_L1_1 |     11,204     15812.1    3774.255   6123.432   23867.51
@@ -110,5 +115,5 @@ Cross-fitting fold 1 2 ...completed cross-fitting
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_crossfit.log
   log type:  text
- closed on:  28 Jul 2023, 13:37:36
------------------------------------------------------------------------------------------------------------------------
+ closed on:   8 Aug 2023, 00:16:50
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

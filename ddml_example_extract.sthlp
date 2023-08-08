@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 28july2023}{...}
+{* *! version 31july2023}{...}
 {smcl}
 {pstd}{ul:ddml extract utility: Extracting stored information from ddml associative arrays}
 
@@ -117,7 +117,7 @@ Note that the {opt ename} option must be used.{p_end}
 {phang2}. {stata "ddml extract, ename(AA_e401) key1(D1_pystacked) key2(MSE) key3(1)"}{p_end}
 {phang2}. {stata "ddml extract, ename(AA_e401) key1(D1_pystacked) key2(MSE) key3(2)"}{p_end}
 
-{pstd}{ul:Using Mtata's associative array commands}{p_end}
+{pstd}{ul:Using Mata's associative array commands}{p_end}
 
 {pstd}If preferred, Mata's associative array commands can be used directly.
 Note that all keys are strings.{p_end}

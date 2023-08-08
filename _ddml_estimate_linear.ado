@@ -1,5 +1,5 @@
-*! ddml v1.4.1
-*! last edited: 28july2023
+*! ddml v1.4.2
+*! last edited: 8aug2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -1026,7 +1026,17 @@ program _ddml_estimate_main
 			}
 	
 		}
-	
+
+		// if multiple resamples, get mean/median for each specification
+		if `nreps'>1 & `ncombos' > 1 {
+			forvalues i = 1/`ncombos' {
+				local title "Mean over `nreps' resamples"
+				`qui' medmean_and_store, mname(`mname') spec(`i') medmean(mn) title(`title') `noconstant'
+				local title "Median over `nreps' resamples"
+				`qui' medmean_and_store, mname(`mname') spec(`i') medmean(md) title(`title') `noconstant'
+			}
+		}
+		
 		// estimation of all combos complete; ncombos > 0 indicates all combos estimated
 		mata: `mname'.ncombos = `ncombos'
 		mata: (`mname'.estAA).put(("nmat","all"),`nmat')
@@ -1121,7 +1131,7 @@ program _ddml_estimate_main
 				}
 			}
 			else {
-				// only mse/ss specs available/reported
+				// only mse/stacking specs available/reported
 				if `numspecflag' {
 					`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`m') `noconstant'
 					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
@@ -1268,6 +1278,7 @@ program _ddml_estimate_main
 	}
 
 	if `nreps' > 1 & `tableflag' {
+		** mean and median
 		di
 		di as text "Mean/med    Y learner" _c
 		forvalues j=1/`numeqnD' {
@@ -1283,8 +1294,51 @@ program _ddml_estimate_main
 			di as text %14s "Z learner" _c
 		}
 		di
+		if `doallcombos' {
+			// all combos available, so loop through
+			forvalues i=1/`ncombos' {
+				foreach medmean in mn md {
+					`qui' replay_estimate, mname(`mname') spec(`i') rep(`medmean') noconstant
+					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
+					mat `btemp'		= e(b)
+					mat `Vtemp'		= e(V)
+					local yt		`e(y)'
+					local dt_list	`e(d)'
+					local zt_list	`e(z)'
+					local specrep "`: di " " %3s "`i'" %3s "`medmean'"'"
+					// force noconstant with mean/median
+					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`medmean') notable replay noconstant
+					di %6s "{`rcmd':`specrep'}" _c
+					di as res %14s abbrev("`yt'",13) _c
+					forvalues j=1/`numeqnD' {
+						local dt : word `j' of `dt_list'
+						di as res %14s abbrev("`dt'",13) _c
+						// precede with a space
+						di as res " " %9.3f el(`btemp',1,`j') _c
+						local se = sqrt(el(`Vtemp',`j',`j'))
+						local se = strtrim("`: di %8.3f `se''")
+						local pse (`se')
+						// precede with a space
+						di as res " " %10s "`pse'" _c
+					}
+					if "`model'"=="fiv" {
+						forvalues j=1/`numeqnD' {
+							local dt : word `j' of `dt_list'
+							// append "_h" to D learner name
+							di as res %14s abbrev("`dt'_h",13) _c
+						}
+					}
+					forvalues j=1/`numeqnZ' {
+						local z_j : word `j' of `nameZ'
+						// only one learner so use the name
+						local zt : word `j' of `zt_list'
+						di as res %14s abbrev("`zt'",13) _c
+					}
+					di
+				}
+			}
+		}
 		foreach medmean in mn md {
-			** mean and median over mse
 			if `numspecflag' {
 				// force noconstant with mean/median
 				`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`medmean') noconstant
@@ -1293,7 +1347,7 @@ program _ddml_estimate_main
 				mat `Vtemp' = e(V)
 				local specrep "`: di " " %3s "`spectext'" %3s "`medmean'"'"
 				// force noconstant with mean/median
-				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable replay `noconstant'
+				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable replay noconstant
 				di %6s "{`rcmd':`specrep'}" _c
 				if `poss_combos'>1 {
 					// learner is min-mse learner
@@ -1886,12 +1940,17 @@ program define medmean_and_store, eclass
 				mata: st_local("`obj'",strofreal(`B'.get(("`obj'","scalar"))))
 			}
 		}
+		// collect list of vars used
+		foreach obj in y d dh z {
+			mata: st_local("vname",`B'.get(("`obj'_m","local")))
+			local `obj'_`medmean' ``obj'_`medmean'' `vname'
+		}
 		// possible that different estimation samples have different #obs
 		qui count if `mname'_sample_`m'==1
 		local N = `N' + r(N)
 	}
 	local N = round(`N'/`nreps')
-	
+
 	if "`medmean'"=="mn" {
 		// mean beta
 		mata: `bagg' = mean(`bvec')
@@ -1979,12 +2038,12 @@ program define medmean_and_store, eclass
 	mata: `A'.put(("depvar","post"),"`depvar'")
 	
 	// store locals
-	local list_local title y d yname dnames vce vcetype
+	local list_local title y d yname dnames vce vcetype y_`medmean' d_`medmean'
 	if "`model'"=="iv" {
-		local list_local `list_local' z
+		local list_local `list_local' z z_`medmean'
 	}
 	else if "`model'"=="fiv" {
-		local list_local `list_local' z dh
+		local list_local `list_local' z dh z_`medmean' dh_`medmean'
 	}
 	if "`clustvar'"~=""		local list_local `list_local' clustvar
 	foreach obj in `list_local' {
@@ -2000,6 +2059,32 @@ program define medmean_and_store, eclass
 	// so store without resample subscript
 	foreach obj in y d dh z {
 		mata: `A'.put(("`obj'_m","local"),"``obj''")
+	}
+	// special case - min mse specification
+	// min mse can vary across resamples, so varnames for y, d, etc.
+	// are original varnames with mse suffix
+	if "`spec'"=="mse" {
+		mata: `A'.put(("y","local"),   "`medmean'_`yname'_mse")
+		mata: `A'.put(("y_m","local"), "`medmean'_`yname'_mse")
+		foreach dn in `dnames' {
+			local dn_list `dn_list' `medmean'_`dn'_mse
+		mata: `A'.put(("d","local"),   "`dn_list'")
+		mata: `A'.put(("d_m","local"), "`dn_list'")
+		}
+		if `ivflag' {
+			foreach zn in `znames' {
+				local zn_list `zn_list' `medmean'_`zn'_mse
+			}
+			mata: `A'.put(("z","local"),   "`zn_list'")
+			mata: `A'.put(("z_m","local"), "`zn_list'")
+		}
+		else if `fivflag' {
+			foreach dn in `dnames' {
+				local dh_list `dh_list' `medmean'_`dn'_h_mse
+			}
+			mata: `A'.put(("dh","local"),   "`dh_list'")
+			mata: `A'.put(("dh_m","local"), "`dh_list'")	
+		}
 	}
 	// special case - vector of betas available only for mean/median
 	mata: `A'.put(("b_resamples","matrix"),`bvec')

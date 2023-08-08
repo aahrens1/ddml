@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 28july2023}{...}
+{* *! version 8aug2023}{...}
 {viewerjumpto "Examples" "ddml_interactiveiv##examples"}{...}
 {viewerjumpto "Installation" "ddml_interactiveiv##installation"}{...}
 {viewerjumpto "References" "ddml_interactiveiv##references"}{...}
@@ -7,7 +7,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_interactiveiv##also_see"}{...}
 {hline}
-{cmd:help ddml interactiveiv}{right: v1.4.1}
+{cmd:help ddml interactiveiv}{right: v1.4.2}
 {hline}
 
 {title:ddml - estimation of the interactive IV (LATE) model in Double Debiased Machine Learning}

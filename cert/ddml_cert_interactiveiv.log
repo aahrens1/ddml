@@ -1,0 +1,3410 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactiveiv.log
+  log type:  text
+ opened on:   8 Aug 2023, 00:32:44
+
+. 
+. which ddml, all
+
+C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
+*! ddml v1.4.1
+*! last edited: 28july2023
+*! authors: aa/ms
+
+. mata: whichddml()
+  
+  Mata library for ddml and related programs,
+  compiled 28 Jul 2023 under Stata 15.1 born 26 Aug 2019.
+  authors AA/MS
+
+. which pystacked, all
+
+C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
+*! pystacked v0.7.5
+*! last edited: 7aug2023
+*! authors: aa/ms
+
+. 
+. use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
+
+. keep in 1/5000
+(6,204 observations deleted)
+
+. 
+. set seed 123
+
+. 
+. ********************************************************************************
+. *** interactiveiv                                                                                                                       ****
+. ********************************************************************************
+. 
+. gen lnearnings = log(earnings) 
+(596 missing values generated)
+
+. global Y lnearnings
+
+. global D training
+
+. global Z assignmt 
+
+. global X sex-age4554
+
+. 
+. *** pystacked, no SS
+. 
+. *** initialise ddml and select model; 
+. ddml init interactiveiv, kfolds(2) reps(2)
+
+. ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(ols gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X,Z]: pystacked $D $X, type(class) method(logit gradboost)
+Learner D1_pystacked added successfully.
+
+. ddml E[Z|X]: pystacked $Z $X, type(class) method(logit gradboost)
+Learner Z1_pystacked added successfully.
+
+. ddml crossfit
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
+Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] equation: training
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[Z|X]: assignmt
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked
+D equations (1):        training
+ training learners:     D1_pystacked
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.003    (0.002)  Z1_pystacked
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.003    (0.001)  Z1_pystacked
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.003    (0.002)  Z1_pystacked
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.003    (0.002)  Z1_pystacked
+
+Median over 2 stacking resamples (LATE)
+E[y|X,Z=0]   = Y1_pystacked0                       Number of obs   =      5000
+E[y|X,Z=1]   = Y1_pystacked1
+E[D|X,Z=0]   = D1_pystacked0
+E[D|X,Z=1]   = D1_pystacked1
+E[Z|X]       = Z1_pystacked
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0026478   .0016169    -1.64   0.102    -.0058168    .0005212
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0026   -0.0027   -0.0027   -0.0026   -0.0026   -0.0026
+
+. *** replay
+. ddml estimate, mname(m0) spec(st) rep(1) replay notable
+
+Stacking DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0027273   .0017776    -1.53   0.125    -.0062113    .0007568
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
+Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] equation: training
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[Z|X]: assignmt
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked
+D equations (1):        training
+ training learners:     D1_pystacked
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.003    (0.002)  Z1_pystacked
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.003    (0.001)  Z1_pystacked
+  st  3  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.000    (0.002)  Z1_pystacked
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.003    (0.002)  Z1_pystacked
+
+Median over 3 stacking resamples (LATE)
+E[y|X,Z=0]   = Y1_pystacked0                       Number of obs   =      5000
+E[y|X,Z=1]   = Y1_pystacked1
+E[D|X,Z=0]   = D1_pystacked0
+E[D|X,Z=1]   = D1_pystacked1
+E[Z|X]       = Z1_pystacked
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0025683   .0017847    -1.44   0.150    -.0060663    .0009297
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0019   -0.0027   -0.0027   -0.0026   -0.0005   -0.0005
+
+. *** replay
+. ddml estimate, mname(m0) spec(st) rep(1) replay notable
+
+Stacking DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0027273   .0017776    -1.53   0.125    -.0062113    .0007568
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(st) rep(2) replay notable
+
+Stacking DDML model (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D1_pystacked0_2
+E[D|X,Z=1]   = D1_pystacked1_2
+E[Z|X]       = Z1_pystacked_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0025683   .0014339    -1.79   0.073    -.0053786     .000242
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(st) rep(mn) replay notable
+
+Mean over 3 stacking resamples (LATE)
+E[y|X,Z=0]   = Y1_pystacked0                       Number of obs   =      5000
+E[y|X,Z=1]   = Y1_pystacked1
+E[D|X,Z=0]   = D1_pystacked0
+E[D|X,Z=1]   = D1_pystacked1
+E[Z|X]       = Z1_pystacked
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019161   .0018364    -1.04   0.297    -.0055155    .0016832
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0019   -0.0027   -0.0027   -0.0026   -0.0005   -0.0005
+
+. ddml estimate, mname(m0) spec(st) rep(md) replay notable
+
+Median over 3 stacking resamples (LATE)
+E[y|X,Z=0]   = Y1_pystacked0                       Number of obs   =      5000
+E[y|X,Z=1]   = Y1_pystacked1
+E[D|X,Z=0]   = D1_pystacked0
+E[D|X,Z=1]   = D1_pystacked1
+E[Z|X]       = Z1_pystacked
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0025683   .0017847    -1.44   0.150    -.0060663    .0009297
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0019   -0.0027   -0.0027   -0.0026   -0.0005   -0.0005
+
+. *** ddml extract
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .90563874    .86467433    .99201308    .86022881
+gradboost            2    .09436126    .13532567    .00798692    .13977119
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00177778    .00228428            0    .00304907
+gradboost            2            0    .99822222    .99771572            1    .99695093
+      ols            1            1    .00076729     .0018245    .00047736            0
+gradboost            2            1    .99923271     .9981755    .99952264            1
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0    .71795816    .74260729    .70523975    .70602745
+gradboost            2            0    .28204184    .25739271    .29476025    .29397255
+    logit            1            1    .50066574    .53519632    .47113474    .49566615
+gradboost            2            1    .49933426    .46480368    .52886526    .50433385
+
+error - short-stacked weights for assignmt not available
+
+error - short-stacked weights for lnearnings not available
+
+error - short-stacked weights for training not available
+
+error - pool-stacked weights for assignmt not available
+
+error - pool-stacked weights for lnearnings not available
+
+error - pool-stacked weights for training not available
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .93949877  .78984989
+gradboost          2          1  .06050123  .21015011
+    logit          1          2          1  .98402617
+gradboost          2          2          0  .01597383
+    logit          1          3  .90191006  .81854756
+gradboost          2          3  .09808994  .18145244
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .90563874    .86467433    .99201308    .86022881
+gradboost            2    .09436126    .13532567    .00798692    .13977119
+
+pystacked MSEs for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .22269669  .22446312
+gradboost          2          1  .22815448  .22891956
+    logit          1          2  .22265348  .22420206
+gradboost          2          2  .23058796   .2317147
+    logit          1          3  .22402015  .22151725
+gradboost          2          3  .22969832  .22589751
+
+mean stacking MSEs across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2      rep_3
+    logit          1  .22325879   .2235799  .22342777   .2227687
+gradboost          2  .22916209  .22853702  .23115133  .22779792
+
+pystacked weights for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .00456856  1.613e-16
+gradboost          2          0          1  .99543144          1
+      ols          1          0          2          0          0
+gradboost          2          0          2          1          1
+      ols          1          0          3  .00609814          0
+gradboost          2          0          3  .99390186          1
+      ols          1          1          1  .00154421  .00210479
+gradboost          2          1          1  .99845579  .99789521
+      ols          1          1          2          0  .00095472
+gradboost          2          1          2          1  .99904528
+      ols          1          1          3          0          0
+gradboost          2          1          3          1          1
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00177778    .00228428            0    .00304907
+gradboost            2            0    .99822222    .99771572            1    .99695093
+      ols            1            1    .00076729     .0018245    .00047736            0
+gradboost            2            1    .99923271     .9981755    .99952264            1
+
+pystacked MSEs for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .87852107  .97871021
+gradboost          2          0          1  .00061042  .00205651
+      ols          1          0          2  .88332599  .97745751
+gradboost          2          0          2  .00157052  .00073721
+      ols          1          0          3  .90207153  .94022536
+gradboost          2          0          3  .00071794  .00111948
+      ols          1          1          1  .89826625  1.0918523
+gradboost          2          1          1  .00038102  .00223041
+      ols          1          1          2  1.0183185  .99718448
+gradboost          2          1          2  .00374523  .00081301
+      ols          1          1          3  1.0214655  .96133133
+gradboost          2          1          3  .00384266  .00044668
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2      rep_3
+      ols          1          0  .92671861  .92861564  .93039175  .92114844
+gradboost          2          0  .00113535  .00133347  .00115386  .00091871
+      ols          1          1  .99806972  .99505928  1.0077515  .99139841
+gradboost          2          1  .00190984  .00130572  .00227912  .00214467
+
+pystacked weights for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .81666919  .66854539
+gradboost          2          0          1  .18333081  .33145461
+    logit          1          0          2  .85469184  .55578766
+gradboost          2          0          2  .14530816  .44421234
+    logit          1          0          3  .94435312  .46770178
+gradboost          2          0          3  .05564688  .53229822
+    logit          1          1          1    .546026  .52436665
+gradboost          2          1          1    .453974  .47563335
+    logit          1          1          2  .58349976  .35876971
+gradboost          2          1          2  .41650024  .64123029
+    logit          1          1          3  .58012904  .41120326
+gradboost          2          1          3  .41987096  .58879674
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0    .71795816    .74260729    .70523975    .70602745
+gradboost            2            0    .28204184    .25739271    .29476025    .29397255
+    logit            1            1    .50066574    .53519632    .47113474    .49566615
+gradboost            2            1    .49933426    .46480368    .52886526    .50433385
+
+pystacked MSEs for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .01301123   .0204968
+gradboost          2          0          1  .01530629  .02103978
+    logit          1          0          2  .02000378  .01497096
+gradboost          2          0          2  .02345748  .01538503
+    logit          1          0          3  .01462366  .01908187
+gradboost          2          0          3  .01927896  .01898525
+    logit          1          1          1  .21474822   .2243913
+gradboost          2          1          1   .2161549  .22513791
+    logit          1          1          2  .22402158  .21808897
+gradboost          2          1          2  .22626467  .21333725
+    logit          1          1          3   .2218442  .21711664
+gradboost          2          1          3  .22417613  .21423931
+
+mean stacking MSEs across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2      rep_3
+    logit          1          0  .01703138  .01675402  .01748737  .01685276
+gradboost          2          0   .0189088  .01817304  .01942126   .0191321
+    logit          1          1  .22003515  .21956976  .22105528  .21948042
+gradboost          2          1  .21988503  .22064641  .21980096  .21920772
+
+. 
+. *** pystacked, SS
+. 
+. *** initialise ddml and select model; 
+. ddml init interactiveiv, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(ols gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X,Z]: pystacked $D $X, type(class) method(logit gradboost)
+Learner D1_pystacked added successfully.
+
+. ddml E[Z|X]: pystacked $Z $X, type(class) method(logit gradboost)
+Learner Z1_pystacked added successfully.
+
+. ddml crossfit, shortstack poolstack
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
+Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X,Z] equation: training
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[Z|X]: assignmt
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. ddml estimate
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked
+D equations (1):        training
+ training learners:     D1_pystacked
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+  ss  1  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ps  1   [poolstack]          [ps]          [ps]          [ps]    -0.002    (0.002)          [ps]
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked     0.000    (0.002)  Z1_pystacked
+  ss  2  [shortstack]          [ss]          [ss]          [ss]     0.000    (0.002)          [ss]
+  ps  2   [poolstack]          [ps]          [ps]          [ps]     0.000    (0.002)          [ps]
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.002)  Z1_pystacked
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.002)          [ss]
+  ps mn   [poolstack]          [ps]          [ps]          [ps]    -0.001    (0.002)          [ps]
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.002)  Z1_pystacked
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.002)          [ss]
+  ps md   [poolstack]          [ps]          [ps]          [ps]    -0.001    (0.002)          [ps]
+
+Shortstack DDML model (median over 2 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0007456   .0020239    -0.37   0.713    -.0047123    .0032212
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0007   -0.0019   -0.0019   -0.0007    0.0004    0.0004
+
+. *** replay
+. ddml estimate, mname(m0) spec(st) rep(1) replay notable
+
+Stacking DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019334   .0015416    -1.25   0.210    -.0049549     .001088
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ss1_1
+E[D|X,Z=0]   = D_training_ss0_1
+E[D|X,Z=1]   = D_training_ss1_1
+E[Z|X]       = Z_assignmt_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019283   .0015438    -1.25   0.212     -.004954    .0010974
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+
+Poolstack DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ps0_1                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ps1_1
+E[D|X,Z=0]   = D_training_ps0_1
+E[D|X,Z=1]   = D_training_ps1_1
+E[Z|X]       = Z_assignmt_ps_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019672   .0015392    -1.28   0.201     -.004984    .0010496
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. *** ddml extract
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .91930467    .87521105    .96339828
+gradboost            2    .08069533    .12478895    .03660172
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .00257647    .00253187    .00262108
+gradboost            2            0    .99742353    .99746813    .99737892
+      ols            1            1    .00199552    2.673e-17    .00399104
+gradboost            2            1    .99800448            1    .99600896
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+    logit            1            0    .78144573    .70742334    .85546812
+gradboost            2            0    .21855427    .29257666    .14453188
+    logit            1            1    .64049897    .67498789    .60601004
+gradboost            2            1    .35950103    .32501211    .39398996
+
+short-stacked weights across resamples for assignmt
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .99621356            1    .99242713
+gradboost            2    .00378644            0    .00757287
+
+short-stacked weights across resamples for lnearnings
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .00110693    .00221386            0
+gradboost            2            0    .99889307    .99778614            1
+      ols            1            1    .00079195    .00158389            0
+gradboost            2            1    .99920805    .99841611            1
+
+short-stacked weights across resamples for training
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+    logit            1            0    .77029373    .76091095    .77967651
+gradboost            2            0    .22970627    .23908905    .22032349
+    logit            1            1    .53395045    .54383679    .52406411
+gradboost            2            1    .46604955    .45616321    .47593589
+
+pool-stacked weights across resamples for assignmt
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .93710763    .87613828    .99807698
+gradboost            2    .06289237    .12386172    .00192302
+
+pool-stacked weights across resamples for lnearnings
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .00221252    .00257597    .00184907
+gradboost            2            0    .99778748    .99742403    .99815093
+      ols            1            1      .001979            0    .00395799
+gradboost            2            1      .998021            1    .99604201
+
+pool-stacked weights across resamples for training
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+    logit            1            0     .7883061    .71136656    .86524564
+gradboost            2            0     .2116939    .28863344    .13475436
+    logit            1            1    .63576051    .67708571    .59443532
+gradboost            2            1    .36423949    .32291429    .40556468
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .99013152  .76029059
+gradboost          2          1  .00986848  .23970941
+    logit          1          2          1  .92679656
+gradboost          2          2          0  .07320344
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2
+    logit            1    .91930467    .87521105    .96339828
+gradboost            2    .08069533    .12478895    .03660172
+
+pystacked MSEs for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .22300665  .22201711
+gradboost          2          1  .23057624  .22598501
+    logit          1          2   .2236796  .22442762
+gradboost          2          2  .23223746   .2311261
+
+mean stacking MSEs across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2
+    logit          1  .22328275  .22251188  .22405361
+gradboost          2   .2299812  .22828063  .23168178
+
+pystacked weights for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1   .0010158  .00404795
+gradboost          2          0          1   .9989842  .99595205
+      ols          1          0          2  6.359e-18  .00524215
+gradboost          2          0          2          1  .99475785
+      ols          1          1          1  5.347e-17          0
+gradboost          2          1          1          1          1
+      ols          1          1          2  .00344287  .00453921
+gradboost          2          1          2  .99655713  .99546079
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+      ols            1            0    .00257647    .00253187    .00262108
+gradboost            2            0    .99742353    .99746813    .99737892
+      ols            1            1    .00199552    2.673e-17    .00399104
+gradboost            2            1    .99800448            1    .99600896
+
+pystacked MSEs for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .89383683  .99241212
+gradboost          2          0          1  .00108256  .00070156
+      ols          1          0          2  1.0297618  .81948947
+gradboost          2          0          2  .00110604  .00098528
+      ols          1          1          1  .91522841  1.0568325
+gradboost          2          1          1  .00366804  .00102781
+      ols          1          1          2  1.0163523  .97910314
+gradboost          2          1          2  .00048727  .00220856
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2
+      ols          1          0  .93387506  .94312447  .92462566
+gradboost          2          0  .00096886  .00089206  .00104566
+      ols          1          1  .99187909  .98603047  .99772771
+gradboost          2          1  .00184792  .00234793  .00134792
+
+pystacked weights for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .66044478   .7544019
+gradboost          2          0          1  .33955522   .2455981
+    logit          1          0          2  .82474618  .88619007
+gradboost          2          0          2  .17525382  .11380993
+    logit          1          1          1  .71502949   .6349463
+gradboost          2          1          1  .28497051   .3650537
+    logit          1          1          2  .71823112  .49378896
+gradboost          2          1          2  .28176888  .50621104
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2
+    logit            1            0    .78144573    .70742334    .85546812
+gradboost            2            0    .21855427    .29257666    .14453188
+    logit            1            1    .64049897    .67498789    .60601004
+gradboost            2            1    .35950103    .32501211    .39398996
+
+pystacked MSEs for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .01853639  .01594501
+gradboost          2          0          1  .01954996  .01786293
+    logit          1          0          2  .01402761   .0203014
+gradboost          2          0          2  .01593187  .02458424
+    logit          1          1          1  .21775286  .22147936
+gradboost          2          1          1  .22429745  .22524855
+    logit          1          1          2  .21869803  .21791376
+gradboost          2          1          2  .22445946  .21771014
+
+mean stacking MSEs across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2
+    logit          1          0   .0172026   .0172407  .01716451
+gradboost          2          0  .01948225  .01870644  .02025805
+    logit          1          1    .218961  .21961611  .21830589
+gradboost          2          1   .2229289    .224773   .2210848
+
+. 
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit, shortstack poolstack
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
+Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[D|X,Z] equation: training
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+Cross-fitting E[Z|X]: assignmt
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking...completed pooled-stacking
+
+. ddml estimate
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked
+D equations (1):        training
+ training learners:     D1_pystacked
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+  ss  1  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+  ps  1   [poolstack]          [ps]          [ps]          [ps]    -0.002    (0.002)          [ps]
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked     0.000    (0.002)  Z1_pystacked
+  ss  2  [shortstack]          [ss]          [ss]          [ss]     0.000    (0.002)          [ss]
+  ps  2   [poolstack]          [ps]          [ps]          [ps]     0.000    (0.002)          [ps]
+  st  3  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.000    (0.001)  Z1_pystacked
+  ss  3  [shortstack]          [ss]          [ss]          [ss]    -0.000    (0.001)          [ss]
+  ps  3   [poolstack]          [ps]          [ps]          [ps]    -0.000    (0.001)          [ps]
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.002)  Z1_pystacked
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.002)          [ss]
+  ps mn   [poolstack]          [ps]          [ps]          [ps]    -0.001    (0.002)          [ps]
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.000    (0.002)  Z1_pystacked
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.000    (0.002)          [ss]
+  ps md   [poolstack]          [ps]          [ps]          [ps]    -0.000    (0.002)          [ps]
+
+Shortstack DDML model (median over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0002473   .0018655    -0.13   0.895    -.0039036    .0034089
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0006   -0.0019   -0.0019   -0.0002    0.0004    0.0004
+
+. *** replay
+. ddml estimate, mname(m0) spec(st) rep(1) replay notable
+
+Stacking DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019334   .0015416    -1.25   0.210    -.0049549     .001088
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(st) rep(2) replay notable
+
+Stacking DDML model (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D1_pystacked0_2
+E[D|X,Z=1]   = D1_pystacked1_2
+E[Z|X]       = Z1_pystacked_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   .0003883   .0017553     0.22   0.825    -.0030521    .0038287
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(st) rep(mn) replay notable
+
+Mean over 3 stacking resamples (LATE)
+E[y|X,Z=0]   = Y1_pystacked0                       Number of obs   =      5000
+E[y|X,Z=1]   = Y1_pystacked1
+E[D|X,Z=0]   = D1_pystacked0
+E[D|X,Z=1]   = D1_pystacked1
+E[Z|X]       = Z1_pystacked
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0005747   .0018239    -0.32   0.753    -.0041495    .0030002
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0006   -0.0019   -0.0019   -0.0002    0.0004    0.0004
+
+. ddml estimate, mname(m0) spec(st) rep(md) replay notable
+
+Median over 3 stacking resamples (LATE)
+E[y|X,Z=0]   = Y1_pystacked0                       Number of obs   =      5000
+E[y|X,Z=1]   = Y1_pystacked1
+E[D|X,Z=0]   = D1_pystacked0
+E[D|X,Z=1]   = D1_pystacked1
+E[Z|X]       = Z1_pystacked
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0001788   .0018447    -0.10   0.923    -.0037944    .0034367
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0006   -0.0019   -0.0019   -0.0002    0.0004    0.0004
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ss1_1
+E[D|X,Z=0]   = D_training_ss0_1
+E[D|X,Z=1]   = D_training_ss1_1
+E[Z|X]       = Z_assignmt_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019283   .0015438    -1.25   0.212     -.004954    .0010974
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(2) replay notable
+
+Shortstack DDML model (sample=2) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0_2                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ss1_2
+E[D|X,Z=0]   = D_training_ss0_2
+E[D|X,Z=1]   = D_training_ss1_2
+E[Z|X]       = Z_assignmt_ss_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   .0004372   .0017353     0.25   0.801    -.0029639    .0038384
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
+
+Shortstack DDML model (mean over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0005795   .0018146    -0.32   0.749     -.004136    .0029771
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0006   -0.0019   -0.0019   -0.0002    0.0004    0.0004
+
+. ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+
+Shortstack DDML model (median over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0002473   .0018655    -0.13   0.895    -.0039036    .0034089
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0006   -0.0019   -0.0019   -0.0002    0.0004    0.0004
+
+. ddml estimate, mname(m0) spec(ps) rep(1) replay notable
+
+Poolstack DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ps0_1                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ps1_1
+E[D|X,Z=0]   = D_training_ps0_1
+E[D|X,Z=1]   = D_training_ps1_1
+E[Z|X]       = Z_assignmt_ps_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019672   .0015392    -1.28   0.201     -.004984    .0010496
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ps) rep(2) replay notable
+
+Poolstack DDML model (sample=2) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ps0_2                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ps1_2
+E[D|X,Z=0]   = D_training_ps0_2
+E[D|X,Z=1]   = D_training_ps1_2
+E[Z|X]       = Z_assignmt_ps_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   .0004095   .0017495     0.23   0.815    -.0030194    .0038384
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ps) rep(mn) replay notable
+
+Poolstack DDML model (mean over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ps0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ps1
+E[D|X,Z=0]   = D_training_ps0
+E[D|X,Z=1]   = D_training_ps1
+E[Z|X]       = Z_assignmt_ps
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0005964   .0018227    -0.33   0.744    -.0041689    .0029761
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0006   -0.0020   -0.0020   -0.0002    0.0004    0.0004
+
+. ddml estimate, mname(m0) spec(ps) rep(md) replay notable
+
+Poolstack DDML model (median over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ps0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ps1
+E[D|X,Z=0]   = D_training_ps0
+E[D|X,Z=1]   = D_training_ps1
+E[Z|X]       = Z_assignmt_ps
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0002315   .0018632    -0.12   0.901    -.0038834    .0034203
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0006   -0.0020   -0.0020   -0.0002    0.0004    0.0004
+
+. *** ddml extract
+. ddml extract, show(weights)
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .90657626    .87521105    .96339828    .88111946
+gradboost            2    .09342374    .12478895    .03660172    .11888054
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00242071    .00253187    .00262108    .00210917
+gradboost            2            0    .99757929    .99746813    .99737892    .99789083
+      ols            1            1    .00173918    2.673e-17    .00399104    .00122649
+gradboost            2            1    .99826082            1    .99600896    .99877351
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0    .71080995    .70742334    .85546812    .56953837
+gradboost            2            0    .28919005    .29257666    .14453188    .43046163
+    logit            1            1    .60923806    .67498789    .60601004    .54671624
+gradboost            2            1    .39076194    .32501211    .39398996    .45328376
+
+short-stacked weights across resamples for assignmt
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .97380811            1    .99242713    .92899719
+gradboost            2    .02619189            0    .00757287    .07100281
+
+short-stacked weights across resamples for lnearnings
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00073795    .00221386            0            0
+gradboost            2            0    .99926205    .99778614            1            1
+      ols            1            1    .00052796    .00158389            0            0
+gradboost            2            1    .99947204    .99841611            1            1
+
+short-stacked weights across resamples for training
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0    .79939324    .76091095    .77967651    .85759227
+gradboost            2            0    .20060676    .23908905    .22032349    .14240773
+    logit            1            1    .53217341    .54383679    .52406411    .52861932
+gradboost            2            1    .46782659    .45616321    .47593589    .47138068
+
+pool-stacked weights across resamples for assignmt
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .91845359    .87613828    .99807698    .88114553
+gradboost            2    .08154641    .12386172    .00192302    .11885447
+
+pool-stacked weights across resamples for lnearnings
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00147501    .00257597    .00184907            0
+gradboost            2            0    .99852499    .99742403    .99815093            1
+      ols            1            1    .00131933            0    .00395799            0
+gradboost            2            1    .99868067            1    .99604201            1
+
+pool-stacked weights across resamples for training
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0     .7324668    .71136656    .86524564    .62078819
+gradboost            2            0     .2675332    .28863344    .13475436    .37921181
+    logit            1            1    .60541155    .67708571    .59443532    .54471361
+gradboost            2            1    .39458845    .32291429    .40556468    .45528639
+
+. ddml extract, show(pystacked)
+
+pystacked weights for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .99013152  .76029059
+gradboost          2          1  .00986848  .23970941
+    logit          1          2          1  .92679656
+gradboost          2          2          0  .07320344
+    logit          1          3  .89252518  .86971373
+gradboost          2          3  .10747482  .13028627
+
+mean stacking weights across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+               learner  mean_weight        rep_1        rep_2        rep_3
+    logit            1    .90657626    .87521105    .96339828    .88111946
+gradboost            2    .09342374    .12478895    .03660172    .11888054
+
+pystacked MSEs for Z1_pystacked (assignmt)
+             learner   resample     fold_1     fold_2
+    logit          1          1  .22300665  .22201711
+gradboost          2          1  .23057624  .22598501
+    logit          1          2   .2236796  .22442762
+gradboost          2          2  .23223746   .2311261
+    logit          1          3  .22245979  .22316447
+gradboost          2          3  .22821867  .22879914
+
+mean stacking MSEs across folds/resamples for Z1_pystacked (assignmt)
+final stacking estimator: nnls1
+             learner   mean_MSE      rep_1      rep_2      rep_3
+    logit          1  .22312587  .22251188  .22405361  .22281213
+gradboost          2  .22949044  .22828063  .23168178   .2285089
+
+pystacked weights for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1   .0010158  .00404795
+gradboost          2          0          1   .9989842  .99595205
+      ols          1          0          2  6.359e-18  .00524215
+gradboost          2          0          2          1  .99475785
+      ols          1          0          3  .00421834  3.547e-16
+gradboost          2          0          3  .99578166          1
+      ols          1          1          1  5.347e-17          0
+gradboost          2          1          1          1          1
+      ols          1          1          2  .00344287  .00453921
+gradboost          2          1          2  .99655713  .99546079
+      ols          1          1          3          0  .00245299
+gradboost          2          1          3          1  .99754701
+
+mean stacking weights across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+      ols            1            0    .00242071    .00253187    .00262108    .00210917
+gradboost            2            0    .99757929    .99746813    .99737892    .99789083
+      ols            1            1    .00173918    2.673e-17    .00399104    .00122649
+gradboost            2            1    .99826082            1    .99600896    .99877351
+
+pystacked MSEs for Y1_pystacked (lnearnings)
+             learner      Z=0/1   resample     fold_1     fold_2
+      ols          1          0          1  .89383683  .99241212
+gradboost          2          0          1  .00108256  .00070156
+      ols          1          0          2  1.0297618  .81948947
+gradboost          2          0          2  .00110604  .00098528
+      ols          1          0          3  .91189597   .9811706
+gradboost          2          0          3  .00054469  .00111062
+      ols          1          1          1  .91522841  1.0568325
+gradboost          2          1          1  .00366804  .00102781
+      ols          1          1          2  1.0163523  .97910314
+gradboost          2          1          2  .00048727  .00220856
+      ols          1          1          3  .97464176  1.0219551
+gradboost          2          1          3  .00467866  .00060227
+
+mean stacking MSEs across folds/resamples for Y1_pystacked (lnearnings)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2      rep_3
+      ols          1          0  .93809447  .94312447  .92462566  .94653328
+gradboost          2          0  .00092179  .00089206  .00104566  .00082766
+      ols          1          1  .99401887  .98603047  .99772771  .99829843
+gradboost          2          1   .0021121  .00234793  .00134792  .00264047
+
+pystacked weights for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .66044478   .7544019
+gradboost          2          0          1  .33955522   .2455981
+    logit          1          0          2  .82474618  .88619007
+gradboost          2          0          2  .17525382  .11380993
+    logit          1          0          3    .772206  .36687075
+gradboost          2          0          3    .227794  .63312925
+    logit          1          1          1  .71502949   .6349463
+gradboost          2          1          1  .28497051   .3650537
+    logit          1          1          2  .71823112  .49378896
+gradboost          2          1          2  .28176888  .50621104
+    logit          1          1          3  .61173176  .48170071
+gradboost          2          1          3  .38826824  .51829929
+
+mean stacking weights across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+               learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+    logit            1            0    .71080995    .70742334    .85546812    .56953837
+gradboost            2            0    .28919005    .29257666    .14453188    .43046163
+    logit            1            1    .60923806    .67498789    .60601004    .54671624
+gradboost            2            1    .39076194    .32501211    .39398996    .45328376
+
+pystacked MSEs for D1_pystacked (training)
+             learner      Z=0/1   resample     fold_1     fold_2
+    logit          1          0          1  .01853639  .01594501
+gradboost          2          0          1  .01954996  .01786293
+    logit          1          0          2  .01402761   .0203014
+gradboost          2          0          2  .01593187  .02458424
+    logit          1          0          3  .01282401  .02177417
+gradboost          2          0          3  .01454064  .02127714
+    logit          1          1          1  .21775286  .22147936
+gradboost          2          1          1  .22429745  .22524855
+    logit          1          1          2  .21869803  .21791376
+gradboost          2          1          2  .22445946  .21771014
+    logit          1          1          3  .22151778   .2194017
+gradboost          2          1          3  .22475312  .21884695
+
+mean stacking MSEs across folds/resamples for D1_pystacked (training)
+final stacking estimator: nnls1
+             learner      Z=0/1   mean_MSE      rep_1      rep_2      rep_3
+    logit          1          0  .01723476   .0172407  .01716451  .01729909
+gradboost          2          0   .0189578  .01870644  .02025805  .01790889
+    logit          1          1  .21946058  .21961611  .21830589  .22045974
+gradboost          2          1  .22255261    .224773   .2210848  .22180003
+
+. 
+. *** multiple learners, no SS
+. 
+. *** initialise ddml and select model; 
+. ddml init interactiveiv, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X,Z]: reg $Y $X
+Learner Y2_reg added successfully.
+
+. ddml E[D|X,Z]: pystacked $D $X, type(class) method(gradboost)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X,Z]: logit $D $X
+Learner D2_logit added successfully.
+
+. ddml E[Z|X]: pystacked $Z $X, type(class) method(gradboost)
+Learner Z1_pystacked added successfully.
+
+. ddml E[Z|X]: logit $Z $X
+Learner Z2_logit added successfully.
+
+. ddml crossfit
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
+Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] equation: training
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[Z|X]: assignmt
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked Y2_reg
+D equations (1):        training
+ training learners:     D1_pystacked D2_logit
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked Z2_logit
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+ mse  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)      Z2_logit
+ mse  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.001    (0.002)      Z2_logit
+mse = minimum MSE specification for that resample.
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.001    (0.002)     [min-mse]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.001    (0.002)     [min-mse]
+
+Median over 2 min-mse resamples (LATE)
+E[y|X,Z=0]   = md_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = md_1_mse
+E[D|X,Z=0]   = md_training0_mse
+E[D|X,Z=1]   = md_training1_mse
+E[Z|X]       = md__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0014792   .0018684    -0.79   0.429    -.0051412    .0021827
+------------------------------------------------------------------------------
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0015   -0.0023   -0.0023   -0.0015   -0.0007   -0.0007
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3995
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022789   .0017846    -1.28   0.202    -.0057767    .0012189
+------------------------------------------------------------------------------
+
+
+. *** allcombos
+. ddml estimate, allcombos
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked Y2_reg
+D equations (1):        training
+ training learners:     D1_pystacked D2_logit
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked Z2_logit
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+   2  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)      Z2_logit
+   3  1  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.002)  Z1_pystacked
+   4  1  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.002)      Z2_logit
+   5  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+*  6  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)      Z2_logit
+   7  1  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)  Z1_pystacked
+   8  1  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+   9  1  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.017    (0.019)  Z1_pystacked
+  10  1  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked     0.000    (0.016)      Z2_logit
+  11  1  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.017    (0.019)  Z1_pystacked
+  12  1  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit     0.000    (0.016)      Z2_logit
+  13  1  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.021    (0.019)  Z1_pystacked
+  14  1  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.003    (0.017)      Z2_logit
+  15  1  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.021    (0.019)  Z1_pystacked
+  16  1  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.003    (0.017)      Z2_logit
+  17  1        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked    -0.006    (0.037)  Z1_pystacked
+  18  1        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked     0.007    (0.033)      Z2_logit
+  19  1        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit    -0.006    (0.037)  Z1_pystacked
+  20  1        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit     0.007    (0.033)      Z2_logit
+  21  1        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked    -0.011    (0.038)  Z1_pystacked
+  22  1        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.005    (0.034)      Z2_logit
+  23  1        Y2_reg  Y1_pystacked      D2_logit      D2_logit    -0.011    (0.038)  Z1_pystacked
+  24  1        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.005    (0.034)      Z2_logit
+  25  1        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.021    (0.053)  Z1_pystacked
+  26  1        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked     0.009    (0.049)      Z2_logit
+  27  1        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.021    (0.053)  Z1_pystacked
+  28  1        Y2_reg        Y2_reg  D1_pystacked      D2_logit     0.009    (0.049)      Z2_logit
+  29  1        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.030    (0.055)  Z1_pystacked
+  30  1        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.004    (0.051)      Z2_logit
+  31  1        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.030    (0.055)  Z1_pystacked
+  32  1        Y2_reg        Y2_reg      D2_logit      D2_logit     0.004    (0.051)      Z2_logit
+   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked     0.000    (0.001)  Z1_pystacked
+   2  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked     0.000    (0.002)      Z2_logit
+   3  2  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit     0.000    (0.001)  Z1_pystacked
+   4  2  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit     0.000    (0.002)      Z2_logit
+   5  2  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.001    (0.002)  Z1_pystacked
+   6  2  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.001    (0.002)      Z2_logit
+   7  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.001    (0.002)  Z1_pystacked
+*  8  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.001    (0.002)      Z2_logit
+   9  2  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.012    (0.017)  Z1_pystacked
+  10  2  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.010    (0.016)      Z2_logit
+  11  2  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.012    (0.017)  Z1_pystacked
+  12  2  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.010    (0.016)      Z2_logit
+  13  2  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.014    (0.018)  Z1_pystacked
+  14  2  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.014    (0.017)      Z2_logit
+  15  2  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.014    (0.018)  Z1_pystacked
+  16  2  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.014    (0.017)      Z2_logit
+  17  2        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked    -0.028    (0.035)  Z1_pystacked
+  18  2        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked     0.004    (0.033)      Z2_logit
+  19  2        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit    -0.028    (0.035)  Z1_pystacked
+  20  2        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit     0.004    (0.033)      Z2_logit
+  21  2        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked    -0.029    (0.037)  Z1_pystacked
+  22  2        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.036)      Z2_logit
+  23  2        Y2_reg  Y1_pystacked      D2_logit      D2_logit    -0.029    (0.037)  Z1_pystacked
+  24  2        Y2_reg  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.036)      Z2_logit
+  25  2        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.040    (0.051)  Z1_pystacked
+  26  2        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.006    (0.049)      Z2_logit
+  27  2        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.040    (0.051)  Z1_pystacked
+  28  2        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.006    (0.049)      Z2_logit
+  29  2        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.043    (0.053)  Z1_pystacked
+  30  2        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.016    (0.052)      Z2_logit
+  31  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.043    (0.054)  Z1_pystacked
+  32  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.016    (0.052)      Z2_logit
+* = minimum MSE specification for that resample.
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+   1 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.001    (0.002)  Z1_pystacked
+   1 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.001    (0.002)  Z1_pystacked
+   2 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.001    (0.002)      Z2_logit
+   2 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.001    (0.002)      Z2_logit
+   3 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.001    (0.002)  Z1_pystacked
+   3 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.001    (0.002)  Z1_pystacked
+   4 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.001    (0.002)      Z2_logit
+   4 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.001    (0.002)      Z2_logit
+   5 mn Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.001    (0.002)  Z1_pystacked
+   5 md Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.001    (0.002)  Z1_pystacked
+   6 mn Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.001    (0.002)      Z2_logit
+   6 md Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.001    (0.002)      Z2_logit
+   7 mn Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.001    (0.002)  Z1_pystacked
+   7 md Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.001    (0.002)  Z1_pystacked
+   8 mn Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.001    (0.002)      Z2_logit
+   8 md Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.001    (0.002)      Z2_logit
+   9 mn Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.015    (0.018)  Z1_pystacked
+   9 md Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.015    (0.018)  Z1_pystacked
+  10 mn Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.005    (0.017)      Z2_logit
+  10 md Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.005    (0.017)      Z2_logit
+  11 mn Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.015    (0.018)  Z1_pystacked
+  11 md Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.015    (0.018)  Z1_pystacked
+  12 mn Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.005    (0.017)      Z2_logit
+  12 md Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.005    (0.017)      Z2_logit
+  13 mn Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.018    (0.019)  Z1_pystacked
+  13 md Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.018    (0.019)  Z1_pystacked
+  14 mn Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.008    (0.018)      Z2_logit
+  14 md Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.008    (0.018)      Z2_logit
+  15 mn Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.018    (0.019)  Z1_pystacked
+  15 md Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.018    (0.019)  Z1_pystacked
+  16 mn Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.008    (0.018)      Z2_logit
+  16 md Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.008    (0.018)      Z2_logit
+  17 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.017    (0.037)  Z1_pystacked
+  17 md       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.017    (0.038)  Z1_pystacked
+  18 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1     0.005    (0.033)      Z2_logit
+  18 md       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1     0.005    (0.033)      Z2_logit
+  19 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.017    (0.037)  Z1_pystacked
+  19 md       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.017    (0.038)  Z1_pystacked
+  20 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1     0.005    (0.033)      Z2_logit
+  20 md       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1     0.005    (0.033)      Z2_logit
+  21 mn       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.020    (0.039)  Z1_pystacked
+  21 md       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.020    (0.039)  Z1_pystacked
+  22 mn       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.001    (0.035)      Z2_logit
+  22 md       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.001    (0.035)      Z2_logit
+  23 mn       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1    -0.020    (0.039)  Z1_pystacked
+  23 md       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1    -0.020    (0.039)  Z1_pystacked
+  24 mn       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.001    (0.035)      Z2_logit
+  24 md       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.001    (0.035)      Z2_logit
+  25 mn       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.031    (0.053)  Z1_pystacked
+  25 md       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.031    (0.053)  Z1_pystacked
+  26 mn       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1     0.001    (0.050)      Z2_logit
+  26 md       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1     0.001    (0.050)      Z2_logit
+  27 mn       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.031    (0.053)  Z1_pystacked
+  27 md       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.031    (0.053)  Z1_pystacked
+  28 mn       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1     0.001    (0.050)      Z2_logit
+  28 md       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1     0.001    (0.050)      Z2_logit
+  29 mn       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1    -0.036    (0.055)  Z1_pystacked
+  29 md       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1    -0.036    (0.055)  Z1_pystacked
+  30 mn       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1    -0.006    (0.052)      Z2_logit
+  30 md       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1    -0.006    (0.052)      Z2_logit
+  31 mn       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1    -0.036    (0.055)  Z1_pystacked
+  31 md       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1    -0.036    (0.055)  Z1_pystacked
+  32 mn       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1    -0.006    (0.052)      Z2_logit
+  32 md       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1    -0.006    (0.052)      Z2_logit
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.001    (0.002)     [min-mse]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.001    (0.002)     [min-mse]
+
+Median over 2 min-mse specifications (LATE)
+E[y|X,Z=0]   = md_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = md_1_mse
+E[D|X,Z=0]   = md_training0_mse
+E[D|X,Z=1]   = md_training1_mse
+E[Z|X]       = md__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0014792   .0018684    -0.79   0.429    -.0051412    .0021827
+------------------------------------------------------------------------------
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0015   -0.0023   -0.0023   -0.0015   -0.0007   -0.0007
+
+. forvalues i=1/8 {
+  2.     ddml estimate, mname(m0) spec(`i') rep(1) replay notable
+  3. }
+
+DDML model, specification 1 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   -.001912   .0017382    -1.10   0.271    -.0053187    .0014947
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019035   .0016538    -1.15   0.250    -.0051449     .001338
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019098   .0017361    -1.10   0.271    -.0053126     .001493
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019014    .001652    -1.15   0.250    -.0051392    .0013365
+------------------------------------------------------------------------------
+
+
+DDML model, specification 5 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3995
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0023613    .001868    -1.26   0.206    -.0060225       .0013
+------------------------------------------------------------------------------
+
+
+Min MSE DDML model, specification 6 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3995
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022789   .0017846    -1.28   0.202    -.0057767    .0012189
+------------------------------------------------------------------------------
+
+
+DDML model, specification 7 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3995
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0023587    .001866    -1.26   0.206    -.0060159    .0012985
+------------------------------------------------------------------------------
+
+
+DDML model, specification 8 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3995
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022752   .0017818    -1.28   0.202    -.0057675     .001217
+------------------------------------------------------------------------------
+
+
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
+Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] equation: training
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[Z|X]: assignmt
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked Y2_reg
+D equations (1):        training
+ training learners:     D1_pystacked D2_logit
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked Z2_logit
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+ mse  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)      Z2_logit
+ mse  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.001    (0.002)      Z2_logit
+ mse  3  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+mse = minimum MSE specification for that resample.
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+
+Median over 3 min-mse resamples (LATE)
+E[y|X,Z=0]   = md_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = md_1_mse
+E[D|X,Z=0]   = md_training0_mse
+E[D|X,Z=1]   = md_training1_mse
+E[Z|X]       = md__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022603   .0017847    -1.27   0.205    -.0057582    .0012377
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0023   -0.0023   -0.0023   -0.0007   -0.0007
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3995
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022789   .0017846    -1.28   0.202    -.0057767    .0012189
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(2) replay notable
+
+Min MSE DDML model (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      3806
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D2_logit0_2
+E[D|X,Z=1]   = D2_logit1_2
+E[Z|X]       = Z2_logit_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0006796   .0015868    -0.43   0.668    -.0037897    .0024305
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse resamples (LATE)
+E[y|X,Z=0]   = mn_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = mn_1_mse
+E[D|X,Z=0]   = mn_training0_mse
+E[D|X,Z=1]   = mn_training1_mse
+E[Z|X]       = mn__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0017396   .0018668    -0.93   0.351    -.0053984    .0019193
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0023   -0.0023   -0.0023   -0.0007   -0.0007
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse resamples (LATE)
+E[y|X,Z=0]   = md_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = md_1_mse
+E[D|X,Z=0]   = md_training0_mse
+E[D|X,Z=1]   = md_training1_mse
+E[Z|X]       = md__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022603   .0017847    -1.27   0.205    -.0057582    .0012377
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0023   -0.0023   -0.0023   -0.0007   -0.0007
+
+. *** allcombos
+. ddml estimate, allcombos
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked Y2_reg
+D equations (1):        training
+ training learners:     D1_pystacked D2_logit
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked Z2_logit
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+   2  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)      Z2_logit
+   3  1  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.002)  Z1_pystacked
+   4  1  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.002)      Z2_logit
+   5  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+*  6  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)      Z2_logit
+   7  1  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)  Z1_pystacked
+   8  1  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+   9  1  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.017    (0.019)  Z1_pystacked
+  10  1  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked     0.000    (0.016)      Z2_logit
+  11  1  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.017    (0.019)  Z1_pystacked
+  12  1  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit     0.000    (0.016)      Z2_logit
+  13  1  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.021    (0.019)  Z1_pystacked
+  14  1  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.003    (0.017)      Z2_logit
+  15  1  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.021    (0.019)  Z1_pystacked
+  16  1  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.003    (0.017)      Z2_logit
+  17  1        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked    -0.006    (0.037)  Z1_pystacked
+  18  1        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked     0.007    (0.033)      Z2_logit
+  19  1        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit    -0.006    (0.037)  Z1_pystacked
+  20  1        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit     0.007    (0.033)      Z2_logit
+  21  1        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked    -0.011    (0.038)  Z1_pystacked
+  22  1        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.005    (0.034)      Z2_logit
+  23  1        Y2_reg  Y1_pystacked      D2_logit      D2_logit    -0.011    (0.038)  Z1_pystacked
+  24  1        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.005    (0.034)      Z2_logit
+  25  1        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.021    (0.053)  Z1_pystacked
+  26  1        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked     0.009    (0.049)      Z2_logit
+  27  1        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.021    (0.053)  Z1_pystacked
+  28  1        Y2_reg        Y2_reg  D1_pystacked      D2_logit     0.009    (0.049)      Z2_logit
+  29  1        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.030    (0.055)  Z1_pystacked
+  30  1        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.004    (0.051)      Z2_logit
+  31  1        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.030    (0.055)  Z1_pystacked
+  32  1        Y2_reg        Y2_reg      D2_logit      D2_logit     0.004    (0.051)      Z2_logit
+   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked     0.000    (0.001)  Z1_pystacked
+   2  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked     0.000    (0.002)      Z2_logit
+   3  2  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit     0.000    (0.001)  Z1_pystacked
+   4  2  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit     0.000    (0.002)      Z2_logit
+   5  2  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.001    (0.002)  Z1_pystacked
+   6  2  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.001    (0.002)      Z2_logit
+   7  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.001    (0.002)  Z1_pystacked
+*  8  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.001    (0.002)      Z2_logit
+   9  2  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.012    (0.017)  Z1_pystacked
+  10  2  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.010    (0.016)      Z2_logit
+  11  2  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.012    (0.017)  Z1_pystacked
+  12  2  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.010    (0.016)      Z2_logit
+  13  2  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.014    (0.018)  Z1_pystacked
+  14  2  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.014    (0.017)      Z2_logit
+  15  2  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.014    (0.018)  Z1_pystacked
+  16  2  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.014    (0.017)      Z2_logit
+  17  2        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked    -0.028    (0.035)  Z1_pystacked
+  18  2        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked     0.004    (0.033)      Z2_logit
+  19  2        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit    -0.028    (0.035)  Z1_pystacked
+  20  2        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit     0.004    (0.033)      Z2_logit
+  21  2        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked    -0.029    (0.037)  Z1_pystacked
+  22  2        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.036)      Z2_logit
+  23  2        Y2_reg  Y1_pystacked      D2_logit      D2_logit    -0.029    (0.037)  Z1_pystacked
+  24  2        Y2_reg  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.036)      Z2_logit
+  25  2        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.040    (0.051)  Z1_pystacked
+  26  2        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.006    (0.049)      Z2_logit
+  27  2        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.040    (0.051)  Z1_pystacked
+  28  2        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.006    (0.049)      Z2_logit
+  29  2        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.043    (0.053)  Z1_pystacked
+  30  2        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.016    (0.052)      Z2_logit
+  31  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.043    (0.054)  Z1_pystacked
+  32  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.016    (0.052)      Z2_logit
+   1  3  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+   2  3  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)      Z2_logit
+   3  3  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.002)  Z1_pystacked
+   4  3  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.002)      Z2_logit
+   5  3  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.003)  Z1_pystacked
+   6  3  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)      Z2_logit
+   7  3  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.003)  Z1_pystacked
+*  8  3  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+   9  3  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.031    (0.019)  Z1_pystacked
+  10  3  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.003    (0.016)      Z2_logit
+  11  3  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.031    (0.019)  Z1_pystacked
+  12  3  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.003    (0.016)      Z2_logit
+  13  3  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.006    (0.020)  Z1_pystacked
+  14  3  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked     0.012    (0.018)      Z2_logit
+  15  3  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.006    (0.020)  Z1_pystacked
+  16  3  Y1_pystacked        Y2_reg      D2_logit      D2_logit     0.012    (0.018)      Z2_logit
+  17  3        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked     0.028    (0.043)  Z1_pystacked
+  18  3        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked     0.009    (0.033)      Z2_logit
+  19  3        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit     0.028    (0.043)  Z1_pystacked
+  20  3        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit     0.009    (0.033)      Z2_logit
+  21  3        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.078    (0.048)  Z1_pystacked
+  22  3        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.040    (0.036)      Z2_logit
+  23  3        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.078    (0.048)  Z1_pystacked
+  24  3        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.041    (0.036)      Z2_logit
+  25  3        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.001    (0.059)  Z1_pystacked
+  26  3        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked     0.008    (0.049)      Z2_logit
+  27  3        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.001    (0.059)  Z1_pystacked
+  28  3        Y2_reg        Y2_reg  D1_pystacked      D2_logit     0.008    (0.049)      Z2_logit
+  29  3        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.074    (0.064)  Z1_pystacked
+  30  3        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.055    (0.053)      Z2_logit
+  31  3        Y2_reg        Y2_reg      D2_logit      D2_logit     0.074    (0.064)  Z1_pystacked
+  32  3        Y2_reg        Y2_reg      D2_logit      D2_logit     0.055    (0.053)      Z2_logit
+* = minimum MSE specification for that resample.
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+   1 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.001    (0.002)  Z1_pystacked
+   1 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.002)  Z1_pystacked
+   2 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.001    (0.002)      Z2_logit
+   2 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.002)      Z2_logit
+   3 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.001    (0.002)  Z1_pystacked
+   3 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.002)  Z1_pystacked
+   4 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.001    (0.002)      Z2_logit
+   4 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.002)      Z2_logit
+   5 mn Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)  Z1_pystacked
+   5 md Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)  Z1_pystacked
+   6 mn Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)      Z2_logit
+   6 md Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)      Z2_logit
+   7 mn Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)  Z1_pystacked
+   7 md Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)  Z1_pystacked
+   8 mn Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)      Z2_logit
+   8 md Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)      Z2_logit
+   9 mn Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.020    (0.020)  Z1_pystacked
+   9 md Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.017    (0.019)  Z1_pystacked
+  10 mn Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.004    (0.017)      Z2_logit
+  10 md Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.003    (0.017)      Z2_logit
+  11 mn Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.020    (0.020)  Z1_pystacked
+  11 md Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.017    (0.019)  Z1_pystacked
+  12 mn Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.004    (0.017)      Z2_logit
+  12 md Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.003    (0.017)      Z2_logit
+  13 mn Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.014    (0.020)  Z1_pystacked
+  13 md Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.014    (0.021)  Z1_pystacked
+  14 mn Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.002    (0.020)      Z2_logit
+  14 md Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.003    (0.021)      Z2_logit
+  15 mn Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.014    (0.020)  Z1_pystacked
+  15 md Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.014    (0.021)  Z1_pystacked
+  16 mn Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.002    (0.020)      Z2_logit
+  16 md Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.003    (0.021)      Z2_logit
+  17 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.043)  Z1_pystacked
+  17 md       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.006    (0.041)  Z1_pystacked
+  18 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1     0.006    (0.033)      Z2_logit
+  18 md       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1     0.007    (0.033)      Z2_logit
+  19 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.043)  Z1_pystacked
+  19 md       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.006    (0.041)  Z1_pystacked
+  20 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1     0.006    (0.033)      Z2_logit
+  20 md       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1     0.007    (0.033)      Z2_logit
+  21 mn       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.013    (0.056)  Z1_pystacked
+  21 md       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.011    (0.041)  Z1_pystacked
+  22 mn       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.014    (0.039)      Z2_logit
+  22 md       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.005    (0.036)      Z2_logit
+  23 mn       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.013    (0.056)  Z1_pystacked
+  23 md       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1    -0.011    (0.041)  Z1_pystacked
+  24 mn       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.014    (0.039)      Z2_logit
+  24 md       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.005    (0.036)      Z2_logit
+  25 mn       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.021    (0.056)  Z1_pystacked
+  25 md       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.021    (0.054)  Z1_pystacked
+  26 mn       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1     0.003    (0.049)      Z2_logit
+  26 md       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1     0.008    (0.049)      Z2_logit
+  27 mn       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.021    (0.056)  Z1_pystacked
+  27 md       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.021    (0.054)  Z1_pystacked
+  28 mn       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1     0.003    (0.049)      Z2_logit
+  28 md       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1     0.008    (0.049)      Z2_logit
+  29 mn       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1     0.001    (0.073)  Z1_pystacked
+  29 md       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1    -0.030    (0.055)  Z1_pystacked
+  30 mn       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1     0.014    (0.058)      Z2_logit
+  30 md       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1     0.004    (0.056)      Z2_logit
+  31 mn       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1     0.001    (0.073)  Z1_pystacked
+  31 md       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1    -0.030    (0.055)  Z1_pystacked
+  32 mn       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1     0.014    (0.058)      Z2_logit
+  32 md       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1     0.004    (0.056)      Z2_logit
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+
+Median over 3 min-mse specifications (LATE)
+E[y|X,Z=0]   = md_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = md_1_mse
+E[D|X,Z=0]   = md_training0_mse
+E[D|X,Z=1]   = md_training1_mse
+E[Z|X]       = md__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022603   .0017847    -1.27   0.205    -.0057582    .0012377
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0023   -0.0023   -0.0023   -0.0007   -0.0007
+
+. forvalues i=1/4 {
+  2.         forvalues r=1/2 {
+  3.                 ddml estimate, mname(m0) spec(`i') rep(`r') replay notable
+  4.         }
+  5. }
+
+DDML model, specification 1 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   -.001912   .0017382    -1.10   0.271    -.0053187    .0014947
+------------------------------------------------------------------------------
+
+
+DDML model, specification 1 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D1_pystacked0_2
+E[D|X,Z=1]   = D1_pystacked1_2
+E[Z|X]       = Z1_pystacked_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   .0003703   .0014858     0.25   0.803    -.0025418    .0032824
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019035   .0016538    -1.15   0.250    -.0051449     .001338
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D1_pystacked0_2
+E[D|X,Z=1]   = D1_pystacked1_2
+E[Z|X]       = Z2_logit_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   .0003801   .0015061     0.25   0.801    -.0025717     .003332
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019098   .0017361    -1.10   0.271    -.0053126     .001493
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D1_pystacked0_2
+E[D|X,Z=1]   = D2_logit1_2
+E[Z|X]       = Z1_pystacked_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   .0003707   .0014875     0.25   0.803    -.0025448    .0032862
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019014    .001652    -1.15   0.250    -.0051392    .0013365
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D1_pystacked0_2
+E[D|X,Z=1]   = D2_logit1_2
+E[Z|X]       = Z2_logit_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   .0003803   .0015067     0.25   0.801    -.0025728    .0033334
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse specifications (LATE)
+E[y|X,Z=0]   = mn_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = mn_1_mse
+E[D|X,Z=0]   = mn_training0_mse
+E[D|X,Z=1]   = mn_training1_mse
+E[Z|X]       = mn__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0017396   .0018668    -0.93   0.351    -.0053984    .0019193
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0023   -0.0023   -0.0023   -0.0007   -0.0007
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse specifications (LATE)
+E[y|X,Z=0]   = md_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = md_1_mse
+E[D|X,Z=0]   = md_training0_mse
+E[D|X,Z=1]   = md_training1_mse
+E[Z|X]       = md__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022603   .0017847    -1.27   0.205    -.0057582    .0012377
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0023   -0.0023   -0.0023   -0.0007   -0.0007
+
+. 
+. *** multiple learners, SS
+. 
+. *** initialise ddml and select model; 
+. ddml init interactiveiv, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[Y|X,Z]: reg $Y $X
+Learner Y2_reg added successfully.
+
+. ddml E[D|X,Z]: pystacked $D $X, type(class) method(gradboost)
+Learner D1_pystacked added successfully.
+
+. ddml E[D|X,Z]: logit $D $X
+Learner D2_logit added successfully.
+
+. ddml E[Z|X]: pystacked $Z $X, type(class) method(gradboost)
+Learner Z1_pystacked added successfully.
+
+. ddml E[Z|X]: logit $Z $X
+Learner Z2_logit added successfully.
+
+. ddml crossfit, shortstack
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
+Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X,Z] equation: training
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[Z|X]: assignmt
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+. ddml estimate
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked Y2_reg
+D equations (1):        training
+ training learners:     D1_pystacked D2_logit
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked Z2_logit
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+ mse  1  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+  ss  1  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+ mse  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+mse = minimum MSE specification for that resample.
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+
+Shortstack DDML model (median over 2 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0017874    .001455    -1.23   0.219    -.0046392    .0010644
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0018   -0.0020   -0.0020   -0.0018   -0.0016   -0.0016
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   -.001839   .0017479    -1.05   0.293    -.0052648    .0015869
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ss1_1
+E[D|X,Z=0]   = D_training_ss0_1
+E[D|X,Z=1]   = D_training_ss1_1
+E[Z|X]       = Z_assignmt_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0015951   .0015485    -1.03   0.303    -.0046301    .0014399
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. *** allcombos
+. ddml estimate, allcombos
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked Y2_reg
+D equations (1):        training
+ training learners:     D1_pystacked D2_logit
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked Z2_logit
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+   2  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)      Z2_logit
+   3  1  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.002)  Z1_pystacked
+   4  1  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.002)      Z2_logit
+   5  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+   6  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)      Z2_logit
+   7  1  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)  Z1_pystacked
+*  8  1  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+   9  1  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.010    (0.017)  Z1_pystacked
+  10  1  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.006    (0.016)      Z2_logit
+  11  1  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.010    (0.017)  Z1_pystacked
+  12  1  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.006    (0.016)      Z2_logit
+  13  1  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.010    (0.019)  Z1_pystacked
+  14  1  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.003    (0.018)      Z2_logit
+  15  1  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.010    (0.019)  Z1_pystacked
+  16  1  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.003    (0.018)      Z2_logit
+  17  1        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.039)  Z1_pystacked
+  18  1        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked    -0.006    (0.033)      Z2_logit
+  19  1        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.039)  Z1_pystacked
+  20  1        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit    -0.006    (0.033)      Z2_logit
+  21  1        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.020    (0.043)  Z1_pystacked
+  22  1        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.014    (0.036)      Z2_logit
+  23  1        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.020    (0.042)  Z1_pystacked
+  24  1        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.014    (0.036)      Z2_logit
+  25  1        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.011    (0.054)  Z1_pystacked
+  26  1        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.010    (0.049)      Z2_logit
+  27  1        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.011    (0.054)  Z1_pystacked
+  28  1        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.010    (0.049)      Z2_logit
+  29  1        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.012    (0.059)  Z1_pystacked
+  30  1        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.012    (0.053)      Z2_logit
+  31  1        Y2_reg        Y2_reg      D2_logit      D2_logit     0.012    (0.058)  Z1_pystacked
+  32  1        Y2_reg        Y2_reg      D2_logit      D2_logit     0.012    (0.052)      Z2_logit
+  ss  1  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.001)  Z1_pystacked
+   2  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.001)      Z2_logit
+   3  2  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.001)  Z1_pystacked
+   4  2  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.001)      Z2_logit
+   5  2  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.003    (0.002)  Z1_pystacked
+   6  2  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)      Z2_logit
+   7  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.003    (0.002)  Z1_pystacked
+*  8  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+   9  2  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.020    (0.018)  Z1_pystacked
+  10  2  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.005    (0.016)      Z2_logit
+  11  2  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.020    (0.018)  Z1_pystacked
+  12  2  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.005    (0.016)      Z2_logit
+  13  2  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.025    (0.020)  Z1_pystacked
+  14  2  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.016    (0.018)      Z2_logit
+  15  2  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.025    (0.020)  Z1_pystacked
+  16  2  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.016    (0.018)      Z2_logit
+  17  2        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked     0.022    (0.039)  Z1_pystacked
+  18  2        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked     0.011    (0.034)      Z2_logit
+  19  2        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit     0.022    (0.039)  Z1_pystacked
+  20  2        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit     0.011    (0.034)      Z2_logit
+  21  2        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.013    (0.045)  Z1_pystacked
+  22  2        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked    -0.012    (0.038)      Z2_logit
+  23  2        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.013    (0.045)  Z1_pystacked
+  24  2        Y2_reg  Y1_pystacked      D2_logit      D2_logit    -0.012    (0.038)      Z2_logit
+  25  2        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked     0.004    (0.055)  Z1_pystacked
+  26  2        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked     0.008    (0.049)      Z2_logit
+  27  2        Y2_reg        Y2_reg  D1_pystacked      D2_logit     0.004    (0.054)  Z1_pystacked
+  28  2        Y2_reg        Y2_reg  D1_pystacked      D2_logit     0.008    (0.049)      Z2_logit
+  29  2        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.009    (0.062)  Z1_pystacked
+  30  2        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.026    (0.055)      Z2_logit
+  31  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.009    (0.062)  Z1_pystacked
+  32  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.026    (0.055)      Z2_logit
+  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+* = minimum MSE specification for that resample.
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+   1 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.002)  Z1_pystacked
+   1 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.002)  Z1_pystacked
+   2 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.001)      Z2_logit
+   2 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.001)      Z2_logit
+   3 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.002)  Z1_pystacked
+   3 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.002)  Z1_pystacked
+   4 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.001)      Z2_logit
+   4 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.001)      Z2_logit
+   5 mn Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)  Z1_pystacked
+   5 md Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)  Z1_pystacked
+   6 mn Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)      Z2_logit
+   6 md Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)      Z2_logit
+   7 mn Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)  Z1_pystacked
+   7 md Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)  Z1_pystacked
+   8 mn Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)      Z2_logit
+   8 md Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)      Z2_logit
+   9 mn Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.015    (0.018)  Z1_pystacked
+   9 md Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.015    (0.018)  Z1_pystacked
+  10 mn Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.006    (0.016)      Z2_logit
+  10 md Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.006    (0.016)      Z2_logit
+  11 mn Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.015    (0.018)  Z1_pystacked
+  11 md Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.015    (0.018)  Z1_pystacked
+  12 mn Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.006    (0.016)      Z2_logit
+  12 md Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.006    (0.016)      Z2_logit
+  13 mn Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.017    (0.021)  Z1_pystacked
+  13 md Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.017    (0.021)  Z1_pystacked
+  14 mn Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.010    (0.019)      Z2_logit
+  14 md Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.010    (0.019)      Z2_logit
+  15 mn Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.017    (0.021)  Z1_pystacked
+  15 md Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.017    (0.021)  Z1_pystacked
+  16 mn Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.010    (0.019)      Z2_logit
+  16 md Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.010    (0.019)      Z2_logit
+  17 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1     0.010    (0.041)  Z1_pystacked
+  17 md       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1     0.010    (0.041)  Z1_pystacked
+  18 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1     0.003    (0.035)      Z2_logit
+  18 md       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1     0.003    (0.035)      Z2_logit
+  19 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1     0.010    (0.041)  Z1_pystacked
+  19 md       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1     0.010    (0.041)  Z1_pystacked
+  20 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1     0.003    (0.035)      Z2_logit
+  20 md       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1     0.003    (0.035)      Z2_logit
+  21 mn       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.017    (0.044)  Z1_pystacked
+  21 md       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.017    (0.044)  Z1_pystacked
+  22 mn       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.001    (0.039)      Z2_logit
+  22 md       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.001    (0.039)      Z2_logit
+  23 mn       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.017    (0.044)  Z1_pystacked
+  23 md       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.017    (0.044)  Z1_pystacked
+  24 mn       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.001    (0.039)      Z2_logit
+  24 md       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.001    (0.039)      Z2_logit
+  25 mn       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.003    (0.055)  Z1_pystacked
+  25 md       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.003    (0.055)  Z1_pystacked
+  26 mn       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.001    (0.050)      Z2_logit
+  26 md       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.001    (0.050)      Z2_logit
+  27 mn       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.003    (0.055)  Z1_pystacked
+  27 md       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.003    (0.055)  Z1_pystacked
+  28 mn       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.001    (0.050)      Z2_logit
+  28 md       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.001    (0.050)      Z2_logit
+  29 mn       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1     0.002    (0.061)  Z1_pystacked
+  29 md       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1     0.002    (0.061)  Z1_pystacked
+  30 mn       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1    -0.007    (0.057)      Z2_logit
+  30 md       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1    -0.007    (0.057)      Z2_logit
+  31 mn       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1     0.002    (0.061)  Z1_pystacked
+  31 md       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1     0.002    (0.061)  Z1_pystacked
+  32 mn       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1    -0.007    (0.057)      Z2_logit
+  32 md       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1    -0.007    (0.057)      Z2_logit
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+
+Shortstack DDML model (median over 2 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0017874    .001455    -1.23   0.219    -.0046392    .0010644
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0018   -0.0020   -0.0020   -0.0018   -0.0016   -0.0016
+
+. forvalues i=1/8 {
+  2.     ddml estimate, mname(m0) spec(`i') rep(1) replay notable
+  3. }
+
+DDML model, specification 1 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0018613   .0016412    -1.13   0.257    -.0050779    .0013554
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0016183   .0015461    -1.05   0.295    -.0046485    .0014119
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0018602   .0016401    -1.13   0.257    -.0050748    .0013544
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0016179   .0015456    -1.05   0.295    -.0046471    .0014114
+------------------------------------------------------------------------------
+
+
+DDML model, specification 5 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019953   .0018599    -1.07   0.283    -.0056407    .0016501
+------------------------------------------------------------------------------
+
+
+DDML model, specification 6 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0018417   .0017506    -1.05   0.293    -.0052728    .0015894
+------------------------------------------------------------------------------
+
+
+DDML model, specification 7 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019918   .0018566    -1.07   0.283    -.0056308    .0016471
+------------------------------------------------------------------------------
+
+
+Min MSE DDML model, specification 8 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   -.001839   .0017479    -1.05   0.293    -.0052648    .0015869
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ss1_1
+E[D|X,Z=0]   = D_training_ss0_1
+E[D|X,Z=1]   = D_training_ss1_1
+E[Z|X]       = Z_assignmt_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0015951   .0015485    -1.03   0.303    -.0046301    .0014399
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. *** append, estimate, replay
+. ddml sample, append(1)
+
+. ddml crossfit, shortstack
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
+Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[D|X,Z] equation: training
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Cross-fitting E[Z|X]: assignmt
+Resample 3...
+Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+
+. ddml estimate
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked Y2_reg
+D equations (1):        training
+ training learners:     D1_pystacked D2_logit
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked Z2_logit
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+ mse  1  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+  ss  1  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+ mse  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+ mse  3  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+  ss  3  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+mse = minimum MSE specification for that resample.
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+
+Shortstack DDML model (median over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0015951   .0013821    -1.15   0.248     -.004304    .0011139
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0020   -0.0020   -0.0016   -0.0015   -0.0015
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   -.001839   .0017479    -1.05   0.293    -.0052648    .0015869
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(2) replay notable
+
+Min MSE DDML model (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      3363
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D2_logit0_2
+E[D|X,Z=1]   = D2_logit1_2
+E[Z|X]       = Z2_logit_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022564   .0016501    -1.37   0.171    -.0054905    .0009776
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse resamples (LATE)
+E[y|X,Z=0]   = mn_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = mn_1_mse
+E[D|X,Z=0]   = mn_training0_mse
+E[D|X,Z=1]   = mn_training1_mse
+E[Z|X]       = mn__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019762   .0016469    -1.20   0.230    -.0052041    .0012516
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0020   -0.0023   -0.0023   -0.0018   -0.0018   -0.0018
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse resamples (LATE)
+E[y|X,Z=0]   = md_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = md_1_mse
+E[D|X,Z=0]   = md_training0_mse
+E[D|X,Z=1]   = md_training1_mse
+E[Z|X]       = md__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   -.001839    .001702    -1.08   0.280    -.0051749     .001497
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0020   -0.0023   -0.0023   -0.0018   -0.0018   -0.0018
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ss1_1
+E[D|X,Z=0]   = D_training_ss0_1
+E[D|X,Z=1]   = D_training_ss1_1
+E[Z|X]       = Z_assignmt_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0015951   .0015485    -1.03   0.303    -.0046301    .0014399
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(2) replay notable
+
+Shortstack DDML model (sample=2) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0_2                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ss1_2
+E[D|X,Z=0]   = D_training_ss0_2
+E[D|X,Z=1]   = D_training_ss1_2
+E[Z|X]       = Z_assignmt_ss_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019797   .0013275    -1.49   0.136    -.0045817    .0006222
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
+
+Shortstack DDML model (mean over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0016952   .0014158    -1.20   0.231    -.0044702    .0010797
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0020   -0.0020   -0.0016   -0.0015   -0.0015
+
+. ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+
+Shortstack DDML model (median over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0015951   .0013821    -1.15   0.248     -.004304    .0011139
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0020   -0.0020   -0.0016   -0.0015   -0.0015
+
+. *** allcombos
+. ddml estimate, allcombos
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=3
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked Y2_reg
+D equations (1):        training
+ training learners:     D1_pystacked D2_logit
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked Z2_logit
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+   1  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+   2  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)      Z2_logit
+   3  1  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.002)  Z1_pystacked
+   4  1  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.002)      Z2_logit
+   5  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+   6  1  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)      Z2_logit
+   7  1  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)  Z1_pystacked
+*  8  1  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+   9  1  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.010    (0.017)  Z1_pystacked
+  10  1  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.006    (0.016)      Z2_logit
+  11  1  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.010    (0.017)  Z1_pystacked
+  12  1  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.006    (0.016)      Z2_logit
+  13  1  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.010    (0.019)  Z1_pystacked
+  14  1  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.003    (0.018)      Z2_logit
+  15  1  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.010    (0.019)  Z1_pystacked
+  16  1  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.003    (0.018)      Z2_logit
+  17  1        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.039)  Z1_pystacked
+  18  1        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked    -0.006    (0.033)      Z2_logit
+  19  1        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.039)  Z1_pystacked
+  20  1        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit    -0.006    (0.033)      Z2_logit
+  21  1        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.020    (0.043)  Z1_pystacked
+  22  1        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.014    (0.036)      Z2_logit
+  23  1        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.020    (0.042)  Z1_pystacked
+  24  1        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.014    (0.036)      Z2_logit
+  25  1        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.011    (0.054)  Z1_pystacked
+  26  1        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.010    (0.049)      Z2_logit
+  27  1        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.011    (0.054)  Z1_pystacked
+  28  1        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.010    (0.049)      Z2_logit
+  29  1        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.012    (0.059)  Z1_pystacked
+  30  1        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.012    (0.053)      Z2_logit
+  31  1        Y2_reg        Y2_reg      D2_logit      D2_logit     0.012    (0.058)  Z1_pystacked
+  32  1        Y2_reg        Y2_reg      D2_logit      D2_logit     0.012    (0.052)      Z2_logit
+  ss  1  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.002)          [ss]
+   1  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.001)  Z1_pystacked
+   2  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.001)      Z2_logit
+   3  2  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.001)  Z1_pystacked
+   4  2  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.001)      Z2_logit
+   5  2  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.003    (0.002)  Z1_pystacked
+   6  2  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)      Z2_logit
+   7  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.003    (0.002)  Z1_pystacked
+*  8  2  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+   9  2  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.020    (0.018)  Z1_pystacked
+  10  2  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.005    (0.016)      Z2_logit
+  11  2  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.020    (0.018)  Z1_pystacked
+  12  2  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.005    (0.016)      Z2_logit
+  13  2  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.025    (0.020)  Z1_pystacked
+  14  2  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.016    (0.018)      Z2_logit
+  15  2  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.025    (0.020)  Z1_pystacked
+  16  2  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.016    (0.018)      Z2_logit
+  17  2        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked     0.022    (0.039)  Z1_pystacked
+  18  2        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked     0.011    (0.034)      Z2_logit
+  19  2        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit     0.022    (0.039)  Z1_pystacked
+  20  2        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit     0.011    (0.034)      Z2_logit
+  21  2        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.013    (0.045)  Z1_pystacked
+  22  2        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked    -0.012    (0.038)      Z2_logit
+  23  2        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.013    (0.045)  Z1_pystacked
+  24  2        Y2_reg  Y1_pystacked      D2_logit      D2_logit    -0.012    (0.038)      Z2_logit
+  25  2        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked     0.004    (0.055)  Z1_pystacked
+  26  2        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked     0.008    (0.049)      Z2_logit
+  27  2        Y2_reg        Y2_reg  D1_pystacked      D2_logit     0.004    (0.054)  Z1_pystacked
+  28  2        Y2_reg        Y2_reg  D1_pystacked      D2_logit     0.008    (0.049)      Z2_logit
+  29  2        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.009    (0.062)  Z1_pystacked
+  30  2        Y2_reg        Y2_reg      D2_logit  D1_pystacked    -0.026    (0.055)      Z2_logit
+  31  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.009    (0.062)  Z1_pystacked
+  32  2        Y2_reg        Y2_reg      D2_logit      D2_logit    -0.026    (0.055)      Z2_logit
+  ss  2  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+   1  3  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.001)  Z1_pystacked
+   2  3  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.001)      Z2_logit
+   3  3  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.002    (0.001)  Z1_pystacked
+   4  3  Y1_pystacked  Y1_pystacked  D1_pystacked      D2_logit    -0.001    (0.001)      Z2_logit
+   5  3  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+   6  3  Y1_pystacked  Y1_pystacked      D2_logit  D1_pystacked    -0.002    (0.002)      Z2_logit
+   7  3  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)  Z1_pystacked
+*  8  3  Y1_pystacked  Y1_pystacked      D2_logit      D2_logit    -0.002    (0.002)      Z2_logit
+   9  3  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.009    (0.017)  Z1_pystacked
+  10  3  Y1_pystacked        Y2_reg  D1_pystacked  D1_pystacked    -0.003    (0.016)      Z2_logit
+  11  3  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.009    (0.017)  Z1_pystacked
+  12  3  Y1_pystacked        Y2_reg  D1_pystacked      D2_logit    -0.003    (0.016)      Z2_logit
+  13  3  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked    -0.005    (0.018)  Z1_pystacked
+  14  3  Y1_pystacked        Y2_reg      D2_logit  D1_pystacked     0.001    (0.018)      Z2_logit
+  15  3  Y1_pystacked        Y2_reg      D2_logit      D2_logit    -0.005    (0.018)  Z1_pystacked
+  16  3  Y1_pystacked        Y2_reg      D2_logit      D2_logit     0.001    (0.018)      Z2_logit
+  17  3        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked    -0.012    (0.041)  Z1_pystacked
+  18  3        Y2_reg  Y1_pystacked  D1_pystacked  D1_pystacked    -0.014    (0.033)      Z2_logit
+  19  3        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit    -0.012    (0.041)  Z1_pystacked
+  20  3        Y2_reg  Y1_pystacked  D1_pystacked      D2_logit    -0.014    (0.033)      Z2_logit
+  21  3        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.005    (0.045)  Z1_pystacked
+  22  3        Y2_reg  Y1_pystacked      D2_logit  D1_pystacked     0.002    (0.035)      Z2_logit
+  23  3        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.005    (0.045)  Z1_pystacked
+  24  3        Y2_reg  Y1_pystacked      D2_logit      D2_logit     0.002    (0.035)      Z2_logit
+  25  3        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.020    (0.056)  Z1_pystacked
+  26  3        Y2_reg        Y2_reg  D1_pystacked  D1_pystacked    -0.016    (0.049)      Z2_logit
+  27  3        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.020    (0.056)  Z1_pystacked
+  28  3        Y2_reg        Y2_reg  D1_pystacked      D2_logit    -0.016    (0.049)      Z2_logit
+  29  3        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.003    (0.060)  Z1_pystacked
+  30  3        Y2_reg        Y2_reg      D2_logit  D1_pystacked     0.005    (0.052)      Z2_logit
+  31  3        Y2_reg        Y2_reg      D2_logit      D2_logit     0.003    (0.060)  Z1_pystacked
+  32  3        Y2_reg        Y2_reg      D2_logit      D2_logit     0.005    (0.052)      Z2_logit
+  ss  3  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+* = minimum MSE specification for that resample.
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+   1 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.001)  Z1_pystacked
+   1 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.001)  Z1_pystacked
+   2 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.001)      Z2_logit
+   2 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.001)      Z2_logit
+   3 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.001)  Z1_pystacked
+   3 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.001)  Z1_pystacked
+   4 mn Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.001)      Z2_logit
+   4 md Y1_pystacked0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.001)      Z2_logit
+   5 mn Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)  Z1_pystacked
+   5 md Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)  Z1_pystacked
+   6 mn Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)      Z2_logit
+   6 md Y1_pystacked0 Y1_pystacked1     D2_logit0 D1_pystacked1    -0.002    (0.002)      Z2_logit
+   7 mn Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)  Z1_pystacked
+   7 md Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)  Z1_pystacked
+   8 mn Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)      Z2_logit
+   8 md Y1_pystacked0 Y1_pystacked1     D2_logit0     D2_logit1    -0.002    (0.002)      Z2_logit
+   9 mn Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.013    (0.018)  Z1_pystacked
+   9 md Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.010    (0.017)  Z1_pystacked
+  10 mn Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.005    (0.016)      Z2_logit
+  10 md Y1_pystacked0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.005    (0.016)      Z2_logit
+  11 mn Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.013    (0.018)  Z1_pystacked
+  11 md Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.010    (0.017)  Z1_pystacked
+  12 mn Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.005    (0.016)      Z2_logit
+  12 md Y1_pystacked0       Y2_reg1 D1_pystacked0     D2_logit1    -0.005    (0.016)      Z2_logit
+  13 mn Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.013    (0.020)  Z1_pystacked
+  13 md Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.010    (0.019)  Z1_pystacked
+  14 mn Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.006    (0.019)      Z2_logit
+  14 md Y1_pystacked0       Y2_reg1     D2_logit0 D1_pystacked1    -0.003    (0.018)      Z2_logit
+  15 mn Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.013    (0.020)  Z1_pystacked
+  15 md Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.010    (0.019)  Z1_pystacked
+  16 mn Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.006    (0.019)      Z2_logit
+  16 md Y1_pystacked0       Y2_reg1     D2_logit0     D2_logit1    -0.003    (0.018)      Z2_logit
+  17 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1     0.002    (0.042)  Z1_pystacked
+  17 md       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.002    (0.042)  Z1_pystacked
+  18 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.003    (0.035)      Z2_logit
+  18 md       Y2_reg0 Y1_pystacked1 D1_pystacked0 D1_pystacked1    -0.006    (0.034)      Z2_logit
+  19 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1     0.002    (0.042)  Z1_pystacked
+  19 md       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.002    (0.042)  Z1_pystacked
+  20 mn       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.003    (0.035)      Z2_logit
+  20 md       Y2_reg0 Y1_pystacked1 D1_pystacked0     D2_logit1    -0.006    (0.034)      Z2_logit
+  21 mn       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.013    (0.045)  Z1_pystacked
+  21 md       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.013    (0.045)  Z1_pystacked
+  22 mn       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.001    (0.038)      Z2_logit
+  22 md       Y2_reg0 Y1_pystacked1     D2_logit0 D1_pystacked1     0.002    (0.038)      Z2_logit
+  23 mn       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.013    (0.045)  Z1_pystacked
+  23 md       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.013    (0.045)  Z1_pystacked
+  24 mn       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.001    (0.038)      Z2_logit
+  24 md       Y2_reg0 Y1_pystacked1     D2_logit0     D2_logit1     0.002    (0.038)      Z2_logit
+  25 mn       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.009    (0.056)  Z1_pystacked
+  25 md       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.011    (0.056)  Z1_pystacked
+  26 mn       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.006    (0.050)      Z2_logit
+  26 md       Y2_reg0       Y2_reg1 D1_pystacked0 D1_pystacked1    -0.010    (0.049)      Z2_logit
+  27 mn       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.009    (0.056)  Z1_pystacked
+  27 md       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.011    (0.056)  Z1_pystacked
+  28 mn       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.006    (0.050)      Z2_logit
+  28 md       Y2_reg0       Y2_reg1 D1_pystacked0     D2_logit1    -0.010    (0.049)      Z2_logit
+  29 mn       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1     0.002    (0.061)  Z1_pystacked
+  29 md       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1     0.003    (0.060)  Z1_pystacked
+  30 mn       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1    -0.003    (0.056)      Z2_logit
+  30 md       Y2_reg0       Y2_reg1     D2_logit0 D1_pystacked1     0.005    (0.053)      Z2_logit
+  31 mn       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1     0.002    (0.061)  Z1_pystacked
+  31 md       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1     0.003    (0.060)  Z1_pystacked
+  32 mn       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1    -0.003    (0.055)      Z2_logit
+  32 md       Y2_reg0       Y2_reg1     D2_logit0     D2_logit1     0.005    (0.053)      Z2_logit
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.002    (0.002)     [min-mse]
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.002    (0.001)          [ss]
+
+Shortstack DDML model (median over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0015951   .0013821    -1.15   0.248     -.004304    .0011139
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0020   -0.0020   -0.0016   -0.0015   -0.0015
+
+. forvalues i=1/8 {
+  2.     forvalues r=1/2 {
+  3.                 ddml estimate, mname(m0) spec(`i') rep(`r') replay notable
+  4.         }
+  5. }
+
+DDML model, specification 1 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0018613   .0016412    -1.13   0.257    -.0050779    .0013554
+------------------------------------------------------------------------------
+
+
+DDML model, specification 1 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D1_pystacked0_2
+E[D|X,Z=1]   = D1_pystacked1_2
+E[Z|X]       = Z1_pystacked_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   -.002333   .0014069    -1.66   0.097    -.0050905    .0004245
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0016183   .0015461    -1.05   0.295    -.0046485    .0014119
+------------------------------------------------------------------------------
+
+
+DDML model, specification 2 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D1_pystacked0_2
+E[D|X,Z=1]   = D1_pystacked1_2
+E[Z|X]       = Z2_logit_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019632   .0013246    -1.48   0.138    -.0045594     .000633
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0018602   .0016401    -1.13   0.257    -.0050748    .0013544
+------------------------------------------------------------------------------
+
+
+DDML model, specification 3 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D1_pystacked0_2
+E[D|X,Z=1]   = D2_logit1_2
+E[Z|X]       = Z1_pystacked_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0023305   .0014054    -1.66   0.097     -.005085    .0004241
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D1_pystacked0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0016179   .0015456    -1.05   0.295    -.0046471    .0014114
+------------------------------------------------------------------------------
+
+
+DDML model, specification 4 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      4404
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D1_pystacked0_2
+E[D|X,Z=1]   = D2_logit1_2
+E[Z|X]       = Z2_logit_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019622    .001324    -1.48   0.138    -.0045571    .0006327
+------------------------------------------------------------------------------
+
+
+DDML model, specification 5 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019953   .0018599    -1.07   0.283    -.0056407    .0016501
+------------------------------------------------------------------------------
+
+
+DDML model, specification 5 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      3363
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D2_logit0_2
+E[D|X,Z=1]   = D1_pystacked1_2
+E[Z|X]       = Z1_pystacked_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0028508    .001754    -1.63   0.104    -.0062886     .000587
+------------------------------------------------------------------------------
+
+
+DDML model, specification 6 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D1_pystacked1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0018417   .0017506    -1.05   0.293    -.0052728    .0015894
+------------------------------------------------------------------------------
+
+
+DDML model, specification 6 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      3363
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D2_logit0_2
+E[D|X,Z=1]   = D1_pystacked1_2
+E[Z|X]       = Z2_logit_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022568   .0016503    -1.37   0.171    -.0054913    .0009777
+------------------------------------------------------------------------------
+
+
+DDML model, specification 7 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z1_pystacked_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019918   .0018566    -1.07   0.283    -.0056308    .0016471
+------------------------------------------------------------------------------
+
+
+DDML model, specification 7 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      3363
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D2_logit0_2
+E[D|X,Z=1]   = D2_logit1_2
+E[Z|X]       = Z1_pystacked_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0028485   .0017527    -1.63   0.104    -.0062836    .0005867
+------------------------------------------------------------------------------
+
+
+Min MSE DDML model, specification 8 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   -.001839   .0017479    -1.05   0.293    -.0052648    .0015869
+------------------------------------------------------------------------------
+
+
+Min MSE DDML model, specification 8 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      3363
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D2_logit0_2
+E[D|X,Z=1]   = D2_logit1_2
+E[Z|X]       = Z2_logit_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022564   .0016501    -1.37   0.171    -.0054905    .0009776
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(1) replay notable
+
+Min MSE DDML model, specification 8 (sample=1) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_1                     Number of obs   =      3792
+E[y|X,Z=1]   = Y1_pystacked1_1
+E[D|X,Z=0]   = D2_logit0_1
+E[D|X,Z=1]   = D2_logit1_1
+E[Z|X]       = Z2_logit_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   -.001839   .0017479    -1.05   0.293    -.0052648    .0015869
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(2) replay notable
+
+Min MSE DDML model, specification 8 (sample=2) (LATE)
+E[y|X,Z=0]   = Y1_pystacked0_2                     Number of obs   =      3363
+E[y|X,Z=1]   = Y1_pystacked1_2
+E[D|X,Z=0]   = D2_logit0_2
+E[D|X,Z=1]   = D2_logit1_2
+E[Z|X]       = Z2_logit_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0022564   .0016501    -1.37   0.171    -.0054905    .0009776
+------------------------------------------------------------------------------
+
+
+. ddml estimate, mname(m0) spec(mse) rep(mn) replay notable
+
+Mean over 3 min-mse specifications (LATE)
+E[y|X,Z=0]   = mn_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = mn_1_mse
+E[D|X,Z=0]   = mn_training0_mse
+E[D|X,Z=1]   = mn_training1_mse
+E[Z|X]       = mn__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019762   .0016469    -1.20   0.230    -.0052041    .0012516
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0020   -0.0023   -0.0023   -0.0018   -0.0018   -0.0018
+
+. ddml estimate, mname(m0) spec(mse) rep(md) replay notable
+
+Median over 3 min-mse specifications (LATE)
+E[y|X,Z=0]   = md_0_mse                            Number of obs   =      5000
+E[y|X,Z=1]   = md_1_mse
+E[D|X,Z=0]   = md_training0_mse
+E[D|X,Z=1]   = md_training1_mse
+E[Z|X]       = md__mse
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |   -.001839    .001702    -1.08   0.280    -.0051749     .001497
+------------------------------------------------------------------------------
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0020   -0.0023   -0.0023   -0.0018   -0.0018   -0.0018
+
+. ddml estimate, mname(m0) spec(ss) rep(1) replay notable
+
+Shortstack DDML model (sample=1) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0_1                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ss1_1
+E[D|X,Z=0]   = D_training_ss0_1
+E[D|X,Z=1]   = D_training_ss1_1
+E[Z|X]       = Z_assignmt_ss_1
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0015951   .0015485    -1.03   0.303    -.0046301    .0014399
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(2) replay notable
+
+Shortstack DDML model (sample=2) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0_2                  Number of obs   =      4404
+E[y|X,Z=1]   = Y_lnearnings_ss1_2
+E[D|X,Z=0]   = D_training_ss0_2
+E[D|X,Z=1]   = D_training_ss1_2
+E[Z|X]       = Z_assignmt_ss_2
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0019797   .0013275    -1.49   0.136    -.0045817    .0006222
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+
+. ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
+
+Shortstack DDML model (mean over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0016952   .0014158    -1.20   0.231    -.0044702    .0010797
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0020   -0.0020   -0.0016   -0.0015   -0.0015
+
+. ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+
+Shortstack DDML model (median over 3 resamples) (LATE)
+E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
+E[y|X,Z=1]   = Y_lnearnings_ss1
+E[D|X,Z=0]   = D_training_ss0
+E[D|X,Z=1]   = D_training_ss1
+E[Z|X]       = Z_assignmt_ss
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0015951   .0013821    -1.15   0.248     -.004304    .0011139
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 3 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0017   -0.0020   -0.0020   -0.0016   -0.0015   -0.0015
+
+. *** ddml extract
+. ddml extract, show(ssweights)
+
+short-stacked weights across resamples for assignmt
+final stacking estimator: nnls1
+                  learner  mean_weight        rep_1        rep_2        rep_3
+Z1_pystacked            1    .11853869    .19085445    .06099649    .10376511
+    Z2_logit            2    .88146131    .80914555    .93900351    .89623489
+
+short-stacked weights across resamples for lnearnings
+final stacking estimator: nnls1
+                  learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+Y1_pystacked            1            0    .99976644            1     .9997798    .99951952
+      Y2_reg            2            0    .00023356            0     .0002202    .00048048
+Y1_pystacked            1            1    .99825397    .99804474    .99909857    .99761861
+      Y2_reg            2            1    .00174603    .00195526    .00090143    .00238139
+
+short-stacked weights across resamples for training
+final stacking estimator: nnls1
+                  learner        Z=0/1  mean_weight        rep_1        rep_2        rep_3
+D1_pystacked            1            0            .            .            .            .
+    D2_logit            2            0            .            .            .            .
+D1_pystacked            1            1     .4512121    .40452316    .45556794    .49354521
+    D2_logit            2            1     .5487879    .59547684    .54443206    .50645479
+
+. 
+. *** ddml overlap
+. ddml init interactiveiv, kfolds(2) reps(2)
+warning - model m0 already exists
+all existing model results and variables will
+be dropped and model m0 will be re-initialized
+
+. ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(ols gradboost)
+Learner Y1_pystacked added successfully.
+
+. ddml E[D|X,Z]: pystacked $D $X, type(class) method(logit gradboost)
+Learner D1_pystacked added successfully.
+
+. ddml E[Z|X]: pystacked $Z $X, type(class) method(logit gradboost)
+Learner Z1_pystacked added successfully.
+
+. ddml crossfit
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
+Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[D|X,Z] equation: training
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Cross-fitting E[Z|X]: assignmt
+Resample 1...
+Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
+Cross-fitting fold 1 2 ...completed cross-fitting
+
+. ddml estimate
+
+
+Model:                  interactiveiv, crossfit folds k=2, resamples r=2
+Mata global (mname):    m0
+Dependent variable (Y): lnearnings
+ lnearnings learners:   Y1_pystacked
+D equations (1):        training
+ training learners:     D1_pystacked
+Z equations (1):        assignmt
+ assignmt learners:     Z1_pystacked
+
+DDML estimation results (LATE):
+spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.003    (0.001)  Z1_pystacked
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.001    (0.002)  Z1_pystacked
+
+Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  D1_pystacked    -0.002    (0.002)  Z1_pystacked
+
+Median over 2 stacking resamples (LATE)
+E[y|X,Z=0]   = Y1_pystacked0                       Number of obs   =      5000
+E[y|X,Z=1]   = Y1_pystacked1
+E[D|X,Z=0]   = D1_pystacked0
+E[D|X,Z=1]   = D1_pystacked1
+E[Z|X]       = Z1_pystacked
+------------------------------------------------------------------------------
+             |               Robust
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    training |  -.0020522   .0019154    -1.07   0.284    -.0058063     .001702
+------------------------------------------------------------------------------
+Stacking final estimator: nnls1
+
+Summary over 2 resamples:
+       D eqn      mean       min       p25       p50       p75       max
+    training     -0.0021   -0.0032   -0.0032   -0.0021   -0.0009   -0.0009
+
+. ddml overlap
+
+. ddml overlap, replist(1)
+
+. ddml overlap, pslist(Z1_pystacked_L1 Z1_pystacked_L2)
+
+. ddml overlap, name(triangle, replace)                                                   ///
+>         title("Propensity score: triangle kernel")
+
+. ddml overlap, kernel(epanechnikov) name(epanechnikov, replace)  ///
+>         title("Propensity score: epanechnikov kernel")
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_interactiveiv.log
+  log type:  text
+ closed on:   8 Aug 2023, 00:42:56
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
