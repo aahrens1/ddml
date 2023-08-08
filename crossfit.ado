@@ -1,5 +1,5 @@
-*! ddml v1.4.1
-*! last edited: 3aug2023
+*! ddml v1.4.2
+*! last edited: 8aug2023
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 

@@ -10,7 +10,7 @@
 {viewerjumpto "Authors" "ddml##authors"}{...}
 {vieweralsosee "Also see" "ddml##also_see"}{...}
 {hline}
-{cmd:help ddml}{right: v1.4.1}
+{cmd:help ddml}{right: v1.4.2}
 {hline}
 
 {title:ddml - Stata package for Double Debiased Machine Learning}
