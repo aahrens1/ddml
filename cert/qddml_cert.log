@@ -1,21 +1,21 @@
------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\qddml_cert.log
   log type:  text
- opened on:  28 Jul 2023, 16:48:47
+ opened on:   8 Aug 2023, 11:05:54
 
 . 
 . * global tol = 0.0001
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.4
-*! last edited: 27july2023
+*! ddml v1.4.1
+*! last edited: 28july2023
 *! authors: aa/ms
 
 . which pystacked
 C:\LocalStore\ecomes\Documents\GitHub\pystacked\pystacked.ado
-*! pystacked v0.7.4
-*! last edited: 23july2023
+*! pystacked v0.7.5
+*! last edited: 7aug2023
 *! authors: aa/ms
 
 . 
@@ -224,14 +224,14 @@ Learner Z1_rforest added successfully.
 
 . ddml crossfit
 Cross-fitting E[y|X] equation: logpgp95
-Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed cross-
-> fitting
+Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed c
+> ross-fitting
 Cross-fitting E[D|X] equation: avexpr
-Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed cross-
-> fitting
+Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed c
+> ross-fitting
 Cross-fitting E[Z|X]: logem4
-Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed cross-
-> fitting
+Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed c
+> ross-fitting
 
 . ddml estimate, robust
 
@@ -277,14 +277,14 @@ Learner D1_rforest added successfully.
 Learner Z1_rforest added successfully.
 shortstack  requested but must have multiple learners in all equations; option ignored
 Cross-fitting E[y|X] equation: logpgp95
-Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed cross-
-> fitting
+Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed c
+> ross-fitting
 Cross-fitting E[D|X] equation: avexpr
-Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed cross-
-> fitting
+Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed c
+> ross-fitting
 Cross-fitting E[Z|X]: logem4
-Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed cross-
-> fitting
+Cross-fitting fold 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 ...completed c
+> ross-fitting
 
 
 Model:                  iv, crossfit folds k=30, resamples r=1
@@ -537,7 +537,8 @@ Summary over 2 resamples:
 
 . // qddml reports only short-stacking by default
 . qddml $Y $D ($X), kfolds(2) reps(2) model(interactive)          ///
->         mname(m0q)                                                                                              ///
+>         mname(m0q)                                                                                              
+> ///
 >         stdstack shortstack                                                                             ///
 >         pystacked_y($pystacked_y_options)                                               ///
 >         pystacked_d($pystacked_d_options)
@@ -727,6 +728,7 @@ Learner D1_pystacked added successfully.
 Learner Z1_pystacked added successfully.
 
 . ddml crossfit
+note: treatment (training) = 1 in 54 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: earnings
 Cross-fitting fold 1 2 3 4 5 ...completed cross-fitting
 Cross-fitting E[D|X,Z] equation: training
@@ -770,8 +772,8 @@ E[Z|X]       = Z1_pystacked_1
 . set seed 42
 
 . qddml $Y (c.($X)# #c($X)) ($D=$Z), kfolds(5) model(interactiveiv)       ///
->         mname(m0q)                                                                                                   
->            ///
+>         mname(m0q)                                                                                              
+>                 ///
 >         pystacked_y($pystacked_y_options)                                                               ///
 >         pystacked_d($pystacked_d_options)                                                               ///
 >         pystacked_z($pystacked_z_options)
@@ -781,6 +783,7 @@ be dropped and model m0q will be re-initialized
 Learner Y1_pystacked added successfully.
 Learner D1_pystacked added successfully.
 Learner Z1_pystacked added successfully.
+note: treatment (training) = 1 in 54 cases when assignment (assignmt) = 0
 shortstack  requested but must have multiple learners in all equations; option ignored
 Cross-fitting E[y|X,Z] equation: earnings
 Cross-fitting fold 1 2 3 4 5 ...completed cross-fitting
@@ -1228,5 +1231,5 @@ Y3_gradboost            3            1            1
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\qddml_cert.log
   log type:  text
- closed on:  28 Jul 2023, 16:54:07
------------------------------------------------------------------------------------------------------------------------
+ closed on:   8 Aug 2023, 11:10:18
+------------------------------------------------------------------------------------------------------------------
