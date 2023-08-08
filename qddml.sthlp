@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 28july2023}{...}
+{* *! version 8aug2023}{...}
 {viewerjumpto "Syntax" "qddml##syntax"}{...}
 {viewerjumpto "Options" "qddml##options"}{...}
 {viewerjumpto "Models" "qddml##models"}{...}
@@ -405,8 +405,8 @@ and with no intermediate calculations that would affect Stata's random number se
 {pstd}We specify 5 base learners: OLS, cross-validated lasso and ridge, and two random forests.
 We will use the same specification for both conditional expectations E[Y|X] and E[D|X].{p_end}
 
-{phang2}. {stata "global rflow max_features(5) min_samples_leaf(1) max_samples(.7)"}{p_end}
-{phang2}. {stata "global rfhigh max_features(5) min_samples_leaf(10) max_samples(.7)"}{p_end}
+{phang2}. {stata "global rflow max_features(4) min_samples_leaf(1) max_samples(.7)"}{p_end}
+{phang2}. {stata "global rfhigh max_features(4) min_samples_leaf(10) max_samples(.7)"}{p_end}
 {phang2}. {stata "global psoptions method(ols lassocv ridgecv rf rf) cmdopt4($rflow) cmdopt5($rfhigh) type(reg)"}{p_end}
 
 {pstd}Estimation using {opt ddml}.{p_end}
