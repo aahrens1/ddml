@@ -1,14 +1,14 @@
------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_misc.log
   log type:  text
- opened on:  28 Jul 2023, 13:46:43
+ opened on:   8 Aug 2023, 00:42:57
 
 . 
 . which ddml
 C:\LocalStore\ecomes\Documents\GitHub\ddml\ddml.ado
-*! ddml v1.4
-*! last edited: 27july2023
+*! ddml v1.4.1
+*! last edited: 28july2023
 *! authors: aa/ms
 
 . mata: whichddml()
@@ -30,8 +30,7 @@ C:\LocalStore\ecomes\Documents\GitHub\pystacked/pystacked.ado
 
 . 
 . ******************************************************************************** 
-. **** ddml describe                                                                                                   
->                    ****
+. **** ddml describe                                                                                                                      ****
 . ******************************************************************************** 
 . 
 . global Y logpgp95
@@ -233,7 +232,7 @@ Median over 2 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
-    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+    logpgp95 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
       avexpr |    .308196   .0651417     4.73   0.000     .1805206    .4358715
       democ1 |   .0119515   .0239636     0.50   0.618    -.0350162    .0589193
@@ -286,7 +285,7 @@ Median over 2 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
-    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+    logpgp95 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
       avexpr |    .308196   .0651417     4.73   0.000     .1805206    .4358715
       democ1 |   .0119515   .0239636     0.50   0.618    -.0350162    .0589193
@@ -333,7 +332,7 @@ Median over 2 stacking resamples
 y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
 D-E[D|X]  = D1-D1_pystacked D2-D2_pystacked 
 ------------------------------------------------------------------------------
-    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+    logpgp95 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
       avexpr |    .308196   .0651417     4.73   0.000     .1805206    .4358715
       democ1 |   .0119515   .0239636     0.50   0.618    -.0350162    .0589193
@@ -468,10 +467,14 @@ No estimation results to display.
 . // crossfit
 . ddml crossfit
 Cross-fitting E[y|X] equation: logpgp95
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting
 Cross-fitting E[D|X] equation: avexpr
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting
 
 . ddml describe, crossfit
@@ -520,12 +523,12 @@ Mean/med    Y learner     D learner         b        SE
  mse md     [min-mse]     [min-mse]     0.286    (0.059)
 
 Median over 2 min-mse resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
-D-E[D|X]  = D-D1_pystacked 
+y-E[y|X]  = y-md_logpgp95_mse                      Number of obs   =        64
+D-E[D|X]  = D-md_avexpr_mse 
 ------------------------------------------------------------------------------
-    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+    logpgp95 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-      avexpr |    .286452   .0588814     4.86   0.000     .1710465    .4018574
+      avexpr |   .2864632   .0588788     4.87   0.000     .1710629    .4018634
 ------------------------------------------------------------------------------
 
 Summary over 2 resamples:
@@ -565,12 +568,12 @@ Cond. exp.  Learner      rep         MSE        1         2
 
 
 Median over 2 min-mse resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
-D-E[D|X]  = D-D1_pystacked 
+y-E[y|X]  = y-md_logpgp95_mse                      Number of obs   =        64
+D-E[D|X]  = D-md_avexpr_mse 
 ------------------------------------------------------------------------------
-    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+    logpgp95 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-      avexpr |    .286452   .0588814     4.86   0.000     .1710465    .4018574
+      avexpr |   .2864632   .0588788     4.87   0.000     .1710629    .4018634
 ------------------------------------------------------------------------------
 
 Summary over 2 resamples:
@@ -601,12 +604,12 @@ D equations (1):        avexpr
 
 
 Median over 2 min-mse resamples
-y-E[y|X]  = y-Y1_pystacked                         Number of obs   =        64
-D-E[D|X]  = D-D1_pystacked 
+y-E[y|X]  = y-md_logpgp95_mse                      Number of obs   =        64
+D-E[D|X]  = D-md_avexpr_mse 
 ------------------------------------------------------------------------------
-    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+    logpgp95 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-      avexpr |    .286452   .0588814     4.86   0.000     .1710465    .4018574
+      avexpr |   .2864632   .0588788     4.87   0.000     .1710629    .4018634
 ------------------------------------------------------------------------------
 
 Summary over 2 resamples:
@@ -616,8 +619,7 @@ Summary over 2 resamples:
 . 
 . 
 . ******************************************************************************** 
-. **** ddml extract                                                                                                    
->                    ****
+. **** ddml extract                                                                                                                       ****
 . ******************************************************************************** 
 . 
 . global Y logpgp95
@@ -695,7 +697,7 @@ y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
 D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
 ------------------------------------------------------------------------------
              |               Robust
-    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+    logpgp95 | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
       avexpr |   .2701645   .0768468     3.52   0.000     .1195476    .4207814
       democ1 |   -.009104   .0205631    -0.44   0.658    -.0494068    .0311989
@@ -967,7 +969,7 @@ Sample sizes for logpgp95:
 
 . // AA with estimation results for spec st, resample 1
 . mata: (m0.estAA).get(("st","1"))
-  0x453df5f0
+  0x6666f020
 
 . mata: AA_e2_r1 = (m0.estAA).get(("st","1"))
 
@@ -1129,7 +1131,7 @@ AA keys for eqn avexpr.resAA:
 . ddml extract avexpr_eqn, vname(avexpr)
 
 . mata: avexpr_eqn
-  0x40e33aa0
+  0x65ba5270
 
 . mata: avexpr_eqn.vname
   avexpr
@@ -1249,8 +1251,7 @@ r1  2.2830912  2.2512582
 . 
 . 
 . ******************************************************************************** 
-. **** ddml export                                                                                                     
->                    ****
+. **** ddml export                                                                                                                        ****
 . ******************************************************************************** 
 . 
 . // partially linear, pystacked-only, 2 reps
@@ -1329,7 +1330,7 @@ y-E[y|X]  = y-Y_logpgp95_ss                        Number of obs   =        64
 D-E[D|X]  = D1-D_avexpr_ss D2-D_democ1_ss 
 ------------------------------------------------------------------------------
              |               Robust
-    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+    logpgp95 | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
       avexpr |   .3014085   .0686754     4.39   0.000     .1668073    .4360097
       democ1 |   .0031689   .0193672     0.16   0.870    -.0347901    .0411278
@@ -1420,7 +1421,7 @@ y-E[y|X]  = y-m_export_Y1_pystacked_1              Number of obs   =        64
 D-E[D|X]  = D-m_export_D1_pystacked_1 
 Z-E[Z|X]  = Z1-m_export_Z1_pystacked_1 Z2-m_export_Z2_pystacked_1 
 ------------------------------------------------------------------------------
-    logpgp95 |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+    logpgp95 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
       avexpr |   .8253752   .2531499     3.26   0.001     .3292105     1.32154
        _cons |   .1120388    .176425     0.64   0.525    -.2337478    .4578255
@@ -1452,7 +1453,7 @@ file cert_ddml_export.csv saved
 . // interactive model, pystacked-only
 . 
 . webuse cattaneo2, clear
-(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138–154)
 
 . keep in 1/1000
 (3,642 observations deleted)
@@ -1502,20 +1503,20 @@ D equations (1):        mbsmoke
 
 DDML estimation results (ATE):
 spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
-  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -437.585  (218.235)
+  st  1  Y1_pystacked  Y1_pystacked  D1_pystacked  -437.387  (218.281)
   ss  1  [shortstack]          [ss]          [ss]  -472.426  (218.890)
-  ps  1   [poolstack]          [ps]          [ps]  -316.457  (210.085)
-  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -184.653  (186.851)
-  ss  2  [shortstack]          [ss]          [ss]  -202.427  (157.705)
-  ps  2   [poolstack]          [ps]          [ps]  -183.080  (161.423)
+  ps  1   [poolstack]          [ps]          [ps]  -316.416  (210.095)
+  st  2  Y1_pystacked  Y1_pystacked  D1_pystacked  -184.362  (186.785)
+  ss  2  [shortstack]          [ss]          [ss]  -202.393  (157.713)
+  ps  2   [poolstack]          [ps]          [ps]  -183.116  (161.417)
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
-  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  -311.119  (237.819)
-  ss mn  [shortstack]          [ss]          [ss]  -337.426  (228.443)
-  ps mn   [poolstack]          [ps]          [ps]  -249.769  (193.591)
-  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  -311.119  (239.298)
-  ss md  [shortstack]          [ss]          [ss]  -337.426  (233.702)
-  ps md   [poolstack]          [ps]          [ps]  -249.769  (198.856)
+  st mn  Y1_pystacked  Y1_pystacked  D1_pystacked  -310.874  (237.829)
+  ss mn  [shortstack]          [ss]          [ss]  -337.409  (228.458)
+  ps mn   [poolstack]          [ps]          [ps]  -249.766  (193.577)
+  st md  Y1_pystacked  Y1_pystacked  D1_pystacked  -310.874  (239.318)
+  ss md  [shortstack]          [ss]          [ss]  -337.409  (233.714)
+  ps md   [poolstack]          [ps]          [ps]  -249.766  (198.847)
 
 Shortstack DDML model (median over 2 resamples) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0                       Number of obs   =      1000
@@ -1523,16 +1524,16 @@ E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss
 ------------------------------------------------------------------------------
              |               Robust
-     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+     bweight | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -337.4265   233.7019    -1.44   0.149    -795.4738    120.6208
+     mbsmoke |  -337.4094   233.7144    -1.44   0.149    -795.4812    120.6625
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -337.4265 -472.4258 -472.4258 -337.4265 -202.4272 -202.4272
+     mbsmoke   -337.4094 -472.4258 -472.4258 -337.4094 -202.3929 -202.3929
 
 . gen stata_id = _n
 
@@ -1550,7 +1551,7 @@ file cert_ddml_export.csv saved
 . // interactive model, multiple learners
 . 
 . webuse cattaneo2, clear
-(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138-154)
+(Excerpt from Cattaneo (2010) Journal of Econometrics 155: 138–154)
 
 . keep in 1/1000
 (3,642 observations deleted)
@@ -1586,10 +1587,14 @@ Learner D2_logit added successfully.
 
 . ddml crossfit, shortstack mname(m_export)
 Cross-fitting E[y|X,D] equation: bweight
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 Cross-fitting E[D|X] equation: mbsmoke
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 . ddml estimate, mname(m_export)
@@ -1604,17 +1609,17 @@ D equations (1):        mbsmoke
 
 DDML estimation results (ATE):
 spec  r  Y(0) learner  Y(1) learner     D learner         b        SE 
- mse  1  Y1_pystacked  Y1_pystacked      D2_logit  -404.966  (102.485)
+ mse  1  Y1_pystacked  Y1_pystacked      D2_logit  -404.966  (102.484)
   ss  1  [shortstack]          [ss]          [ss]  -408.750  (106.385)
- mse  2        Y2_reg  Y1_pystacked  D1_pystacked     8.726  (239.489)
-  ss  2  [shortstack]          [ss]          [ss]     8.726  (239.489)
+ mse  2        Y2_reg  Y1_pystacked  D1_pystacked     8.782  (239.494)
+  ss  2  [shortstack]          [ss]          [ss]     8.782  (239.494)
 mse = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner     D learner         b        SE 
- mse mn     [min-mse]     [min-mse]     [min-mse]  -198.120  (263.744)
-  ss mn  [shortstack]          [ss]          [ss]  -200.012  (266.659)
- mse md     [min-mse]     [min-mse]     [min-mse]  -198.120  (276.973)
-  ss md  [shortstack]          [ss]          [ss]  -200.012  (279.120)
+ mse mn     [min-mse]     [min-mse]     [min-mse]  -198.092  (263.769)
+  ss mn  [shortstack]          [ss]          [ss]  -199.984  (266.684)
+ mse md     [min-mse]     [min-mse]     [min-mse]  -198.092  (276.997)
+  ss md  [shortstack]          [ss]          [ss]  -199.984  (279.143)
 
 Shortstack DDML model (median over 2 resamples) (ATE)
 E[y|X,D=0]   = Y_bweight_ss0                       Number of obs   =      1000
@@ -1622,16 +1627,16 @@ E[y|X,D=1]   = Y_bweight_ss1
 E[D|X]       = D_mbsmoke_ss
 ------------------------------------------------------------------------------
              |               Robust
-     bweight |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+     bweight | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-     mbsmoke |  -200.0123   279.1197    -0.72   0.474    -747.0769    347.0523
+     mbsmoke |  -199.9841   279.1432    -0.72   0.474    -747.0948    347.1265
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 Warning: 2 resamples had propensity scores trimmed to lower limit .01.
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-     mbsmoke   -200.0123 -408.7502 -408.7502 -200.0123    8.7256    8.7256
+     mbsmoke   -199.9841 -408.7501 -408.7501 -199.9841    8.7818    8.7818
 
 . gen stata_id = _n
 
@@ -1681,6 +1686,7 @@ Learner D1_pystacked added successfully.
 Learner Z1_pystacked added successfully.
 
 . ddml crossfit, mname(m_export)
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
 Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
@@ -1726,9 +1732,9 @@ E[D|X,Z=1]   = D1_pystacked1
 E[Z|X]       = Z1_pystacked
 ------------------------------------------------------------------------------
              |               Robust
-  lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-    training |  -.0014046    .001501    -0.94   0.349    -.0043466    .0015374
+    training |  -.0014046   .0015011    -0.94   0.349    -.0043466    .0015374
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
@@ -1796,14 +1802,21 @@ Note: previously-added pystacked multilearner now treated as a single learner
 Learner Z2_logit added successfully.
 
 . ddml crossfit, shortstack mname(m_export)
+note: treatment (training) = 1 in 27 cases when assignment (assignmt) = 0
 Cross-fitting E[y|X,Z] equation: lnearnings
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 Cross-fitting E[D|X,Z] equation: training
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 Cross-fitting E[Z|X]: assignmt
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting...completed short-stacking
 
 . ddml estimate, mname(m_export)
@@ -1827,10 +1840,10 @@ spec  r  Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b       
 mse = minimum MSE specification for that resample.
 
 Mean/med Y(0) learner  Y(1) learner  D(0) learner  D(1) learner         b        SE      Z learner
- mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.001    (0.002)         [mse]
-  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.002)          [ss]
- mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.001    (0.002)         [mse]
-  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.002)          [ss]
+ mse mn     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.001    (0.002)     [min-mse]
+  ss mn  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.001)          [ss]
+ mse md     [min-mse]     [min-mse]     [min-mse]     [min-mse]    -0.001    (0.002)     [min-mse]
+  ss md  [shortstack]          [ss]          [ss]          [ss]    -0.001    (0.001)          [ss]
 
 Shortstack DDML model (median over 2 resamples) (LATE)
 E[y|X,Z=0]   = Y_lnearnings_ss0                    Number of obs   =      5000
@@ -1840,15 +1853,15 @@ E[D|X,Z=1]   = D_training_ss1
 E[Z|X]       = Z_assignmt_ss
 ------------------------------------------------------------------------------
              |               Robust
-  lnearnings |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+  lnearnings | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-    training |  -.0010177   .0015754    -0.65   0.518    -.0041055      .00207
+    training |  -.0009104   .0014555    -0.63   0.532    -.0037631    .0019423
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
 Summary over 2 resamples:
        D eqn      mean       min       p25       p50       p75       max
-    training     -0.0010   -0.0013   -0.0013   -0.0010   -0.0008   -0.0008
+    training     -0.0009   -0.0011   -0.0011   -0.0009   -0.0007   -0.0007
 
 . gen stata_id = _n
 
@@ -1893,10 +1906,14 @@ Learner Dhat_pystacked_h added successfully.
 
 . ddml crossfit, mname(m_export)
 Cross-fitting E[y|X,Z] equation: share
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting
 Cross-fitting E[D|X,Z] and E[D|X] equation: price
+Resample 1...
 Cross-fitting fold 1 2 ...completed cross-fitting
+Resample 2...
 Cross-fitting fold 1 2 ...completed cross-fitting
 
 . ddml estimate, mname(m_export)
@@ -1924,9 +1941,9 @@ E[D|X,Z]  = D-Dhat_pystacked
 E[D^|X]   = Dhat_pystacked_h
 Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X].
 ------------------------------------------------------------------------------
-       share |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+       share | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-       price |  -.1011691    .008215   -12.32   0.000    -.1172703    -.085068
+       price |  -.1011739   .0082132   -12.32   0.000    -.1172713   -.0850764
 ------------------------------------------------------------------------------
 Stacking final estimator: nnls1
 
@@ -1951,5 +1968,5 @@ file cert_ddml_export.csv saved
       name:  <unnamed>
        log:  C:\LocalStore\ecomes\Documents\GitHub\ddml\cert\ddml_cert_misc.log
   log type:  text
- closed on:  28 Jul 2023, 13:50:40
------------------------------------------------------------------------------------------------------------------------
+ closed on:   8 Aug 2023, 00:53:14
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
