@@ -53,7 +53,7 @@ See the help for {help ddml stacking} for a detailed discussion and examples of 
 
 {p 8 14}Using a user-specified combination of {help ddml crossfit} conditional expectations (models {opt partial}, {opt partialiv}, {opt fiv}):
 
-{p 8 14}{cmd:ddml estimate} , {opt y(varname)} {opt d(varlist)} [ {opt z(varlist)} {opt dh(varname)} {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)}{bind: ]} 
+{p 8 14}{cmd:ddml estimate} , {opt y(varname)} {opt d(varlist)} [ {opt z(varlist)} {opt dh(varname)} {opt foldvar(varname)} {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)}{bind: ]} 
 
 {p 8 14}Using a user-specified combination of {help ddml crossfit} conditional expectations (models {opt interactive}, {opt interactiviv}):
 
@@ -205,6 +205,9 @@ estimated E[D|X,Z=0] (model {opt interactiveiv})
 {p_end}
 {synopt:{opt d1(varname)}}
 estimated E[D|X,Z=1] (model {opt interactiveiv})
+{p_end}
+{synopt:{opt foldvar(varname)}}
+cross-fit fold ID variable; required with {opt interactive} model and ATET or ATEU
 {p_end}
 
 
