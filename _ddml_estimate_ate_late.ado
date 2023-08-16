@@ -1,5 +1,5 @@
 *! ddml v1.4.2
-*! last edited: 8aug2023
+*! last edited: 16aug2023
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -621,7 +621,7 @@ program _ddml_estimate_single, eclass sortpreserve
 								z(varname)			///
 								ATET 				///
 								ATEU				///
-								foldid(varname)		/// needed for ATET and ATEU
+								foldvar(varname)	/// needed for ATET and ATEU
 								ROBust				/// has no effect
 								CLUster(varname)	///
 								vce(string)			///
@@ -703,7 +703,7 @@ program _ddml_estimate_single, eclass sortpreserve
 	marksample touse
 	if "`model'"=="interactive" {
 		qui gen byte `esample' = `y0'<. & `y1'<. & `d'<. & `touse'
-		mata: ATE("`teffect'","`nameY'","`nameD'","`y0'", "`y1'", "`d'","`touse'","`b'","`V'","`clustvar'","`foldid'",`trim')
+		mata: ATE("`teffect'","`nameY'","`nameD'","`y0'", "`y1'", "`d'","`touse'","`b'","`V'","`clustvar'","`foldvar'",`trim')
 	}
 	else {
 		qui gen byte `esample' = `y0'<. & `y1'<. & `d0'<. & `d1'<. & `z'<. & `touse'
