@@ -62,9 +62,9 @@ Please check the {help qddml##examples:examples} provided at the end of this hel
 {cmd:qddml}
 {it:depvar} {it:regressors} [{cmd:(}{it:hd_controls}{cmd:)}]
 {cmd:(}{it:endog}{cmd:=}{it:instruments}{cmd:)}
-[{cmd:if} {it:exp}] [{cmd:in} {it:range}]
+[{cmd:if} {it:exp}] [{cmd:in} {it:range}],
 {opt model(name)}
-{bind:[ {cmd:,}}
+{bind:[ }
 {opt pystacked(string)}
 {opt pystacked_y(string)}
 {opt pystacked_d(string)}
@@ -82,9 +82,9 @@ Please check the {help qddml##examples:examples} provided at the end of this hel
 {cmd:qddml}
 {it:depvar} {it:regressors} [{cmd:(}{it:hd_controls}{cmd:)}]
 {cmd:(}{it:endog}{cmd:=}{it:instruments}{cmd:)}
-[{cmd:if} {it:exp}] [{cmd:in} {it:range}]
+[{cmd:if} {it:exp}] [{cmd:in} {it:range}],
 {opt model(name)}
-{bind:[ {cmd:,}}
+{bind:[ }
 {opt cmd(string)}
 {opt cmdopt(string)}
 {opt shortstack}

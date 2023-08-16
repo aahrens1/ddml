@@ -33,7 +33,7 @@ to a CSV file.
 {title:Syntax}
 
 {p 8 14}{cmd:ddml export}
-[using {it:filename} , {opt mname(name)}
+{cmd:using} {it:filename} [ , {opt mname(name)}
 {opt addvars(varlist)}
 
 {synoptset 20}{...}
