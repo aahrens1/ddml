@@ -106,6 +106,11 @@ the model to be estimated; allows for {it:partial}, {it:interactive},
 name of the DDML model. Allows to run multiple DDML
 models simultaneously. Defaults to {it:m0}.
 {p_end}
+{synopt:{opt prefix}}
+tells {opt qddml} to prefix the names of all created variables
+with name of the DDML model.
+Default is to prefix only the created sample and fold ID variables.
+{p_end}
 {synopt:{opt kfolds(integer)}}
 number of cross-fitting folds. The default is 5.
 {p_end}

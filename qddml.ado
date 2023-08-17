@@ -11,6 +11,7 @@ program define qddml, eclass sortpreserve
 		[										///
 		VERBose VVERBose						///
 		mname(name)								///
+		prefix									///
 		kfolds(integer 5)						///
 		foldvar(varlist)						///
 		TABFold									///
@@ -227,7 +228,7 @@ program define qddml, eclass sortpreserve
 	if "`mname'"=="" local mname m0		
 
 	*** initialization
-	ddml init `model', mname(`mname') `kfolds' reps(`reps') cluster(`cluster') `tabfold' `foldvar'
+	ddml init `model', mname(`mname') `kfolds' reps(`reps') cluster(`cluster') `tabfold' `foldvar' `prefix'
 
 	*** IV-HD
 	if ("`model'"=="fiv") & `pyflag' {
