@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 8aug2023}{...}
+{* *! version 17aug2023}{...}
 {smcl}
 {pstd}{ul:Partially-linear model with {help pystacked} and stacking}:{p_end}
 
