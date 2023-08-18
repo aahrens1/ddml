@@ -647,6 +647,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `ssw' = e(b)
 				cap drop `shortstack'_ss_`m'
 				mat score double `shortstack'_ss_`m' = `ssw' if `touse'
+				// if no std stacking, update with default
+				if "`ssfinalest'"==""			local ssfinalest `e(finalest)'
 			}
 			else {	// case 2: interactive models
 				tempname ssw1 ssw0
@@ -659,6 +661,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mat `ssw1' = e(b)
 				cap drop `shortstack'_ss1_`m'
 				mat score double `shortstack'_ss1_`m' = `ssw1' if `touse'
+				// if no std stacking, update with default
+				if "`ssfinalest'"==""			local ssfinalest `e(finalest)'
 				
 				// treatvar == 0
 				// possible in LATE model that D is always =0 if Z=0 (perfect assignment to treatment)
