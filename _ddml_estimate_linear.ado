@@ -1,5 +1,5 @@
 *! ddml v1.4.3
-*! last edited: 17aug2023
+*! last edited: 16sep2023
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -492,6 +492,7 @@ program _ddml_estimate_single, eclass sortpreserve
 	ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
 	ereturn local cmd		ddml
 	ereturn local model		`model'
+	ereturn local mname		`mname'
 	ereturn local dh		`dh'
 	ereturn local z			`z'
 	ereturn local d			`d'
@@ -2038,7 +2039,7 @@ program define medmean_and_store, eclass
 	mata: `A'.put(("depvar","post"),"`depvar'")
 	
 	// store locals
-	local list_local title y d yname dnames vce vcetype y_`medmean' d_`medmean'
+	local list_local title y d yname dnames znames vce vcetype medmean y_`medmean' d_`medmean'
 	if "`model'"=="iv" {
 		local list_local `list_local' z z_`medmean'
 	}
@@ -2050,7 +2051,7 @@ program define medmean_and_store, eclass
 		mata: `A'.put(("`obj'","local"),"``obj''")
 	}
 	// store scalars
-	local list_scalar
+	local list_scalar nreps
 	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
 	foreach obj in `list_scalar' {
 		mata: `A'.put(("`obj'","scalar"),``obj'')
@@ -2225,12 +2226,13 @@ program define replay_estimate, eclass
 	ereturn local model `model'
 	ereturn local rep `rep'
 	ereturn local spec `spec'
-	ereturn local tmname `mname'	// temporary mname
+	ereturn local mname `mname'
 	
 	// extract and post scalars, locals, matrices
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`isscalar'[`i']))
 		if `topost' {
+			// name of scalar
 			mata: st_local("sname",substr(`keys'[`i',1],1,32))
 			mata: st_numscalar("e(`sname')",`B'.get(`keys'[`i',.]))
 		}
@@ -2238,6 +2240,7 @@ program define replay_estimate, eclass
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`islocal'[`i']))
 		if `topost' {
+			// name of local
 			mata: st_local("lname",substr(`keys'[`i',1],1,32))
 			mata: st_global("e(`lname')",`B'.get(`keys'[`i',.]))
 		}
@@ -2245,8 +2248,9 @@ program define replay_estimate, eclass
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`ismatrix'[`i']))
 		if `topost' {
-			mata: st_local("tmname",substr(`keys'[`i',1],1,32))
-			mata: st_matrix("e(`tmname')",`B'.get(`keys'[`i',.]))
+			// name of matrix
+			mata: st_local("matname",substr(`keys'[`i',1],1,32))
+			mata: st_matrix("e(`matname')",`B'.get(`keys'[`i',.]))
 		}
 	}
 	

@@ -1,5 +1,5 @@
 *! ddml v1.4.3
-*! last edited: 17aug2023
+*! last edited: 16sep2023
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -734,6 +734,7 @@ program _ddml_estimate_single, eclass sortpreserve
 	ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
 	ereturn local cmd		ddml
 	ereturn local model		`model'
+	ereturn local mname		`mname'
 	ereturn local z			`z'
 	ereturn local d			`d'
 	ereturn local d0		`d0'
@@ -2429,7 +2430,7 @@ program medmean_and_store, eclass
 	mata: `A'.put(("b_resamples","matrix"),`bvec')
 	
 	// store locals
-	local list_local title yvar dvar y0 y1 vce vcetype teffect y0_`medmean' y1_`medmean'
+	local list_local title yvar dvar y0 y1 vce vcetype teffect medmean y0_`medmean' y1_`medmean'
 	if "`model'"=="interactive" {
 		local list_local `list_local' d d_`medmean'
 	}
@@ -2470,7 +2471,7 @@ program medmean_and_store, eclass
 	
 	// store scalars
 	local trim `trimval'	// hack, to fix
-	local list_scalar nlltrim nultrim trim
+	local list_scalar nreps nlltrim nultrim trim
 	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
 	foreach obj in `list_scalar' {
 		mata: `A'.put(("`obj'","scalar"),``obj'')
@@ -2627,13 +2628,14 @@ program replay_estimate, eclass
 	ereturn local model `model'
 	ereturn local rep `rep'
 	ereturn local spec `spec'
-	ereturn local tmname `mname'
+	ereturn local mname `mname'
 	ereturn local teffect `teffect'
 	
 	// extract and post scalars, locals, matrices
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`isscalar'[`i']))
 		if `topost' {
+			// name of scalar
 			mata: st_local("sname",substr(`keys'[`i',1],1,32))
 			mata: st_numscalar("e(`sname')",`B'.get(`keys'[`i',.]))
 		}
@@ -2641,6 +2643,7 @@ program replay_estimate, eclass
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`islocal'[`i']))
 		if `topost' {
+			// name of local
 			mata: st_local("lname",substr(`keys'[`i',1],1,32))
 			mata: st_global("e(`lname')",`B'.get(`keys'[`i',.]))
 		}
@@ -2648,8 +2651,9 @@ program replay_estimate, eclass
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`ismatrix'[`i']))
 		if `topost' {
-			mata: st_local("tmname",substr(`keys'[`i',1],1,32))
-			mata: st_matrix("e(`tmname')",`B'.get(`keys'[`i',.]))
+			// name of matrix
+			mata: st_local("matname",substr(`keys'[`i',1],1,32))
+			mata: st_matrix("e(`matname')",`B'.get(`keys'[`i',.]))
 		}
 	}
 	
