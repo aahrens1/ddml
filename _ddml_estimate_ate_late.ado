@@ -1,5 +1,5 @@
 *! ddml v1.4.3
-*! last edited: 16sep2023
+*! last edited: 18sep2023
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -2077,6 +2077,8 @@ program define estimate_and_store, eclass
 	mata: `A' = AssociativeArray()
 	mata: `A'.reinit("string",2)
 	mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
+	// always nocons
+	local cons = 0
 	
 	// 0/1 etc
 	local y0		`y0tilde'0
@@ -2150,6 +2152,7 @@ program define estimate_and_store, eclass
 	mata: `A'.put(("lltrim","scalar"),`r(lltrim)')
 	mata: `A'.put(("ultrim","scalar"),`r(ultrim)')
 	mata: `A'.put(("trim","scalar"),`trim')
+	mata: `A'.put(("cons","scalar"),`cons')
 	if "`clustvar'"~="" {
 		mata: `A'.put(("N_clust","scalar"),`N_clust')
 	}
@@ -2295,6 +2298,8 @@ program medmean_and_store, eclass
 	local isodd = mod(`nreps',2)
 	local medrow = ceil(`nreps'/2)
 	local N = 0
+	// always nocons
+	local cons = 0
 	
 	// bvec a misnomer - usually a vector, but can be a matrix if multiple D variables
 	mata: `bvec' = J(`nreps',`K',0)
@@ -2471,7 +2476,7 @@ program medmean_and_store, eclass
 	
 	// store scalars
 	local trim `trimval'	// hack, to fix
-	local list_scalar nreps nlltrim nultrim trim
+	local list_scalar nreps nlltrim nultrim trim cons
 	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
 	foreach obj in `list_scalar' {
 		mata: `A'.put(("`obj'","scalar"),``obj'')
