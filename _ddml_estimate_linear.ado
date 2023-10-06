@@ -336,6 +336,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 	else				mata: `mname'.psflag = 1
 	// re-stacking means any previous model estimation results should be dropped
 	mata: clear_model_estimation(`mname')
+	// no longer needed
+	cap mata: mata drop `eqn'
 
 end
 
@@ -2153,7 +2155,7 @@ program define medmean_and_store, eclass
 	mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
 	
 	// no longer needed
-	foreach obj in `A' `B' `bagg' `bvec' `brow' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' {
+	foreach obj in `eqn' `A' `B' `bagg' `bvec' `brow' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' {
 		cap mata: mata drop `obj'
 	}
 	
