@@ -15,7 +15,7 @@ local stata_version `c(stata_version)'
 local born_date `c(born_date)'
 local current_date `c(current_date)'
 
-version 16.0
+version 15.1
 mata:
 mata clear
 
