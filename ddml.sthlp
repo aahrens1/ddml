@@ -19,9 +19,11 @@
 {opt ddml} implements algorithms for causal inference aided by supervised
 machine learning as proposed in 
 {it:Double/debiased machine learning for treatment and structural parameters}
-({helpb ddml##Chern2018:Chernozhukov et al, Econometrics Journal, 2018}). Five different models are supported, allowing for 
+({helpb ddml##Chern2018:Chernozhukov et al., Econometrics Journal, 2018}). Five different models are supported, allowing for 
 binary or continuous treatment variables and endogeneity, high-dimensional 
-controls and/or instrumental variables. {opt ddml} also implements the stacking approaches discussed in {helpb ddml##Ahrens2024stacking:Ahrens et al. (2024a)}.
+controls and/or instrumental variables. 
+{opt ddml} also implements the stacking approaches discussed in {helpb ddml##Ahrens2024stacking:Ahrens et al. (2024a)}. 
+For a companion paper, see {helpb ddml##Ahrens2024ddml:Ahrens et al. (2024b)}.
 
 {pstd}
 {opt ddml} supports a variety of different ML programs, including
