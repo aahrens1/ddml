@@ -1,5 +1,5 @@
-*! ddml v1.4.2
-*! last edited: 8aug2023
+*! ddml v1.4.4
+*! last edited: 30aug2024
 *! authors: aa/ms
 
 *** ddml cross-fitting
@@ -101,11 +101,6 @@ program _ddml_crossfit, eclass sortpreserve
 		}
 		if `numeqnZ' > 1 {
 			di as err "error - interactiveiv model allows only one Z variable"
-			exit 198
-		}
-		qui count if `nameD'~=1 & `nameD'~=0 & `touse'
-		if r(N) > 0 {
-			di as err "error - interactiveiv model supported only for D=0 or D=1"
 			exit 198
 		}
 		qui count if `nameZ'~=1 & `nameZ'~=0 & `touse'

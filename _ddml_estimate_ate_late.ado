@@ -1,5 +1,5 @@
-*! ddml v1.4.2
-*! last edited: 8aug2023
+*! ddml v1.4.4
+*! last edited: 30aug2024
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -621,7 +621,7 @@ program _ddml_estimate_single, eclass sortpreserve
 								z(varname)			///
 								ATET 				///
 								ATEU				///
-								foldid(varname)		/// needed for ATET and ATEU
+								foldvar(varname)	/// needed for ATET and ATEU
 								ROBust				/// has no effect
 								CLUster(varname)	///
 								vce(string)			///
@@ -703,7 +703,7 @@ program _ddml_estimate_single, eclass sortpreserve
 	marksample touse
 	if "`model'"=="interactive" {
 		qui gen byte `esample' = `y0'<. & `y1'<. & `d'<. & `touse'
-		mata: ATE("`teffect'","`nameY'","`nameD'","`y0'", "`y1'", "`d'","`touse'","`b'","`V'","`clustvar'","`foldid'",`trim')
+		mata: ATE("`teffect'","`nameY'","`nameD'","`y0'", "`y1'", "`d'","`touse'","`b'","`V'","`clustvar'","`foldvar'",`trim')
 	}
 	else {
 		qui gen byte `esample' = `y0'<. & `y1'<. & `d0'<. & `d1'<. & `z'<. & `touse'
@@ -734,6 +734,7 @@ program _ddml_estimate_single, eclass sortpreserve
 	ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
 	ereturn local cmd		ddml
 	ereturn local model		`model'
+	ereturn local mname		`mname'
 	ereturn local z			`z'
 	ereturn local d			`d'
 	ereturn local d0		`d0'
@@ -2076,6 +2077,8 @@ program define estimate_and_store, eclass
 	mata: `A' = AssociativeArray()
 	mata: `A'.reinit("string",2)
 	mata: `A'.notfound("")				// so that if a local isn't found, it's an empty string
+	// always nocons
+	local cons = 0
 	
 	// 0/1 etc
 	local y0		`y0tilde'0
@@ -2149,6 +2152,7 @@ program define estimate_and_store, eclass
 	mata: `A'.put(("lltrim","scalar"),`r(lltrim)')
 	mata: `A'.put(("ultrim","scalar"),`r(ultrim)')
 	mata: `A'.put(("trim","scalar"),`trim')
+	mata: `A'.put(("cons","scalar"),`cons')
 	if "`clustvar'"~="" {
 		mata: `A'.put(("N_clust","scalar"),`N_clust')
 	}
@@ -2294,6 +2298,8 @@ program medmean_and_store, eclass
 	local isodd = mod(`nreps',2)
 	local medrow = ceil(`nreps'/2)
 	local N = 0
+	// always nocons
+	local cons = 0
 	
 	// bvec a misnomer - usually a vector, but can be a matrix if multiple D variables
 	mata: `bvec' = J(`nreps',`K',0)
@@ -2429,7 +2435,7 @@ program medmean_and_store, eclass
 	mata: `A'.put(("b_resamples","matrix"),`bvec')
 	
 	// store locals
-	local list_local title yvar dvar y0 y1 vce vcetype teffect y0_`medmean' y1_`medmean'
+	local list_local title yvar dvar y0 y1 vce vcetype teffect medmean y0_`medmean' y1_`medmean'
 	if "`model'"=="interactive" {
 		local list_local `list_local' d d_`medmean'
 	}
@@ -2470,7 +2476,7 @@ program medmean_and_store, eclass
 	
 	// store scalars
 	local trim `trimval'	// hack, to fix
-	local list_scalar nlltrim nultrim trim
+	local list_scalar nreps nlltrim nultrim trim cons
 	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
 	foreach obj in `list_scalar' {
 		mata: `A'.put(("`obj'","scalar"),``obj'')
@@ -2627,13 +2633,14 @@ program replay_estimate, eclass
 	ereturn local model `model'
 	ereturn local rep `rep'
 	ereturn local spec `spec'
-	ereturn local tmname `mname'
+	ereturn local mname `mname'
 	ereturn local teffect `teffect'
 	
 	// extract and post scalars, locals, matrices
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`isscalar'[`i']))
 		if `topost' {
+			// name of scalar
 			mata: st_local("sname",substr(`keys'[`i',1],1,32))
 			mata: st_numscalar("e(`sname')",`B'.get(`keys'[`i',.]))
 		}
@@ -2641,6 +2648,7 @@ program replay_estimate, eclass
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`islocal'[`i']))
 		if `topost' {
+			// name of local
 			mata: st_local("lname",substr(`keys'[`i',1],1,32))
 			mata: st_global("e(`lname')",`B'.get(`keys'[`i',.]))
 		}
@@ -2648,8 +2656,9 @@ program replay_estimate, eclass
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`ismatrix'[`i']))
 		if `topost' {
-			mata: st_local("tmname",substr(`keys'[`i',1],1,32))
-			mata: st_matrix("e(`tmname')",`B'.get(`keys'[`i',.]))
+			// name of matrix
+			mata: st_local("matname",substr(`keys'[`i',1],1,32))
+			mata: st_matrix("e(`matname')",`B'.get(`keys'[`i',.]))
 		}
 	}
 	

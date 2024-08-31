@@ -15,7 +15,7 @@ local stata_version `c(stata_version)'
 local born_date `c(born_date)'
 local current_date `c(current_date)'
 
-version 16.0
+version 15.1
 mata:
 mata clear
 
@@ -38,7 +38,7 @@ st_global("r(stata_compiled_date)","`current_date")
 struct eStruct {
 	string scalar					vname			// name of variable to be orthogonalized
 	string scalar					etype			// will be Y, D or Z
-	real matrix						vtlist			// list of orthogonalized (learner) variables
+	real rowvector					vtlist			// list of orthogonalized (learner) variables
 	string scalar					shortstack		// name of shortstack variable
 	string scalar					poolstack		// name of poolstack variable
 	real scalar						nlearners		// number of learners
@@ -92,8 +92,8 @@ struct mStruct {
 	class AssociativeArray scalar	eqnAA			// AssociativeArray with all equations
 	class AssociativeArray scalar	estAA			// AA wth all estimation results
 	string scalar					nameY			// dependent variable 
-	string colvector				nameD			// treatment variable(s)
-	string colvector				nameZ			// instrument(s)
+	string rowvector				nameD			// treatment variable(s)
+	string rowvector				nameZ			// instrument(s)
 	string scalar					fclustvar		// name of fold cluster variable (="" if none)
 	real scalar						stdflag			// flag for standard stacking (default=1)
 	real scalar						ssflag			// flag for short-stacking

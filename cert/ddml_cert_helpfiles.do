@@ -17,7 +17,7 @@ which pystacked
 log close
 
 foreach sthlpfile in									///
-	ddml_example_partial_pystacked_basic.sthlp			///
+	/* ddml_example_partial_pystacked_basic.sthlp			///
 	ddml_example_partial_pystacked_detailed.sthlp		///
 	ddml_example_partial_anylearner_detailed.sthlp		///
 	ddml_example_partial_pystacked_multitreat.sthlp		///
@@ -35,7 +35,7 @@ foreach sthlpfile in									///
 	ddml_example_export.sthlp							///
 	ddml_example_overlap.sthlp							///
 	ddml_example_fcluster.sthlp							///
-	qddml.sthlp											///
+	qddml.sthlp						*/					///
 	crossfit.sthlp										///
 	{
 

@@ -1,5 +1,8 @@
 // wrapper to execute all ddml-related cert scripts
 
+adopath ++ "/Users/kahrens/MyProjects/ddml"
+cd "/Users/kahrens/MyProjects/ddml/cert"
+
 // general
 do ddml_cert
 

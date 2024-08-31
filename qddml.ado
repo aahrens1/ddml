@@ -1,5 +1,5 @@
-*! ddml v1.4.2
-*! last edited: 8aug2023
+*! ddml v1.4.4
+*! last edited: 30aug2024
 *! authors: aa/ms
 
 program define qddml, eclass sortpreserve
@@ -11,6 +11,7 @@ program define qddml, eclass sortpreserve
 		[										///
 		VERBose VVERBose						///
 		mname(name)								///
+		prefix									///
 		kfolds(integer 5)						///
 		foldvar(varlist)						///
 		TABFold									///
@@ -227,7 +228,7 @@ program define qddml, eclass sortpreserve
 	if "`mname'"=="" local mname m0		
 
 	*** initialization
-	ddml init `model', mname(`mname') `kfolds' reps(`reps') cluster(`cluster') `tabfold' `foldvar'
+	ddml init `model', mname(`mname') `kfolds' reps(`reps') cluster(`cluster') `tabfold' `foldvar' `prefix'
 
 	*** IV-HD
 	if ("`model'"=="fiv") & `pyflag' {

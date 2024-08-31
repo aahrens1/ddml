@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 8aug2023}{...}
+{* *! version 30aug2024}{...}
 {smcl}
 {pstd}{ul:Partially-linear model - Multiple treatments with {help pystacked}}
 

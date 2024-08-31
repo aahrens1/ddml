@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 8aug2023}{...}
+{* *! version 30aug2024}{...}
 {viewerjumpto "Syntax" "qddml##syntax"}{...}
 {viewerjumpto "Options" "qddml##options"}{...}
 {viewerjumpto "Models" "qddml##models"}{...}
@@ -11,7 +11,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "qddml##also_see"}{...}
 {hline}
-{cmd:help qddml}{right: v1.4.2}
+{cmd:help qddml}{right: v1.4.4}
 {hline}
 
 {title:ddml, qddml - Stata package for Double Debiased Machine Learning}
@@ -62,9 +62,9 @@ Please check the {help qddml##examples:examples} provided at the end of this hel
 {cmd:qddml}
 {it:depvar} {it:regressors} [{cmd:(}{it:hd_controls}{cmd:)}]
 {cmd:(}{it:endog}{cmd:=}{it:instruments}{cmd:)}
-[{cmd:if} {it:exp}] [{cmd:in} {it:range}]
+[{cmd:if} {it:exp}] [{cmd:in} {it:range}],
 {opt model(name)}
-{bind:[ {cmd:,}}
+{bind:[ }
 {opt pystacked(string)}
 {opt pystacked_y(string)}
 {opt pystacked_d(string)}
@@ -82,9 +82,9 @@ Please check the {help qddml##examples:examples} provided at the end of this hel
 {cmd:qddml}
 {it:depvar} {it:regressors} [{cmd:(}{it:hd_controls}{cmd:)}]
 {cmd:(}{it:endog}{cmd:=}{it:instruments}{cmd:)}
-[{cmd:if} {it:exp}] [{cmd:in} {it:range}]
+[{cmd:if} {it:exp}] [{cmd:in} {it:range}],
 {opt model(name)}
-{bind:[ {cmd:,}}
+{bind:[ }
 {opt cmd(string)}
 {opt cmdopt(string)}
 {opt shortstack}
@@ -105,6 +105,11 @@ the model to be estimated; allows for {it:partial}, {it:interactive},
 {synopt:{opt mname(string)}}
 name of the DDML model. Allows to run multiple DDML
 models simultaneously. Defaults to {it:m0}.
+{p_end}
+{synopt:{opt prefix}}
+tells {opt qddml} to prefix the names of all created variables
+with name of the DDML model.
+Default is to prefix only the created sample and fold ID variables.
 {p_end}
 {synopt:{opt kfolds(integer)}}
 number of cross-fitting folds. The default is 5.

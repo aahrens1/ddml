@@ -9,7 +9,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_extract##also_see"}{...}
 {hline}
-{cmd:help ddml extract}{right: v1.4.2}
+{cmd:help ddml extract}{right: v1.4.4}
 {hline}
 
 {title:ddml extract utility for Double Debiased Machine Learning}

@@ -17,12 +17,35 @@ We update the stable website version more frequently than the SSC version.
 
 {marker references}{title:References}
 
+{marker Ahrens2023pystacked}{...}
+{pstd}
+Ahrens, A., Hansen, C. B., & Schaffer, M. E. (2023).
+pystacked: Stacking generalization and machine learning in Stata.
+The Stata Journal, 23(4), 909-931.
+{browse "https://doi.org/10.1177/1536867X231212426"}
+
+{marker Ahrens2024stacking}{...}
+{pstd}
+Ahrens, A., Hansen, C. B., Schaffer, M. E., & Wiemann, T. (2024a).
+Model averaging and double machine learning. 
+arXiv:2401.01645.
+{browse "https://arxiv.org/abs/2401.01645"}
+
+{marker Ahrens2024ddml}{...}
+{pstd}
+Ahrens, A., Hansen, C. B., Schaffer, M. E., & Wiemann, T. (2024b).
+ddml: Double/debiased machine learning in Stata. 
+{it:The Stata Journal}, 24(1), 3-45. 
+{browse "https://doi.org/10.1177/1536867X241233641"}
+
+{marker Chern2018}{...}
 {pstd}
 Chernozhukov, V., Chetverikov, D., Demirer, M., 
 Duflo, E., Hansen, C., Newey, W. and Robins, J. (2018), 
 Double/debiased machine learning for 
 treatment and structural parameters. 
-{it:The Econometrics Journal}, 21: C1-C68. {browse "https://doi.org/10.1111/ectj.12097"}
+{it:The Econometrics Journal}, 21: C1-C68. 
+{browse "https://doi.org/10.1111/ectj.12097"}
 
 {marker Hastie2009}{...}
 {pstd}
@@ -32,7 +55,8 @@ and prediction. Springer Science & Business Media.
 
 {marker Wolpert1992}{...}
 {pstd}
-Wolpert, David H. Stacked generalization. {it:Neural networks} 5.2 (1992): 241-259.
+Wolpert, David H. Stacked generalization. 
+{it:Neural networks} 5.2 (1992): 241-259.
 {browse "https://doi.org/10.1016/S0893-6080(05)80023-1"}
 
 

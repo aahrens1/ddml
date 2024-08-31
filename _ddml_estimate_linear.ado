@@ -1,5 +1,5 @@
-*! ddml v1.4.2
-*! last edited: 8aug2023
+*! ddml v1.4.4
+*! last edited: 30aug2024
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -336,6 +336,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 	else				mata: `mname'.psflag = 1
 	// re-stacking means any previous model estimation results should be dropped
 	mata: clear_model_estimation(`mname')
+	// no longer needed
+	cap mata: mata drop `eqn'
 
 end
 
@@ -492,6 +494,7 @@ program _ddml_estimate_single, eclass sortpreserve
 	ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
 	ereturn local cmd		ddml
 	ereturn local model		`model'
+	ereturn local mname		`mname'
 	ereturn local dh		`dh'
 	ereturn local z			`z'
 	ereturn local d			`d'
@@ -551,8 +554,8 @@ program _ddml_estimate_main
 	marksample touse
 	
 	// consflag
-	local consflag = ("`noconstant'"=="")
-	local showconsflag = ("`showconstant'"~="" & `consflag')	// ignored if nocons
+	local cons = ("`noconstant'"=="")
+	local showconsflag = ("`showconstant'"~="" & `cons')	// ignored if nocons
 	// replay existing results
 	local replayflag = "`replay'"~=""
 	// display summary table
@@ -856,6 +859,7 @@ program _ddml_estimate_main
 		
 		// have looped over reps to get each optimal model and shortstack per rep
 		// now aggregate over reps to get mean/median
+		// need to pass info about whether a constant was estimated; it won't be stored with med/mn results
 		if `nreps' > 1 {
 			// numbered/stacking estimates
 			if `numspecflag' {
@@ -924,8 +928,8 @@ program _ddml_estimate_main
 		
 		tempname nmat bmat semat
 		mata: `nmat' = J(`ncombos',3,"")
-		mata: `bmat' = J(`ncombos'*`nreps',`numeqnD'+`consflag',.)
-		mata: `semat' = J(`ncombos'*`nreps',`numeqnD'+`consflag',.)
+		mata: `bmat' = J(`ncombos'*`nreps',`numeqnD'+`cons',.)
+		mata: `semat' = J(`ncombos'*`nreps',`numeqnD'+`cons',.)
 		
 		// simplest if put into a Mata string matrix
 		tokenize `ylist' , parse("-")
@@ -1028,6 +1032,7 @@ program _ddml_estimate_main
 		}
 
 		// if multiple resamples, get mean/median for each specification
+		// need to pass info about whether a constant was estimated; it won't be stored with med/mn results
 		if `nreps'>1 & `ncombos' > 1 {
 			forvalues i = 1/`ncombos' {
 				local title "Mean over `nreps' resamples"
@@ -1090,7 +1095,7 @@ program _ddml_estimate_main
 						di " " _c
 					}
 					local specrep "`: di %3.0f `i' %3.0f `m''"
-					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') notable replay `noconstant'
+					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`m') notable replay
 					di %6s "{`rcmd':`specrep'}" _c
 					di as res %14s abbrev("`yt'",13) _c
 					forvalues j=1/`numeqnD' {
@@ -1133,12 +1138,12 @@ program _ddml_estimate_main
 			else {
 				// only mse/stacking specs available/reported
 				if `numspecflag' {
-					`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`m') `noconstant'
+					`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`m')
 					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 					mat `btemp' = e(b)
 					mat `Vtemp' = e(V)
 					local specrep "`: di %4s "`spectext'" %3.0f `m''"
-					local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') notable replay `noconstant'
+					local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`m') notable replay
 					di %6s "{`rcmd':`specrep'}" _c
 					mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 					mata: st_local("yt",return_learner_item(`eqn',"opt","`m'"))
@@ -1185,12 +1190,12 @@ program _ddml_estimate_main
 				}
 			}
 			if `ssflag' {
-				`qui' replay_estimate, mname(`mname') spec(ss) rep(`m') `noconstant'
+				`qui' replay_estimate, mname(`mname') spec(ss) rep(`m')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep "`: di %4s "ss" %3.0f `m''"
-				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`m') notable replay `noconstant'
+				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`m') notable replay
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
@@ -1225,12 +1230,12 @@ program _ddml_estimate_main
 				di
 			}
 			if `psflag' {
-				`qui' replay_estimate, mname(`mname') spec(ps) rep(`m') `noconstant'
+				`qui' replay_estimate, mname(`mname') spec(ps) rep(`m')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep "`: di %4s "ps" %3.0f `m''"
-				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`m') notable replay `noconstant'
+				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`m') notable replay
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[poolstack]" _c
 				forvalues j=1/`numeqnD' {
@@ -1298,7 +1303,7 @@ program _ddml_estimate_main
 			// all combos available, so loop through
 			forvalues i=1/`ncombos' {
 				foreach medmean in mn md {
-					`qui' replay_estimate, mname(`mname') spec(`i') rep(`medmean') noconstant
+					`qui' replay_estimate, mname(`mname') spec(`i') rep(`medmean')
 					tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 					mat `btemp'		= e(b)
 					mat `Vtemp'		= e(V)
@@ -1306,8 +1311,7 @@ program _ddml_estimate_main
 					local dt_list	`e(d)'
 					local zt_list	`e(z)'
 					local specrep "`: di " " %3s "`i'" %3s "`medmean'"'"
-					// force noconstant with mean/median
-					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`medmean') notable replay noconstant
+					local rcmd stata ddml estimate, mname(`mname') spec(`i') rep(`medmean') notable replay
 					di %6s "{`rcmd':`specrep'}" _c
 					di as res %14s abbrev("`yt'",13) _c
 					forvalues j=1/`numeqnD' {
@@ -1340,14 +1344,12 @@ program _ddml_estimate_main
 		}
 		foreach medmean in mn md {
 			if `numspecflag' {
-				// force noconstant with mean/median
-				`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`medmean') noconstant
+				`qui' replay_estimate, mname(`mname') spec(`spectext') rep(`medmean')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep "`: di " " %3s "`spectext'" %3s "`medmean'"'"
-				// force noconstant with mean/median
-				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable replay noconstant
+				local rcmd stata ddml estimate, mname(`mname') spec(`spectext') rep(`medmean') notable replay
 				di %6s "{`rcmd':`specrep'}" _c
 				if `poss_combos'>1 {
 					// learner is min-mse learner
@@ -1410,14 +1412,12 @@ program _ddml_estimate_main
 				di
 			}
 			if `ssflag' {
-				// force noconstant with mean/median
-				`qui' replay_estimate, mname(`mname') spec(ss) rep(`medmean') noconstant
+				`qui' replay_estimate, mname(`mname') spec(ss) rep(`medmean')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep "`: di %4s "ss" %3s "`medmean'"'"
-				// force noconstant with mean/median
-				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`medmean') notable replay noconstant
+				local rcmd stata ddml estimate, mname(`mname') spec(ss) rep(`medmean') notable replay
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[shortstack]" _c
 				forvalues j=1/`numeqnD' {
@@ -1441,14 +1441,12 @@ program _ddml_estimate_main
 				di
 			}
 			if `psflag' {
-				// force noconstant with mean/median
-				`qui' replay_estimate, mname(`mname') spec(ps) rep(`medmean') noconstant
+				`qui' replay_estimate, mname(`mname') spec(ps) rep(`medmean')
 				tempname btemp Vtemp	// pre-Stata 16 doesn't allow el(e(b),1,1) etc.
 				mat `btemp' = e(b)
 				mat `Vtemp' = e(V)
 				local specrep "`: di %4s "ps" %3s "`medmean'"'"
-				// force noconstant with mean/median
-				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`medmean') notable replay noconstant
+				local rcmd stata ddml estimate, mname(`mname') spec(ps) rep(`medmean') notable replay
 				di %6s "{`rcmd':`specrep'}" _c
 				di as res %14s "[poolstack]" _c
 				forvalues j=1/`numeqnD' {
@@ -1496,13 +1494,7 @@ program _ddml_estimate_main
 	}
 
 	di
-	if ("`rep'"=="mn" | "`rep'"=="md") {
-		// force noconstant with mean/median
-		replay_estimate, mname(`mname') spec(`specdisp') rep(`rep') noconstant
-	}
-	else {
-		replay_estimate, mname(`mname') spec(`specdisp') rep(`rep') `noconstant'
-	}
+	replay_estimate, mname(`mname') spec(`specdisp') rep(`rep')
 	di
 	
 	if `nreps' > 1 & ("`rep'"=="mn" | "`rep'"=="md") {
@@ -1677,7 +1669,7 @@ program define estimate_and_store, eclass
 				*								///
 				]
 
-	local consflag = ("`noconstant'"=="")
+	local cons = ("`noconstant'"=="")
 	mata: st_local("model",`mname'.model)
 	local ivflag	= "`model'"=="iv"
 	local fivflag	= "`model'"=="fiv"
@@ -1774,7 +1766,7 @@ program define estimate_and_store, eclass
 		mata: `A'.put(("`obj'","local"),"``obj''")
 	}
 	// store scalars
-	local list_scalar
+	local list_scalar cons
 	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
 	foreach obj in `list_scalar' {
 		mata: `A'.put(("`obj'","scalar"),``obj'')
@@ -1896,6 +1888,9 @@ program define medmean_and_store, eclass
 				NOConstant										///
 				]
 
+	// mean/median are always stored as nocons, but original est may have a constant
+	// cons is the stored macro, consflag is based on the original estimation
+	local cons = 0
 	local consflag = ("`noconstant'"=="")
 	mata: st_local("model",`mname'.model)
 	local ivflag	= "`model'"=="iv"
@@ -2038,7 +2033,7 @@ program define medmean_and_store, eclass
 	mata: `A'.put(("depvar","post"),"`depvar'")
 	
 	// store locals
-	local list_local title y d yname dnames vce vcetype y_`medmean' d_`medmean'
+	local list_local title y d yname dnames znames vce vcetype medmean y_`medmean' d_`medmean'
 	if "`model'"=="iv" {
 		local list_local `list_local' z z_`medmean'
 	}
@@ -2050,7 +2045,7 @@ program define medmean_and_store, eclass
 		mata: `A'.put(("`obj'","local"),"``obj''")
 	}
 	// store scalars
-	local list_scalar
+	local list_scalar nreps cons
 	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
 	foreach obj in `list_scalar' {
 		mata: `A'.put(("`obj'","scalar"),``obj'')
@@ -2160,7 +2155,7 @@ program define medmean_and_store, eclass
 	mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
 	
 	// no longer needed
-	foreach obj in `A' `B' `bagg' `bvec' `brow' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' {
+	foreach obj in `eqn' `A' `B' `bagg' `bvec' `brow' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' {
 		cap mata: mata drop `obj'
 	}
 	
@@ -2173,10 +2168,8 @@ program define replay_estimate, eclass
 				mname(name)										///
 				spec(string)									///
 				rep(string)										///
-				NOConstant										///
 				]
 
-	local consflag = ("`noconstant'"=="")
 	mata: st_local("model",`mname'.model)
 	local ivflag	= "`model'"=="iv"
 	local fivflag	= "`model'"=="fiv"
@@ -2200,9 +2193,10 @@ program define replay_estimate, eclass
 	mata: st_local("depvar",`B'.get(("depvar","post")))
 	mata: st_local("yname",`B'.get(("yname","local")))
 	mata: st_local("dnames",`B'.get(("dnames","local")))
+	mata: st_local("cons", strofreal(`B'.get(("cons","scalar"))))
 	
-	if `consflag' {
-		// will be empty if no constant
+	if `cons' {
+		// local will be empty if no constant
 		local consname "_cons"
 	}
 	
@@ -2225,12 +2219,13 @@ program define replay_estimate, eclass
 	ereturn local model `model'
 	ereturn local rep `rep'
 	ereturn local spec `spec'
-	ereturn local tmname `mname'	// temporary mname
+	ereturn local mname `mname'
 	
 	// extract and post scalars, locals, matrices
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`isscalar'[`i']))
 		if `topost' {
+			// name of scalar
 			mata: st_local("sname",substr(`keys'[`i',1],1,32))
 			mata: st_numscalar("e(`sname')",`B'.get(`keys'[`i',.]))
 		}
@@ -2238,6 +2233,7 @@ program define replay_estimate, eclass
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`islocal'[`i']))
 		if `topost' {
+			// name of local
 			mata: st_local("lname",substr(`keys'[`i',1],1,32))
 			mata: st_global("e(`lname')",`B'.get(`keys'[`i',.]))
 		}
@@ -2245,8 +2241,9 @@ program define replay_estimate, eclass
 	forvalues i=1/`nentries' {
 		mata: st_local("topost",strofreal(`ismatrix'[`i']))
 		if `topost' {
-			mata: st_local("tmname",substr(`keys'[`i',1],1,32))
-			mata: st_matrix("e(`tmname')",`B'.get(`keys'[`i',.]))
+			// name of matrix
+			mata: st_local("matname",substr(`keys'[`i',1],1,32))
+			mata: st_matrix("e(`matname')",`B'.get(`keys'[`i',.]))
 		}
 	}
 	
