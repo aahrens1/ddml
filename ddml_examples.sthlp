@@ -1,9 +1,9 @@
 {smcl}
-{* *! version 17aug2023}{...}
+{* *! version 30aug2024}{...}
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_stacking##also_see"}{...}
 {hline}
-{cmd:help ddml examples}{right: v1.4.3}
+{cmd:help ddml examples}{right: v1.4.4}
 {hline}
 
 {title:ddml examples for Double Debiased Machine Learning}

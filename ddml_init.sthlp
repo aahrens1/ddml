@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 17aug2023}{...}
+{* *! version 30aug2024}{...}
 {viewerjumpto "Syntax" "ddml_init##syntax"}{...}
 {viewerjumpto "Options" "ddml_init##options"}{...}
 {viewerjumpto "Installation" "ddml_init##installation"}{...}
@@ -8,7 +8,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_init##also_see"}{...}
 {hline}
-{cmd:help ddml init, ddml eq, ddml sample}{right: v1.4.3}
+{cmd:help ddml init, ddml eq, ddml sample}{right: v1.4.4}
 {hline}
 
 {title:ddml init, eq and sample commands for Double Debiased Machine Learning}

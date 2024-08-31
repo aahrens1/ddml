@@ -1,5 +1,5 @@
-*! ddml v1.4.3
-*! last edited: 17aug2023
+*! ddml v1.4.4
+*! last edited: 30aug2024
 *! authors: aa/ms
 
 program define _ddml_nnls_p

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 17aug2023}{...}
+{* *! version 30aug2024}{...}
 {smcl}
 {pstd}{ul:Partially-linear model - Detailed general example with multiple learners} 
 
