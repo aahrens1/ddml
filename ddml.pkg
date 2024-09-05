@@ -48,6 +48,7 @@ f ddml_export.sthlp
 f ddml_extract.sthlp
 f ddml_fiv.sthlp
 f ddml_init.sthlp
+f ddml_install_ref_auth.ihlp
 f ddml_interactive.sthlp
 f ddml_interactiveiv.sthlp
 f ddml_iv.sthlp
