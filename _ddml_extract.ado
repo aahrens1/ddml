@@ -1,5 +1,5 @@
 *! ddml v1.4.4
-*! last edited: 30aug2024
+*! last edited: 21july2025
 *! authors: aa/ms
 
 program define _ddml_extract, rclass
@@ -200,7 +200,11 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 			vkeys = (eqn.resAA).keys()
 			// sort keys by vtilde, rep, and lastly "MSE" or "MSE_folds"
 			// means that when looping through, when j=MSE then j+1=MSE_folds for same vtilde and rep
-			vkeys = sort(vkeys,(1,3,2))
+			// to get Mata to sort on reps correctly, need to add leading zeros
+			vkeys = vkeys, J(rows(vkeys),1,"0000000000")
+			vkeys[.,4] = strreverse(substr(strreverse(vkeys[.,4] + vkeys[.,3]),1,10))
+			vkeys = sort(vkeys,(1,4,2))
+			vkeys = vkeys[.,1..3]
 			for (j=1;j<=rows(vkeys);j++) {
 				if ((strpos(vkeys[j,2],show)==1) & (strpos(vkeys[j,2],"folds")==0)) {
 					rmatmse = (rmatmse \ (eqn.resAA).get(vkeys[j,.]))
