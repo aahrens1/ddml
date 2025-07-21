@@ -1,5 +1,5 @@
 *! ddml v1.4.4
-*! last edited: 30aug2024
+*! last edited: 27july2025
 *! authors: aa/ms
 
 program ddml	// no class - some subcommands are eclass, some are rclass
@@ -108,6 +108,10 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 		
 		*** describe model
 		if substr("`subcmd'",1,4)=="desc" {
+			if "`restmainargs'"~="" {
+				di as err "syntax error; to specify a specific model, use the mname(.) option"
+				exit 198
+			}
 			_ddml_describe `mname', `options'
 		}
 	
