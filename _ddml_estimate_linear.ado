@@ -1,5 +1,5 @@
 *! ddml v1.4.4
-*! last edited: 30aug2024
+*! last edited: 27july2025
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -2264,12 +2264,12 @@ program define replay_estimate, eclass
 	}
 	local numeqnD : word count `e(d_m)'
 	if `numeqnD'==1 {
-		di as res "D-`e(d_m)' " _c
+		di as res "`e(d_m)' " _c
 	}
 	else {
 		forvalues i=1/`numeqnD' {
 			local Dtilde : word `i' of `e(d_m)' {
-			di as res "D`i'-`Dtilde' " _c
+			di as res "`Dtilde' " _c
 		}
 	}
 	di
