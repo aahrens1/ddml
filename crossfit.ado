@@ -1,5 +1,5 @@
 *! ddml v1.4.4
-*! last edited: 30aug2024
+*! last edited: 21july2025
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 
@@ -213,9 +213,10 @@ program define _crossfit_pystacked, rclass sortpreserve
 		local stdfinalest
 		local stdfinalestopt
 	}
-	
+
 	if "`noisily'"=="" {
 		local qui quietly
+		local cap cap
 	}
 	
 	*** debugging message
@@ -283,10 +284,29 @@ program define _crossfit_pystacked, rclass sortpreserve
 	tempname mse_h_list N_h_list mse_h_folds_list N_h_folds_list
 	tempname mse0_list N0_list mse0_folds_list N0_folds_list
 	tempname mse1_list N1_list mse1_folds_list N1_folds_list
+	// more temps
+	tempname pysw pysw0 pysw1
+	tempname pysw_temp pysw1_temp pysw0_temp
+	tempname pysm pysm0 pysm1
+	tempname pysm_temp pysm1_temp pysm0_temp
 	
 	// will save base learner CV predictions in mata
 	tempname y_stacking_cv y_stacking_cv0 y_stacking_cv1
-	
+
+	tempvar tomata fidtouse fidtouse1 fidtouse0
+	tempvar vhat vhat0 vhat1 vres vres_sq vres0_sq vres1_sq
+	qui gen byte `tomata'=.
+	qui gen int `fidtouse'=.
+	qui gen int `fidtouse0'=.
+	qui gen int `fidtouse1'=.
+	qui gen `vtype' `vhat'=.
+	qui gen `vtype' `vhat0'=.
+	qui gen `vtype' `vhat1'=.
+	qui gen double `vres'=.
+	qui gen double `vres_sq'=.
+	qui gen double `vres0_sq'=.
+	qui gen double `vres1_sq'=.
+
 	// notes:
 	// `vtilde': name for fitted variable (predicted value)
 	// `vhat_k': OOS (crossfit) stacked predicted values for fold k.
@@ -307,6 +327,17 @@ program define _crossfit_pystacked, rclass sortpreserve
 	
 		// create rnames for renaming the rows of saved matrices
 		local rnames `rnames' resample_`m'
+		
+		// initialize for each resample
+		local failed
+		local failed1
+		local failed0
+		cap mat drop `pysw'
+		cap mat drop `pysw_h'
+		cap mat drop `pysm'
+		cap mat drop `pysm_h'
+		
+		
 		// create list of names of variables created by learners for rep m
 		// need to reset for each m
 		if ~`tvflag' {
@@ -343,8 +374,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 
 		// create blank fitted variable(s), other initializations for resample m
 		if ~`tvflag'{ // case 1
-			tempvar vhat vres
-			qui gen `vtype' `vhat'=.
+			qui replace `vhat'=.
 			// base learner predicted values
 			// not tempvars; name based on `vtilde' macro; used for poolstacking
 			forvalues j=1/`nlearners' {
@@ -353,10 +383,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 			}
 		}  
 		else { // case 2
-			tempvar vhat0
-			tempvar vhat1
-			qui gen `vtype' `vhat0'=.
-			qui gen `vtype' `vhat1'=.
+			qui replace `vhat0'=.
+			qui replace `vhat1'=.
 			// base learner predicted values
 			// not tempvars; name based on `vtilde' macro; used for poolstacking
 			forvalues j=1/`nlearners' {
@@ -368,27 +396,15 @@ program define _crossfit_pystacked, rclass sortpreserve
 				qui gen `vtype' `vtilde'1_L`j'_`m' = .
 			}
 		}
-	
-		// will save pystacked weights and MSEs
-		tempname pysw pysw0 pysw1
-		tempname pysw_temp pysw1_temp pysw0_temp
-		tempname pysm pysm0 pysm1
-		tempname pysm_temp pysm1_temp pysm0_temp
-		tempvar tomata fidtouse fidtouse1 fidtouse0
-		qui gen byte `tomata'=.
-		qui gen int `fidtouse'=.
-		qui gen int `fidtouse0'=.
-		qui gen int `fidtouse1'=.
+
 		
 		// crossfit
 		di as text "Cross-fitting fold " _c
 		forvalues k = 1(1)`kfolds' {
 	
+			// initialize
+			local notyetfailed = 1
 			di as text "`k' " _c
-			
-			// needed for each fold loop
-			// predicted values for fold k based on estimation for not-k
-			tempvar vhat_k vhat1_k vhat0_k
 			
 			if ~`tvflag' { // case 1
 				
@@ -398,65 +414,42 @@ program define _crossfit_pystacked, rclass sortpreserve
 				}
 				
 				// estimate excluding kth fold
-				`qui' `est_main' if `fid'!=`k' & `touse', `est_options' `nostdstackopt' `stdfinalestopt'
-				`qui' di as text "N=" as res e(N)
-				local base_est `e(base_est)'
-				local stack_final_est `e(finalest)'
-				// check
-				assert "`e(cmd)'"=="pystacked"
-				assert e(mcount)>1 & e(mcount)<.
-				
-				// pystacked complains if data change after estimation and before predict
-				// so make sure all predict commands are done first
-				
-				// always save crossfit base learner predicted values
-				// OOS (crossfit) base learner predicted values
-				tempvar stacking_p
-				qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
-				
-				if `stdflag' {
-					// get fitted values for kth fold	
-					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
-					// in-sample CV base learner predicted values
-					tempvar stacking_p_cv
-					qui predict double `stacking_p_cv', basexb cv
-					// save pystacked weights and MSEs
-					qui pystacked, table(rmspe)		// create rmspe matrix
-					if (`k'==1) {
-						mat `pysw' = e(weights)
-						mat `pysm_temp' = e(rmspe)
-						mat `pysm' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-						mata: st_replacematrix("`pysm'",st_matrix("`pysm'"):^2)
-					}
-					else {
-						mat `pysw_temp' = e(weights)
-						mat `pysw' = (`pysw',`pysw_temp')
-						mat `pysm_temp' = e(rmspe)
-						mat `pysm_temp' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-						mata: st_replacematrix("`pysm_temp'",st_matrix("`pysm_temp'"):^2)
-						mat `pysm' = (`pysm',`pysm_temp')
-					}
+				_fit_pystacked,	k(`k')					///
+					m(`m')								///
+					nlearners(`nlearners')				///
+					stdflag(`stdflag')					///
+					cap(`cap')							///
+					qui(`qui')							///
+					est_main(`est_main')				///
+					est_options(`est_options')			///
+					stdfinalestopt(`stdfinalestopt')	///
+					nostdstackopt(`nostdstackopt')		///
+					vname(`vname')						///
+					vhat(`vhat')						///
+					vtilde(`vtilde_list')				///
+					fid(`fid')							///
+					touse(`touse')						///
+					mmatname(`y_stacking_cv')			///
+					etype(`etype')
+
+				if `r(failed)'==0 {
+					// no failed estimation
+					local base_est			`r(base_est)'
+					local stack_final_est	`r(final_est)'
+					mat `pysw'				= (nullmat(`pysw'),r(pysw))
+					mat `pysm'				= (nullmat(`pysm'),r(pysm))
 				}
-				
-				// rename OOS (crossfit) base learner predicted values
-				forvalues j=1/`nlearners' {
-					qui replace `vtilde'_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
-				}
-				if `stdflag' {
-					// get stacked out-of-sample predicted values
-					qui replace `vhat' = `vhat_k' if `fid'==`k' & `touse'
-				}
-				if `stdflag' {				
-					// in-sample CV base learner predicted values
-					// accumulated in mata along with corresponding values of dep var
-					qui replace `tomata' = `fid'!=`k' & `touse'
-					qui replace `fidtouse' = (`k'*`touse')
-					fvexpand `stacking_p_cv'*
-					mata: `y_stacking_cv' = `y_stacking_cv' \ st_data(., "`fid' `fidtouse' `vname' `r(varlist)'", "`tomata'")
+				else {
+					// failed means estimation failed, no results to save
+					// track so that pysw and psym can have missings inserted at end
+					local failed			`failed' `k'
+					if `notyetfailed'		di
+					local notyetfailed = 0
+					di as res "Warning: estimation failed with return code `r(rc)' when cross-fitting fold `k'."
 				}
 			}
-	
-			else {	// case 2: interactive models
+
+			else {	// case 2: interactive models, `tvflag'=true
 	
 				// pystacked learners
 				if (`k'==1) & `stdflag' {
@@ -468,160 +461,97 @@ program define _crossfit_pystacked, rclass sortpreserve
 				// outcome equation so estimate separately for treated and untreated
 	
 				// for treatvar = 1
+				_fit_pystacked,	k(`k')					///
+					m(`m')								///
+					nlearners(`nlearners')				///
+					stdflag(`stdflag')					///
+					cap(`cap')							///
+					qui(`qui')							///
+					est_main(`est_main')				///
+					est_options(`est_options')			///
+					nostdstackopt(`nostdstackopt')		///
+					stdfinalestopt(`stdfinalestopt')	///
+					vname(`vname')						///
+					vhat(`vhat1')						///
+					vtilde(`vtilde1_list')				///
+					treatvar(`treatvar')				///
+					treatval(1)							///
+					fid(`fid')							///
+					touse(`touse')						///
+					mmatname(`y_stacking_cv1')			///
+					etype(`etype')
 				
-				// estimate excluding kth fold
-				`qui' `est_main' if `fid'!=`k' & `treatvar' == 1 & `touse', `est_options' `stdfinalestopt'
-				`qui' di as text "N=" as res e(N)
-				local base_est `e(base_est)'
-				local stack_final_est `e(finalest)'
-				// check
-				assert "`e(cmd)'"=="pystacked"
-				assert e(mcount)>1 & e(mcount)<.
-				
-				// pystacked complains if data change after estimation and before predict
-				// so make sure all predict commands are done first
-				
-				// always save crossfit base learner predicted values
-				// OOS (crossfit) base learner predicted values
-				tempvar stacking_p
-				qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
-				
-				if `stdflag' {
-					// get fitted values for kth fold	
-					qui predict `vtype' `vhat1_k' if `fid'==`k' & `touse'
-					// in-sample CV base learner predicted values
-					tempvar stacking_p_cv
-					qui predict double `stacking_p_cv', basexb cv
-					// save pystacked weights and MSEs if #learners>1
-					qui pystacked, table(rmspe)		// create rmspe matrix
-					if (`k'==1) {
-						mat `pysw1' = e(weights)
-						mat `pysm1_temp' = e(rmspe)
-						mat `pysm1' = `pysm1_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-						mata: st_replacematrix("`pysm1'",st_matrix("`pysm1'"):^2)
+				if `r(failed)'==0 & `r(perfect)'==0 {
+					// no failed estimation
+					// no perfect assignment
+					local base_est			`r(base_est)'
+					local stack_final_est	`r(final_est)'
+					mat `pysw1'				= (nullmat(`pysw1'),r(pysw))
+					mat `pysm1'				= (nullmat(`pysm1'),r(pysm))
+				}
+				else {
+					// failed means estimation failed, no results to save
+					// perfect means perfect assignment to treatment (no variation in D)
+					// estimation would have failed so we don't estimation, no results to save
+					// track so that pysw and psym can have missings inserted at end
+					local failed1			`failed1' `k'
+					if `notyetfailed'		di
+					local notyetfailed = 0
+					if `r(failed)' {
+						di as res "Warning: estimation failed with return code `r(rc)' when cross-fitting fold `k'."
 					}
 					else {
-						mat `pysw1_temp' = e(weights)
-						mat `pysw1' = (`pysw1',`pysw1_temp')
-						mat `pysm1_temp' = e(rmspe)
-						mat `pysm1_temp' = `pysm1_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-						mata: st_replacematrix("`pysm1_temp'",st_matrix("`pysm1_temp'"):^2)
-						mat `pysm1' = (`pysm1',`pysm1_temp')
+						di as res "Warning: perfect assignment to treatment when cross-fitting fold `k'."
 					}
 				}
-				
-				// rename OOS (crossfit) base learner predicted values
-				forvalues j=1/`nlearners' {
-					qui replace `vtilde'1_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
-				}
-				if `stdflag' {
-					// get stacked out-of-sample predicted values
-					qui replace `vhat1' = `vhat1_k' if `fid'==`k' & `touse'
-				}
-				if `stdflag' {
-					// in-sample CV base learner predicted values
-					// accumulated in mata along with corresponding values of dep var
-					qui replace `tomata' = `fid'!=`k' & `touse' & (`treatvar'==1)
-					qui replace `fidtouse1' = (`k'*`touse')*(`treatvar'==1)
-					fvexpand `stacking_p_cv'*
-					mata: `y_stacking_cv1' = `y_stacking_cv1' \ st_data(., "`fid' `fidtouse1' `vname' `r(varlist)'", "`tomata'")
-				}
+					
 				// for treatvar = 0
+				_fit_pystacked,	k(`k')					///
+					m(`m')								///
+					nlearners(`nlearners')				///
+					stdflag(`stdflag')					///
+					cap(`cap')							///
+					qui(`qui')							///
+					est_main(`est_main')				///
+					est_options(`est_options')			///
+					nostdstackopt(`nostdstackopt')		///
+					stdfinalestopt(`stdfinalestopt')	///
+					vname(`vname')						///
+					vhat(`vhat0')						///
+					vtilde(`vtilde0_list')				///
+					treatvar(`treatvar')				///
+					treatval(0)							///
+					fid(`fid')							///
+					touse(`touse')						///
+					mmatname(`y_stacking_cv0')			///
+					etype(`etype')
 
-				// possible in LATE model that D is always =0 if Z=0 (perfect assignment to treatment)
-				// check estimation sample for this and handle as a special case (do not estimate)
-				qui count if `treatvar'==0 & `vname'!=0 & `fid'~=`k' & `touse'
-				if (r(N)==0 & "`etype'"=="D") {
-					// case where, if Z=0, D=0 always, so just created fitted values =0 instead of estimating
-					// create fitted values = 0 for kth fold
-					`qui' gen `vhat0_k'=0  if `fid'==`k' & `touse' 
-					if `stdflag' {
-						// OOS (crossfit) base learner predicted values
-						forvalues j=1/`nlearners' {
-							qui replace `vtilde'0_L`j'_`m' = 0 if `fid'==`k' & `touse'
-						}
-						// in-sample CV base learner predicted values
-						tempvar stacking_p_cv
-						forvalues j=1/`nlearners' {
-							cap drop `stacking_p_cv'`j'
-							qui gen double `stacking_p_cv'`j' = 0 if `fid'~=`k' & `touse' & `treatvar'==0
-						}
-						// don't need in-sample CV base learner predicted values for poolstacking
-						// save pystacked weights (all missings) and MSEs (all zeros) if #learners>1
-						if (`k'==1) {
-							mat `pysw0' = J(`nlearners',1,.)
-							mat `pysm0' = J(`nlearners',1,0)
-						}
-						else {
-							mat `pysw0_temp' = J(`nlearners',1,.)
-							mat `pysm0_temp' = J(`nlearners',1,0)
-							mat `pysw0' = `pysw0' , `pysw0_temp'
-							mat `pysm0' = `pysm0' , `pysm0_temp'
-						}
-					}
-				} 
+				if `r(failed)'==0 & `r(perfect)'==0 {
+					// no failed estimation
+					// no perfect assignment
+					local base_est			`r(base_est)'
+					local stack_final_est	`r(final_est)'
+					mat `pysw0'				= (nullmat(`pysw0'),r(pysw))
+					mat `pysm0'				= (nullmat(`pysm0'),r(pysm))
+				}
 				else {
-					// estimate excluding kth fold
-					`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options' `stdfinalestopt'
-					`qui' di as text "N=" as res e(N)
-					local base_est `e(base_est)'
-					local stack_final_est `e(finalest)'
-		
-					// pystacked complains if data change after estimation and before predict
-					// so make sure all predict commands are done first
-				
-					// always save crossfit base learner predicted values
-					// OOS (crossfit) base learner predicted values
-					tempvar stacking_p
-					qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
-
-					if `stdflag' {
-						// get fitted values for kth fold	
-						qui predict `vtype' `vhat0_k' if `fid'==`k' & `touse'
-						// in-sample CV base learner predicted values
-						tempvar stacking_p_cv
-						qui predict double `stacking_p_cv', basexb cv
-						// save pystacked weights and MSEs if #learners>1
-						if e(mcount)>1 & e(mcount)<. {
-							qui pystacked, table(rmspe)		// create weights and rmspe matrices
-							if (`k'==1) {
-								mat `pysw0' = e(weights)
-								mat `pysm0_temp' = e(rmspe)
-								mat `pysm0' = `pysm0_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-								mata: st_replacematrix("`pysm0'",st_matrix("`pysm0'"):^2)
-							}
-							else {
-								mat `pysw0_temp' = e(weights)
-								mat `pysw0' = (`pysw0',`pysw0_temp')
-								mat `pysm0_temp' = e(rmspe)
-								mat `pysm0_temp' = `pysm0_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-								mata: st_replacematrix("`pysm0_temp'",st_matrix("`pysm0_temp'"):^2)
-								mat `pysm0' = (`pysm0',`pysm0_temp')
-							}
-						}
+					// failed means estimation failed, no results to save
+					// perfect means perfect assignment to treatment (no variation in D)
+					// estimation would have failed so we don't estimation, no results to save
+					// track so that pysw and psym can have missings inserted at end
+					local failed0			`failed0' `k'
+					if `notyetfailed'		di
+					local notyetfailed = 0
+					if `r(failed)' {
+						di as res "Warning: estimation failed with return code `r(rc)' when cross-fitting fold `k'."
 					}
-
-					// rename OOS (crossfit) base learner predicted values
-					forvalues j=1/`nlearners' {
-						qui replace `vtilde'0_L`j'_`m' = `stacking_p'`j' if `fid'==`k' & `touse'
+					else {
+						di as res "Warning: perfect assignment to non-treatment when cross-fitting fold `k'."
 					}
-				}
-				
-				if `stdflag' {
-					// get stacked out-of-sample predicted values
-					qui replace `vhat0' = `vhat0_k' if `fid'==`k' & `touse'
-				}
-				// in-sample CV base learner predicted values
-				// accumulated in mata along with corresponding values of dep var
-				if `stdflag' {
-					qui replace `tomata' = `fid'!=`k' & `touse' & (`treatvar'==0)
-					qui replace `fidtouse0' = (`k'*`touse')*(`treatvar'==0)
-					fvexpand `stacking_p_cv'*
-					mata: `y_stacking_cv0' = `y_stacking_cv0' \ st_data(., "`fid' `fidtouse0' `vname' `r(varlist)'", "`tomata'")
 				}
 			}
 		}
-	
+		
 		// last fold
 		di as text "...completed cross-fitting" _c
 		// if noisily, print new line
@@ -795,8 +725,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 				cap drop `vtilde'_`m'
 				qui gen `vtype' `vtilde'_`m' = `vhat'
 				qui label var `vtilde'_`m' "Pred. values E[`vname'|X] using `cmd', rep `m'"
-				tempvar vres_sq
-				qui gen double `vres_sq' = (`vname' - `vhat')^2 if `touse'
+				qui replace `vres_sq' = (`vname' - `vhat')^2 if `touse'
 	
 				// additive-type model
 				qui sum `vres_sq' if `touse', meanonly
@@ -810,6 +739,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mat `N_folds' = (nullmat(`N_folds'), r(N))
 				}
 			
+				// returned as r(.) macros by crossfit; not saved in mata struct
 				mat `mse_list'			= (nullmat(`mse_list') \ `mse')
 				mat `N_list'			= (nullmat(`N_list') \ `N')
 				mat `mse_folds_list'	= (nullmat(`mse_folds_list') \ `mse_folds')
@@ -820,6 +750,12 @@ program define _crossfit_pystacked, rclass sortpreserve
 				mata: add_result_item(`ename',"`vtilde'","MSE",       "`m'", `mse')
 				mata: add_result_item(`ename',"`vtilde'","MSE_folds", "`m'", st_matrix("`mse_folds'"))
 				
+				if "`failed'"~="" {
+					add_m_col `pysw', flist(`failed') lastcol(`kfolds')
+					mat `pysw' = r(A)
+					add_m_col `pysm', flist(`failed') lastcol(`kfolds')
+					mat `pysm' = r(A)
+				}
 				// weights and MSEs will be missing values if #learners=1
 				mata: add_result_item(`ename',"`vtilde'","stack_weights",   "`m'", st_matrix("`pysw'"))
 				mata: add_result_item(`ename',"`vtilde'","stack_MSEs",      "`m'", st_matrix("`pysm'"))
@@ -853,10 +789,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 				qui label var `vtilde'0_`m' "Pred. values E[`vname'|X] given `treatvar'==0 using `cmd', rep `m'"
 				qui label var `vtilde'1_`m' "Pred. values E[`vname'|X] given `treatvar'==1 using `cmd', rep `m'"
 				// calculate and return mspe and sample size
-				tempvar vres0_sq vres1_sq
 				// vtilde has fitted values
-				qui gen double `vres0_sq' = (`vname' - `vhat0')^2 if `treatvar' == 0 & `touse'
-				qui gen double `vres1_sq' = (`vname' - `vhat1')^2 if `treatvar' == 1 & `touse'
+				qui replace `vres0_sq' = (`vname' - `vhat0')^2 if `treatvar' == 0 & `touse'
+				qui replace `vres1_sq' = (`vname' - `vhat1')^2 if `treatvar' == 1 & `touse'
 		
 				// interactive-type model, return mse separately for treatvar =0 and =1
 				qui sum `vres0_sq' if `treatvar' == 0 & `touse', meanonly
@@ -878,6 +813,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mat `N1_folds' = (nullmat(`N1_folds'), r(N))
 				}
 	
+				// returned as r(.) macros by crossfit; not saved in mata struct
 				mat `mse0_list'			= (nullmat(`mse0_list') \ `mse0')
 				mat `N0_list'			= (nullmat(`N0_list') \ `N0')
 				mat `mse0_folds_list'	= (nullmat(`mse0_folds_list') \ `mse0_folds')
@@ -896,6 +832,18 @@ program define _crossfit_pystacked, rclass sortpreserve
 				}
 				
 				// weights and MSEs will be missing values if #learners=1
+				if "`failed1'"~="" {
+					add_m_col `pysw1', flist(`failed1') lastcol(`kfolds')
+					mat `pysw1' = r(A)
+					add_m_col `pysm1', flist(`failed1') lastcol(`kfolds')
+					mat `pysm1' = r(A)
+				}
+				if "`failed0'"~="" {
+					add_m_col `pysw0', flist(`failed0') lastcol(`kfolds')
+					mat `pysw0' = r(A)
+					add_m_col `pysm0', flist(`failed0') lastcol(`kfolds')
+					mat `pysm0' = r(A)
+				}
 				mata: add_result_item(`ename',"`vtilde'","stack_weights0","`m'", st_matrix("`pysw0'"))
 				mata: add_result_item(`ename',"`vtilde'","stack_weights1","`m'", st_matrix("`pysw1'"))
 				mata: add_result_item(`ename',"`vtilde'","stack_MSEs0","`m'",    st_matrix("`pysm0'"))
@@ -931,9 +879,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 		
 				label var `shortstack'_ss_`m' "Pred. values E[`vname'|X] using shortstacking, rep `m'"
 				// calculate and return mspe and sample size
-				tempvar vres_sq
 				// shortstack macros have fitted values
-				qui gen double `vres_sq' = (`vname' - `shortstack'_ss_`m')^2 if `touse'
+				qui replace `vres_sq' = (`vname' - `shortstack'_ss_`m')^2 if `touse'
 			
 				// additive-type model
 				qui sum `vres_sq' if `touse', meanonly
@@ -968,10 +915,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 				label var `shortstack'_ss0_`m'  "Pred. values E[`vname'|X] given `treatvar'==0 using shortstacking, rep `m'"
 				label var `shortstack'_ss1_`m'  "Pred. values E[`vname'|X] given `treatvar'==1 using shortstacking, rep `m'"
 				// calculate and return mspe and sample size
-				tempvar vres0_sq vres1_sq
 				// shortstack macros have fitted values
-				qui gen double `vres0_sq' = (`vname' - `shortstack'_ss0_`m')^2 if `treatvar' == 0 & `touse'
-				qui gen double `vres1_sq' = (`vname' - `shortstack'_ss1_`m')^2 if `treatvar' == 1 & `touse'
+				qui replace `vres0_sq' = (`vname' - `shortstack'_ss0_`m')^2 if `treatvar' == 0 & `touse'
+				qui replace `vres1_sq' = (`vname' - `shortstack'_ss1_`m')^2 if `treatvar' == 1 & `touse'
 		
 				// interactive-type model, return mse separately for treatvar =0 and =1
 				qui sum `vres0_sq' if `treatvar' == 0 & `touse', meanonly
@@ -987,12 +933,13 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mat `mse0_folds' = (nullmat(`mse0_folds'), r(mean))
 					qui sum `vres1_sq' if `treatvar' == 1 & `touse' & `fid'==`k', meanonly
 					mat `mse1_folds' = (nullmat(`mse1_folds'), r(mean))
-					qui count if `treatvar' == 0 & `touse' & `fid'==`k' & `vres1_sq'<.
+					qui count if `treatvar' == 0 & `touse' & `fid'==`k' & `vres0_sq'<.
 					mat `N0_folds' = (nullmat(`N0_folds'), r(N))
-					qui count if `treatvar' == 1 & `touse' & `fid'==`k' & `vres0_sq'<.
+					qui count if `treatvar' == 1 & `touse' & `fid'==`k' & `vres1_sq'<.
 					mat `N1_folds' = (nullmat(`N1_folds'), r(N))
 				}
 	
+				// returned as r(.) macros by crossfit; not saved in mata struct
 				mat `mse0_list'			= (nullmat(`mse0_list') \ `mse0')
 				mat `N0_list'			= (nullmat(`N0_list') \ `N0')
 				mat `mse0_folds_list'	= (nullmat(`mse0_folds_list') \ `mse0_folds')
@@ -1024,9 +971,8 @@ program define _crossfit_pystacked, rclass sortpreserve
 		
 				label var `poolstack'_ps_`m' "Pred. values E[`vname'|X] using poolstacking, rep `m'"
 				// calculate and return mspe and sample size
-				tempvar vres_sq
 				// poolstack macros have fitted values
-				qui gen double `vres_sq' = (`vname' - `poolstack'_ps_`m')^2 if `touse'
+				qui replace `vres_sq' = (`vname' - `poolstack'_ps_`m')^2 if `touse'
 			
 				// additive-type model
 				qui sum `vres_sq' if `touse', meanonly
@@ -1062,10 +1008,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 				label var `poolstack'_ps0_`m'  "Pred. values E[`vname'|X] given `treatvar'==0 using poolstacking, rep `m'"
 				label var `poolstack'_ps1_`m'  "Pred. values E[`vname'|X] given `treatvar'==1 using poolstacking, rep `m'"
 				// calculate and return mspe and sample size
-				tempvar vres0_sq vres1_sq
 				// poolstack macros have fitted values
-				qui gen double `vres0_sq' = (`poolstack'_ps0_`m')^2 if `treatvar' == 0 & `touse'
-				qui gen double `vres1_sq' = (`poolstack'_ps1_`m')^2 if `treatvar' == 1 & `touse'
+				qui replace `vres0_sq' = (`poolstack'_ps0_`m')^2 if `treatvar' == 0 & `touse'
+				qui replace `vres1_sq' = (`poolstack'_ps1_`m')^2 if `treatvar' == 1 & `touse'
 		
 				// interactive-type model, return mse separately for treatvar =0 and =1
 				qui sum `vres0_sq' if `treatvar' == 0 & `touse', meanonly
@@ -1081,9 +1026,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 					mat `mse0_folds' = (nullmat(`mse0_folds'), r(mean))
 					qui sum `vres1_sq' if `treatvar' == 1 & `touse' & `fid'==`k', meanonly
 					mat `mse1_folds' = (nullmat(`mse1_folds'), r(mean))
-					qui count if `treatvar' == 0 & `touse' & `fid'==`k' & `vres1_sq'<.
+					qui count if `treatvar' == 0 & `touse' & `fid'==`k' & `vres0_sq'<.
 					mat `N0_folds' = (nullmat(`N0_folds'), r(N))
-					qui count if `treatvar' == 1 & `touse' & `fid'==`k' & `vres0_sq'<.
+					qui count if `treatvar' == 1 & `touse' & `fid'==`k' & `vres1_sq'<.
 					mat `N1_folds' = (nullmat(`N1_folds'), r(N))
 				}
 	
@@ -1173,6 +1118,7 @@ program define _crossfit_other, rclass sortpreserve
 							ssfinalest(name)		/// final estimator for short-stacking
 							finalest(name)			/// final estimator for both
 							stdflag(integer 0)		/// flag for pystacked with multiple learners
+							NOSTDstack				/// no standard stacking - pystacked only, not supported, used to catch error
 							*						/// ignored options
 							]
 
@@ -1185,18 +1131,26 @@ program define _crossfit_other, rclass sortpreserve
 	mata: st_local("nlearners", strofreal(`ename'.nlearners))
 	mata: st_local("shortstack", `ename'.shortstack)
 	mata: st_local("poolstack", `ename'.poolstack)
-	mata: st_local("lieflag", strofreal(`ename'.lieflag))
 	mata: st_local("etype", `ename'.etype)	// "Y", "D" or "Z"
+	// lieflag already 0/1
+	mata: st_local("lieflag", strofreal(`ename'.lieflag))
 
+	** indicator for interactive model
+	local tvflag	= "`treatvar'"~=""
 	** indicator for short-stacking
 	local ssflag	= "`shortstack'"~=""
 	** indicator for pooled-stacking
 	local psflag	= "`poolstack'"~=""
-	** indicator for interactive model
-	local tvflag	= "`treatvar'"~=""
 	
 	if "`noisily'"=="" {
 		local qui quietly
+		local cap cap
+	}
+
+	** error check
+	if "`nostdstack'"~="" & `lieflag' {
+		di as err "err: option nostdstack invalid with pystacked+fiv model; standard stacking required"
+		exit 198
 	}
 	
 	*** debugging message
@@ -1257,12 +1211,52 @@ program define _crossfit_other, rclass sortpreserve
 	tempname mse1_list N1_list mse1_folds_list N1_folds_list
 	// pystacked support for fiv/lie
 	tempname pysw pysw_h pysw_temp pysm pysm_h pysm_temp
+	// initialize temp vars here
+	tempvar dhat_oosSS dhatSS hhatSS vres_sq vres0_sq vres1_sq hres_sq dres_sq
+	qui gen double `dhat_oosSS'=.
+	qui gen double `dhatSS'=.
+	qui gen double `hhatSS'=.
+	qui gen double `vres_sq'=.
+	qui gen double `vres0_sq'=.
+	qui gen double `vres1_sq'=.
+	qui gen double `hres_sq'=.
+	qui gen double `dres_sq'=.
+	forvalues j=1/`nlearners' {
+		tempvar vhat`j' vres`j' vhat0`j' vres0`j' vhat1`j' vres1`j' dhat`j' hhat`j' hhatSS`j'
+		qui gen double `vhat`j''=.
+		qui gen double `vres`j''=.
+		qui gen double `vhat0`j''=.
+		qui gen double `vres0`j''=.
+		qui gen double `vhat1`j''=.
+		qui gen double `vres1`j''=.
+		qui gen double `dhat`j''=.
+		qui gen double `hhat`j''=.
+		qui gen double `hhatSS`j''=.
+		forvalues k=1/`kfolds' {
+			tempvar dhat_`j'_`k'
+			qui gen double `dhat_`j'_`k''=.
+		}
+	}
+	forvalues k = 1(1)`kfolds' {
+		tempvar dhat_isSS_`k'
+		qui gen double `dhat_isSS_`k''=.
+	}
 	
 	// loop over resamples (crossfitting, shortstacking, store results)
 	forvalues m=`firstrep'/`lastrep' {
 	
 		// create rnames for renaming the rows of saved matrices
 		local rnames `rnames' resample_`m'
+		
+		// initialize for each resample
+		local failed
+		local failed0
+		local failed1
+		local failed_lie_h
+		cap mat drop `pysw'
+		cap mat drop `pysw_h'
+		cap mat drop `pysm'
+		cap mat drop `pysm_h'
 	
 		******************************** CROSSFITTING ************************************
 		
@@ -1280,16 +1274,15 @@ program define _crossfit_other, rclass sortpreserve
 		local thisrep = `m'-`firstrep'+1
 		local fid : word `thisrep' of `fidlist'
 
-		// create blank fitted variable(s)
+		// create or (re-)initialize blank fitted variable(s)
 		if ~`tvflag' & ~`lieflag' { // case 1
 			if `ssflag' {
 				cap drop `shortstack'_ss_`m'
 				qui gen double `shortstack'_ss_`m'=.
 			}
 			forvalues j=1/`nlearners' {
-				tempvar vhat`j' vres`j'
-				qui gen double `vhat`j''=.
-				qui gen double `vres`j''=.
+				qui replace `vhat`j''=.
+				qui replace `vres`j''=.
 			}
 		}  
 		else if `tvflag' & ~`lieflag' { // case 2
@@ -1300,30 +1293,25 @@ program define _crossfit_other, rclass sortpreserve
 				qui gen double `shortstack'_ss1_`m'=.
 			}
 			forvalues j=1/`nlearners' {
-				tempvar vhat0`j' vres0`j'
-				tempvar vhat1`j' vres1`j'
-				qui gen double `vhat0`j''=.
-				qui gen double `vres0`j''=.	
-				qui gen double `vhat1`j''=.
-				qui gen double `vres1`j''=.	
+				qui replace `vhat0`j''=.
+				qui replace `vres0`j''=.	
+				qui replace `vhat1`j''=.
+				qui replace `vres1`j''=.	
 			}
 		}
 		else if `lieflag' { // case 3
 			// out-of-sample predicted values for E[D|XZ] 
 			forvalues j=1/`nlearners' {
-				tempvar dhat`j'
-				qui gen double `dhat`j''=.  // using learner i
+				qui replace `dhat`j''=.  // using learner i
 			}
 			// out-of-sample predicted values for E[D|X] 
 			forvalues j=1/`nlearners' {
-				tempvar hhat`j'
-				qui gen double `hhat`j''=.  // using learner i in both steps
+				qui replace `hhat`j''=.  // using learner i in both steps
 			}
 			// predicted values for E[D|ZX] for each k & learner i
 			forvalues k=1/`kfolds' {
 				forvalues j=1/`nlearners' {
-					tempvar dhat_`j'_`k'
-					qui gen double `dhat_`j'_`k''=.
+					qui replace `dhat_`j'_`k''=.
 				}
 			}
 			if `ssflag' { // with short-stacking
@@ -1334,23 +1322,18 @@ program define _crossfit_other, rclass sortpreserve
 				qui gen double `shortstack'_h_ss_`m'=.			
 				// in-sample predicted values for E[D|ZX] for each k: short-stacked
 				forvalues k=1/`kfolds' {		
-					tempvar dhat_isSS_`k' 
-					qui gen double `dhat_isSS_`k''=.
+					qui replace `dhat_isSS_`k''=.
 				}
 				// out-of-sample predicted values for E[D|ZX] from short-stacking by k
 				// NB: this is different from "dhatSS", which are from applying constrained regression to full sample
-				tempvar dhat_oosSS
-				qui gen double `dhat_oosSS'=. 
+				qui replace `dhat_oosSS'=. 
 				// out-of-sample predicted values for E[D|X] 
 				forvalues j=1/`nlearners' {
-					tempvar hhatSS`j'
-					qui gen double `hhatSS`j''=. // using short-stacking for E[D|XZ] & then using learner i for E[D|X]
+					qui replace `hhatSS`j''=. // using short-stacking for E[D|XZ] & then using learner i for E[D|X]
 				}
 				// short-stacking predicted values
-				tempvar dhatSS
-				qui gen double `dhatSS'=. // this will become `shortstack'
-				tempvar hhatSS
-				qui gen double `hhatSS'=. // this will become `shortstack'_h_ss_
+				qui replace `dhatSS'=. // this will become `shortstack'
+				qui replace `hhatSS'=. // this will become `shortstack'_h_ss_
 			} 
 		}
 		else {
@@ -1362,6 +1345,8 @@ program define _crossfit_other, rclass sortpreserve
 		di as text "Cross-fitting fold " _c
 		forvalues k = 1(1)`kfolds' {
 	
+			// initialize
+			local notyetfailed = 1
 			di as text "`k' " _c
 	
 			forvalues j=1/`nlearners' {
@@ -1379,69 +1364,98 @@ program define _crossfit_other, rclass sortpreserve
 				}
 				if ~`tvflag' & ~`lieflag' { // case 1
 				
+					// need to declare here since needed for predict
 					tempvar vhat_k
 					
 					// estimate excluding kth fold
-					`qui' `est_main' if `fid'!=`k' & `touse', `est_options'
-					local cmd `e(cmd)'
-					if "`cmd'"=="" {
-						// macro e(cmd) may be missing, so deduce from command line
-						local cmd : word 1 of `est_main'
+					`cap' `est_main' if `fid'!=`k' & `touse', `est_options'
+
+					local rc = _rc
+					if `rc'>0 {
+						// estimation failed
+						if `notyetfailed'		di
+						local notyetfailed = 0
+						di as res "Warning: estimation failed with return code `rc' when cross-fitting fold `k'."
+						qui gen `vtype' `vhat_k' = . if `touse', `predopt'
+						qui replace `vhat`j'' = `vhat_k' if `fid'==`k' & `touse'
+						qui replace `vres`j'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
+						local failed `failed' `k'
 					}
+					else {
 					
-					// special treatment of single call to pystacked with multiple learners
-					if `stdflag' {
-						local base_est `e(base_est)'
-						local stack_final_est `e(finalest)'
-						local stype `e(type)'
-						// check
-						assert "`e(cmd)'"=="pystacked"
-						assert e(mcount)>1 & e(mcount)<.
-						// save pystacked weights and MSEs
-						qui pystacked, table(rmspe)		// create rmspe matrix
-						if (`k'==1) {
-							mat `pysw' = e(weights)
-							mat `pysm_temp' = e(rmspe)
-							mat `pysm' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-							mata: st_replacematrix("`pysm'",st_matrix("`pysm'"):^2)
+						local cmd `e(cmd)'
+						if "`cmd'"=="" {
+							// macro e(cmd) may be missing, so deduce from command line
+							local cmd : word 1 of `est_main'
 						}
-						else {
+						
+						// special treatment of single call to pystacked with multiple learners
+						if `stdflag' {
+							local base_est `e(base_est)'
+							local stack_final_est `e(finalest)'
+							local stype `e(type)'
+							// check
+							assert "`e(cmd)'"=="pystacked"
+							assert e(mcount)>1 & e(mcount)<.
+							// save pystacked weights and MSEs
+							qui pystacked, table(rmspe)		// create rmspe matrix
 							mat `pysw_temp' = e(weights)
-							mat `pysw' = (`pysw',`pysw_temp')
+							mat `pysw' = (nullmat(`pysw'),`pysw_temp')
 							mat `pysm_temp' = e(rmspe)
 							mat `pysm_temp' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
 							mata: st_replacematrix("`pysm_temp'",st_matrix("`pysm_temp'"):^2)
-							mat `pysm' = (`pysm',`pysm_temp')
+							mat `pysm' = (nullmat(`pysm'),`pysm_temp')
 						}
+						
+						// get fitted values for kth fold	
+						qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
+			
+						// get predicted values
+						qui replace `vhat`j'' = `vhat_k' if `fid'==`k' & `touse'
+						qui replace `vres`j'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
 					}
 					
-					// get fitted values for kth fold	
-					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
-		
-					// get predicted values
-					qui replace `vhat`j'' = `vhat_k' if `fid'==`k' & `touse'
-					qui replace `vres`j'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
+					// no longer needed
+					drop `vhat_k'
 				}
 		
 				else if `tvflag' & ~`lieflag' {	// case 2: interactive models
+
+					// need to declare here since needed for predict
+					tempvar vhat_k
 		
 					// outcome equation so estimate separately
 		
 					// for treatvar = 1
 					// estimate excluding kth fold
-					`qui' `est_main' if `fid'!=`k' & `treatvar' == 1 & `touse', `est_options'
-					local cmd `e(cmd)'
-					if "`cmd'"=="" {
-						// macro e(cmd) may be missing, so deduce from command line
-						local cmd : word 1 of `est_main'
+
+					`cap' `est_main' if `fid'!=`k' & `treatvar' == 1 & `touse', `est_options'
+
+					local rc = _rc
+					if `rc'>0 {
+						// estimation failed
+						if `notyetfailed'		di
+						local notyetfailed = 0
+						di as res "Warning: estimation failed with return code `rc' when cross-fitting fold `k'."
+						qui gen `vtype' `vhat_k' = . if `touse', `predopt'
+						local failed1 `failed1' `k'
 					}
-		
-					// get fitted values for kth fold	
-					tempvar vhat_k
-					qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
+					else {
+						local cmd `e(cmd)'
+						if "`cmd'"=="" {
+							// macro e(cmd) may be missing, so deduce from command line
+							local cmd : word 1 of `est_main'
+						}
+			
+						// get fitted values for kth fold	
+						qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'
+					}
 					qui replace `vhat1`j'' = `vhat_k' if `fid'==`k' & `touse'
 					qui replace `vres1`j'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
-		
+					
+					// no longer needed
+					drop `vhat_k'
+
 					// for treatvar = 0
 
 					// first, we need to account for D always = 0 if Z=0
@@ -1450,114 +1464,141 @@ program define _crossfit_other, rclass sortpreserve
 
 					if (`r(N)'==0 & "`allowallzero'"!="") {
 						// get fitted values for kth fold	
-						tempvar vhat_k	
 						`qui' gen double `vhat_k'=0  if `fid'==`k' & `touse' 	
 					} 
 					else {
 						// estimate excluding kth fold
-						`qui' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options'
-			
-						// get fitted values for kth fold	
-						tempvar vhat_k
-						qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'					
+						`cap' `est_main' if `fid'!=`k' & `treatvar' == 0 & `touse', `est_options'
 
+						local rc = _rc
+						if `rc'>0 {
+							// estimation failed
+							if `notyetfailed'		di
+							local notyetfailed = 0
+							di as res "Warning: estimation failed with return code `rc' when cross-fitting fold `k'."
+							qui gen `vtype' `vhat_k' = . if `touse', `predopt'
+							local failed0 `failed0' `k'
+						}
+						else {
+				
+							// get fitted values for kth fold	
+							qui predict `vtype' `vhat_k' if `fid'==`k' & `touse', `predopt'					
+						}
+						qui replace `vhat0`j'' = `vhat_k' if `fid'==`k' & `touse'
+						qui replace `vres0`j'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
 					}
-					qui replace `vhat0`j'' = `vhat_k' if `fid'==`k' & `touse'
-					qui replace `vres0`j'' = `vname' - `vhat_k' if `fid'==`k' & `touse'
+
+					// no longer needed
+					drop `vhat_k'
 					
 				}
 		
 				else if `lieflag' { // case 3
 		
-					tempvar vhat_k // stores predicted values for E[D|ZX] temporarily
-					tempvar vtil_k // stores predicted values for E[D^|X] temporarily
+					// need to declare here since needed for predict
+					tempvar vhat_k // stores predicted values for E[D|Z,X] temporarily
+					tempvar vtil_k // stores predicted values for E[D|X] temporarily
 		
-					// Step I: estimation of E[D|XZ]=D^
+					// Step I: estimation of E[D|Z,X]=D^
 					// estimate excluding kth fold
-					`qui' `est_main' if `fid'!=`k' & `touse', `est_options'
-					local cmd `e(cmd)'
-					if "`cmd'"=="" {
-						// macro e(cmd) may be missing, so deduce from command line
-						local cmd : word 1 of `est_main'
+					`cap' `est_main' if `fid'!=`k' & `touse', `est_options'
+					local rc = _rc
+					if `rc'>0 {
+						// estimation failed
+						if `notyetfailed'		di
+						local notyetfailed = 0
+						di as res "Warning: estimation of E[D|Z,X] failed with return code `rc' when cross-fitting fold `k'."
+						qui gen `vtype' `vhat_k' = . if `touse', `predopt'
+						// get *combined* out-of-sample predicted values
+						qui replace `dhat`j'' = `vhat_k' if `fid'==`k' & `touse'
+						// get predicted values in wide format for each i and k
+						qui replace `dhat_`j'_`k'' = `vhat_k' if `touse'
+						local failed `failed' `k'
 					}
-					
-					// special treatment of single call to pystacked with multiple learners
-					if `stdflag' {
-						local base_est `e(base_est)'
-						local stack_final_est `e(finalest)'
-						local stype `e(type)'
-						// check
-						assert "`e(cmd)'"=="pystacked"
-						assert e(mcount)>1 & e(mcount)<.
-						// save pystacked weights and MSEs
-						qui pystacked, table(rmspe)		// create rmspe matrix
-						if (`k'==1) {
-							mat `pysw' = e(weights)
-							mat `pysm_temp' = e(rmspe)
-							mat `pysm' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-							mata: st_replacematrix("`pysm'",st_matrix("`pysm'"):^2)
+					else {
+						if "`cmd'"=="" {
+							// macro e(cmd) may be missing, so deduce from command line
+							local cmd : word 1 of `est_main'
 						}
-						else {
+						
+						// special treatment of single call to pystacked with multiple learners
+						if `stdflag' {
+							local base_est `e(base_est)'
+							local stack_final_est `e(finalest)'
+							local stype `e(type)'
+							// check
+							assert "`e(cmd)'"=="pystacked"
+							assert e(mcount)>1 & e(mcount)<.
+							// save pystacked weights and MSEs
+							qui pystacked, table(rmspe)		// create rmspe matrix
 							mat `pysw_temp' = e(weights)
-							mat `pysw' = (`pysw',`pysw_temp')
+							mat `pysw' = (nullmat(`pysw'),`pysw_temp')
 							mat `pysm_temp' = e(rmspe)
 							mat `pysm_temp' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
 							mata: st_replacematrix("`pysm_temp'",st_matrix("`pysm_temp'"):^2)
-							mat `pysm' = (`pysm',`pysm_temp')
+							mat `pysm' = (nullmat(`pysm'),`pysm_temp')
 						}
+			
+						// get fitted values (in and out of sample)
+						qui predict `vtype' `vhat_k' if `touse', `predopt'
+			
+						// get *combined* out-of-sample predicted values
+						qui replace `dhat`j'' = `vhat_k' if `fid'==`k' & `touse'
+			
+						// get predicted values in wide format for each i and k
+						qui replace `dhat_`j'_`k'' = `vhat_k' if `touse'
 					}
 		
-					// get fitted values (in and out of sample)
-					qui predict `vtype' `vhat_k' if `touse', `predopt'
-		
-					// get *combined* out-of-sample predicted values
-					qui replace `dhat`j'' = `vhat_k' if `fid'==`k' & `touse'
-		
-					// get predicted values in wide format for each i and k
-					qui replace `dhat_`j'_`k'' = `vhat_k' if `touse'
-		
-					// Step II: estimation of E[D^|X]
+					// Step II: estimation of E[D|X]
 		
 					// replace {D}-placeholder in estimation string with variable name
 					local est_main_h_k = subinstr("`est_main_h'","{D}","`dhat_`j'_`k''",1)
 		
 					// estimation	
-					`qui' `est_main_h_k' if `fid'!=`k' & `touse', `est_options_h'
-					local cmd_h `e(cmd)'
-		
-					// special treatment of single call to pystacked with multiple learners
-					// h estimation
-					if `stdflag' {
-						local base_est_h `e(base_est)'
-						local stack_final_est_h `e(finalest)'
-						local stype_h `e(type)'
-						// check
-						assert "`e(cmd)'"=="pystacked"
-						assert e(mcount)>1 & e(mcount)<.
-						// save pystacked weights and MSEs
-						qui pystacked, table(rmspe)		// create rmspe matrix
-						if (`k'==1) {
-							mat `pysw_h' = e(weights)
-							mat `pysm_temp' = e(rmspe)
-							mat `pysm_h' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
-							mata: st_replacematrix("`pysm_h'",st_matrix("`pysm_h'"):^2)
-						}
-						else {
+					`cap' `est_main_h_k' if `fid'!=`k' & `touse', `est_options_h'
+					local rc = _rc
+					if `rc'>0 {
+						// estimation failed
+						if `notyetfailed'		di
+						local notyetfailed = 0
+						di as res "Warning: estimation of E[D|X] failed with return code `rc' when cross-fitting fold `k'."
+						qui gen `vtype' `vtil_k' = . if `touse', `predopt_h'
+						// get *combined* out-of-sample predicted values
+						qui replace `hhat`j'' = `vtil_k' if `fid'==`k' & `touse'
+						local failed_lie_h `failed_lie_h' `k'
+					}
+					else {
+						local cmd_h `e(cmd)'
+			
+						// special treatment of single call to pystacked with multiple learners
+						// h estimation
+						if `stdflag' {
+							local base_est_h `e(base_est)'
+							local stack_final_est_h `e(finalest)'
+							local stype_h `e(type)'
+							// check
+							assert "`e(cmd)'"=="pystacked"
+							assert e(mcount)>1 & e(mcount)<.
+							// save pystacked weights and MSEs
+							qui pystacked, table(rmspe)		// create rmspe matrix
 							mat `pysw_temp' = e(weights)
-							mat `pysw_h' = (`pysw_h',`pysw_temp')
+							mat `pysw_h' = (nullmat(`pysw_h'),`pysw_temp')
 							mat `pysm_temp' = e(rmspe)
 							mat `pysm_temp' = `pysm_temp'[2...,"RMSPE_cv".."RMSPE_cv"]
 							mata: st_replacematrix("`pysm_temp'",st_matrix("`pysm_temp'"):^2)
-							mat `pysm_h' = (`pysm_h',`pysm_temp')
+							mat `pysm_h' = (nullmat(`pysm_h'),`pysm_temp')
 						}
+						
+						// get fitted values  
+						qui predict `vtype' `vtil_k' if `touse', `predopt_h'
+			
+						// get *combined* out-of-sample predicted values
+						qui replace `hhat`j'' = `vtil_k' if `fid'==`k' & `touse'
 					}
 					
-					// get fitted values  
-					qui predict `vtype' `vtil_k' if `touse', `predopt_h'
-		
-					// get *combined* out-of-sample predicted values
-					qui replace `hhat`j'' = `vtil_k' if `fid'==`k' & `touse'
-		
+					// no longer needed
+					drop `vhat_k'
+					drop `vtil_k'
 				}
 				
 				if `k'==1 & `m'==1 {
@@ -1569,10 +1610,8 @@ program define _crossfit_other, rclass sortpreserve
 	
 		// last fold, insert new line
 		di as text "...completed cross-fitting" _c
-		
 
 		******************************** SHORTSTACKING ************************************
-	
 
 		// shortstacking. we need to distinguish between 3 cases again. 
 		if `ssflag' & `nlearners'>1 {
@@ -1582,28 +1621,30 @@ program define _crossfit_other, rclass sortpreserve
 				forvalues j=1/`nlearners' {
 					local vhats `vhats' `vhat`j''
 				}
-				tempvar vss
 				`qui' di
 				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (additive model):"
 				`qui' _ddml_nnls `vname' `vhats', finalest(`ssfinalest') `noisily'
 				`qui' di as text "N=" as res e(N)
 				tempname ssw
 				mat `ssw' = e(b)
+				// declare here since needed for predict
 				tempvar vtemp
 				qui predict double `vtemp'
 				qui replace `shortstack'_ss_`m' = `vtemp'
-					
+				// no longer needed
+				drop `vtemp'
 			}
 			else if `tvflag' & ~`lieflag' {	// case 2: interactive models
 				local vhats1 
 				local vhats0
 				tempname ssw1 ssw0
+				// declare here since needed for predict
+				tempvar vtemp
 				
 				// treatvar == 1
 				forvalues j=1/`nlearners' {
 					local vhats1 `vhats1' `vhat1`j''
 				}
-				tempvar vtemp
 				`qui' di
 				`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=1):"
 				`qui' _ddml_nnls `vname' `vhats1' if `treatvar'==1, finalest(`ssfinalest') `noisily'
@@ -1611,6 +1652,8 @@ program define _crossfit_other, rclass sortpreserve
 				mat `ssw1' = e(b)
 				qui predict double `vtemp'
 				qui replace `shortstack'_ss1_`m'=`vtemp'
+				// no longer needed
+				drop `vtemp'
 					
 				// treatvar == 0
 				// if late and Z==0, we know Dhat should be 0 (eps = appx 0)
@@ -1623,7 +1666,6 @@ program define _crossfit_other, rclass sortpreserve
 					forvalues j=1/`nlearners' {
 						local vhats0 `vhats0' `vhat0`j''
 					}
-					tempvar vtemp
 					`qui' di
 					`qui' di as text as text "Short-stacking, finalest=`ssfinalest' (interactive model, treatvar=0):"
 					`qui' _ddml_nnls `vname' `vhats0' if `treatvar'==0, finalest(`ssfinalest') `noisily'
@@ -1632,8 +1674,11 @@ program define _crossfit_other, rclass sortpreserve
 					qui predict double `vtemp'
 					qui replace `shortstack'_ss0_`m'=`vtemp'
 				}
+				// no longer needed
+				cap drop `vtemp'
 			}
 			else if `lieflag' {
+
 				// apply short-stacking to cross-fitted (out-of-sample) predicted values of E[D|XZ]
 				local dhats
 				forvalues j=1/`nlearners' {
@@ -1644,16 +1689,20 @@ program define _crossfit_other, rclass sortpreserve
 				`qui' _ddml_nnls `vname' `dhats' if `touse'
 				tempname ssw
 				mat `ssw'= e(b)
+				// declare here since needed for predict
 				tempvar vtemp
 				qui predict double `vtemp' if `touse'
 				qui replace `dhatSS'=`vtemp' 
-	
+				// no longer needed
+				drop `vtemp'
+
 				// apply short-stacking to in-sample predicted values of E[D|XZ] *for each k*
 				forvalues k = 1(1)`kfolds' {
 					local dhats_is
 					forvalues j=1/`nlearners' {
 						local dhats_is `dhats_is' `dhat_`j'_`k''
 					}
+					// declare here since needed for predict
 					tempvar vtemp
 					`qui' di
 					`qui' di as text "Short-stacking, finalest=`ssfinalest' (LIE, in-sample E[D|XZ] fold `k':"
@@ -1661,8 +1710,10 @@ program define _crossfit_other, rclass sortpreserve
 					qui predict double `vtemp'
 					qui replace `dhat_isSS_`k'' = `vtemp' if `fid'!=`k' & `touse'
 					qui replace `dhat_oosSS' = `vtemp' if `fid'==`k' & `touse'
+					// no longer needed
+					drop `vtemp'
 				}
-	
+
 				// need to cross-fit stacked in-sample predicted values against X
 				forvalues k = 1(1)`kfolds' {
 					forvalues j=1/`nlearners' {
@@ -1680,37 +1731,34 @@ program define _crossfit_other, rclass sortpreserve
 						local cmd_h `e(cmd)'
 					
 						// get fitted values  
+						// declare here since needed for predict
 						tempvar vtemp
 						qui predict double `vtemp' if `touse', `predopt_h'
-			
 						// get out-of-sample predicted values
 						qui replace `hhatSS`j'' = `vtemp' if `fid'==`k' & `touse'
+						// no longer needed
+						drop `vtemp'
 					}
 				}
 	
 				// final stacking for E[D|X]
-				tempname ssw_h ssw_h_temp
-				forvalues k = 1(1)`kfolds' {
-					local hhatSS_list
-					forvalues j=1/`nlearners' {
-						local hhatSS_list `hhatSS_list' `hhatSS`j''
-					}
-					`qui' di
-					`qui' di as text "Short-stacking, finalest=`ssfinalest' (LIE, E[D|X]):"
-					`qui' _ddml_nnls `dhat_oosSS' `hhatSS_list'
-					if (`k'==1) {
-						mat `ssw_h' = e(b)
-					}
-					else {
-						mat `ssw_h_temp' = e(b)
-						mat  `ssw_h_temp' = (`ssw_h' \ `ssw_h_temp' )
-					}
-					tempvar vtemp
-					qui predict double `vtemp'
-					qui replace `hhatSS'=`vtemp'
+				tempname ssw_h
+				local hhatSS_list
+				forvalues j=1/`nlearners' {
+					local hhatSS_list `hhatSS_list' `hhatSS`j''
 				}
+				`qui' di
+				`qui' di as text "Short-stacking, finalest=`ssfinalest' (LIE, E[D|X]):"
+				`qui' _ddml_nnls `dhat_oosSS' `hhatSS_list'
+				mat `ssw_h' = e(b)
+				// declare here since needed for predict
+				tempvar vtemp
+				qui predict double `vtemp'
+				qui replace `hhatSS'=`vtemp'
 				qui replace `shortstack'_ss_`m'=`dhatSS'
 				qui replace `shortstack'_h_ss_`m'=`hhatSS'
+				// no longer needed
+				drop `vtemp'
 			}
 			else {
 				di as err "internal crossfit error"
@@ -1742,7 +1790,6 @@ program define _crossfit_other, rclass sortpreserve
 		else {
 			di
 		}
-	
 		
 		******************************** STORE RESULTS ************************************
 		
@@ -1755,6 +1802,7 @@ program define _crossfit_other, rclass sortpreserve
 			// vtilde, mspe, etc.
 			if ~`tvflag' & ~`lieflag' {
 		
+				// not a temp var so can overwrite
 				cap drop `vtilde'_`m'
 				// vtilde is predicted values
 				mata: st_local("vtype", return_learner_item(`ename',"`vtilde'","vtype"))
@@ -1762,8 +1810,7 @@ program define _crossfit_other, rclass sortpreserve
 				qui label var `vtilde'_`m' "Pred. values E[`vname'|X] using `cmd', rep `m'"
 		
 				// calculate and return mspe and sample size
-				tempvar vres_sq
-				qui gen double `vres_sq' = `vres`j''^2 if `touse'
+				qui replace `vres_sq' = `vres`j''^2 if `touse'
 
 				// additive-type model
 				qui sum `vres_sq' if `touse', meanonly
@@ -1810,10 +1857,9 @@ program define _crossfit_other, rclass sortpreserve
 				qui label var `vtilde'1_`m' "Pred. values E[`vname'|X] given `treatvar'==1 using `cmd', rep `m'"
 		
 				// calculate and return mspe and sample size
-				tempvar vres0_sq vres1_sq
 				// vtilde has fitted values
-				qui gen double `vres0_sq' = (`vname' - `vhat0`j'')^2 if `treatvar' == 0 & `touse'
-				qui gen double `vres1_sq' = (`vname' - `vhat1`j'')^2 if `treatvar' == 1 & `touse'
+				qui replace `vres0_sq' = (`vname' - `vhat0`j'')^2 if `treatvar' == 0 & `touse'
+				qui replace `vres1_sq' = (`vname' - `vhat1`j'')^2 if `treatvar' == 1 & `touse'
 		
 				// interactive-type model, return mse separately for treatvar =0 and =1
 				qui sum `vres0_sq' if `treatvar' == 0 & `touse', meanonly
@@ -1876,10 +1922,9 @@ program define _crossfit_other, rclass sortpreserve
 				qui label var `vtilde'_h_`m' "Pred. values E[`vtilde'|X], rep `m'"
 
 				// calculate and return mspe and sample size
-				tempvar hres dres hres_sq dres_sq
 				// vtilde has fitted values
-				qui gen double `dres_sq' = (`vname' - `dhat`j'')^2 if `touse'
-				qui gen double `hres_sq' = (`vname' - `hhat`j'')^2 if `touse'
+				qui replace `dres_sq' = (`vname' - `dhat`j'')^2 if `touse'
+				qui replace `hres_sq' = (`vname' - `hhat`j'')^2 if `touse'
 	
 				qui sum `dres_sq' if `touse', meanonly
 				local mse			= r(mean)
@@ -1951,9 +1996,8 @@ program define _crossfit_other, rclass sortpreserve
 		
 				label var `shortstack'_ss_`m' "Pred. values E[`vname'|X] using shortstacking, rep `m'"
 				// calculate and return mspe and sample size
-				tempvar vres_sq
 				// shortstack macro has the residuals
-				qui gen double `vres_sq' = (`shortstack'_ss_`m')^2 if `touse'
+				qui replace `vres_sq' = (`vname' - `shortstack'_ss_`m')^2 if `touse'
 			
 				// additive-type model
 				qui sum `vres_sq' if `touse', meanonly
@@ -1987,8 +2031,8 @@ program define _crossfit_other, rclass sortpreserve
 				// calculate and return mspe and sample size
 				tempvar vres0_sq vres1_sq
 				// shortstack macros have fitted values
-				qui gen double `vres0_sq' = (`shortstack'_ss0_`m')^2 if `treatvar' == 0 & `touse'
-				qui gen double `vres1_sq' = (`shortstack'_ss1_`m')^2 if `treatvar' == 1 & `touse'
+				qui gen double `vres0_sq' = (`vname' - `shortstack'_ss0_`m')^2 if `treatvar' == 0 & `touse'
+				qui gen double `vres1_sq' = (`vname' - `shortstack'_ss1_`m')^2 if `treatvar' == 1 & `touse'
 		
 				// interactive-type model, return mse separately for treatvar =0 and =1
 				qui sum `vres0_sq' if `treatvar' == 0 & `touse', meanonly
@@ -2004,9 +2048,9 @@ program define _crossfit_other, rclass sortpreserve
 					mat `mse0_folds' = (nullmat(`mse0_folds'), r(mean))
 					qui sum `vres1_sq' if `treatvar' == 1 & `touse' & `fid'==`k', meanonly
 					mat `mse1_folds' = (nullmat(`mse1_folds'), r(mean))
-					qui count if `treatvar' == 0 & `touse' & `fid'==`k' & `vres1_sq'<.
+					qui count if `treatvar' == 0 & `touse' & `fid'==`k' & `vres0_sq'<.
 					mat `N0_folds' = (nullmat(`N0_folds'), r(N))
-					qui count if `treatvar' == 1 & `touse' & `fid'==`k' & `vres0_sq'<.
+					qui count if `treatvar' == 1 & `touse' & `fid'==`k' & `vres1_sq'<.
 					mat `N1_folds' = (nullmat(`N1_folds'), r(N))
 				}
 	
@@ -2088,6 +2132,12 @@ program define _crossfit_other, rclass sortpreserve
 		
 		// save results relating to stacked learner if it exists
 		if `stdflag' {
+			if "`failed'"~="" {
+				add_m_col `pysw', flist(`failed') lastcol(`kfolds')
+				mat `pysw' = r(A)
+				add_m_col `pysm', flist(`failed') lastcol(`kfolds')
+				mat `pysm' = r(A)
+			}
 			mata: add_result_item(`ename',"`vtilde'","stack_weights",   "`m'", st_matrix("`pysw'"))
 			mata: add_result_item(`ename',"`vtilde'","stack_MSEs",      "`m'", st_matrix("`pysm'"))
 			mata: add_learner_item(`ename',"`vtilde'","stack_base_est","`base_est'")
@@ -2095,6 +2145,12 @@ program define _crossfit_other, rclass sortpreserve
 			mata: add_learner_item(`ename',"`vtilde'","stack_type","`stype'")
 		}
 		if `stdflag' & `lieflag' {
+			if "`failed_lie_h'"~="" {
+				add_m_col `pysw_h', flist(`failed_lie_h') lastcol(`kfolds')
+				mat `pysw_h' = r(A)
+				add_m_col `pysm_h', flist(`failed_lie_h') lastcol(`kfolds')
+				mat `pysm_h' = r(A)
+			}
 			mata: add_result_item(`ename',"`vtilde'","stack_weights_h",   "`m'", st_matrix("`pysw_h'"))
 			mata: add_result_item(`ename',"`vtilde'","stack_MSEs_h",      "`m'", st_matrix("`pysm_h'"))
 			mata: add_learner_item(`ename',"`vtilde'","stack_base_est_h","`base_est_h'")
@@ -2344,4 +2400,195 @@ program define parse_estring, rclass
 	// no longer needed so clear from Mata
 	mata: mata drop `t'
 
+end
+
+prog define add_m_col, rclass
+	version 16.0
+	syntax name, flist(numlist) lastcol(integer)
+	
+	tempname A A_miss
+	mat `A' = `namelist'
+	
+	mat `A_miss' = J(rowsof(`A'),1,.)
+	foreach c in `flist' {
+		if `c'==1 {
+			mat `A' = `A_miss',`A'
+		}
+		else if `c'==`lastcol' {
+			mat `A' = `A',`A_miss'
+		}
+		else {
+			mat `A' = `A'[.,1..`c'-1], `A_miss', `A'[.,`c'...] 
+		}
+	}
+	return mat A=`A'
+
+end
+
+prog define _fit_pystacked, rclass
+	version 16.0
+	syntax [anything], [				///
+		k(integer 0)					///
+		m(integer 0)					///
+		nlearners(integer 1)			///
+		stdflag(integer 0)				/// flag for doing standard stacking
+		cap(string)						///
+		qui(string)						///
+		est_main(string)				///
+		est_options(string)				///
+		NOSTDstackopt(string)			///
+		stdfinalestopt(string)			///
+		vname(varname)					///
+		vhat(varname)					/// where to save (replace) stacked OOS (crossfit) predicted values
+		vtype(string)					/// var type for vhat predictions
+		vtilde(varlist)					/// where to save (replace) OOS (crossfit) base learner predicted values
+		treatvar(varname)				///
+		treatval(integer 1)				///
+		fid(varname)					///
+		touse(varname)					///
+		mmatname(name)					/// name of Mata matrix for storing the in-sample base learner predicted values
+		etype(string)					/// will be "D" or blank
+						]
+
+	tempname pysw pysm
+	tempvar tomata fidtouse stacking_p vhat_k toest
+	// initialize
+	mat `pysw' = .
+	mat `pysm' = .
+	local failed = 0
+	local perfect = 0
+	local rc = 0
+	
+	// estimation is either all obs excluding the fold ID
+	// or also for the treated or untreated sample (treatvar=1 or treatvar=0)
+	if "`treatvar'"=="" {
+		qui gen `toest' = `fid'!=`k' & `touse'
+	}
+	else {
+		// treatment effects / interactive model
+		qui gen `toest' = `fid'!=`k' & `touse' & (`treatvar'==`treatval')
+		// LATE model special cases:
+		// nb: D (treatment, `vname') can be continuous; code below aimed at binary treatment
+		//     Z (assignment, `treatvar') is alway binary
+		// possible that in the Z=1 subsample of the estimation sample, all are assigned to treatment (D=1)
+		// possible that in the Z=0 subsample of the estimation sample, no one is assigned to treatment (D=0)
+		// main case: perfect assignment to (non-)treatment: D=1 for all obs when Z=1, or D=0 for all obs when Z=0
+		// if no variation in D, estimation may fail, so catch here as a special case
+		qui count if `touse'
+		local N = r(N)
+		qui count if `treatvar'==0 & `vname'==0 & `touse'
+		local Z0D0 = (r(N)==`N')
+		qui count if `treatvar'==1 & `vname'==1 & `touse'
+		local Z1D1 = (r(N)==`N')
+		local perfect = (`Z0D0' | `Z1D1') & "`etype'"=="D"
+	}
+
+	if `perfect' {
+		// create predicted values = treatval (0 or 1) for kth (OOS) fold
+		qui replace `vhat' = `treatval' if `fid'==`k' & `touse'
+		// standard stacking case
+		// OOS (crossfit) base learner predicted values
+		tokenize `vtilde'
+		forvalues j=1/`nlearners' {
+			qui replace ``j'' = `treatval' if `fid'==`k' & `touse'
+		}
+		if `stdflag' {
+			// in-sample CV base learner predicted values - temp vars, for mata
+			// initialize
+			local st_cv_list
+			forvalues j=1/`nlearners' {
+				tempvar stacking_p_cv`j'
+				qui gen double `stacking_p_cv`j'' = `treatval'
+				local st_cv_list `st_cv_list' `stacking_p_cv`j''
+			}
+			qui gen `tomata' = `fid'!=`k' & `touse'
+			qui gen `fidtouse' = (`k'*`touse')
+			mata: `mmatname' = `mmatname' \ st_data(., "`fid' `fidtouse' `vname' `st_cv_list'", "`tomata'")
+		}
+	}
+	else {
+		
+		`cap' `est_main' if `toest', `est_options' `nostdstackopt' `stdfinalestopt'
+
+		local rc = _rc
+		if `rc'>0 {
+			// estimation failed - all in-sample and OOS predicted values are missings
+			local failed = 1
+			// predicted values = missing values for kth (OOS) fold (though should be missing already)
+			qui replace `vhat' = . if `fid'==`k' & `touse'
+			// OOS (crossfit) base learner predicted values
+			tokenize `vtilde'
+			forvalues j=1/`nlearners' {
+				qui replace ``j'' = . if `fid'==`k' & `touse'
+			}
+			if `stdflag' {
+				// standard stacking case
+				// in-sample CV base learner predicted values - temp vars, for mata
+				// initialize
+				local st_cv_list
+				forvalues j=1/`nlearners' {
+					tempvar stacking_p_cv`j'
+					qui gen double `stacking_p_cv`j'' = .
+					local st_cv_list `st_cv_list' `stacking_p_cv`j''
+				}
+				qui gen `tomata' = `fid'!=`k' & `touse'
+				qui gen `fidtouse' = (`k'*`touse')
+				mata: `mmatname' = `mmatname' \ st_data(., "`fid' `fidtouse' `vname' `st_cv_list'", "`tomata'")
+			}
+		}
+		else {
+			`qui' di as text "N=" as res e(N)
+			local base_est `e(base_est)'
+			local stack_final_est `e(finalest)'
+			// check
+			assert "`e(cmd)'"=="pystacked"
+			assert e(mcount)>1 & e(mcount)<.
+			
+			// *** pystacked complains if data change after estimation and before predict ***
+			// *** so make sure all predict commands are done first ***
+			
+			// always save crossfit base learner predicted values
+			// OOS (crossfit) base learner predicted values
+			qui predict double `stacking_p' if `fid'==`k' & `touse', basexb
+			
+			if `stdflag' {
+				// standard stacking case
+				// get predicted values for kth fold	
+				qui predict `vtype' `vhat_k' if `fid'==`k' & `touse'
+				// in-sample CV base learner predicted values
+				tempvar stacking_p_cv
+				qui predict double `stacking_p_cv', basexb cv
+				// save pystacked weights and MSEs
+				qui pystacked, table(rmspe)		// create rmspe matrix
+				mat `pysw' = e(weights)
+				mat `pysm' = e(rmspe)
+				mat `pysm' = `pysm'[2...,"RMSPE_cv".."RMSPE_cv"]
+				mata: st_replacematrix("`pysm'",st_matrix("`pysm'"):^2)
+			}
+			
+			// OOS (crossfit) base learner predicted values
+			tokenize `vtilde'
+			forvalues j=1/`nlearners' {
+				qui replace ``j'' = `stacking_p'`j' if `fid'==`k' & `touse'
+			}
+			if `stdflag' {
+				// insert previously-created stacked out-of-sample predicted values
+				qui replace `vhat' = `vhat_k' if `fid'==`k' & `touse'
+				// in-sample CV base learner predicted values
+				// accumulated in mata along with corresponding values of dep var
+				qui gen `tomata' = `fid'!=`k' & `touse'
+				qui gen `fidtouse' = (`k'*`touse')
+				fvexpand `stacking_p_cv'*
+				mata: `mmatname' = `mmatname' \ st_data(., "`fid' `fidtouse' `vname' `r(varlist)'", "`tomata'")
+			}
+		}
+	}
+
+	return local base_est	`e(base_est)'
+	return local final_est	`e(finalest)'
+	return local rc			= `rc'
+	return local failed		= `failed'
+	return local perfect	= `perfect'
+	return mat pysw			= `pysw'
+	return mat pysm			= `pysm'
 end
