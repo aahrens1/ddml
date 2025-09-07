@@ -1,5 +1,5 @@
 *! ddml v1.4.4
-*! last edited: 27july2025
+*! last edited: 31july2025
 *! authors: aa/ms
 
 program ddml	// no class - some subcommands are eclass, some are rclass
@@ -59,7 +59,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 						REPlace					///
 						cmdname(name)			///
 						NOIsily					///
-						prefix		 			/// add model name + "_" as prefix
+						PREFIXopt	 			/// add model name + "_" as prefix; "opt" to distinguish from local prefix below
 						*						///
 						]
 		// now parse main args; first element is subcmd
@@ -169,7 +169,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			}
 			// fill by hand
 			mata: `mname'.model			= "`model'"
-			mata: `mname'.prefixflag	= "`prefix'"~=""
+			mata: `mname'.prefixflag	= "`prefixopt'"~=""
 			mata: `mname'.fclustvar		= "`fcluster'"
 			// initialize with default fold var, kfolds, number of resamplings
 			_ddml_sample `if' `in' , mname(`mname') `options'
@@ -260,7 +260,12 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 				tokenize `"`eqn'"'
 				local learner `prefix'_`1'
 			}
-	
+			else {
+				// add prefix if any to learner name
+				mata: st_local("prefixflag",strofreal(`mname'.prefixflag))
+				if `prefixflag'		local learner `mname'_`learner'
+			}
+
 			** vname: use 2nd word of eq (dep var) as the default 
 			if "`vname'"=="" & "`subcmd'"=="dheq" {
 				di as err "vname() required with 'ddml E[D|X]'"
@@ -273,6 +278,9 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 				syntax [anything] [if] [in] [ , * ]
 				local vname : word 2 of `anything'
 			}
+			// unabbreviate if abbreviated
+			unab vname : `vname'
+
 			** check that dep var in eqn isn't already used for some other eqn
 			** also set flag for whether dep var is new
 			mata: st_local("yvar",`mname'.nameY)
@@ -303,7 +311,7 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 					exit 198				
 				}
 			}
-					
+
 			add_eqn_to_model,						///
 								mname(`mname')		///
 								vname(`vname')		///
@@ -480,6 +488,9 @@ program define add_eqn_to_model, rclass
 		mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 	}
 	
+	// eqn has model type
+	mata: `eqn'.model = "`model'"
+	
 	// etype is Y, D, DH or Z
 	if "`subcmd'"=="yeq" {
 		mata: `eqn'.etype = "Y"
@@ -569,6 +580,13 @@ program define add_eqn_to_model, rclass
 		tempname holdname
 		_estimates hold `holdname', nullok
 		`qui' di as text "calling pystacked on full sample with noestimate option..."
+		if "`subcmd'"=="dheq" {
+			// if dh eqn, need to replace placeholder with a variable
+			// so create a tempvar for this
+			tempvar Dname
+			qui gen `Dname'=1
+			local est_main = subinstr("`est_main'","{D}","`Dname'",1)
+		}
 		cap `est_main' , `est_options' noestimate
 		if _rc==0 {
 			`qui' di as text "N=" as res e(N)
@@ -604,11 +622,11 @@ program define add_eqn_to_model, rclass
 			`qui' di as text "number of learners = " as res `mcount'
 		}
 		_estimates unhold `holdname'
-		if `mcount' > 1 {
-			// will be >1 if pystacked is the only learner and #learners>1
+//		if `mcount' > 1 {
+//			// will be >1 if pystacked is the only learner and #learners>1
 			mata: `eqn'.pystackedmulti = `mcount'
 			`qui' di as text "adding pystacked multilearner..."
-		}
+//		}
 	}
 	
 	`qui' di as text "number of ddml learners = " as res `nlearners'

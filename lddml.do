@@ -38,6 +38,7 @@ st_global("r(stata_compiled_date)","`current_date")
 struct eStruct {
 	string scalar					vname			// name of variable to be orthogonalized
 	string scalar					etype			// will be Y, D or Z
+	string scalar					model			// model; partial, iv, late, etc
 	real rowvector					vtlist			// list of orthogonalized (learner) variables
 	string scalar					shortstack		// name of shortstack variable
 	string scalar					poolstack		// name of poolstack variable
@@ -59,6 +60,7 @@ struct eStruct init_eStruct()
 
 	m.vname				= ""
 	m.etype				= ""
+	m.model				= ""
 	m.vtlist			= J(1,0,"")
 	m.shortstack		= ""
 	m.poolstack			= ""
@@ -85,7 +87,9 @@ void clear_equation_results(struct eStruct e)
 
 // ddml model structure
 struct mStruct {
-	string scalar					model			// model; partial, iv, late, etc
+	string scalar					model			// model: partial, iv, fiv, interactive, interactiveiv
+	real scalar						lieflag			// = 1 if LIE enforced in fiv model
+	real scalar						did2x2flag		// = 1 if interactive mode is diff-in-diff 2x2
 	real scalar						nreps			// number of resamplings
 	real scalar						ncombos			// number of possible specifications (=0 if not yet estimated)
 	real scalar						kfolds			// number of crossfitting folds
@@ -115,6 +119,8 @@ struct mStruct init_mStruct()
 	struct mStruct scalar	m
 	
 	m.model				= ""
+	m.lieflag			= 0
+	m.did2x2flag		= 0
 	m.nreps				= 0
 	m.ncombos			= 0
 	m.kfolds			= 0

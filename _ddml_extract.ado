@@ -1,5 +1,5 @@
 *! ddml v1.4.4
-*! last edited: 21july2025
+*! last edited: 7sept2025
 *! authors: aa/ms
 
 program define _ddml_extract, rclass
@@ -370,7 +370,7 @@ function poolstack_extract(									///
 	nlearners=eqn.pystackedmulti
 
 	rstripe = vtlist'
-	if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+	if ((eqn.ateflag==0) & (eqn.etype~="DH")) {
 		// base case - plm, plm IV, ATE D, LATE Z, LIE Y
 		// initialize
 		cstripe = "learner" \ "mean_weight"
@@ -404,6 +404,8 @@ function poolstack_extract(									///
 		rstripe = vtlist'
 		rstripe = (J(rows(rstripe),1,""), rstripe)
 		rn = vnkey+"_learners"
+		// truncate if too long
+		rn = substr(rn,1,32)
 		st_matrix("r("+rn+")",(1::rows(vtlist')))
 		st_matrixcolstripe("r("+rn+")",cstripe)
 		st_matrixrowstripe("r("+rn+")",rstripe)
@@ -413,7 +415,7 @@ function poolstack_extract(									///
 		// LIE means D and Dhat so we need a column to indicate h=0/1
 		// ATE/LATE means we need a column for D or Z = 0/1
 		// initialize
-		if (eqn.lieflag==1) {
+		if (eqn.etype=="DH") {
 			cstripe = ("learner" \ "h=0/1" \ "mean_weight")
 		}
 		else if (d.model=="interactive") {
@@ -429,7 +431,7 @@ function poolstack_extract(									///
 		// final estimator
 		final_est = return_learner_item(eqn,vnkey,"ps_final_est")
 		for (m=1;m<=nreps;m++) {
-			if (eqn.lieflag==1) {
+			if (eqn.etype=="DH") {
 				// D
 				rrep0 = return_result_item(eqn,vnkey,"ps_weights",strofreal(m))
 				// Dhat
@@ -470,7 +472,7 @@ function poolstack_extract(									///
 		rmat = rmat[.,2..cols(rmat)]
 		cstripe = (J(rows(cstripe),1,""), cstripe)
 		rstripe = J(0,1,"")
-		if (eqn.lieflag==1) {
+		if (eqn.etype=="DH") {
 			rstripe = (vtlist' \ (vtlist' :+ "_h"))
 		}
 		else {
@@ -510,7 +512,7 @@ function shortstack_extract(								///
 	}
 
 	rstripe = vtlist'
-	if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+	if ((eqn.ateflag==0) & (eqn.etype~="DH")) {
 		// base case - plm, plm IV, ATE D, LATE Z, LIE Y
 		// initialize
 		cstripe = "learner" \ "mean_weight"
@@ -544,7 +546,7 @@ function shortstack_extract(								///
 		// LIE means D and Dhat so we need a column to indicate h=0/1
 		// ATE/LATE means we need a column for D or Z = 0/1
 		// initialize
-		if (eqn.lieflag==1) {
+		if (eqn.etype=="DH") {
 			cstripe = ("learner" \ "h=0/1" \ "mean_weight")
 		}
 		else if (d.model=="interactive") {
@@ -560,7 +562,7 @@ function shortstack_extract(								///
 		// final estimator
 		final_est = return_learner_item(eqn,vnkey,"ss_final_est")
 		for (m=1;m<=nreps;m++) {
-			if (eqn.lieflag==1) {
+			if (eqn.etype=="DH") {
 				// D
 				rrep0 = return_result_item(eqn,vnkey,"ss_weights",strofreal(m))
 				// Dhat
@@ -601,7 +603,7 @@ function shortstack_extract(								///
 		rmat = rmat[.,2..cols(rmat)]
 		cstripe = (J(rows(cstripe),1,""), cstripe)
 		rstripe = J(0,1,"")
-		if (eqn.lieflag==1) {
+		if (eqn.etype=="DH") {
 			rstripe = (vtlist' \ (vtlist' :+ "_h"))
 		}
 		else {
@@ -621,6 +623,8 @@ function shortstack_extract(								///
 	rstripe = vtlist'
 	rstripe = (J(rows(rstripe),1,""), rstripe)
 	rn = vnkey+"_learners"
+	// truncate if too long
+	rn = substr(rn,1,32)
 	st_matrix("r("+rn+")",(1::rows(vtlist')))
 	st_matrixcolstripe("r("+rn+")",cstripe)
 	st_matrixrowstripe("r("+rn+")",rstripe)
@@ -664,13 +668,12 @@ function pystacked_extract(									///
 	vkeys = vkeys[.,(1::3)]
 	
 	for (j=1;j<=cols(eqn.vtlist);j++) {
-
 		// initialize
 		vkeys_i = select(vkeys,vkeys[.,1]:==(eqn.vtlist)[j])
 		swflag = 0
 		// rmat will have all weights/MSEs for all learners for vt name j
 		// if ATE/LATE, an additional column is needed, and similarly for LIE
-		if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+		if ((eqn.ateflag==0) & (eqn.etype~="DH")) {
 			rmat_all = J(0,2+d.kfolds,0)
 		}
 		else {
@@ -706,16 +709,18 @@ function pystacked_extract(									///
 				if ((hflag==0) | (hflag==.)) {
 					base_est = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_base_est")))'
 					rstripe = rstripe \ base_est
-					final_est = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_final_est")))'
 				}
 				else {
 					base_est_h = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_base_est_h")))'
 					rstripe = rstripe \ base_est_h
-					final_est = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_final_est_h")))'
+				}
+				final_est = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_final_est")))'
+				if (eqn.etype=="DH") {
+					final_est_h = tokens((eqn.lrnAA).get((vkeys_i[k,1],"stack_final_est_h")))'
 				}
 				if (rmat~=J(0,0,.)) {
 					// col 1 is learner number, col 2 is treatment/hflag (if needed), col 3 is rep number (in AA as string)
-					if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+					if ((eqn.ateflag==0) & (eqn.etype~="DH")) {
 						rmat_k = ( (1::rows(rmat)) , J(rows(rmat),1,strtoreal(vkeys_i[k,3])) , rmat)
 					}
 					else if (eqn.ateflag==1) {
@@ -738,10 +743,10 @@ function pystacked_extract(									///
 			nlearners = rows(base_est)
 			if (detailflag) {
 				// rmat_all has full set of weights for all learners
-				if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+				if ((eqn.ateflag==0) & (eqn.etype~="DH")) {
 					cstripe = ("learner" \ "resample")
 				}
-				else if (eqn.lieflag==1) {
+				else if (eqn.etype=="DH") {
 					cstripe = ("learner" \ "h" \ "resample")
 				}
 				else if (d.model=="interactive") {
@@ -765,7 +770,7 @@ function pystacked_extract(									///
 			}
 
 			// learner means across resamples/folds
-			if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+			if ((eqn.ateflag==0) & (eqn.etype~="DH")) {
 				// one mean per learner
 				rmean_all = J(nlearners,(2+nreps),.)
 				for (ll=1;ll<=nlearners;ll++) {
@@ -816,7 +821,7 @@ function pystacked_extract(									///
 					rlearner_1 = select(rmat1,rmat1[.,1]:==ll)
 
 					rlearner_1 = rlearner_1[.,4..cols(rlearner_1)]'
-					// no weights shouldn't happen if Z==1 but include to catch errors
+					// weights shouldn't happen if Z==1 but include to catch errors
 					if (cols(rlearner_1)==0) {
 						rlearner_1 = J(rows(rlearner_1),nreps,.)
 					}
@@ -826,7 +831,7 @@ function pystacked_extract(									///
 				rmean_all_1 = mean(rmean_all_1')', rmean_all_1
 				rmean_all = rmean_all_0 \ rmean_all_1
 				rmean_all = pre_rmean_all, rmean_all
-				if (eqn.lieflag==1) {
+				if (eqn.etype=="DH") {
 					cstripe = "learner" \ "h=0/1" \ ("mean_"+kstring)
 				}
 				else if (d.model=="interactive") {
@@ -840,7 +845,13 @@ function pystacked_extract(									///
 				}
 				cstripe = (J(rows(cstripe),1,""), cstripe)
 				rstripe = (J(nlearners,1,""), base_est)
-				rstripe = rstripe \ rstripe
+				if (eqn.etype=="DH") {
+					rstripe_h = (J(nlearners,1,""), base_est_h)
+					rstripe = rstripe \ rstripe_h
+				}
+				else {
+					rstripe = rstripe \ rstripe
+				}
 				rn = rname+kabbrev+"_mn"
 				st_matrix("r("+rn+")",rmean_all)
 				st_matrixcolstripe("r("+rn+")",cstripe)
@@ -854,6 +865,8 @@ function pystacked_extract(									///
 			cstripe = ("" , "learner")
 			rstripe = (J(nlearners,1,""), base_est)
 			rn = rname+"_learners"
+			// truncate if too long
+			rn = substr(rn,1,32)
 			st_matrix("r("+rn+")",(1::nlearners))
 			st_matrixcolstripe("r("+rn+")",cstripe)
 			st_matrixrowstripe("r("+rn+")",rstripe)
@@ -866,10 +879,10 @@ function pystacked_extract(									///
 					svec = rmat_all[.,1] :== ll
 					rmat_ll = select(rmat_all,svec)
 					rmat_ll = rmat_ll[.,(2::cols(rmat_ll))]
-					if ((eqn.ateflag==0) & (eqn.lieflag==0)) {
+					if ((eqn.ateflag==0) & (eqn.etype~="DH")) {
 						cstripe = ("resample")
 					}
-					else if (eqn.lieflag==1) {
+					else if (eqn.etype=="DH") {
 						cstripe = ("h=0/1" \ "resample")
 					}
 					else if (d.model=="interactive") {
