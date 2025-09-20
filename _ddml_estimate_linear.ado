@@ -1,15 +1,15 @@
 *! ddml v1.4.4
-*! last edited: 27july2025
+*! last edited: 7sept2025
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
 	version 16
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
-								y(varname)			/// for estimating by hand...
+								y(varlist)			/// for estimating by hand...
 								d(varlist)			/// 
 								z(varlist)			///
-								dh(varname)			///
+								dh(varlist)			///
 								stdstack			/// re-standard-stack
 								shortstack			/// re-short-stack
 								poolstack			/// re-pool-stack
@@ -379,22 +379,30 @@ program _ddml_estimate_single, eclass sortpreserve
 	version 16
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
-								y(varname)			/// for estimating by hand...
+								y(varlist)			///
 								d(varlist)			/// 
 								z(varlist)			///
-								dh(varname)			///
+								dh(varlist)			///
 								ROBust				///
 								CLUster(varname)	///
 								vce(string)			///
 								NOConstant			///
+								mean				///
 								* ]
 
 	mata: st_local("model",`mname'.model)
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	mata: st_local("lieflag", strofreal(`mname'.lieflag))	// lieflag already 0/1
+
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
+	
+	local numYreps  : word count `y'
+	local numDreps  : word count `d'
+	local numZreps  : word count `z'
+	local numDHreps : word count `dh'
 
 	// checks
 	if "`y'"=="" {
@@ -405,20 +413,27 @@ program _ddml_estimate_single, eclass sortpreserve
 		di as err "option d(.) missing"
 		exit 198
 	}
+	local numDexpected = `numYreps' * `numeqnD'
+	if `numDreps'~=`numDexpected' {
+		di as err "error - number of Y and D variables must match: #Y vars = #D eqns x #D vars"
+		di as err "        but #Y vars = `numYreps', #D eqns = `numeqnD', #D vars = `numDreps'"
+		exit 198
+	}
 	if "`model'"=="partial" {
 		if "`z'"~="" {
 			di as err "z(.) should be empty for model=partial"
-			exit 198
-		}
-		local numD : word count `d'
-		if `numD'~=`numeqnD' {
-			di as err "error - model has `numeqnD' D variables but `numD' specified"
 			exit 198
 		}
 	}
 	else if "`model'"=="iv" {
 		if "`z'"=="" {
 			di as err "option z(.) missing"
+			exit 198
+		}
+		local numZexpected = `numYreps' * `numeqnZ'
+		if `numZreps'~=`numZexpected' {
+			di as err "error - number of Y and Z variables must match: #Y vars = #Z eqns x #Z vars"
+			di as err "        but #Y vars = `numYreps', #Z eqns = `numeqnZ', #Z vars = `numZreps'"
 			exit 198
 		}
 	}
@@ -431,96 +446,324 @@ program _ddml_estimate_single, eclass sortpreserve
 			di as err "option dh(.) missing"
 			exit 198
 		}
+		if `numDreps'~=`numDHreps'{
+			di as err "error - number of D variables (`numDreps') must match number of DH variables (`numDHreps)"
+			exit 198
+		}
 	}
 	else {
 		di as err "error - unknown model `model'"
 		exit 198
 	}
 
-	// residualization
-	tempvar yt
-	qui gen double `yt' = `nameY' - `y'
-	if "`model'"~="fiv" {
-		// applies to plm and iv models
-		forvalues i=1/`numeqnD' {
-			tempvar d_resid
-			local dname_i : word `i' of `nameD'
-			local dtilde_i : word `i' of `d'
-			qui gen double `d_resid' = `dname_i' - `dtilde_i'
-			local d_resid_list `d_resid_list' `d_resid'
-		}
-		// if plm model, won't enter
-		forvalues i=1/`numeqnZ' {
-			tempvar z_resid
-			local zname_i : word `i' of `nameZ'
-			local ztilde_i : word `i' of `z'
-			qui gen double `z_resid' = `zname_i' - `ztilde_i'
-			local z_resid_list `z_resid_list' `z_resid'
-		}
-	}
-	else {
-		// create new D and Z
-		tempvar d_resid_list z_resid_list
-		qui gen double `d_resid_list'	= `nameD' - `dh'
-		qui gen double `z_resid_list'	= `d'     - `dh'
-
-	}
-
-	if "`robust'"!=""	local vce robust
-	if "`cluster'"~=""	local vce cluster `cluster'
 	tempname b V
 	tempvar esample
-	marksample touse
-	if "`model'"=="partial" {
-		qui reg `yt' `d_resid_list' if `touse', vce(`vce') `noconstant'
+	if "`robust'"!=""	local vce robust
+	if "`cluster'"~=""	local vce cluster `cluster'
+	if `lieflag' {
+		// for display - local will be empty if LIE not enforced
+		local liehat ^
 	}
-	else {
-		qui reg `yt' `d_resid_list' (`z_resid_list') if `touse', vce(`vce') `noconstant'
-	}
-
-	mat `b'=e(b)
-	mat `V'=e(V)
-	local cnames			`nameD'
-	if "`noconstant'"=="" {
-		local cnames		`cnames' _cons
-	}
-	mat colnames `b' = `cnames'
-	mat colnames `V' = `cnames'
-	mat rownames `V' = `cnames'
-	local N=e(N)
-	local vcetype			`e(vcetype)'
-	local clustvar			`e(clustvar)'
-	qui gen byte `esample'=e(sample)
-	ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
-	ereturn local cmd		ddml
-	ereturn local model		`model'
-	ereturn local mname		`mname'
-	ereturn local dh		`dh'
-	ereturn local z			`z'
-	ereturn local d			`d'
-	ereturn local y			`y'
-	ereturn local vce		`vce'
-	ereturn local vcetype	`vcetype'
 	
-	di
-	di as text "y-E[y|X]" _col(11) "= " as res "`e(y)'" _c
-	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
-	if "`e(model)'"~="fiv" {
-		di as text "D-E[D|X]" _col(11)  "= " as res "`e(d)'"
+	if `numYreps'==1 {
+	
+		// residualization
+		tempvar y_resid
+		qui gen double `y_resid' = `nameY' - `y'
+		if "`model'"~="fiv" {
+			// applies to plm and iv models
+			forvalues i=1/`numeqnD' {
+				tempvar d_resid
+				local dname_i : word `i' of `nameD'
+				local dtilde_i : word `i' of `d'
+				qui gen double `d_resid' = `dname_i' - `dtilde_i'
+				local d_resid_list `d_resid_list' `d_resid'
+			}
+			// if plm model, won't enter
+			forvalues i=1/`numeqnZ' {
+				tempvar z_resid
+				local zname_i : word `i' of `nameZ'
+				local ztilde_i : word `i' of `z'
+				qui gen double `z_resid' = `zname_i' - `ztilde_i'
+				local z_resid_list `z_resid_list' `z_resid'
+			}
+		}
+		else {
+			// initialize lists of endog and opt IV
+			local d_resid_list
+			local z_resid_list
+			forvalues i=1/`numeqnD' {
+				tempvar d_resid z_resid
+				local d_i   : word `i' of `nameD'
+				local d_m_i : word `i' of `d'
+				local z_m_i : word `i' of `dh'
+				qui gen double `d_resid' = `d_i' - `z_m_i'
+				qui gen double `z_resid' = `d_m_i' - `z_m_i'
+				local d_resid_list `d_resid_list' `d_resid'
+				local z_resid_list `z_resid_list' `z_resid'
+			}
+		}
+
+		marksample touse
+		if "`model'"=="partial" {
+			qui reg `y_resid' `d_resid_list' if `touse', vce(`vce') `noconstant'
+		}
+		else {
+			qui reg `y_resid' `d_resid_list' (`z_resid_list') if `touse', vce(`vce') `noconstant'
+		}
+	
+		mat `b'=e(b)
+		mat `V'=e(V)
+		local cnames			`nameD'
+		if "`noconstant'"=="" {
+			local cnames		`cnames' _cons
+		}
+		mat colnames `b' = `cnames'
+		mat colnames `V' = `cnames'
+		mat rownames `V' = `cnames'
+		local N=e(N)
+		local vcetype			`e(vcetype)'
+		local clustvar			`e(clustvar)'
+		qui gen byte `esample'=e(sample)
+		ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
+		ereturn local cmd		ddml
+		ereturn local model		`model'
+		ereturn local mname		`mname'
+		ereturn local dh		`dh'
+		ereturn local z			`z'
+		ereturn local d			`d'
+		ereturn local y			`y'
+		ereturn local vce		`vce'
+		ereturn local vcetype	`vcetype'
+		if "`e(model)'" == "fiv" {
+			ereturn scalar enforce_lie=`lieflag'
+		}
+		
+	
+		di
+		di as text "y-E[y|X]" _col(11) "= " as res "y-`e(y)'" _c
+		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
+		if "`e(model)'"~="fiv" {
+			di as text "D-E[D|X]" _col(11)  "= " as res "D-`e(d)'"
+		}
+		else {
+			di as text "E[D|X,Z]" _col(11)  "= " as res "`e(d)'"
+		}
+		if "`e(model)'" == "iv" {
+			di as text "Z-E[Z|X]" _col(11) "= " as res "Z-`e(z)'"
+		}
+		else if "`e(model)'" == "fiv" {
+			di as text "E[D`liehat'|X]" _col(11) "= " as res "`e(dh)'"
+		}
+		if "`e(model)'" == "fiv" {
+			di as text "Orthogonalized D = D - E[D`liehat'|X]; optimal IV = E[D|X,Z] - E[D`liehat'|X]."
+		}
+		ereturn display
 	}
 	else {
-		di as text "E[D|X,Z]" _col(11)  "= " as res "`e(d)'"
+		
+		tempvar y_resid
+		qui gen double `y_resid' = .
+		tempname bvec b_i Vall Vagg V_i sbvec bagg Vvec sVvec
+		
+		local isodd = mod(`numYreps',2)
+		local medrow = ceil(`numYreps'/2)
+		local N = 0
+		// will be set to 1 if ob used in any estimate
+		qui gen byte `esample'=0
+		
+		forvalues m=1/`numYreps' {
+			// initialize
+			local d_resid_list
+			local z_resid_list
+			local dh_resid_list
+			// define
+			local ytilde_i : word `m' of `y'
+			qui replace `y_resid' = `nameY' - `ytilde_i'
+
+			if "`model'"~="fiv" {
+				// applies to plm and iv models
+				forvalues i=1/`numeqnD' {
+					tempvar d_resid
+					local dname_i : word `i' of `nameD'
+					local j = (`numYreps'*(`i'-1))+`m'
+					local dtilde_i : word `j' of `d'
+					qui gen double `d_resid' = `dname_i' - `dtilde_i'
+					local d_resid_list `d_resid_list' `d_resid'
+				}
+				// if plm model, won't enter
+				forvalues i=1/`numeqnZ' {
+					tempvar z_resid
+					local zname_i : word `i' of `nameZ'
+					local j = (`numYreps'*(`i'-1))+`m'
+					local ztilde_i : word `j' of `z'
+					qui gen double `z_resid' = `zname_i' - `ztilde_i'
+					local z_resid_list `z_resid_list' `z_resid'
+				}
+			}
+
+			if "`model'"=="partial" {
+				qui regress `y_resid' `d_resid_list', vce(`vce') `noconstant'
+			}
+			else if "`model'"=="iv" | "`model'"=="fiv" {
+				qui regress `y_resid' `d_resid_list' (`z_resid_list'), vce(`vce') `noconstant'
+			}
+			else {
+				di as err "internal ddml error"
+				exit 198
+			}
+			mat `b_i' = e(b)
+			mat `V_i' = e(V)
+			local N = `N' + e(N)
+			// set =1 if used in any estimate
+			qui replace `esample'=1 if e(sample)
+			if "`noconstant'"=="" {
+				// don't aggregate the constant in the last row/col
+				mat `b_i' = `b_i'[1...,1..`numeqnD']		
+				mat `V_i' = `V_i'[1...,1..`numeqnD']		
+				mat `V_i' = `V_i'[1..`numeqnD',1...]		
+			}
+			mat `bvec' = nullmat(`bvec') \ `b_i'
+			mat `Vall' = nullmat(`Vall') \ `V_i'
+		}
+
+		mata: `bvec' = st_matrix("`bvec'")
+		mata: `Vall' = st_matrix("`Vall'")
+		local N = `N' / `numYreps'
+		mata: `bagg' = J(1,`numeqnD',0)
+		mata: `Vagg' = J(`numeqnD',`numeqnD',0)
+		mata: `Vvec' = J(`numYreps',1,0)
+		if "`mean'"~="" {
+			mata: `bagg'[.,] = mean(`bvec')
+			mata: st_matrix("`bagg'", `bagg')
+		}
+		else {
+			forvalues k=1/`numeqnD' {
+				mata: `sbvec' = sort(`bvec',`k')
+				if `isodd' {
+					mata: `bagg'[1,`k'] = `sbvec'[`medrow',`k']
+				}
+				else {
+					mata: `bagg'[1,`k'] = (`sbvec'[`medrow',`k'] + `sbvec'[`medrow'+1,`k'])/2
+				}
+			}	
+			mata: st_matrix("`bagg'", `bagg')
+		}
+		if "`mean'"~="" {
+			// harmonic mean
+			// inefficient - does off-diagonals twice
+			forvalues m=1/`numYreps' {
+				mata: `V_i' = `Vall'[((`m'-1)*`numeqnD'+1)::(`m'*`numeqnD'),(1..`numeqnD')]
+				forvalues j=1/`numeqnD' {
+					forvalues k=1/`numeqnD' {
+						// abs(.) needed?
+						mata: `V_i'[`j',`k'] = `V_i'[`j',`k'] + abs((`bvec'[`m',`j'] - `bagg'[1,`j'])*(`bvec'[`m',`k'] - `bagg'[1,`k']))
+					}
+				}
+				mata: `Vagg' = `Vagg' + 1:/`V_i'
+			}
+			mata: `Vagg' = `numYreps' :/ `Vagg'
+			mata: st_matrix("`Vagg'",`Vagg')
+		}
+		else {
+			// median VCV
+			// inefficient - does off-diagonals twice
+			forvalues j=1/`numeqnD' {
+				forvalues k=1/`numeqnD' {
+					forvalues m=1/`numYreps' {
+						mata: `V_i' = `Vall'[((`m'-1)*`numeqnD'+1)::(`m'*`numeqnD'),(1..`numeqnD')]
+						mata: `Vvec'[`m'] = `V_i'[`j',`k']
+					}
+					// adjustment as per
+					// https://docs.doubleml.org/stable/guide/resampling.html#repeated-cross-fitting-with-k-folds-and-m-repetition
+					// (generalized to multiple D variables)
+					mata: `Vvec' = `Vvec' + abs((`bvec'[.,`j'] :- `bagg'[1,`j']):*(`bvec'[.,`k'] :- `bagg'[1,`k']))
+					mata: `sVvec' = sort(`Vvec',1)
+					if `isodd' {
+						mata: `Vagg'[`j',`k'] = `sVvec'[`medrow',1]
+					}
+					else {
+						mata: `Vagg'[`j',`k'] = (`sVvec'[`medrow',1] + `sVvec'[`medrow'+1,1])/2
+					}
+				}
+			}
+			mata: st_matrix("`Vagg'",`Vagg')
+		}
+		
+		// clean up Mata
+		cap mata: mata drop `bvec'
+		cap mata: mata drop `b_i'
+		cap mata: mata drop `Vall'
+		cap mata: mata drop `Vagg'
+		cap mata: mata drop `V_i'
+		cap mata: mata drop `sbvec'
+		cap mata: mata drop `bagg'
+		cap mata: mata drop `Vvec'
+		cap mata: mata drop `sVvec'
+
+		mat `b'=`bagg'
+		mat `V'=`Vagg'
+		local cnames `nameD'
+		mat colnames `b' = `cnames'
+		mat colnames `V' = `cnames'
+		mat rownames `V' = `cnames'
+		local vcetype			`e(vcetype)'
+		local clustvar			`e(clustvar)'
+		ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
+		ereturn local cmd		ddml
+		ereturn local model		`model'
+		ereturn local mname		`mname'
+		ereturn local dh		`dh'
+		ereturn local z			`z'
+		ereturn local d			`d'
+		ereturn local y			`y'
+		if "`mean'"~="" {
+			ereturn local dh_mn		`dh'
+			ereturn local z_mn		`z'
+			ereturn local d_mn		`d'
+			ereturn local y_mn		`y'
+		}
+		else {
+			ereturn local dh_md		`dh'
+			ereturn local z_md		`z'
+			ereturn local d_md		`d'
+			ereturn local y_md		`y'
+		}
+		ereturn local vce		`vce'
+		ereturn local vcetype	`vcetype'
+		if "`e(model)'" == "fiv" {
+			ereturn scalar enforce_lie=`lieflag'
+		}
+				
+		di
+		if length("`y'")>33		local y_disp  = substr("`y'",1,30)+"..."
+		else					local y_disp  = "`y'"
+		if length("`d'")>33		local d_disp  = substr("`d'",1,30)+"..."
+		else					local d_disp  = "`d'"
+		if length("`dh'")>33	local dh_disp = substr("`dh'",1,30)+"..."
+		else					local dh_disp = "`dh'"
+		if length("`z'")>33		local z_disp  = substr("`z'",1,30)+"..."
+		else					local z_disp  = "`z'"
+		di as text "y-E[y|X]" _col(11) "= " as res "y-`y_disp'" _c
+		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
+		if "`e(model)'"~="fiv" {
+			di as text "D-E[D|X]" _col(11)  "= " as res "D-`d_disp'"
+		}
+		else {
+			di as text "E[D|X,Z]" _col(11)  "= " as res "`d_disp'"
+		}
+		if "`e(model)'" == "iv" {
+			di as text "Z-E[Z|X]" _col(11) "= " as res "Z-`z_disp'"
+		}
+		else if "`e(model)'" == "fiv" {
+			di as text "E[D`liehat'|X]" _col(11) "= " as res "`dh_disp'"
+		}
+		if "`e(model)'" == "fiv" {
+			di as text "Orthogonalized D = D - E[D`liehat'|X]; optimal IV = E[D|X,Z] - E[D`liehat'|X]."
+		}
+		ereturn display
+
 	}
-	if "`e(model)'" == "iv" {
-		di as text "Z-E[Z|X]" _col(11) "= " as res "`e(z)'"
-	}
-	else if "`e(model)'" == "fiv" {
-		di as text "E[D^|X]" _col(11) "= " as res "`e(dh)'"
-	}
-	if "`e(model)'" == "fiv" {
-		di as text "Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X]."
-	}
-	ereturn display
 
 end
 
@@ -562,6 +805,8 @@ program _ddml_estimate_main
 	local tableflag = "`notable'"==""
 	// request estimation/reporting of all combinations
 	local doallcombos = "`allcombos'"~=""
+	// no spec specified
+	local nospecflag = "`spec'"==""
 	// remaining macro flags
 	mata: st_local("nreps",strofreal(`mname'.nreps))
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
@@ -629,14 +874,14 @@ program _ddml_estimate_main
 	local ivflag	= "`model'"=="iv"
 	local fivflag	= "`model'"=="fiv"
 	local allpystackedmulti = 1
-	foreach vname in `nameY' `nameD' `nameZ' {
+	foreach vname in /* `nameY' */ `nameD' `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
 			local allpystackedmulti = `allpystackedmulti' & `pystackedmulti'
 	}
 
 	// reset stdflag (standard stacking) and psflag (pooled stacking)
-	// if not all eqns are pystacked multi-learners
+	// if not all D and Z eqns are pystacked multi-learners
 	// nb: stdflag may also be 0 if pystacked is used with voting to get short-stacked only
 	if `allpystackedmulti'==0 {
 		local stdflag	=0
@@ -729,6 +974,7 @@ program _ddml_estimate_main
 			}
 		}
 	}
+
 	if `psflag' {
 		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 		mata: st_local("poolstack", `eqn'.poolstack)
@@ -756,7 +1002,7 @@ program _ddml_estimate_main
 	
 	// multiple specs
 	// text locals control messages and lookups
-	if `replayflag' {
+	if `replayflag' & `nospecflag'==0 {
 		local spectext	`spec'
 	}
 	else if `poss_combos'>1 {
@@ -856,7 +1102,7 @@ program _ddml_estimate_main
 						title(`title')
 			}
 		}
-		
+	
 		// have looped over reps to get each optimal model and shortstack per rep
 		// now aggregate over reps to get mean/median
 		// need to pass info about whether a constant was estimated; it won't be stored with med/mn results
@@ -1712,11 +1958,21 @@ program define estimate_and_store, eclass
 			local z_resid_list `z_resid_list' `z_resid'
 		}
 	}
-	// D and Z, fiv model (nb: awkward naming)
+	// D and Z, fiv model (nb: awkward naming, e.g. not really "z_resid")
 	if `fivflag' {
-		tempvar d_resid_list z_resid_list
-		qui gen double `d_resid_list' = `dnames' - `z_m'
-		qui gen double `z_resid_list' = `d_m' - `z_m'
+		// initialize lists of endog and opt IV
+		local d_resid_list
+		local z_resid_list
+		forvalues i=1/`numeqnD' {
+			tempvar d_resid z_resid
+			local d_i   : word `i' of `dnames'
+			local d_m_i : word `i' of `d_m'
+			local z_m_i : word `i' of `z_m'
+			qui gen double `d_resid' = `d_i' - `z_m_i'
+			qui gen double `z_resid' = `d_m_i' - `z_m_i'
+			local d_resid_list `d_resid_list' `d_resid'
+			local z_resid_list `z_resid_list' `z_resid'
+		}
 	}
 	// estimate
 	if ~`ivflag' & ~`fivflag' {
@@ -1724,7 +1980,7 @@ program define estimate_and_store, eclass
 	}
 	else {
 		// old-style regress syntax: put IVs in parentheses
-		 qui reg `y_resid' `d_resid_list' (`z_resid_list') if `touse', vce(`vce') `noconstant' `options'
+		qui reg `y_resid' `d_resid_list' (`z_resid_list') if `touse', vce(`vce') `noconstant' `options'
 	}
 	tempname b V
 	mat `b' = e(b)
@@ -1784,7 +2040,9 @@ program define estimate_and_store, eclass
 	mata: `A'.put(("`y'_mse_folds","matrix"),return_result_item(`eqn',"`y'","MSE_folds","`rep'"))
 	// pystacked results
 	if "`spec'"=="st" {
-		mata: `A'.put(("`y'_stack_final_est","local"), return_learner_item(`eqn',"`y'","stack_final_est"))
+		// y may not be stacked
+		cap mata: `A'.put(("`y'_stack_final_est","local"), return_learner_item(`eqn',"`y'","stack_final_est"))
+		if "`y'_stack_final_est"==""	local `y'_stack_final_est "n.a."
 	}
 	// ss results
 	if "`spec'"=="ss" {
@@ -2173,6 +2431,7 @@ program define replay_estimate, eclass
 	mata: st_local("model",`mname'.model)
 	local ivflag	= "`model'"=="iv"
 	local fivflag	= "`model'"=="fiv"
+	mata: st_local("lieflag", strofreal(`mname'.lieflag))	// lieflag already 0/1
 
 	// replay
 	tempname B keys isscalar islocal ismatrix
@@ -2199,6 +2458,10 @@ program define replay_estimate, eclass
 		// local will be empty if no constant
 		local consname "_cons"
 	}
+	if `lieflag' {
+		// local will be empty if LIE not enforced
+		local liehat ^
+	}
 	
 	matrix rownames `b' = `depvar'
 	matrix colnames `b' = `dnames' `consname'
@@ -2220,6 +2483,9 @@ program define replay_estimate, eclass
 	ereturn local rep `rep'
 	ereturn local spec `spec'
 	ereturn local mname `mname'
+	if `fivflag' {
+		ereturn scalar enforce_lie=`lieflag'
+	}
 	
 	// extract and post scalars, locals, matrices
 	forvalues i=1/`nentries' {
@@ -2263,8 +2529,17 @@ program define replay_estimate, eclass
 		di as text "E[D|X,Z]" _col(11) "= " _c
 	}
 	local numeqnD : word count `e(d_m)'
-	if `numeqnD'==1 {
+	if `numeqnD'==1 & "`e(model)'"~="fiv" {
+		di as res "D-`e(d_m)' " _c
+	}
+	else if `numeqnD'==1 {
 		di as res "`e(d_m)' " _c
+	}
+	else if "`e(model)'"~="fiv" {
+		forvalues i=1/`numeqnD' {
+			local Dtilde : word `i' of `e(d_m)' {
+			di as res "D-`Dtilde' " _c
+		}
 	}
 	else {
 		forvalues i=1/`numeqnD' {
@@ -2288,8 +2563,8 @@ program define replay_estimate, eclass
 		di
 	}
 	if "`e(model)'" == "fiv" {
-		di as text "E[D^|X]" _col(11) "= " as res "`e(dh_m)'"
-		di as text "Orthogonalized D = D - E[D^|X]; optimal IV = E[D|X,Z] - E[D^|X]."
+		di as text "E[D`liehat'|X]" _col(11) "= " as res "`e(dh_m)'"
+		di as text "Orthogonalized D = D - E[D`liehat'|X]; optimal IV = E[D|X,Z] - E[D`liehat'|X]."
 	}
 	ereturn display
 	

@@ -1,17 +1,17 @@
 *! ddml v1.4.4
-*! last edited: 30aug2024
+*! last edited: 20sept2025
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
 	version 16
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
-								y0(varname)			/// for estimating by hand...
-								y1(varname)			/// 
-								d(varname)			/// 
-								d0(varname)			/// 
-								d1(varname)			/// 
-								z(varname)			///
+								y0(varlist)			/// for estimating by hand...
+								y1(varlist)			/// 
+								d(varlist)			/// 
+								d0(varlist)			/// 
+								d1(varlist)			/// 
+								z(varlist)			///
 								stdstack			/// re-standard-stack
 								shortstack			/// re-short-stack
 								poolstack			/// re-pool-stack
@@ -613,12 +613,12 @@ program _ddml_estimate_single, eclass sortpreserve
 	version 16
 	syntax namelist(name=mname) [if] [in] ,			/// 
 								[					///
-								y0(varname)			/// for estimating by hand...
-								y1(varname)			/// 
-								d(varname)			/// 
-								d0(varname)			/// 
-								d1(varname)			/// 
-								z(varname)			///
+								y0(varlist)			/// for estimating by hand...
+								y1(varlist)			/// 
+								d(varlist)			/// 
+								d0(varlist)			/// 
+								d1(varlist)			/// 
+								z(varlist)			///
 								ATET 				///
 								ATEU				///
 								foldvar(varname)	/// needed for ATET and ATEU
@@ -626,16 +626,29 @@ program _ddml_estimate_single, eclass sortpreserve
 								CLUster(varname)	///
 								vce(string)			///
 								trim(real 0.01)		///
+								mean				/// default is empty = median
 								* ]
 
 	mata: st_local("model",`mname'.model)
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	
+	local numY0reps  : word count `y0'
+	local numY1reps  : word count `y1'
+	local numDreps   : word count `d'
+	local numD0reps  : word count `d0'
+	local numD1reps  : word count `d1'
+	local numZreps  : word count `z'
 
 	// checks
 	if "`y0'"=="" | "`y1'"=="" {
 		di as err "options y0(.) and y1(.) required"
+		exit 198
+	}
+	if `numY0reps'~=`numY1reps' {
+		di as err "error - number of Y0 and Y1 variables must match"
+		di as err "        #Y0 vars = `numY0reps', #Y1 vars = `numY1reps'"
 		exit 198
 	}
 	if "`model'"=="interactive" {
@@ -651,6 +664,11 @@ program _ddml_estimate_single, eclass sortpreserve
 			di as err "option foldvar(varname) required for ATET or ATEU"
 			exit 198
 		}
+		if `numDreps'~=`numY0reps' {
+			di as err "error - number of Y and D variables must match"
+			di as err "        #Y vars = `numY0reps', #D vars = `numDreps'"
+			exit 198
+		}
 	}
 	else if "`model'"=="interactiveiv" {
 		if "`z'"=="" {
@@ -659,6 +677,21 @@ program _ddml_estimate_single, eclass sortpreserve
 		}
 		if "`d0'"=="" | "`d1'"=="" {
 			di as err "options d0(.) and d1(.) required"
+			exit 198
+		}
+		if `numD0reps'~=`numD1reps' {
+			di as err "error - number of D0 and D1 variables must match"
+			di as err "        #D0 vars = `numD0reps', #D1 vars = `numD1reps'"
+			exit 198
+		}
+		if `numD0reps'~=`numY0reps' {
+			di as err "error - number of Y and D variables must match"
+			di as err "        #Y vars = `numY0reps', #D vars = `numD0reps'"
+			exit 198
+		}
+		if `numZreps'~=`numY0reps' {
+			di as err "error - number of Z, Y and D variables must match"
+			di as err "        #Y vars = #D vars = `numY0reps', #Z vars = `numZreps'"
 			exit 198
 		}
 	}
@@ -698,99 +731,325 @@ program _ddml_estimate_single, eclass sortpreserve
 	if "`vce1'"=="cluster" {
 		local clustvar : word 2 of `vce'
 	}
+	
 	tempname b V
 	tempvar esample
 	marksample touse
-	if "`model'"=="interactive" {
-		qui gen byte `esample' = `y0'<. & `y1'<. & `d'<. & `touse'
-		mata: ATE("`teffect'","`nameY'","`nameD'","`y0'", "`y1'", "`d'","`touse'","`b'","`V'","`clustvar'","`foldvar'",`trim')
-	}
-	else {
-		qui gen byte `esample' = `y0'<. & `y1'<. & `d0'<. & `d1'<. & `z'<. & `touse'
-		mata: LATE("`nameY'","`nameD'","`nameZ'","`y0'", "`y1'", "`d0'","`d1'","`z'","`touse'","`b'","`V'","`clustvar'",`trim')
-	}
-	if "`clustvar'"=="" {
-		// e(.) for basic robust
-		local vce		robust
-		local vcetype	Robust
-	}
-	else {
-		// e(.) for cluster-robust; clustvar already defined
-		local vce		cluster
-		local vcetype	Robust
-		local N_clust	=r(N_clust)
-	}
-	local lltrim	
-	mat `b'				=r(b)
-	mat `V'				=r(V)
-	local N				=r(N)
-	local lltrim		=r(lltrim)
-	local ultrim		=r(ultrim)
-	mat colnames `b'	=`nameD'
-	mat colnames `V'	=`nameD'
-	mat rownames `V'	=`nameD'
+	
+	if `numY0reps'==1 {	// single estimation
 
-	// qui gen byte `esample'=
-	ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
-	ereturn local cmd		ddml
-	ereturn local model		`model'
-	ereturn local mname		`mname'
-	ereturn local z			`z'
-	ereturn local d			`d'
-	ereturn local d0		`d0'
-	ereturn local d1		`d1'
-	ereturn local y0		`y0'
-	ereturn local y1		`y1'
-	ereturn local vce		`vce'
-	ereturn local vcetype	`vcetype'
-	ereturn scalar lltrim	=`lltrim'
-	ereturn scalar ultrim	=`ultrim'
-	if "`clustvar'"~="" ereturn scalar N_clust=`Nclust'
-	
-	di
-	if "`e(model)'"=="interactive" {
-		di as text "E[y|X,D=0]" _col(14) "= " as res "`e(y0)'" _c
-	}
-	else {
-		di as text "E[y|X,Z=0]" _col(14) "= " as res "`e(y0)'" _c
-	}
-	di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
-	if "`e(model)'"=="interactive" {
-		di as text "E[y|X,D=1]" _col(14) "= " as res "`e(y1)'"
-	}
-	else {
-		di as text "E[y|X,Z=1]" _col(14) "= " as res "`e(y1)'"
-	}
-	if "`e(model)'"=="interactive" {
-		di as text "E[D|X]" _col(14)  "= " as res "`e(d)'"
-	}
-	else {
-		di as text "E[D|X,Z=0]" _col(14)  "= " as res "`e(d0)'"
-		di as text "E[D|X,Z=1]" _col(14)  "= " as res "`e(d1)'"
-		di as text "E[Z|X]" _col(14)  "= " as res "`e(z)'"
-	}
-	ereturn display
-	
-	// report warning if clustered SEs requested but doesn't match clustered crossfitting
-	mata: st_local("fclustvar",`mname'.fclustvar)
-	if "`e(clustvar)'"~="" {
-		if "`fclustvar'"=="" {
-			di as res "Warning" as text ": crossfit folds do not necessarily respect cluster structure used for VCE."
+		if "`model'"=="interactive" {
+			qui gen byte `esample' = `y0'<. & `y1'<. & `d'<. & `touse'
+			mata: ATE("`teffect'","`nameY'","`nameD'","`y0'", "`y1'", "`d'","`touse'","`b'","`V'","`clustvar'","`foldvar'",`trim')
 		}
-		else if "`fclustvar'"~="`e(clustvar)'" {
-			di as res "Warning" as text ": cluster variable for VCE does not match cluster variable for crossfit folds."
+		else {
+			qui gen byte `esample' = `y0'<. & `y1'<. & `d0'<. & `d1'<. & `z'<. & `touse'
+			mata: LATE("`nameY'","`nameD'","`nameZ'","`y0'", "`y1'", "`d0'","`d1'","`z'","`touse'","`b'","`V'","`clustvar'",`trim')
+		}
+		if "`clustvar'"=="" {
+			// e(.) for basic robust
+			local vce		robust
+			local vcetype	Robust
+		}
+		else {
+			// e(.) for cluster-robust; clustvar already defined
+			local vce		cluster
+			local vcetype	Robust
+			local N_clust	=r(N_clust)
+		}
+		local lltrim	
+		mat `b'				=r(b)
+		mat `V'				=r(V)
+		local N				=r(N)
+		local lltrim		=r(lltrim)
+		local ultrim		=r(ultrim)
+		mat colnames `b'	=`nameD'
+		mat colnames `V'	=`nameD'
+		mat rownames `V'	=`nameD'
+	
+		ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
+		ereturn local cmd		ddml
+		ereturn local model		`model'
+		ereturn local mname		`mname'
+		ereturn local z			`z'
+		ereturn local d			`d'
+		ereturn local d0		`d0'
+		ereturn local d1		`d1'
+		ereturn local y0		`y0'
+		ereturn local y1		`y1'
+		ereturn local vce		`vce'
+		ereturn local vcetype	`vcetype'
+		ereturn scalar lltrim	=`lltrim'
+		ereturn scalar ultrim	=`ultrim'
+		ereturn scalar trim		=`trim'
+		if "`clustvar'"~="" ereturn scalar N_clust=`Nclust'
+		
+		di
+		if "`e(model)'"=="interactive" {
+			di as text "E[y|X,D=0]" _col(14) "= " as res "`e(y0)'" _c
+		}
+		else {
+			di as text "E[y|X,Z=0]" _col(14) "= " as res "`e(y0)'" _c
+		}
+		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
+		if "`e(model)'"=="interactive" {
+			di as text "E[y|X,D=1]" _col(14) "= " as res "`e(y1)'"
+		}
+		else {
+			di as text "E[y|X,Z=1]" _col(14) "= " as res "`e(y1)'"
+		}
+		if "`e(model)'"=="interactive" {
+			di as text "E[D|X]" _col(14)  "= " as res "`e(d)'"
+		}
+		else {
+			di as text "E[D|X,Z=0]" _col(14)  "= " as res "`e(d0)'"
+			di as text "E[D|X,Z=1]" _col(14)  "= " as res "`e(d1)'"
+			di as text "E[Z|X]" _col(14)  "= " as res "`e(z)'"
+		}
+		ereturn display
+		
+		// report warning if clustered SEs requested but doesn't match clustered crossfitting
+		mata: st_local("fclustvar",`mname'.fclustvar)
+		if "`e(clustvar)'"~="" {
+			if "`fclustvar'"=="" {
+				di as res "Warning" as text ": crossfit folds do not necessarily respect cluster structure used for VCE."
+			}
+			else if "`fclustvar'"~="`e(clustvar)'" {
+				di as res "Warning" as text ": cluster variable for VCE does not match cluster variable for crossfit folds."
+			}
+		}
+		
+		// warn if any values trimmed
+		if e(lltrim)>0 & e(lltrim)<. {
+			di as res "Warning" as text ": " _c
+			di as text e(lltrim) " propensity scores trimmed to lower limit " e(trim) "."
+		}
+		if e(ultrim) & e(ultrim)<. {
+			di as res "Warning" as text ": " _c
+			di as text e(ultrim) " propensity scores trimmed to upper limit " 1-e(trim) "."
+		}
+	}	// end single estimation
+	
+	else {		// mean/median aggregation
+
+		tempvar y0_resid y1_resid
+		qui gen double `y0_resid' = .
+		qui gen double `y1_resid' = .
+		tempname b_list b_i V_list V_i
+		
+		local isodd = mod(`numY0reps',2)
+		local medrow = ceil(`numY0reps'/2)
+		// sum number of observations in N; take mean(N) over reps at end
+		local N = 0
+		// will be set to 1 if ob used in any estimate
+		qui gen byte `esample'=0
+		// track trimming
+		local nlltrim = 0
+		local nultrim = 0
+
+		forvalues m=1/`numY0reps' {
+			local y0_m : word `m' of `y0'
+			local y1_m : word `m' of `y1'
+			if "`model'"=="interactive" {
+				local d_m : word `m' of `d'
+				qui replace `esample' = 1 if `y0_m'<. & `y1_m'<. & `d_m'<. & `touse'
+				mata: ATE("`teffect'","`nameY'","`nameD'","`y0_m'", "`y1_m'", "`d_m'","`touse'","`b'","`V'","`clustvar'","`foldvar'",`trim')
+			}
+			else {
+				local d0_m : word `m' of `d0'
+				local d1_m : word `m' of `d1'
+				local z_m  : word `m' of `z'
+				qui replace `esample' = 1 if `y0_m'<. & `y1_m'<. & `d0_m'<. & `d1_m'<. & `z_m'<. & `touse'
+				mata: LATE("`nameY'","`nameD'","`nameZ'","`y0_m'", "`y1_m'", "`d0_m'","`d1_m'","`z_m'","`touse'","`b'","`V'","`clustvar'",`trim')
+			}
+			mat `b_i'		=r(b)
+			mat `b_list'	= nullmat(`b_list') \ `b_i'
+			mat `V_i'		=r(V)
+			mat `V_list'	= nullmat(`V_list') \ `V_i'
+			local N			= `N' + r(N)
+			local nlltrim	= `nlltrim' + (r(lltrim)>0 & r(lltrim)<.)
+			local nultrim	= `nultrim' + (r(ultrim)>0 & r(ultrim)<.)
+		}
+		
+		// subroutine expects any constant to have been removed already
+		agg_medmean, bmat(`b_list') vmat(`V_list') cnames(`nameD') `mean'
+		
+		mat `b' = e(b)
+		mat `V' = e(V)
+		local N = `N' / `numY0reps'
+
+		ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
+		ereturn local cmd		ddml
+		ereturn local model		`model'
+		ereturn local mname		`mname'
+		ereturn local z			`z'
+		ereturn local d			`d'
+		ereturn local d0		`d0'
+		ereturn local d1		`d1'
+		ereturn local y0		`y0'
+		ereturn local y1		`y1'
+		ereturn local vce		`vce'
+		ereturn local vcetype	`vcetype'
+		ereturn scalar nlltrim	=`nlltrim'
+		ereturn scalar nultrim	=`nultrim'
+		ereturn scalar trim		=`trim'
+		if "`clustvar'"~="" ereturn scalar N_clust=`Nclust'
+		
+		di
+		if "`mean'"=="mean" {
+			di as text "Mean over " `numY0reps' " resamples" _c
+		}
+		else {
+			di as text "Median over " `numY0reps' " resamples" _c
+		}
+		if "`model'"=="interactive" {
+			di as text " (ATE)"
+		}
+		else {
+			di as text " (LATE)"
+		}
+		if length("`y0'")>33	local y0_disp  = substr("`y0'",1,30)+"..."
+		else					local y0_disp  = "`y0'"
+		if length("`y1'")>33	local y1_disp  = substr("`y1'",1,30)+"..."
+		else					local y1_disp  = "`y1'"
+		if length("`d'")>33		local d_disp  = substr("`d'",1,30)+"..."
+		else					local d_disp  = "`d'"
+		if length("`d0'")>33	local d0_disp  = substr("`d0'",1,30)+"..."
+		else					local d0_disp  = "`d0'"
+		if length("`d1'")>33	local d1_disp  = substr("`d1'",1,30)+"..."
+		else					local d1_disp  = "`d1'"
+		if length("`z'")>33		local z_disp  = substr("`z'",1,30)+"..."
+		else					local z_disp  = "`z'"
+		if "`e(model)'"=="interactive" {
+			di as text "E[y|X,D=0]" _col(14) "= " as res "`y0_disp'" _c
+		}
+		else {
+			di as text "E[y|X,Z=0]" _col(14) "= " as res "`y0_disp'" _c
+		}
+		di as text _col(52) "Number of obs   =" _col(70) as res %9.0f `e(N)'
+		if "`e(model)'"=="interactive" {
+			di as text "E[y|X,D=1]" _col(14) "= " as res "`y1_disp'"
+		}
+		else {
+			di as text "E[y|X,Z=1]" _col(14) "= " as res "`y1_disp'"
+		}
+		if "`e(model)'"=="interactive" {
+			di as text "E[D|X]" _col(14)  "= " as res "`d_disp'"
+		}
+		else {
+			di as text "E[D|X,Z=0]" _col(14)  "= " as res "`d0_disp'"
+			di as text "E[D|X,Z=1]" _col(14)  "= " as res "`d1_disp'"
+			di as text "E[Z|X]" _col(14)  "= " as res "`z_disp'"
+		}
+		ereturn display
+		if e(nlltrim)>0 & e(nlltrim)<. {
+			di as res "Warning" as text ": " _c
+			di as text e(nlltrim) " resamples had propensity scores trimmed to lower limit " e(trim) "."
+		}
+		if e(ultrim) & e(ultrim)<. {
+			di as res "Warning" as text ": " _c
+			di as text e(nultrim) " resamples had propensity scores trimmed to upper limit " 1-e(trim) "."
+		}
+		
+	}	// end mean/median aggregation
+	
+end
+
+program agg_medmean, eclass
+	version 16
+	syntax [anything] [if] [in] ,				///
+						[						///
+							bmat(name)			///
+							vmat(name)			///
+							cnames(string)		/// column/row names for b/V
+							medmean(string)		///
+							mean				/// default is empty = median
+						]
+
+	// assumes no constant in b or V
+	
+	// prep
+	tempname bagg Vagg sbmat V_i Vvec sVvec
+	local nreps = rowsof(`bmat')
+	local K = colsof(`bmat')
+	local isodd = mod(`nreps',2)
+	local medrow = ceil(`nreps'/2)	
+	mata: `bmat' = st_matrix("`bmat'")
+	mata: `vmat' = st_matrix("`vmat'")
+	mata: `Vagg' = J(`K',`K',0)
+	mata: `Vvec' = J(`nreps',1,0)
+	
+	// mean/median of b
+	if "`mean'"=="mean" {
+		mata: `bagg' = mean(`bmat')
+	}
+	else {
+		// initialize
+		mata: `bagg' = J(1,`K',.)
+		forvalues k=1/`K' {
+			// leave order of bmat unchanged; sbmat = sorted bmat
+			mata: `sbmat' = sort(`bmat',`k')
+			if `isodd' {
+				mata: `bagg'[1,`k'] = `sbmat'[`medrow',`k']
+			}
+			else {
+				mata: `bagg'[1,`k'] = (`sbmat'[`medrow',`k'] + `sbmat'[`medrow'+1,`k'])/2
+			}
 		}
 	}
+	mata: st_matrix("`bagg'",`bagg')
 	
-	// warn if any values trimmed
-	if e(lltrim)>0 & e(lltrim)<. {
-		di as res "Warning" as text ": " _c
-		di as text e(lltrim) " propensity scores trimmed to lower limit " e(trim) "."
+	// mean/median of V
+	if "`mean'"=="mean" {
+		// harmonic mean
+		// inefficient - does off-diagonals twice
+		forvalues m=1/`nreps' {
+			mata: `V_i' = `vmat'[((`m'-1)*`K'+1)::(`m'*`K'),(1..`K')]
+			forvalues j=1/`K' {
+				forvalues k=1/`K' {
+					// abs(.) needed?
+					mata: `V_i'[`j',`k'] = `V_i'[`j',`k'] + abs((`bmat'[`m',`j'] - `bagg'[1,`j'])*(`bmat'[`m',`k'] - `bagg'[1,`k']))
+				}
+			}
+			mata: `Vagg' = `Vagg' + 1:/`V_i'
+		}
+		mata: `Vagg' = `nreps' :/ `Vagg'
 	}
-	if e(ultrim) & e(ultrim)<. {
-		di as res "Warning" as text ": " _c
-		di as text e(ultrim) " propensity scores trimmed to upper limit " 1-e(trim) "."
+	else {
+		// median VCV
+		// inefficient - does off-diagonals twice
+		forvalues j=1/`K' {
+			forvalues k=1/`K' {
+				forvalues m=1/`nreps' {
+					mata: `V_i' = `vmat'[((`m'-1)*`K'+1)::(`m'*`K'),(1..`K')]
+					mata: `Vvec'[`m'] = `V_i'[`j',`k']
+				}
+				// adjustment as per
+				// https://docs.doubleml.org/stable/guide/resampling.html#repeated-cross-fitting-with-k-folds-and-m-repetition
+				// (generalized to multiple D variables)
+				mata: `Vvec' = `Vvec' + abs((`bmat'[.,`j'] :- `bagg'[1,`j']):*(`bmat'[.,`k'] :- `bagg'[1,`k']))
+				mata: `sVvec' = sort(`Vvec',1)
+				if `isodd' {
+					mata: `Vagg'[`j',`k'] = `sVvec'[`medrow',1]
+				}
+				else {
+					mata: `Vagg'[`j',`k'] = (`sVvec'[`medrow',1] + `sVvec'[`medrow'+1,1])/2
+				}
+			}
+		}
 	}
+	mata: st_matrix("`Vagg'",`Vagg')
+
+	mat colnames `bagg' = `cnames'
+	mat colnames `Vagg' = `cnames'
+	mat rownames `Vagg' = `cnames'
+	ereturn post `bagg' `Vagg'
+	
+	// clean up mata
+	foreach obj in `bmat' `vmat' `bagg' `Vagg' `sbmat' `Vvec' `sVvec' `V_i' {
+		cap mata: mata drop `obj'
+	}
+
 end
 
 // main estimation program
