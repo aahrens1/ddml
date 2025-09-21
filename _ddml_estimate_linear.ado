@@ -1,5 +1,5 @@
 *! ddml v1.4.4
-*! last edited: 7sept2025
+*! last edited: 21sept2025
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -458,8 +458,10 @@ program _ddml_estimate_single, eclass sortpreserve
 
 	tempname b V
 	tempvar esample
-	if "`robust'"!=""	local vce robust
-	if "`cluster'"~=""	local vce cluster `cluster'
+	if "`vce'"=="" {
+		if "`robust'"!=""	local vce robust
+		if "`cluster'"~=""	local vce cluster `cluster'
+	}
 	if `lieflag' {
 		// for display - local will be empty if LIE not enforced
 		local liehat ^
@@ -564,7 +566,7 @@ program _ddml_estimate_single, eclass sortpreserve
 		
 		tempvar y_resid
 		qui gen double `y_resid' = .
-		tempname bvec b_i Vall Vagg V_i sbvec bagg Vvec sVvec
+		tempname b_list v_list
 		
 		local isodd = mod(`numYreps',2)
 		local medrow = ceil(`numYreps'/2)
@@ -612,101 +614,19 @@ program _ddml_estimate_single, eclass sortpreserve
 				di as err "internal ddml error"
 				exit 198
 			}
-			mat `b_i' = e(b)
-			mat `V_i' = e(V)
+			
+			mat `b_list' = nullmat(`b_list') \ e(b)
+			mat `v_list' = nullmat(`v_list') \ e(V)
 			local N = `N' + e(N)
 			// set =1 if used in any estimate
 			qui replace `esample'=1 if e(sample)
-			if "`noconstant'"=="" {
-				// don't aggregate the constant in the last row/col
-				mat `b_i' = `b_i'[1...,1..`numeqnD']		
-				mat `V_i' = `V_i'[1...,1..`numeqnD']		
-				mat `V_i' = `V_i'[1..`numeqnD',1...]		
-			}
-			mat `bvec' = nullmat(`bvec') \ `b_i'
-			mat `Vall' = nullmat(`Vall') \ `V_i'
-		}
-
-		mata: `bvec' = st_matrix("`bvec'")
-		mata: `Vall' = st_matrix("`Vall'")
-		local N = `N' / `numYreps'
-		mata: `bagg' = J(1,`numeqnD',0)
-		mata: `Vagg' = J(`numeqnD',`numeqnD',0)
-		mata: `Vvec' = J(`numYreps',1,0)
-		if "`mean'"~="" {
-			mata: `bagg'[.,] = mean(`bvec')
-			mata: st_matrix("`bagg'", `bagg')
-		}
-		else {
-			forvalues k=1/`numeqnD' {
-				mata: `sbvec' = sort(`bvec',`k')
-				if `isodd' {
-					mata: `bagg'[1,`k'] = `sbvec'[`medrow',`k']
-				}
-				else {
-					mata: `bagg'[1,`k'] = (`sbvec'[`medrow',`k'] + `sbvec'[`medrow'+1,`k'])/2
-				}
-			}	
-			mata: st_matrix("`bagg'", `bagg')
-		}
-		if "`mean'"~="" {
-			// harmonic mean
-			// inefficient - does off-diagonals twice
-			forvalues m=1/`numYreps' {
-				mata: `V_i' = `Vall'[((`m'-1)*`numeqnD'+1)::(`m'*`numeqnD'),(1..`numeqnD')]
-				forvalues j=1/`numeqnD' {
-					forvalues k=1/`numeqnD' {
-						// abs(.) needed?
-						mata: `V_i'[`j',`k'] = `V_i'[`j',`k'] + abs((`bvec'[`m',`j'] - `bagg'[1,`j'])*(`bvec'[`m',`k'] - `bagg'[1,`k']))
-					}
-				}
-				mata: `Vagg' = `Vagg' + 1:/`V_i'
-			}
-			mata: `Vagg' = `numYreps' :/ `Vagg'
-			mata: st_matrix("`Vagg'",`Vagg')
-		}
-		else {
-			// median VCV
-			// inefficient - does off-diagonals twice
-			forvalues j=1/`numeqnD' {
-				forvalues k=1/`numeqnD' {
-					forvalues m=1/`numYreps' {
-						mata: `V_i' = `Vall'[((`m'-1)*`numeqnD'+1)::(`m'*`numeqnD'),(1..`numeqnD')]
-						mata: `Vvec'[`m'] = `V_i'[`j',`k']
-					}
-					// adjustment as per
-					// https://docs.doubleml.org/stable/guide/resampling.html#repeated-cross-fitting-with-k-folds-and-m-repetition
-					// (generalized to multiple D variables)
-					mata: `Vvec' = `Vvec' + abs((`bvec'[.,`j'] :- `bagg'[1,`j']):*(`bvec'[.,`k'] :- `bagg'[1,`k']))
-					mata: `sVvec' = sort(`Vvec',1)
-					if `isodd' {
-						mata: `Vagg'[`j',`k'] = `sVvec'[`medrow',1]
-					}
-					else {
-						mata: `Vagg'[`j',`k'] = (`sVvec'[`medrow',1] + `sVvec'[`medrow'+1,1])/2
-					}
-				}
-			}
-			mata: st_matrix("`Vagg'",`Vagg')
 		}
 		
-		// clean up Mata
-		cap mata: mata drop `bvec'
-		cap mata: mata drop `b_i'
-		cap mata: mata drop `Vall'
-		cap mata: mata drop `Vagg'
-		cap mata: mata drop `V_i'
-		cap mata: mata drop `sbvec'
-		cap mata: mata drop `bagg'
-		cap mata: mata drop `Vvec'
-		cap mata: mata drop `sVvec'
+		if "`noconstant'"==""		local dropcons dropcons
+		qui _ddml_medmean, bmat(`b_list') vmat(`v_list') cnames(`nameD') `mean' `dropcons'
+		mat `b' = e(b)
+		mat `V' = e(V)
 
-		mat `b'=`bagg'
-		mat `V'=`Vagg'
-		local cnames `nameD'
-		mat colnames `b' = `cnames'
-		mat colnames `V' = `cnames'
-		mat rownames `V' = `cnames'
 		local vcetype			`e(vcetype)'
 		local clustvar			`e(clustvar)'
 		ereturn post `b' `V', depname(`nameY') obs(`N') esample(`esample')
@@ -2154,7 +2074,7 @@ program define medmean_and_store, eclass
 	local ivflag	= "`model'"=="iv"
 	local fivflag	= "`model'"=="fiv"
 		
-	tempname b V bagg Vagg Vi
+	tempname b V bagg Vagg b_list v_list
 	tempname bvec brow sbvec bmed Vvec sVvec Vmed
 	tempvar esample
 	tempname B
@@ -2169,15 +2089,17 @@ program define medmean_and_store, eclass
 	local medrow = ceil(`nreps'/2)
 	local N = 0
 	
-	// bvec a misnomer - usually a vector, but can be a matrix if multiple D variables
-	mata: `bvec' = J(`nreps',`K',0)
-	mata: `bagg' = J(1,`K',0)
+	// loop through resamples, collecting details of each
 	forvalues m=1/`nreps' {
 		mata: check_spec(`mname',"`spec'","`m'")
 		mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-		mata: `brow' = `B'.get(("b","post"))
-		// don't aggregate the constant
-		mata: `bvec'[`m',.] = `brow'[1,(1..(cols(`brow')-`consflag'))]
+		
+		// collect b and V in Stata
+		mata: st_matrix("r(b)", `B'.get(("b","post")))
+		mata: st_matrix("r(V)", `B'.get(("V","post")))
+		mat `b_list' = nullmat(`b_list') \ r(b)
+		mat `v_list' = nullmat(`v_list') \ r(V)
+		
 		// row/colnames etc. - need to do this only once
 		if `m'==1 {
 			mata: st_local("depvar",`B'.get(("depvar","post")))
@@ -2203,82 +2125,19 @@ program define medmean_and_store, eclass
 		local N = `N' + r(N)
 	}
 	local N = round(`N'/`nreps')
-
-	if "`medmean'"=="mn" {
-		// mean beta
-		mata: `bagg' = mean(`bvec')
-		mata: st_matrix("`bagg'",`bagg')
-	}
-	else if "`medmean'"=="md" {
-		// median beta
-		forvalues k=1/`K' {
-			mata: `sbvec' = sort(`bvec',`k')
-			if `isodd' {
-				mata: `bagg'[1,`k'] = `sbvec'[`medrow',`k']
-			}
-			else {
-				mata: `bagg'[1,`k'] = (`sbvec'[`medrow',`k'] + `sbvec'[`medrow'+1,`k'])/2
-			}
-		}
-		mata: st_matrix("`bagg'",`bagg')
-	}
-	else {
-		di as err "replay_estimate error - unrecognized option `medmean'"
-		exit 198
-	}
 	
-	mata: `Vagg' = J(`K',`K',0)
-	mata: `Vvec' = J(`nreps',1,0)
-	if "`medmean'"=="mn" {
-		// harmonic mean
-		// inefficient - does off-diagonals twice
-		forvalues m=1/`nreps' {
-			mata: check_spec(`mname',"`spec'","`m'")
-			mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-			mata: `Vi' = `B'.get(("V","post"))
-			// don't aggregate the constant
-			mata: `Vi' = `Vi'[(1::(cols(`Vi')-`consflag')),(1..(cols(`Vi')-`consflag'))]
-			forvalues j=1/`K' {
-				forvalues k=1/`K' {
-					// abs(.) needed?
-					mata: `Vi'[`j',`k'] = `Vi'[`j',`k'] + abs((`bvec'[`m',`j'] - `bagg'[1,`j'])*(`bvec'[`m',`k'] - `bagg'[1,`k']))
-				}
-			}
-			mata: `Vagg' = `Vagg' + 1:/`Vi'
-		}
-		mata: `Vagg' = `nreps' :/ `Vagg'
-		mata: st_matrix("`Vagg'",`Vagg')
-	}
-	else if "`medmean'"=="md" {
-		// median VCV
-		// inefficient - does off-diagonals twice
-		forvalues j=1/`K' {
-			forvalues k=1/`K' {
-				forvalues m=1/`nreps' {
-					mata: check_spec(`mname',"`spec'","`m'")
-					mata: `B' = (`mname'.estAA).get(("`spec'","`m'"))
-					mata: `Vi' = `B'.get(("V","post"))
-					mata: `Vvec'[`m'] = `Vi'[`j',`k']
-				}
-				// adjustment as per
-				// https://docs.doubleml.org/stable/guide/resampling.html#repeated-cross-fitting-with-k-folds-and-m-repetition
-				// (generalized to multiple D variables)
-				mata: `Vvec' = `Vvec' + abs((`bvec'[.,`j'] :- `bagg'[1,`j']):*(`bvec'[.,`k'] :- `bagg'[1,`k']))
-				mata: `sVvec' = sort(`Vvec',1)
-				if `isodd' {
-					mata: `Vagg'[`j',`k'] = `sVvec'[`medrow',1]
-				}
-				else {
-					mata: `Vagg'[`j',`k'] = (`sVvec'[`medrow',1] + `sVvec'[`medrow'+1,1])/2
-				}
-			}
-		}
-		mata: st_matrix("`Vagg'",`Vagg')
-	}
-	else {
-		di as err "replay_estimate error - unrecognized option `medmean'"
-		exit 198
-	}
+	// get mean/median b and V
+	// set options
+	if "`medmean'"=="mn"	local mean mean				// option name is "mean"
+	else					local mean					// default is median
+	if "`noconstant'"==""	local dropcons dropcons		// default => don't drop the last col/row (=_cons)
+	qui _ddml_medmean, bmat(`b_list') vmat(`v_list') cnames(`nameD') `mean' `dropcons'
+	mat `bagg' = e(b)
+	mat `Vagg' = e(V)
+	// needed in mata as well
+	mata: `b_list' = st_matrix("`b_list'")
+	mata: `bagg' = st_matrix("`bagg'")
+	mata: `Vagg' = st_matrix("`Vagg'")
 
 	tempname A
 	mata: `A' = AssociativeArray()
@@ -2339,8 +2198,8 @@ program define medmean_and_store, eclass
 			mata: `A'.put(("dh_m","local"), "`dh_list'")	
 		}
 	}
-	// special case - vector of betas available only for mean/median
-	mata: `A'.put(("b_resamples","matrix"),`bvec')
+	// special case - list of betas available only for mean/median
+	mata: `A'.put(("b_resamples","matrix"),`b_list')
 	
 	// additional estimation results
 	local numeqnD	: word count `dnames'
@@ -2413,7 +2272,7 @@ program define medmean_and_store, eclass
 	mata: (`mname'.estAA).put(("`spec'","`medmean'"),`A')
 	
 	// no longer needed
-	foreach obj in `eqn' `A' `B' `bagg' `bvec' `brow' `sbvec' `Vagg' `Vvec' `sVvec' `Vi' {
+	foreach obj in `eqn' `A' `B' `bagg' `b_list' {
 		cap mata: mata drop `obj'
 	}
 	
