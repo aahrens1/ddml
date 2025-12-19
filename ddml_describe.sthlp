@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 30aug2024}{...}
+{* *! version 18dec2025}{...}
 {viewerjumpto "Syntax" "ddml_describe##syntax"}{...}
 {viewerjumpto "Examples" "ddml_describe##examples"}{...}
 {viewerjumpto "Installation" "ddml_describe##installation"}{...}
@@ -8,7 +8,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_describe##also_see"}{...}
 {hline}
-{cmd:help ddml describe}{right: v1.4.4}
+{cmd:help ddml describe}{right: v1.5.0}
 {hline}
 
 {title:ddml describe utility for Double Debiased Machine Learning}
@@ -30,9 +30,11 @@ controls and/or instrumental variables.
 {p 8 14}{cmd:ddml describe}
 [ , {opt mname(name)}
 {opt sample}
-{opt learners}
-{opt crossfit} 
-{opt estimates}
+{opt learn:ers}
+{opt cross:fit} 
+{opt est:imates}
+{opt stack:ing}
+{opt cvc}
 {opt all}
 
 {synoptset 20}{...}
@@ -45,17 +47,23 @@ models simultaneously. Defaults to {it:m0}.
 {synopt:{opt sample}}
 information about the estimation sample, folds, etc.
 {p_end}
-{synopt:{opt learners}}
+{synopt:{opt learn:ers}}
 information about the differ learners used to estimate conditional expectations.
 {p_end}
-{synopt:{opt crossfit}}
+{synopt:{opt cross:fit}}
 information about results of the cross-fitting step.
 {p_end}
-{synopt:{opt estimates}}
+{synopt:{opt est:imates}}
 information about the estimation estimation results.
 {p_end}
+{synopt:{opt stack:ing}}
+information about stacking weights.
+{p_end}
+{synopt:{opt cvc}}
+results of the {helpb ddml##Lei2020:Lei (2020)} CVC (cross-validation with confidence) test.
+{p_end}
 {synopt:{opt all}}
-equivalent to {opt sample} + {opt learners} + {opt crossfit} + {opt estiamtes}.
+equivalent to {opt sample} + {opt learners} + {opt crossfit} + {opt estimates} + {opt stacking} + {opt cvc}.
 {p_end}
 {synoptline}
 {p2colreset}{...}

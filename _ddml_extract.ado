@@ -1,6 +1,7 @@
-*! ddml v1.4.4
-*! last edited: 7sept2025
+*! ddml v1.5.0
+*! last edited: 18dec2025
 *! authors: aa/ms
+* remaining issue - keep treating missing weights as zeros in reporting means?
 
 program define _ddml_extract, rclass
     version 16.0
@@ -130,7 +131,7 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 		vnames = sort(vnames,(1::cols(vnames))')
 		for (i=1;i<=rows(vnames);i++) {
 			eqn = (d.eqnAA).get(vnames[i])
-			if (d.stdflag) {
+			if (eqn.pystackedmulti>0) {
 				pystacked_extract(d,eqn,vnames[i],"weights",0)
 			}
 			else {
@@ -737,8 +738,12 @@ function pystacked_extract(									///
 		// process if any stacking weights encountered
 		if (rows(rmat_all) > 0) {
 		
-			// possible that some weights are missing; treat as zeros when taking means
-			rmat_all_z = editmissing(rmat_all,0)
+//			// possible that some weights are missing; treat as zeros when taking means
+//			rmat_all_z = editmissing(rmat_all,0)
+//			rmat_all_z = rmat_all
+//			rmat_all
+//			rmat_all[1,4]=.
+//			rmat_all
 
 			nlearners = rows(base_est)
 			if (detailflag) {
@@ -775,8 +780,8 @@ function pystacked_extract(									///
 				rmean_all = J(nlearners,(2+nreps),.)
 				for (ll=1;ll<=nlearners;ll++) {
 					rmean_all[ll,1] = ll
-					// treat missings as zeros
-					rlearner = select(rmat_all_z,rmat_all_z[.,1]:==ll)
+//					// treat missings as zeros
+					rlearner = select(rmat_all,rmat_all[.,1]:==ll)
 					// mean across all folds and resamples
 					rmean_all[ll,2] = mean(mean(rlearner[.,(3..cols(rlearner))]')')
 					// mean across folds by resample
@@ -803,9 +808,9 @@ function pystacked_extract(									///
 				rmean_all_0 = J(0,nreps,.)
 				rmean_all_1 = J(0,nreps,.)
 				rstripe = J(0,2,"")
-				// treat missings as zeros
-				rmat0 = select(rmat_all_z,rmat_all_z[.,2]:==0)
-				rmat1 = select(rmat_all_z,rmat_all_z[.,2]:==1)
+//				// treat missings as zeros
+				rmat0 = select(rmat_all,rmat_all[.,2]:==0)
+				rmat1 = select(rmat_all,rmat_all[.,2]:==1)
 				for (ll=1;ll<=nlearners;ll++) {
 					pre_rmean_all[ll,1]				= ll
 					pre_rmean_all[nlearners+ll,1]	= ll
