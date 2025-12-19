@@ -231,7 +231,7 @@ program define qddml, eclass sortpreserve
 	ddml init `model', mname(`mname') `kfolds' reps(`reps') cluster(`cluster') `tabfold' `foldvar' `prefix'
 
 	*** IV-HD
-	if ("`model'"=="fiv") & `pyflag' {
+/*	if ("`model'"=="fiv") & `pyflag' {
 		// special treatment for pystacked - split into separate pystacked calls
 		// Y eqn spec
 		`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions' noestimate
@@ -264,7 +264,7 @@ program define qddml, eclass sortpreserve
 				pystacked {D} `e(xvars_o`m')', method(`e(method`m')') pipe1(`e(pipe`m')') cmdopt1(`e(opt`m')') `globalopt'
 		}
 	}
-	else if ("`model'"=="fiv") {
+	else */ if ("`model'"=="fiv") {
 	// non-pystacked
 		ddml E[Y|X], mname(`mname') vname(`depvar') predopt(`ypredopt') vtype(`yvtype'):						///
 			`ycmd' `depvar' `xctrl' `ycmdoptions' `cmdoptions'
