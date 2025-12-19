@@ -1,5 +1,5 @@
-*! ddml v1.4.4
-*! last edited: 21sept2025
+*! ddml v1.5.0
+*! last edited: 18dec2025
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -19,35 +19,78 @@ program _ddml_estimate_linear, eclass sortpreserve
 								psfinalest(name)	///
 								* ]
 
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	// used multiple times below
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	
+	// initialize
+	mata: st_local("nameY",`mname'.nameY)
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	
+	// current model stacking settings
+	mata: st_local("stdflag", strofreal(`mname'.stdflag))
+	mata: st_local("ssflag", strofreal(`mname'.ssflag))
+	mata: st_local("psflag", strofreal(`mname'.psflag))
+	
 	// default behavior if final estimators specified but stacking options are not
 	if "`stdfinalest'"~="" & "`stdstack'"==""	local stdstack		stdstack
 	if "`ssfinalest'"~="" & "`shortstack'"==""	local shortstack	shortstack
 	if "`psfinalest'"~="" & "`poolstack'"==""	local poolstack		poolstack
 	if "`stdstack'`shortstack'`poolstack'"=="" & "`finalest'"~="" {
 		// default when just finalest(.) is specified is to re-stack whatever has been already stacked
-		mata: st_local("stdflag", strofreal(`mname'.stdflag))
-		mata: st_local("ssflag", strofreal(`mname'.ssflag))
-		mata: st_local("psflag", strofreal(`mname'.psflag))
 		if `stdflag'	local stdstack		stdstack
 		if `ssflag'		local shortstack	shortstack
 		if `psflag'		local poolstack		poolstack
 	}
-
+	
 	// restacking	
 	if "`stdstack'"~="" {
 		// restack
 		if "`stdfinalest'"==""	local stdfinalest `finalest'
 		_ddml_estimate_stacking `mname' `if' `in', std finalest(`stdfinalest') `options'
+		// update model stacking settings
+		mata: `mname'.stdflag = 1
 	}
 	if "`shortstack'"~="" {
 		// restack
 		if "`ssfinalest'"==""	local ssfinalest `finalest'
 		_ddml_estimate_stacking `mname' `if' `in', ss finalest(`ssfinalest') `options'
+		// update model stacking settings
+		mata: `mname'.ssflag = 1
 	}
 	if "`poolstack'"~="" {
 		// restack
 		if "`psfinalest'"==""	local psfinalest `finalest'
 		_ddml_estimate_stacking `mname' `if' `in', ps finalest(`psfinalest') `options'
+		// update model stacking settings
+		mata: `mname'.psflag = 1
+	}
+	
+	// check that std or pooled stacking is available across all variables; if not, set model stacking flag to 0
+	if `stdflag' | `psflag' {
+		// check Y eqn
+		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+		// used for checking
+		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+		if `pystackedmulti'==0 {
+			di as res "nb: estimates using stacked or pool-stacked for all eqns not reported"
+			di as res "    either use one pystacked call for each model equation or specify"
+			di as res "    the specific variables to use with the y(.), d(.), z(.), dh(.) options"
+			mata: `mname'.stdflag = 0
+			mata: `mname'.psflag = 0
+		}
+		// check D and Z eqns
+		foreach vname in `nameD' `nameZ' {
+			mata: `eqn' = (`mname'.eqnAA).get("`vname'")
+			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+			if `pystackedmulti'==0 {
+				di as res "warning..."
+				mata: `mname'.stdflag = 0
+				mata: `mname'.psflag = 0
+			}
+		}
 	}
 
 	// estimation
@@ -394,7 +437,7 @@ program _ddml_estimate_single, eclass sortpreserve
 	mata: st_local("nameY",`mname'.nameY)
 	mata: st_local("nameD",invtokens(`mname'.nameD))
 	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
-	mata: st_local("lieflag", strofreal(`mname'.lieflag))	// lieflag already 0/1
+	mata: st_local("lieflag", strofreal(`mname'.lieflag))
 
 	local numeqnD : word count `nameD'
 	local numeqnZ : word count `nameZ'
@@ -447,7 +490,7 @@ program _ddml_estimate_single, eclass sortpreserve
 			exit 198
 		}
 		if `numDreps'~=`numDHreps'{
-			di as err "error - number of D variables (`numDreps') must match number of DH variables (`numDHreps)"
+			di as err "error - number of D variables (`numDreps') must match number of DH variables (`numDHreps')"
 			exit 198
 		}
 	}
@@ -600,6 +643,20 @@ program _ddml_estimate_single, eclass sortpreserve
 					local j = (`numYreps'*(`i'-1))+`m'
 					local ztilde_i : word `j' of `z'
 					qui gen double `z_resid' = `zname_i' - `ztilde_i'
+					local z_resid_list `z_resid_list' `z_resid'
+				}
+			}
+			else {
+				// initialize lists of endog and opt IV
+				forvalues i=1/`numeqnD' {
+					tempvar d_resid z_resid
+					local d_i   : word `i' of `nameD'
+					local j = (`numYreps'*(`i'-1))+`m'
+					local d_m_i : word `j' of `d'
+					local z_m_i : word `j' of `dh'
+					qui gen double `d_resid' = `d_i' - `z_m_i'
+					qui gen double `z_resid' = `d_m_i' - `z_m_i'
+					local d_resid_list `d_resid_list' `d_resid'
 					local z_resid_list `z_resid_list' `z_resid'
 				}
 			}
@@ -1091,7 +1148,7 @@ program _ddml_estimate_main
 		local ylist `r(ystr)'
 		local Dlist `r(dstr)'
 		local Zlist `r(zstr)' 
-		
+
 		tempname nmat bmat semat
 		mata: `nmat' = J(`ncombos',3,"")
 		mata: `bmat' = J(`ncombos'*`nreps',`numeqnD'+`cons',.)
@@ -1735,15 +1792,15 @@ program define _ddml_make_varlists, rclass
 	mata: st_local("nameZ",invtokens(`mname'.nameZ))
 	local numeqnD	: word count `nameD'
 	local numeqnZ	: word count `nameZ'
-	
+	mata: st_local("lieflag",strofreal(`mname'.lieflag))
+
 	mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
 	local numlnrY : word count `vtlistY'
-	
+
 	if `numeqnD' {
 		foreach var of varlist `nameD' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
-			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			tempname Dt_list
 			local `Dt_list' `vtlistD'
@@ -1754,7 +1811,6 @@ program define _ddml_make_varlists, rclass
 	if `numeqnD' & `lieflag' {
 		foreach var of varlist `nameD' {
 			mata: `eqn' = (`mname'.eqnAA).get("`var'")
-			mata: st_local("lieflag",strofreal(`eqn'.lieflag))
 			mata: st_local("vtlistD",invtokens(`eqn'.vtlist))
 			foreach vn in `vtlistD' {
 				local vtlistD_h `vtlistD_h' `vn'_h
@@ -1839,6 +1895,8 @@ program define estimate_and_store, eclass
 	mata: st_local("model",`mname'.model)
 	local ivflag	= "`model'"=="iv"
 	local fivflag	= "`model'"=="fiv"
+	mata: st_local("lieflag", strofreal(`mname'.lieflag))
+	mata: st_local("lieflag_ss", strofreal(`mname'.lieflag_ss))
 	local numeqnD	: word count `dnames'
 	local numeqnZ	: word count `znames'
 		
@@ -1944,6 +2002,13 @@ program define estimate_and_store, eclass
 	// store scalars
 	local list_scalar cons
 	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+	if "`model'"=="fiv" {
+		// LIE flag special case - not supported with pystacked + shortstacking
+		if "`spec'"=="ss" & `lieflag_ss'==0 {
+			local lieflag = 0
+		}
+		local list_scalar `list_scalar' lieflag
+	}
 	foreach obj in `list_scalar' {
 		mata: `A'.put(("`obj'","scalar"),``obj'')
 	}
@@ -2111,6 +2176,7 @@ program define medmean_and_store, eclass
 			// retrieve scalars (as locals)
 			local list_scalar
 			if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+			if `fivflag'			local list_scalar `list_scalar' lieflag
 			foreach obj in `list_scalar' {
 				mata: st_local("`obj'",strofreal(`B'.get(("`obj'","scalar"))))
 			}
@@ -2164,6 +2230,7 @@ program define medmean_and_store, eclass
 	// store scalars
 	local list_scalar nreps cons
 	if "`clustvar'"~=""		local list_scalar `list_scalar' N_clust
+	if `fivflag'			local list_scalar `list_scalar' lieflag
 	foreach obj in `list_scalar' {
 		mata: `A'.put(("`obj'","scalar"),``obj'')
 	}
@@ -2290,7 +2357,6 @@ program define replay_estimate, eclass
 	mata: st_local("model",`mname'.model)
 	local ivflag	= "`model'"=="iv"
 	local fivflag	= "`model'"=="fiv"
-	mata: st_local("lieflag", strofreal(`mname'.lieflag))	// lieflag already 0/1
 
 	// replay
 	tempname B keys isscalar islocal ismatrix
@@ -2317,10 +2383,13 @@ program define replay_estimate, eclass
 		// local will be empty if no constant
 		local consname "_cons"
 	}
-	if `lieflag' {
+	if `fivflag' {
+		mata: st_local("lieflag", strofreal(`B'.get(("lieflag","scalar"))))
 		// local will be empty if LIE not enforced
-		local liehat ^
+		if `lieflag'	local liehat ^
+		else 			local liehat
 	}
+
 	
 	matrix rownames `b' = `depvar'
 	matrix colnames `b' = `dnames' `consname'
@@ -2453,6 +2522,13 @@ program define replay_estimate, eclass
 		}
 		else {
 			di as text "Stacking final estimators: " as res "`stack_msg'"
+		}
+	}
+	
+	// fiv only - note if LIE not enforced
+	if `fivflag' {
+		if `lieflag'==0 {
+			di as res "nb: LIE not enforced in flexible IV cross-fitting"
 		}
 	}
 	

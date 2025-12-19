@@ -1,5 +1,5 @@
-*! ddml v1.4.4
-*! last edited: 21sept2025
+*! ddml v1.5.0
+*! last edited: 18dec2025
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -20,6 +20,22 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 								ssfinalest(name)	///
 								psfinalest(name)	///
 								* ]
+	
+	// blank eqn - declare this way so that it's a struct and not transmorphic
+	// used multiple times below
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+	
+	// initialize
+	mata: st_local("nameY",`mname'.nameY)
+	mata: st_local("nameD",invtokens(`mname'.nameD))
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	
+	// current model stacking settings
+	mata: st_local("stdflag", strofreal(`mname'.stdflag))
+	mata: st_local("ssflag", strofreal(`mname'.ssflag))
+	mata: st_local("psflag", strofreal(`mname'.psflag))
+	
 
 	// default behavior if final estimators specified but stacking options are not
 	if "`stdfinalest'"~="" & "`stdstack'"==""	local stdstack		stdstack
@@ -27,9 +43,6 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	if "`psfinalest'"~="" & "`poolstack'"==""	local poolstack		poolstack
 	if "`stdstack'`shortstack'`poolstack'"=="" & "`finalest'"~="" {
 		// default when just finalest(.) is specified is to re-stack whatever has been already stacked
-		mata: st_local("stdflag", strofreal(`mname'.stdflag))
-		mata: st_local("ssflag", strofreal(`mname'.ssflag))
-		mata: st_local("psflag", strofreal(`mname'.psflag))
 		if `stdflag'	local stdstack		stdstack
 		if `ssflag'		local shortstack	shortstack
 		if `psflag'		local poolstack		poolstack
@@ -40,16 +53,47 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 		// restack
 		if "`stdfinalest'"==""	local stdfinalest `finalest'
 		_ddml_estimate_stacking `mname' `if' `in', std finalest(`stdfinalest') `options'
+		// update model stacking settings
+		mata: `mname'.stdflag = 1
 	}
 	if "`shortstack'"~="" {
 		// restack
 		if "`ssfinalest'"==""	local ssfinalest `finalest'
 		_ddml_estimate_stacking `mname' `if' `in', ss finalest(`ssfinalest') `options'
+		// update model stacking settings
+		mata: `mname'.ssflag = 1
 	}
 	if "`poolstack'"~="" {
 		// restack
 		if "`psfinalest'"==""	local psfinalest `finalest'
 		_ddml_estimate_stacking `mname' `if' `in', ps finalest(`psfinalest') `options'
+		// update model stacking settings
+		mata: `mname'.psflag = 1
+	}
+	
+	// check that std or pooled stacking is available across all variables; if not, set model stacking flag to 0
+	if `stdflag' | `psflag' {
+		// check Y eqn
+		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
+		// used for checking
+		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+		if `pystackedmulti'==0 {
+			di as res "nb: estimates using stacked or pool-stacked for all eqns not reported"
+			di as res "    either use one pystacked call for each model equation or specify"
+			di as res "    the specific variables to use with the y(.), d(.), z(.), dh(.) options"
+			mata: `mname'.stdflag = 0
+			mata: `mname'.psflag = 0
+		}
+		// check D and Z eqns
+		foreach vname in `nameD' `nameZ' {
+			mata: `eqn' = (`mname'.eqnAA).get("`vname'")
+			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+			if `pystackedmulti'==0 {
+				di as res "warning..."
+				mata: `mname'.stdflag = 0
+				mata: `mname'.psflag = 0
+			}
+		}
 	}
 	
 	// estimation
@@ -2823,6 +2867,12 @@ program replay_estimate, eclass
 		else {
 			di as text "Stacking final estimators: " as res "`stack_msg'"
 		}
+	}
+	
+	// report if perfect assignment to treatment
+	mata: st_local("perfectflag", strofreal(`mname'.perfectflag))
+	if `perfectflag' {
+		di as res "nb: perfect assignment to treatment; D=0 for all obs where Z=0"
 	}
 	
 	// report warning if clustered SEs requested but doesn't match clustered crossfitting

@@ -53,9 +53,17 @@ Hastie, T., Tibshirani, R., & Friedman, J. (2009).
 The elements of statistical learning: data mining, inference,
 and prediction. Springer Science & Business Media.
 
+{marker Lei2020}{...}
+{pstd}
+Lei, Jing (2020).
+Cross-validation with confidence.
+{it:Journal of the American Statistical Association}, 115(532), 1978-1997.
+{browse "https://doi.org/10.1080/01621459.2019.1672556"}
+
 {marker Wolpert1992}{...}
 {pstd}
-Wolpert, David H. Stacked generalization. 
+Wolpert, David H. (1992).
+Stacked generalization.
 {it:Neural networks} 5.2 (1992): 241-259.
 {browse "https://doi.org/10.1016/S0893-6080(05)80023-1"}
 

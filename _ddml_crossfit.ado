@@ -1,5 +1,5 @@
-*! ddml v1.4.4
-*! last edited: 7sept2025
+*! ddml v1.5.0
+*! last edited: 18dec2025
 *! authors: aa/ms
 
 *** ddml cross-fitting
@@ -27,6 +27,15 @@ program _ddml_crossfit, eclass sortpreserve
 	tempname eqn
 	mata: `eqn' = init_eStruct()
 	
+	// model
+	mata: st_local("model",`mname'.model)
+	mata: st_local("nameY",`mname'.nameY)
+	mata: st_local("nameD",invtokens((`mname'.nameD)))
+	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
+	mata: st_local("reps",strofreal(`mname'.nreps))
+	local numeqnD : word count `nameD'
+	local numeqnZ : word count `nameZ'
+
 	// reps = total number of reps; crossfitted = reps done so far (=0 if none)
 	mata: st_local("reps", strofreal(`mname'.nreps))
 	mata: st_local("crossfitted", strofreal(`mname'.crossfitted))
@@ -41,24 +50,22 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: clear_model_estimation(`mname')
 	}
 	
+	// standard stacking for model estimation (all eqns) possible only if pystacked used for every eqn
+	mata: st_local("stdflag", strofreal(`mname'.stdflag))
+	
 	// set flags
 	local ssflag		= "`shortstack'"~=""
 	local psflag		= "`poolstack'"~=""
-	local stdflag		= "`nostdstack'"==""
-	local enforceflag	= "`noenforcelie'"==""
-	// update on the model struct
-	if `enforceflag'			mata: `mname'.lieflag = 1
-	else						mata: `mname'.lieflag = 0
-	
-	*** extract details of estimation
-	// model
-	mata: st_local("model",`mname'.model)
-	mata: st_local("nameY",`mname'.nameY)
-	mata: st_local("nameD",invtokens((`mname'.nameD)))
-	mata: st_local("nameZ",invtokens((`mname'.nameZ)))
-	mata: st_local("reps",strofreal(`mname'.nreps))
-	local numeqnD : word count `nameD'
-	local numeqnZ : word count `nameZ'
+	// update stdflag if nostdstack specified
+	local stdflag		= "`nostdstack'"=="" & `stdflag'
+	// fiv model only - update on the model struct
+	if "`model'"=="fiv" & "`noenforcelie'"=="" {
+		mata: `mname'.lieflag = 1
+	}
+	else {
+		mata: `mname'.lieflag = 0
+	}
+
 	mata: st_local("prefixflag",strofreal(`mname'.prefixflag))
 	if `prefixflag'		local prefix `mname'_
 	local touse `mname'_sample
@@ -129,11 +136,6 @@ program _ddml_crossfit, eclass sortpreserve
 	mata: st_local("vtlistY",invtokens(`eqn'.vtlist))
 	`qui' di as text "Y eqn learners: `vtlistY'"
 	local vtlist `vtlistY'
-	mata: st_local("numlnrY", strofreal(`eqn'.nlearners))
-	// used to track minimum number of learners in an equation; must be >1 for short/pool stacking
-	local minlearners = `numlnrY'
-	// flag for integrated pystacked code
-	mata: st_local("pystacked_Y", strofreal(`eqn'.pystackedmulti))
 	
 	// will always be a D eqn
 	`qui' di as text "D equations (`numeqnD'): `nameD'"
@@ -157,28 +159,6 @@ program _ddml_crossfit, eclass sortpreserve
 		}
 	}
 
-	// short-stacking and pooled-stacking require multiple learners in D equation
-	if (`ssflag' | `psflag') {
-		local multi_flag = 1
-		foreach var of varlist `nameD' {
-			mata: `eqn' = (`mname'.eqnAA).get("`var'")
-			mata: st_local("numlnrD",strofreal(cols(`eqn'.vtlist)))
-			mata: st_local("pystacked_D", strofreal(`eqn'.pystackedmulti))
-			if `numlnrD'==1 & ((`pystacked_D'<=1) | ("`crossfitother'"~="")) {
-				local multi_flag = 0
-			}
-		}
-		if `multi_flag'==0 {
-			di as text "`shortstack' `poolstack' requested but must have multiple learners in D equation(s); option ignored"
-			mata: `mname'.ssflag = 0
-			local ssflag=0
-			local shortstack
-			mata: `mname'.psflag = 0
-			local psflag=0
-			local poolstack
-		}
-	}
-
 	// update model struct flags for stacking
 	if `stdflag'	mata: `mname'.stdflag	= 1
 	else 			mata: `mname'.stdflag	= 0
@@ -191,6 +171,11 @@ program _ddml_crossfit, eclass sortpreserve
 	************************** Y equation **************************
 	// will always be a Y eqn
 	mata: `eqn' = (`mname'.eqnAA).get(`mname'.nameY)
+	// used to track minimum number of learners in an equation; must be >1 for short/pool stacking
+	mata: st_local("numlnrY", strofreal(`eqn'.nlearners))
+	local minlearners = `numlnrY'
+	// flag for integrated pystacked code
+	mata: st_local("pystacked_Y", strofreal(`eqn'.pystackedmulti))
 	
 	// shortstack and poolstack variable names
 	if `ssflag'		mata: `eqn'.shortstack = "`prefix'Y_`nameY'"
@@ -245,7 +230,6 @@ program _ddml_crossfit, eclass sortpreserve
 	// will always be a D eqn
 	if ("`model'"=="interactiveiv") {
 		local treatvar	`nameZ'
-		local allowallzero allowallzero // for the case where D is always zero when Z=0
 	}
 	else {
 		// clear local
@@ -256,7 +240,7 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: st_local("numlnrD",strofreal(cols(`eqn'.vtlist)))
 		// flag for integrated pystacked code
 		mata: st_local("pystacked_D", strofreal(`eqn'.pystackedmulti))
-//				mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
+
 		// shortstack and poolstack variable names
 		if `ssflag'		mata: `eqn'.shortstack = "`prefix'D_`var'"				
 		else			mata: `eqn'.shortstack = ""
@@ -266,10 +250,15 @@ program _ddml_crossfit, eclass sortpreserve
 		if ("`model'"=="interactiveiv")					di as text "Cross-fitting E[D|X,Z] equation: `var'"
 		if ("`model'"=="fiv")							di as text "Cross-fitting E[D|X,Z] and E[D|X] equation: `var'"
 		if ("`model'"=="interactive"|"`model'"=="iv")	di as text "Cross-fitting E[D|X] equation: `var'"
+		
 		if `ssflag' & `numlnrD'==1 & `pystacked_D'==1 {
 			di as text "Note: short-stacked fitted values = fitted values from single learner"
 		}
-		if `psflag' & `numlnrD'==1 & `pystacked_D'<=1 {
+		if `psflag' & (`pystacked_D'==0) {
+			di as text "Note: poolstack option requires pystacked as the single learner; option ignored"
+			mata: `eqn'.poolstack = ""
+		}
+		else if `psflag' & `numlnrD'==1 & `pystacked_D'<=1 {
 			di as text "Note: pool-stacked fitted values = fitted values from single learner"
 		}
 
@@ -285,8 +274,17 @@ program _ddml_crossfit, eclass sortpreserve
 			`nostdstack'							///
 			`crossfitother'							///
 			`noisily'								///
-			`options'								///
-			`allowallzero'
+			`options'
+		if ("`model'"=="interactiveiv") {
+			// LATE special case - perfect assignment to treatment
+			if r(perfectflag)==1 {
+				mata: `mname'.perfectflag=1
+			}
+		}
+		if ("`model'"=="fiv" & "`r(fiv_warn)'"~="") {
+			// LIE + shortstacking + pystacked integration special case
+			mata: `mname'.lieflag_ss = 0
+		}
 		mata: (`mname'.eqnAA).put("`var'",`eqn')
 	}
 
@@ -307,7 +305,11 @@ program _ddml_crossfit, eclass sortpreserve
 			if `ssflag' & `numlnrZ'==1 & `pystacked_Z'<=1 {
 				di as text "Note: short-stacked fitted values = fitted values from single learner"
 			}
-			if `psflag' & `numlnrZ'==1 & `pystacked_Z'<=1 {
+			if `psflag' & (`pystacked_Z'==0) {
+				di as text "Note: poolstack option requires pystacked as the single learner; option ignored"
+				mata: `eqn'.poolstack = ""
+			}
+			else if `psflag' & `numlnrZ'==1 & `pystacked_Z'<=1 {
 				di as text "Note: pool-stacked fitted values = fitted values from single learner"
 			}
 			

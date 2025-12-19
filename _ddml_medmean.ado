@@ -1,5 +1,5 @@
-*! ddml v1.4.4
-*! last edited: 21sept2025
+*! ddml v1.5.0
+*! last edited: 18dec2025
 *! authors: aa/ms
 * utility to take list of coefficient vectors and VCVs and return median/mean aggregation
 * can be used interactively
