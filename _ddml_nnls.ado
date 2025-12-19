@@ -1,5 +1,5 @@
-*! ddml v1.4.4
-*! last edited: 30aug2024
+*! ddml v1.5.0
+*! last edited: 18dec2025
 *! authors: aa/ms
 
 program _ddml_nnls
@@ -181,7 +181,7 @@ program _ddml_nnls_python, eclass sortpreserve
 	
 	local yvar : word 1 of `varlist'
 	local xvars : list varlist - yvar
-	
+
     tempvar wt
     if "`weight'"~="" {
         qui gen double `wt' `exp'
@@ -272,10 +272,20 @@ class ConstrLS(BaseEstimator):
 
         #Use nnls to get initial guess
         #coef0, rnorm = nnls(X,y)
+        
         #Use LinearRegression to get initial guess
-        initial_est = LinearRegression(positive=True,fit_intercept=False)
-        initial_est.fit(X, y, w)
+        #LinearRegression with positive=True and no intercept can fail in perverse cases
+        try:
+            initial_est = LinearRegression(positive=True,fit_intercept=False)
+            initial_est.fit(X, y, w)
+        #so when that happens, drop positive=True
+        except:
+            initial_est = LinearRegression(fit_intercept=False)
+            initial_est.fit(X, y, w)
+        
         coef0 = initial_est.coef_
+        
+        print('initial coef est', coef0)
 
         #Define minimisation function
         def fn(coef, X, y):
