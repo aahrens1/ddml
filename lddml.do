@@ -8,7 +8,7 @@ local pwd `c(pwd)'
 * Now change to the right folder. Will depend on user.
 * This is where the mlib will be created.
 * ms:
-cap cd "C:\LocalStore\ecomes\Documents\GitHub\ddml"
+cap cd "C:\LocalStore\ecomes\GitHub\ddml"
 
 * Locals used in whichddml; set when compiled
 local stata_version `c(stata_version)'
@@ -43,7 +43,6 @@ struct eStruct {
 	string scalar					shortstack		// name of shortstack variable
 	string scalar					poolstack		// name of poolstack variable
 	real scalar						nlearners		// number of learners
-	real scalar						lieflag			// =1 if LIE spec with two estimation strings etc.
 	real scalar						ateflag			// =1 if treatment variable in ATE/LATE
 	real scalar						pystackedmulti	// =#learners if pystacked with multiple learners
 	class AssociativeArray scalar	lrnAA			// AssociativeArray with all learners //
@@ -65,7 +64,6 @@ struct eStruct init_eStruct()
 	m.shortstack		= ""
 	m.poolstack			= ""
 	m.nlearners			= 0
-	m.lieflag			= 0
 	m.ateflag			= 0
 	m.pystackedmulti	= 0
 	
@@ -89,6 +87,7 @@ void clear_equation_results(struct eStruct e)
 struct mStruct {
 	string scalar					model			// model: partial, iv, fiv, interactive, interactiveiv
 	real scalar						lieflag			// = 1 if LIE enforced in fiv model
+	real scalar						lieflag_ss		// = 1 if LIE enforced in short-stacked fiv model
 	real scalar						did2x2flag		// = 1 if interactive mode is diff-in-diff 2x2
 	real scalar						nreps			// number of resamplings
 	real scalar						ncombos			// number of possible specifications (=0 if not yet estimated)
@@ -107,10 +106,10 @@ struct mStruct {
 	real scalar						crossfitted   	// =number of reps for which crossfitting; 0 if not
 	real scalar						estimated		// =1 if estimation has been done; 0 if not
 	real scalar						prefixflag		// =1 if model name to be added as prefix to vars
+	real scalar						perfectflag		// (interactiveiv/LATE model only) perfect assignment to treatment
 	real scalar						ycounter		// counter for default y learners
 	real scalar						dcounter		// counter for default d learners
 	real scalar						zcounter		// counter for default z learners
-	real scalar						allpystackedmulti	// =1 if all eqns to use pystacked-specific code/features
 }
 
 struct mStruct init_mStruct()
@@ -120,6 +119,7 @@ struct mStruct init_mStruct()
 	
 	m.model				= ""
 	m.lieflag			= 0
+	m.lieflag_ss		= 0
 	m.did2x2flag		= 0
 	m.nreps				= 0
 	m.ncombos			= 0
@@ -136,7 +136,7 @@ struct mStruct init_mStruct()
 	m.crossfitted		= 0
 	m.estimated			= 0
 	m.prefixflag		= 0
-	m.allpystackedmulti	= 0
+	m.perfectflag		= 0
 	
 	(m.eqnAA).reinit("string",1)
 	(m.eqnAA).notfound(NULL)
