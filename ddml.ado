@@ -1,11 +1,11 @@
-*! ddml v1.4.4
-*! last edited: 31july2025
+*! ddml v1.5.0
+*! last edited: 18dec2025
 *! authors: aa/ms
 
 program ddml	// no class - some subcommands are eclass, some are rclass
 
 	version 16
-	local lversion 1.4
+	local lversion 1.5
 	
 	if replay() {
 		syntax [, VERsion * ]
@@ -171,6 +171,10 @@ program ddml	// no class - some subcommands are eclass, some are rclass
 			mata: `mname'.model			= "`model'"
 			mata: `mname'.prefixflag	= "`prefixopt'"~=""
 			mata: `mname'.fclustvar		= "`fcluster'"
+			// fiv special case - default is to enforce LIE
+			if "`model'"=="fiv" {
+				mata: `mname'.lieflag = 1
+			}
 			// initialize with default fold var, kfolds, number of resamplings
 			_ddml_sample `if' `in' , mname(`mname') `options'
 		}
@@ -545,7 +549,6 @@ program define add_eqn_to_model, rclass
 		mata: add_learner_item(`eqn',"`vtilde'","est_options_h","`est_options'")
 		mata: add_learner_item(`eqn',"`vtilde'","predopt_h","`predopt'")
 		mata: add_learner_item(`eqn',"`vtilde'","vtype","`vtype'")
-		mata: `eqn'.lieflag = 1
 	}
 	else {
 		mata: add_learner_item(`eqn',"`vtilde'","cmd","`cmdname'")
@@ -556,7 +559,6 @@ program define add_eqn_to_model, rclass
 		mata: add_learner_item(`eqn',"`vtilde'","vtype","`vtype'")
 		// update nlearners - counts deq and dheq as a single learner
 		mata: `eqn'.nlearners = cols(`eqn'.vtlist)
-		mata: `eqn'.lieflag = 0
 		if "`model'"=="interactive" & "`subcmd'"=="yeq" {
 			mata: `eqn'.ateflag = 1
 		}
@@ -569,10 +571,17 @@ program define add_eqn_to_model, rclass
 	mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
 	
 	local cmd : word 1 of `est_main'
+	if "`cmd'"~="pystacked" {
+		// pystacked required for model estimations that use standard stacking for all eqns
+		mata: `mname'.stdflag = 0
+	}
+	
 	if `pystackedmulti' & (`nlearners'>1) {
 		// treat previous multilearner single pystacked as just another learner
 		mata: `eqn'.pystackedmulti = 0
 		di as text "Note: previously-added pystacked multilearner now treated as a single learner"
+		// single pystacked learner required for model estimatinos that use standard stacking for all eqns
+		mata: `mname'.stdflag = 0
 	}
 	else if `nlearners'==1 & "`cmd'"=="pystacked" {
 		// identify if pystacked with multiple learners
@@ -622,11 +631,8 @@ program define add_eqn_to_model, rclass
 			`qui' di as text "number of learners = " as res `mcount'
 		}
 		_estimates unhold `holdname'
-//		if `mcount' > 1 {
-//			// will be >1 if pystacked is the only learner and #learners>1
 			mata: `eqn'.pystackedmulti = `mcount'
 			`qui' di as text "adding pystacked multilearner..."
-//		}
 	}
 	
 	`qui' di as text "number of ddml learners = " as res `nlearners'
