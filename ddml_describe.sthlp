@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 18dec2025}{...}
+{* *! version 28dec2025}{...}
 {viewerjumpto "Syntax" "ddml_describe##syntax"}{...}
 {viewerjumpto "Examples" "ddml_describe##examples"}{...}
 {viewerjumpto "Installation" "ddml_describe##installation"}{...}
@@ -34,7 +34,14 @@ controls and/or instrumental variables.
 {opt cross:fit} 
 {opt est:imates}
 {opt stack:ing}
+{opt stweights}
+{opt ssweights}
+{opt psweights}
 {opt cvc}
+{opt mse}
+{opt rmse}
+{opt rsq}
+{opt n}
 {opt all}
 
 {synoptset 20}{...}
@@ -48,7 +55,7 @@ models simultaneously. Defaults to {it:m0}.
 information about the estimation sample, folds, etc.
 {p_end}
 {synopt:{opt learn:ers}}
-information about the differ learners used to estimate conditional expectations.
+information about the different learners used to estimate conditional expectations.
 {p_end}
 {synopt:{opt cross:fit}}
 information about results of the cross-fitting step.
@@ -59,11 +66,32 @@ information about the estimation estimation results.
 {synopt:{opt stack:ing}}
 information about stacking weights.
 {p_end}
+{synopt:{opt stweights}}
+information about standard stacking weights ({opt pystacked} only).
+{p_end}
+{synopt:{opt ssweights}}
+information about short-stacking weights).
+{p_end}
+{synopt:{opt psweights}}
+information about pooled-stacking weights ({opt pystacked} only).
+{p_end}
 {synopt:{opt cvc}}
 results of the {helpb ddml##Lei2020:Lei (2020)} CVC (cross-validation with confidence) test.
 {p_end}
+{synopt:{opt mse}}
+MSE by learner and resample.
+{p_end}
+{synopt:{opt rmse}}
+RMSE by learner and resample.
+{p_end}
+{synopt:{opt rsq}}
+R-sqs by learner and resample.
+{p_end}
+{synopt:{opt n}}
+sample sizes by learner and resample.
+{p_end}
 {synopt:{opt all}}
-equivalent to {opt sample} + {opt learners} + {opt crossfit} + {opt estimates} + {opt stacking} + {opt cvc}.
+report information relating to all options.
 {p_end}
 {synoptline}
 {p2colreset}{...}

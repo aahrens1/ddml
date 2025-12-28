@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 30aug2024}{...}
+{* *! version 28dec2025}{...}
 {smcl}
 {pstd}{ul:ddml describe utility - Basic example with {help pystacked}}{p_end}
 
@@ -31,8 +31,14 @@ and estimation results.{p_end}
 {phang2}. {stata "ddml describe, learners"}{p_end}
 {phang2}. {stata "ddml describe, crossfit"}{p_end}
 {phang2}. {stata "ddml describe, estimates"}{p_end}
+{phang2}. {stata "ddml describe, stack"}{p_end}
+{phang2}. {stata "ddml describe, cvc"}{p_end}
+{phang2}. {stata "ddml describe, mse"}{p_end}
+{phang2}. {stata "ddml describe, rmse"}{p_end}
+{phang2}. {stata "ddml describe, rsq"}{p_end}
+{phang2}. {stata "ddml describe, n"}{p_end}
 
-{pstd}The {opt all} option is equivalent to specifying all 4 options.{p_end}
+{pstd}The {opt all} option is equivalent to specifying all options.{p_end}
 
 {phang2}. {stata "ddml describe, all"}{p_end}
 {phang2}. {stata "ddml describe, sample learners crossfit estimates"}{p_end}

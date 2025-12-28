@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 31july2023}{...}
+{* *! version 28dec2025}{...}
 {smcl}
 {pstd}{ul:ddml extract utility: Extracting stored information from ddml associative arrays}
 
@@ -7,7 +7,8 @@
 and stacking regression using {helpb pystacked}.
 We also request short-stacking.
 The model name is the default name "m0".
-For simplicity we use {helpb pystacked}'s default learners and settings.
+For simplicity and speed we use only 2 {helpb pystacked} learners with default settings,
+a subsample of 10% of the full sample, 2-fold cross-fitting and 3 resamples.
 {p_end}
 
 {pstd}Preparation and estimation:{p_end}
@@ -15,28 +16,13 @@ For simplicity we use {helpb pystacked}'s default learners and settings.
 {phang2}. {stata "use https://github.com/aahrens1/ddml/raw/master/data/sipp1991.dta, clear"}{p_end}
 {phang2}. {stata "global X tw age inc fsize educ db marr twoearn pira hown"}{p_end}
 {phang2}. {stata "set seed 42"}{p_end}
-{phang2}. {stata "ddml init partial, kfolds(3) reps(5)"}{p_end}
-{phang2}. {stata "ddml E[Y|X]: pystacked net_tfa $X, type(reg)"}{p_end}
-{phang2}. {stata "ddml E[D|X]: pystacked e401 $X, type(reg)"}{p_end}
+{phang2}. {stata "gen runi = runiform()"}{p_end}
+{phang2}. {stata "keep if runi <= 0.1"}{p_end}
+{phang2}. {stata "ddml init partial, kfolds(2) reps(3)"}{p_end}
+{phang2}. {stata "ddml E[Y|X]: pystacked net_tfa $X, method(rf lassocv) type(reg)"}{p_end}
+{phang2}. {stata "ddml E[D|X]: pystacked e401 $X, method(rf lassocv) type(reg)"}{p_end}
 {phang2}. {stata "ddml crossfit, shortstack"}{p_end}
 {phang2}. {stata "ddml estimate, robust"}{p_end}
-
-{pstd}{ul:{opt show(something)} option examples}{p_end}
-
-{pstd}{opt show} option examples: report standard (pystacked) and short-stacked weights.
-Standard stacking weights displayed here are mean weights across cross-fit folds.{p_end}
-
-{phang2}. {stata "ddml extract, show(stweights)"}{p_end}
-{phang2}. {stata "ddml extract, show(ssweights)"}{p_end}
-
-{pstd}The {opt show} option leaves results in r(.) macros.{p_end}
-
-{phang2}. {stata "mat list r(Y_net_tfa_ss)"}{p_end}
-{phang2}. {stata "mat list r(D_e401_ss)"}{p_end}
-
-{pstd}{opt show} option examples: examine the learner weights and MSEs by fold reported by {cmd:pystacked}.{p_end}
-
-{phang2}. {stata "ddml extract, show(pystacked)"}{p_end}
 
 {pstd}{ul:List keys examples}{p_end}
 

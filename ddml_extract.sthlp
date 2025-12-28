@@ -9,7 +9,7 @@
 {vieweralsosee "ddml main page" "ddml"}{...}
 {vieweralsosee "Other" "ddml_extract##also_see"}{...}
 {hline}
-{cmd:help ddml extract}{right: v1.4.4}
+{cmd:help ddml extract}{right: v1.5.0}
 {hline}
 
 {title:ddml extract utility for Double Debiased Machine Learning}
@@ -36,7 +36,7 @@ Please check the {helpb ddml extract##examples:examples} provided at the end of 
 {marker syntax}{...}
 {title:Syntax}
 
-{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt show(display_item)} {opt ename(name)} {opt vname(varname)}
+{p 8 14}{cmd:ddml extract} [ {it:object_name} , {opt mname(name)} {opt ename(name)} {opt vname(varname)}
 {opt stata} {opt keys} {opt key1(string)} {opt key2(string)} {opt key3(string)} {opt subkey1(string)} {opt subkey2(string)}{bind: ]}
 
 {pstd}
@@ -62,37 +62,6 @@ Use with {helpb crossfit} or with a DDML eStruct that has been separately extrac
 {p_end}
 {synopt:{opt stata}}
 Saves extracted {it:object_name} in a Stata r(.) macro (default is to leave it as Mata object).
-NB: does not apply to {opt show(display_item)} (see below).
-{p_end}
-{synoptline}
-{p2colreset}{...}
-{pstd}
-
-{synoptset 20}{...}
-{synopthdr:show options}
-{synoptline}
-{synopt:{opt show(stweights)}}
-Extracts standard stacking ({opt pystacked}) weights.
-{p_end}
-{synopt:{opt show(ssweights)}}
-Extracts {opt shortstack} weights.
-{p_end}
-{synopt:{opt show(pweights)}}
-Extracts {opt poolstack} weights.
-{p_end}
-{synopt:{opt show(weights)}}
-Extracts all available weights: standard, short-stacked, pool-stacked.
-{p_end}
-{synopt:{opt show(pystacked)}}
-Extracts detailed {opt pystacked} weights and learner MSEs, including a breakdown by cross-fit fold.
-The MSEs are cross-validation MSEs and correspond to the predictions used to obtain the stacking weights;
-see {helpb pystacked:help pystacked}.
-{p_end}
-{synopt:{opt show(mse)}}
-Extracts OOS MSEs by crossfitting fold.
-{p_end}
-{synopt:{opt show(n)}}
-Extracts sample size by crossfitting fold.
 {p_end}
 {synoptline}
 {p2colreset}{...}
@@ -123,6 +92,9 @@ Associative array subkey #2.
 {p2colreset}{...}
 {pstd}
 
+{pstd}
+Note: the {opt show(.)} option ({opt ddml} version 1.4 and earlier) is deprectated as of version 1.5.
+To extract and display stacking weights, MSEs, etc. see {helpb ddml describe}
 
 {marker examples}{...}
 {title:Examples}

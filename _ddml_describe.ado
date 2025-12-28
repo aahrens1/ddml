@@ -1,22 +1,48 @@
 *! ddml v1.5.0
-*! last edited: 18dec2025
+*! last edited: 28dec2025
 *! authors: aa/ms
+
 
 program define _ddml_describe, rclass
 	version 16
-	syntax name(name=mname), [LEARNers CROSSfit ESTimates SAMple STACKing cvc all *]
+	syntax name(name=mname), [LEARNers CROSSfit ESTimates SAMple STACKing cvc rsq mse rmse n stweights ssweights psweights all ]
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
 	mata: `eqn' = init_eStruct()
 	
+	// used for storing matrices before returning
+	tempname vmat
+	
 	local allflag	= "`all'"~=""
-	local lflag		= "`learners'"~=""	| `allflag'
-	local cflag		= "`crossfit'"~=""	| `allflag'
-	local eflag		= "`estimates'"~=""	| `allflag'
-	local sflag		= "`sample'"~=""	| `allflag'
-	local stflag	= "`stacking'"~=""	| `allflag'
-	local cvcflag	= "`cvc'"~=""		| `allflag'
+	if `allflag' {
+		local learners		learners
+		local crossfit		crossfit
+		local estimates		estimates
+		local sample		sample
+		local stacking		stacking
+		local cvc			cvc
+		local rsq			rsq
+		local mse			mse
+		local rmse			rmse
+		local n				n
+		local stweights		stweights
+		local ssweights		ssweights
+		local psweights		psweights
+	}
+	local lflag		= "`learners'"~=""
+	local cflag		= "`crossfit'"~=""
+	local eflag		= "`estimates'"~=""
+	local sflag		= "`sample'"~=""
+	local stwflag	= "`stacking'"~=""
+	local cvcflag	= "`cvc'"~=""
+	local rsqflag	= "`rsq'"~=""
+	local mseflag	= "`mse'"~=""
+	local rmseflag	= "`rmse'"~=""
+	local nflag		= "`n'"~=""
+	local stflag	= "`stweights'"~=""	| `stwflag'
+	local ssflag	= "`ssweights'"~=""	| `stwflag'
+	local psflag	= "`psweights'"~=""	| `stwflag'
 	
 	mata: st_local("model",`mname'.model)
 	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))	// flag for crossfitting results available
@@ -33,6 +59,32 @@ program define _ddml_describe, rclass
 	forvalues m=1/`nreps' {
 		local fidlist `fidlist' `mname'_fid_`m'
 		local rslist `rslist' `mname'_sample_`m'
+	}
+	
+	// syntax check - options require prior estimation
+	local optlist eflag
+	local optprob =0
+	if `estimated'==0 {
+		foreach opt in `optlist' {
+			if ``opt'' {
+				local optprob =1
+				local `opt' = 0
+			}
+		}
+		if `optprob'	di as res "some selected option(s) require prior estimation; not reported"
+	}
+
+	// syntax check - options required prior crossfitting
+	local optlist cflag stwflag cvcflag rsqflag mseflag rmseflag nflag stflag ssflag psflag
+	local optprob =0
+	if `crossfitted'==0 {
+		foreach opt in `optlist' {
+			if ``opt'' {
+				local optprob =1
+				local `opt' = 0
+			}
+		}
+		if `optprob'	di as res "some selected option(s) require prior crossfitting; not reported"
 	}
 
 	// basic info about equations and learners - always displayed
@@ -126,12 +178,12 @@ program define _ddml_describe, rclass
 			local rs : word `m' of `rslist'
 			cap count if `rs'
 			if _rc==0 {
-				local N "`: di %2.0f r(N)'"
+				local nobs "`: di %2.0f r(N)'"
 			}
 			else {
-				local N "(n.a.)"
+				local nobs "(n.a.)"
 			}
-			di as res %~12s "`N'" _c
+			di as res %~12s "`nobs'" _c
 		}
 		di
 	}
@@ -156,68 +208,70 @@ program define _ddml_describe, rclass
 	}
 		
 	// crossfit results in detail
-	if `cflag' & `crossfitted' {
+	if `cflag' {
 		di
 		di as text "Crossfit results (detail):"
 		desc_crossfit `mname', vname(`nameY') etype(yeq) header
-		tempname cfresults_Y1 
-		mat `cfresults_Y1' = r(cfresults)
+		mat `vmat' = r(cfresults)
+		return mat cfresults_`nameY' = `vmat'
 		// should always be a D eqn
 		if `numeqnD' {
-			local dnum 1
 			foreach var in `nameD' {
-				tempname cfresults_D`dnum'
 				desc_crossfit `mname', vname(`var') etype(deq)
-				mat `cfresults_D`dnum'' = r(cfresults)
-				local ++dnum
+				mat `vmat' = r(cfresults)
+				return mat cfresults_`var' = `vmat'
 			}
 		}
 		if `numeqnZ' {
 			local znum 1
 			foreach var in `nameZ' {
-				tempname cfresults_Z`znum'
 				desc_crossfit `mname', vname(`var') etype(zeq)
-				mat `cfresults_Z`znum'' = r(cfresults)
-				local ++znum
+				mat `vmat' = r(cfresults)
+				return mat cfresults_`var' = `vmat'
 			}
 		}
-	}
-	else if `cflag' {
-		di
-		di as text "No crossfitting results to display."
 	}
 	
 	// stacking results in detail
-	if `stflag' & `crossfitted' {	
+	if `stwflag' {	
 		di
 		di as text "Stacking results (detail):"
-		desc_stacking `mname', vname(`nameY') etype(yeq)
+		
+		// always a Y eqn
 		tempname stweights_Y1 ssweights_Y1 psweights_Y1
-		mat `stweights_Y1'=r(stweights)
-		mat `ssweights_Y1'=r(ssweights)
-		mat `psweights_Y1'=r(psweights)
+		desc_stacking `mname', vname(`nameY') etype(yeq)
+		mat `vmat' = r(stweights)
+		return mat stweights_`nameY' = `vmat'
+		mat `vmat' = r(ssweights)
+		return mat ssweights_`nameY' = `vmat'
+		mat `vmat' = r(psweights)
+		return mat psweights_`nameY' = `vmat'
 		// should always be a D eqn
 		if `numeqnD' {
-			local dnum 1
 			foreach var in `nameD' {
 				tempname stweights_D`dnum' ssweights_D`dnum' psweights_D`dnum'
 				desc_stacking `mname', vname(`var') etype(deq)
-				mat `stweights_D`dnum''=r(stweights)
-				mat `ssweights_D`dnum''=r(ssweights)
-				mat `psweights_D`dnum''=r(psweights)
-				local ++dnum
+				mat `vmat' = r(stweights)
+				return mat stweights_`var' = `vmat'
+				mat `vmat' = r(ssweights)
+				return mat ssweights_`var' = `vmat'
+				mat `vmat' = r(psweights)
+				return mat psweights_`var' = `vmat'
 			}
 		}
+		// may or may not be a Z eqn
 		if `numeqnZ' {
 			local znum 1
 			foreach var in `nameZ' {
 				desc_stacking `mname', vname(`var') etype(zeq)
+				mat `vmat' = r(stweights)
+				return mat stweights_`var' = `vmat'
+				mat `vmat' = r(ssweights)
+				return mat ssweights_`var' = `vmat'
+				mat `vmat' = r(psweights)
+				return mat psweights_`var' = `vmat'
 			}
 		}
-	}
-	else if `stflag' {
-		di
-		di as text "No stacking results to display."
 	}	// end stacking block
 
 	// CVC results in detail
@@ -228,19 +282,53 @@ program define _ddml_describe, rclass
         di as res "HA: " as text "There is another learner with lower predictive risk."
         di
         di as res "CVC test p-values:"
-		desc_cvc `mname', vname(`nameY') etype(yeq)
+		desc_values `mname', vname(`nameY') etype(yeq) cvc median
+		mat `vmat' = r(values)
+		return mat cvc_`nameY' = `vmat'
 		// should always be a D eqn
 		if `numeqnD' {
 			foreach var in `nameD' {
-				desc_cvc `mname', vname(`var') etype(deq)
+				desc_values `mname', vname(`var') etype(deq) cvc median
+				mat `vmat' = r(values)
+				return mat cvc_`var' = `vmat'
 			}
 		}
 		if `numeqnZ' {
 			foreach var in `nameZ' {
-				desc_cvc `mname', vname(`var') etype(zeq)
+				desc_values `mname', vname(`var') etype(zeq) cvc median
+				mat `vmat' = r(values)
+				return mat cvc_`var' = `vmat'
 			}
 		}
-	
+	}
+
+	// R-sq/MSE/RMSE/N results in detail
+	if (`rsqflag' | `mseflag' | `rmseflag' | `nflag') & `crossfitted' {
+		foreach stat in `rsq' `rmse' `mse' `n' {
+			di
+			if "`stat'"=="rsq"		di as res "R-sq by learner:"
+			if "`stat'"=="mse"		di as res "MSE by learner:"
+			if "`stat'"=="rmse"		di as res "RMSE by learner:"
+			if "`stat'"=="n"		di as res "Sample size by learner:"
+			desc_values `mname', vname(`nameY') etype(yeq) `stat' mean
+			mat `vmat' = r(values)
+			return mat `stat'_`nameY' = `vmat'
+			// should always be a D eqn
+			if `numeqnD' {
+				foreach var in `nameD' {
+					desc_values `mname', vname(`var') etype(deq) `stat' mean
+					mat `vmat' = r(values)
+					return mat `stat'_`var' = `vmat'
+				}
+			}
+			if `numeqnZ' {
+				foreach var in `nameZ' {
+					desc_values `mname', vname(`var') etype(zeq) `stat' mean
+					mat `vmat' = r(values)
+					return mat `stat'_`var' = `vmat'
+				}
+			}
+		}
 	}
 
 	// estimate results in detail; notable option since _ddml_estimate routines would otherwise output this
@@ -252,36 +340,11 @@ program define _ddml_describe, rclass
 		di
 		_ddml_estimate_linear `mname', `options' replay notable
 	}
-	else if `eflag' {
-		di
-		di as text "No estimation results to display."
-	}
 	
 	// clear this global from Mata
 	mata: mata drop `eqn'
 
-	// return results
-	if `cflag' & `crossfitted' {
-		// return results in r(.) macros
-		return mat cfresults_Y1			= `cfresults_Y1'
-		forvalues j=1/`numeqnD' {
-			return mat cfresults_D`j'	= `cfresults_D`j''
-		}
-		forvalues j=1/`numeqnZ' {
-			return mat cfresults_Z`j'	= `cfresults_Z`j''
-		}
-	}
-	if `stflag' & `crossfitted' {
-		// return results in r(.) macros
-		return mat stweights_Y1			= `stweights_Y1'
-		return mat ssweights_Y1			= `ssweights_Y1'
-		return mat psweights_Y1			= `psweights_Y1'
-		forvalues j=1/`numeqnD' {
-			return mat stweights_D`j'	= `stweights_D`j''
-			return mat ssweights_D`j'	= `ssweights_D`j''
-			return mat psweights_D`j'	= `psweights_D`j''
-		}
-	}
+
 end
 
 prog define desc_stacking, rclass
@@ -319,55 +382,68 @@ prog define desc_stacking, rclass
 	di
 	di as text "Conditional expectation: " as res "`vname'"
 	
-
 	// standard stacking
-	local vtilde `vtlist'
-	qui _ddml_extract, mname(`mname') show(stweights)
-	mat `wmat' = r(`vtilde'_w_mn)
-	di
-	di as text "Standard stacking weights: " _c
-	if `wmat'[1,1] ~= . {
-		di as res "`vtilde'"
-		display_weights `wmat', dh(`dh') nreps(`nreps')
-		di as text "(nb: std stacking weights above are means across `kfolds' folds)"
+	if `stdflag' {
+		local vtilde `vtlist'
+		// qui _ddml_extract, mname(`mname') show(stweights)
+		// mat `wmat' = r(`vtilde'_w_mn)
+		extract_weights `mname', vname(`vname') etype(`etype') stweights
+		mat `wmat' = r(weights)
+		di
+		di as text "Standard stacking weights: " _c
+		if `wmat'[1,1] ~= . {
+			di as res "`vtilde'"
+			display_values `wmat', dh(`dh') nreps(`nreps') mean
+			di as text "(nb: std stacking weights above are means across `kfolds' folds)"
+		}
+		else {
+			// don't display varname if weights not available
+			di as res "(no weights available)"
+		}
+		return matrix stweights=`wmat'
 	}
-	else {
-		// don't display varname if weights not available
-		di as res "(no weights available)"
-	}
-	return matrix stweights=`wmat'
 
+	// short-stacking
 	if `ssflag' {
-		qui _ddml_extract, mname(`mname') show(ssweights)
-		mat `wmat' = r(`shortstack'_ss)
+		// qui _ddml_extract, mname(`mname') show(ssweights)
+		// mat `wmat' = r(`shortstack'_ss)
+		extract_weights `mname', vname(`vname') etype(`etype') ssweights
+		mat `wmat' = r(weights)
 		di
 		di as text "Short-stacking weights: " as res "`shortstack'_ss"
-		display_weights `wmat', dh(`dh') nreps(`nreps')
+		display_values `wmat', dh(`dh') nreps(`nreps') mean
 		return matrix ssweights=`wmat'
 	}
 
 	// pooled stacking
-	qui _ddml_extract, mname(`mname') show(psweights)
-	mat `wmat' = r(`poolstack'_ps)
-	di
-	di as text "Pooled stacking weights: " _c
-	if `wmat'[1,1] ~= . {
-		di as res "`poolstack'_ps"
-		display_weights `wmat', dh(`dh') nreps(`nreps')
+	if `psflag' {
+		// qui _ddml_extract, mname(`mname') show(psweights)
+		// mat `wmat' = r(`poolstack'_ps)
+		extract_weights `mname', vname(`vname') etype(`etype') psweights
+		mat `wmat' = r(weights)
+		di
+		di as text "Pooled stacking weights: " _c
+		if `wmat'[1,1] ~= . {
+			di as res "`poolstack'_ps"
+			display_values `wmat', dh(`dh') nreps(`nreps') mean
+		}
+		else {
+			// don't display varname if weights not available
+			di as res "(no weights available)"
+		}
+		return matrix psweights=`wmat'
 	}
-	else {
-		// don't display varname if weights not available
-		di as res "(no weights available)"
-	}
-	return matrix psweights=`wmat'
 
 
 end
 
 
-prog define desc_cvc, rclass
+prog define extract_weights, rclass
 
-	syntax name(name=mname), vname(string) etype(string)	// etype is yeq, deq or zeq (not dheq)
+	syntax name(name=mname), vname(string) etype(string)		/// etype is yeq, deq or zeq (not dheq)
+								[								///
+								stweights ssweights psweights	///
+								 ]
 
 	tempname eqn
 	mata: `eqn' = init_eStruct()
@@ -381,35 +457,57 @@ prog define desc_cvc, rclass
 	mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 	mata: st_local("vtlist",invtokens(`eqn'.vtlist))
 	mata: st_local("pystackedmulti",strofreal(`eqn'.pystackedmulti))
+	mata: st_local("shortstack",invtokens(`eqn'.shortstack))
+	mata: st_local("poolstack",invtokens(`eqn'.poolstack))
 	
 	if "`etype'"=="yeq" {
-		local yd y
+		local ydz y
 	}
 	else if "`etype'"=="deq" {
-		local yd d
+		local ydz d
+	}
+	else if "`etype'"=="zeq" {
+		local ydz z
+	}
+	
+	if "`stweights'"=="stweights"		{
+		local stflag	=1
+		local ssflag	=0
+		local psflag	=0
+		local key1		`vtlist'
+		local key2		stack_weights
+	}
+	else if "`ssweights'"=="ssweights" {
+		local stflag	=0
+		local ssflag	=1
+		local psflag	=0
+		local key1		`shortstack'_ss
+		local key2		ss_weights
+	}
+	else if "`psweights'"=="psweights" {
+		local stflag	=0
+		local ssflag	=0
+		local psflag	=1
+		local key1		`poolstack'_ps
+		local key2		ps_weights
+	}
+	else {
+		di as err "ddml extract error"
+		exit 198
 	}
 
 	tempname wmat
-	
-	di
-	di as text "Conditional expectation " _c
-	if "`yd'"=="y" {
-		di as text "E[Y|X]: " _c
-	}
-	else if "`yd'"=="d" {
-		di as text "E[D|Z,X]: " _c
-	}
-	di as res "`vname'"
-	
+	tempname val val_m val_0 val_1 val_h val_m_h
 
-	if ("`model'"=="interactive" & "`yd'"=="y") 	|	///
-		("`model'"=="interactiveiv" & "`yd'"=="y")	|	///
-		("`model'"=="interactiveiv" & "`yd'"=="d")		///
+	if ("`model'"=="interactive" & "`ydz'"=="y") 	|	///
+		("`model'"=="interactiveiv" & "`ydz'"=="y")	|	///
+		("`model'"=="interactiveiv" & "`ydz'"=="d")		///
 		{
-		tempname cvc_pval cvc0_pval cvc1_pval
 		
+		// interactive, treat=0 and treat=1
+				
 		if `pystackedmulti' {
-			_ddml_extract lnames, mname(`mname') vname(`vname') key1(`vtlist') key2(stack_base_est) stata
+			_ddml_extract lnames, mname(`mname') vname(`vname') key1(`key1') key2(stack_base_est) stata
 			local lnames = r(lnames)
 		}
 		else {
@@ -418,44 +516,35 @@ prog define desc_cvc, rclass
 		local nlearners : list sizeof lnames
 		
 		forvalues m=1/`nreps' {
-			_ddml_extract cvc0_pval, mname(`mname') vname(`vname') key1(`vname') key2(cvc0_pval) key3(`m') stata
-			mat `cvc0_pval' = nullmat(`cvc0_pval') \ r(cvc0_pval)
-			_ddml_extract cvc1_pval, mname(`mname') vname(`vname') key1(`vname') key2(cvc1_pval) key3(`m') stata
-			mat `cvc1_pval' = nullmat(`cvc1_pval') \ r(cvc1_pval)
+			forvalues i=0/1 {
+				_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2'`i') key3(`m') stata
+				mat `val_m' = r(val)
+				if `stflag' {
+					// for std stacking, need to convert into means across folds
+					mata: st_matrix("`val_m'", mean(st_matrix("`val_m'")')')
+				}
+				mat `val_`i'' = nullmat(`val_`i'') , `val_m'
+			}
 		}
 		forvalues i=0/1 {
-			mat `cvc`i'_pval' = `cvc`i'_pval''
-			mata: st_matrix("`cvc`i'_pval'",(mean(st_matrix("`cvc`i'_pval'")')' , st_matrix("`cvc`i'_pval'")))
-			mat `cvc`i'_pval' = J(`nlearners',1,`i') , `cvc`i'_pval'
-			mata: st_matrix("`cvc`i'_pval'",(runningsum(J(`nlearners',1,1)), st_matrix("`cvc`i'_pval'")))
-			mat rownames `cvc`i'_pval' = `lnames'
+			mata: st_matrix("`val_`i''",(mean(st_matrix("`val_`i''")')' , st_matrix("`val_`i''")))
+			mat `val_`i'' = J(`nlearners',1,`i') , `val_`i''
+			mata: st_matrix("`val_`i''",(runningsum(J(`nlearners',1,1)), st_matrix("`val_`i''")))
+			// rownames
+			mat rownames `val_`i'' = `lnames'
 		}
-		mat `cvc_pval' = `cvc0_pval' \ `cvc1_pval'
-		display_weights `cvc_pval', dh(d) nreps(`nreps')
+		mat `val' = `val_0' \ `val_1'
+		// colnames
+		if "`model'"=="interactive"		local cnames learner D=0/1 mean_weight
+		else							local cnames learner Z=0/1 mean_weight
+		forvalues i=1/`nreps' {
+			local cnames `cnames' rep_`i'
+		}
+		mat colnames `val' = `cnames'
 	}
-	else {
-		tempname cvc_pval
-		
-		if `pystackedmulti' {
-			_ddml_extract lnames, mname(`mname') vname(`vname') key1(`vtlist') key2(stack_base_est) stata
-			local lnames = r(lnames)
-		}
-		else {
-			local lnames `vtlist'
-		}
-		local nlearners : list sizeof lnames
-		
-		forvalues m=1/`nreps' {
-			_ddml_extract cvc_pval, mname(`mname') vname(`vname') key1(`vname') key2(cvc_pval) key3(`m') stata
-			mat `cvc_pval' = nullmat(`cvc_pval') \ r(cvc_pval)
-		}
-		mat `cvc_pval' = `cvc_pval''
-		mata: st_matrix("`cvc_pval'",(runningsum(J(`nlearners',1,1)), mean(st_matrix("`cvc_pval'")')' , st_matrix("`cvc_pval'")))
-		mat rownames `cvc_pval' = `lnames'
-		display_weights `cvc_pval', nreps(`nreps')
-	}
-	if "`yd'"=="d" & "`model'"=="fiv" {
-		tempname cvc_h_pval
+	else if "`ydz'"=="d" & "`model'"=="fiv" {
+		// fiv, with/without h		
+		cap mat drop `val'
 		
 		if `pystackedmulti' {
 			_ddml_extract lnames, mname(`mname') vname(`vname') key1(`vtlist') key2(stack_base_est_h) stata
@@ -467,49 +556,406 @@ prog define desc_cvc, rclass
 		local nlearners : list sizeof lnames
 		
 		forvalues m=1/`nreps' {
-			_ddml_extract cvc_h_pval, mname(`mname') vname(`vname') key1(`vname') key2(cvc_h_pval) key3(`m') stata
-			mat `cvc_h_pval' = nullmat(`cvc_h_pval') \ r(cvc_h_pval)
+			_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2') key3(`m') stata
+			mat `val_m' = r(val)
+			_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2'_h) key3(`m') stata
+			mat `val_m_h' = r(val)
+			if `stflag' {
+				// for std stacking, need to convert into means across folds
+				mata: st_matrix("`val_m'", mean(st_matrix("`val_m'")')')
+				mata: st_matrix("`val_m_h'", mean(st_matrix("`val_m_h'")')')
+			}
+			mat `val' = nullmat(`val') , `val_m'
+			mat `val_h' = nullmat(`val_h') , `val_m_h'
 		}
-		mat `cvc_h_pval' = `cvc_h_pval''
-		mata: st_matrix("`cvc_h_pval'",(runningsum(J(`nlearners',1,1)), mean(st_matrix("`cvc_h_pval'")')' , st_matrix("`cvc_h_pval'")))
-		mat rownames `cvc_h_pval' = `lnames'
-		di as text "Conditional expectation E[D|X]: " as res "`vname'"
-		display_weights `cvc_h_pval', nreps(`nreps')
+		// add learner number, h=0/1 and mean as first column
+		mata: st_matrix("`val'", (runningsum(J(`nlearners',1,1)), J(`nlearners',1,0), mean(st_matrix("`val'")')' , st_matrix("`val'")))
+		mata: st_matrix("`val_h'", (runningsum(J(`nlearners',1,1)), J(`nlearners',1,1), mean(st_matrix("`val_h'")')' , st_matrix("`val_h'")))
+		// rownames
+		mat rownames `val' = `lnames'
+		mat rownames `val_h' = `lnames'
+		// append
+		mat `val' = `val' \ `val_h'
+		// colnames
+		local cnames learner h=0/1 mean_weight
+		forvalues i=1/`nreps' {
+			local cnames `cnames' rep_`i'
+		}
+		mat colnames `val' = `cnames'
 	}
+	else {
+		// standard
+		if `pystackedmulti' {
+			_ddml_extract lnames, mname(`mname') vname(`vname') key1(`key1') key2(stack_base_est) stata
+			local lnames = r(lnames)
+		}
+		else {
+			local lnames `vtlist'
+		}
+		local nlearners : list sizeof lnames
+	
+		// get values for each resample; rows are learners, columns are resamples
+		// or folds/resamples if standard stacking weights
+		forvalues m=1/`nreps' {
+			_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2') key3(`m') stata
+			mat `val_m' = r(val)
+			if `stflag' {
+				// for std stacking, need to convert into means across folds
+				mata: st_matrix("`val_m'", mean(st_matrix("`val_m'")')')
+			}
+			mat `val' = nullmat(`val') , `val_m'
+		}
+		// add learner number and mean as first column
+		mata: st_matrix("`val'",(runningsum(J(`nlearners',1,1)), mean(st_matrix("`val'")')' , st_matrix("`val'")))
+		// rownames and colnames
+		mat rownames `val' = `lnames'
+		local cnames learner mean_weight
+		forvalues i=1/`nreps' {
+			local cnames `cnames' rep_`i'
+		}
+		mat colnames `val' = `cnames'
+	}
+
+	return mat weights	= `val'
+	
+end
+
+
+prog define desc_values, rclass
+
+	syntax name(name=mname), vname(string) etype(string)	/// etype is yeq, deq or zeq (not dheq)
+								[							///
+								 cvc rsq mse rmse n			///
+								 mean median				///
+								 ]
+
+	tempname eqn
+	mata: `eqn' = init_eStruct()
+
+	mata: st_local("crossfitted",strofreal(`mname'.crossfitted))
+	mata: st_local("model",`mname'.model)
+	mata: st_local("kfolds",strofreal(`mname'.kfolds))
+	mata: st_local("nreps",strofreal(`mname'.nreps))
+	mata: st_local("stdflag",strofreal(`mname'.stdflag))
+	mata: st_local("ssflag",strofreal(`mname'.ssflag))
+	mata: st_local("psflag",strofreal(`mname'.psflag))
+
+	mata: `eqn' = (`mname'.eqnAA).get("`vname'")
+	mata: st_local("vtlist",invtokens(`eqn'.vtlist))
+	mata: st_local("shortstack",invtokens(`eqn'.shortstack))
+	mata: st_local("poolstack",invtokens(`eqn'.poolstack))
+	mata: st_local("pystackedmulti",strofreal(`eqn'.pystackedmulti))
+	
+	if "`etype'"=="yeq" {
+		local ydz y
+	}
+	else if "`etype'"=="deq" {
+		local ydz d
+	}
+	else if "`etype'"=="zeq" {
+		local ydz z
+	}
+	
+	if "`median'"=="median"		local medmean	median
+	else if "`mean'"=="mean"	local medmean	mean
+	else {
+		di as err "ddml describe error"
+		exit 198
+	}
+	
+	// pystackedmulti means 1 call to pystacked with multiple learners, so vtlist is vtilde
+	if `pystackedmulti'			local vtilde `vtlist'
+	
+	// cvc saved under vname; others saved under learner
+	if "`cvc'"=="cvc"			local key1 `vname'
+	else						local key1 `vtilde'
+	
+	if "`cvc'"=="cvc"			local key2 cvc_pval
+	else if "`rsq'"=="rsq"		local key2 R-sq
+	else if "`mse'"=="mse"		local key2 MSE
+	else if "`rmse'"=="rmse"	local key2 RMSE
+	else if "`n'"=="n"			local key2 N
+	else {
+		di as err "ddml extract error"
+		exit 198
+	}
+	if "`n'"=="n"				local nodecimal nodecimal
+
+	tempname wmat
+	tempname val val_0 val_1 val_st val_st_0 val_st_1 val_ss val_ss_0 val_ss_1 val_ps val_ps_0 val_ps_1
+	
+	di
+	di as text "Conditional expectation " _c
+	if "`ydz'"=="y" {
+		di as text "E[Y|X]: " _c
+	}
+	else if "`ydz'"=="d" {
+		di as text "E[D|Z,X]: " _c
+	}
+	else if "`ydz'"=="z" {
+		di as text "E[Z|X]: " _c
+	}
+	di as res "`vname'"
+	
+
+	if ("`model'"=="interactive" & "`ydz'"=="y") 	|	///
+		("`model'"=="interactiveiv" & "`ydz'"=="y")	|	///
+		("`model'"=="interactiveiv" & "`ydz'"=="d")		///
+		{
+		
+		// interactive, treat=0 and treat=1
+				
+		if `pystackedmulti' {
+			_ddml_extract lnames, mname(`mname') vname(`vname') key1(`vtlist') key2(stack_base_est) stata
+			local lnames = r(lnames)
+		}
+		else {
+			local lnames `vtlist'
+		}
+		local nlearners : list sizeof lnames
+		
+		// get values for each resample; rows are learners, columns are resamples
+		forvalues m=1/`nreps' {
+			forvalues i=0/1 {
+				if "`cvc'"=="cvc" {
+				// single matrix of cvc results for all learners
+					_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2'`i') key3(`m') stata
+					mat `val_`i'' = nullmat(`val_`i'') , r(val)
+				}
+				else if `pystackedmulti' {
+					// pystacked learners all in one matrix
+					_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2'_L`i') key3(`m') stata
+					mat `val_`i'' = nullmat(`val_`i'') , r(val)
+				}
+				else {
+					// loop through learners
+					tempname val_j
+					foreach vt in `vtlist' {
+						_ddml_extract val, mname(`mname') vname(`vname') key1(`vt') key2(`key2'`i') key3(`m') stata
+						mat `val_j' = nullmat(`val_j') \ r(val)
+					}
+					mat `val_`i'' = nullmat(`val_`i''), `val_j'
+				}
+			}
+		}
+		// add rows for stacking learners unless cvc
+		if `stdflag' & "`cvc'"=="" {
+			forvalues i=0/1 {
+				forvalues m=1/`nreps' {
+					_ddml_extract val, mname(`mname') vname(`vname') key1(`vtlist') key2(`key2'`i') key3(`m') stata
+					mat `val_st_`i'' = nullmat(`val_st_`i'') , r(val)
+				}
+				mat `val_`i'' = `val_`i'' \ `val_st_`i''
+			}
+			local lnames `lnames' Std_stacking
+		}
+		if `ssflag' & "`cvc'"=="" {
+			forvalues i=0/1 {
+				forvalues m=1/`nreps' {
+					_ddml_extract val, mname(`mname') vname(`vname') key1(`shortstack'_ss) key2(`key2'`i') key3(`m') stata
+					mat `val_ss_`i'' = nullmat(`val_ss_`i'') , r(val)
+				}
+				mat `val_`i'' = `val_`i'' \ `val_ss_`i''
+			}
+			local lnames `lnames' Short_stacking
+		}
+		if `psflag' & "`cvc'"=="" {
+			forvalues i=0/1 {
+				forvalues m=1/`nreps' {
+					_ddml_extract val, mname(`mname') vname(`vname') key1(`poolstack'_ps) key2(`key2'`i') key3(`m') stata
+					mat `val_ps_`i'' = nullmat(`val_ps_`i'') , r(val)
+				}
+				mat `val_`i'' = `val_`i'' \ `val_ps_`i''
+			}
+			local lnames `lnames' Pooled_stacking
+		}
+		// add mean/median as first column
+		local nrows : list sizeof lnames
+		forvalues i=0/1 {
+			if "`medmean'"=="median" {
+				mata: st_matrix("`val_`i''",(ddml_median(st_matrix("`val_`i''")')' , st_matrix("`val_`i''")))
+			}
+			else {
+				mata: st_matrix("`val_`i''",(mean(st_matrix("`val_`i''")')' , st_matrix("`val_`i''")))
+			}
+			mat `val_`i'' = J(`nrows',1,`i') , `val_`i''
+			mata: st_matrix("`val_`i''",(runningsum(J(`nrows',1,1)), st_matrix("`val_`i''")))
+			mat rownames `val_`i'' = `lnames'
+		}
+		mat `val' = `val_0' \ `val_1'
+		display_values `val', dh(d) nreps(`nreps') `medmean' `nodecimal'
+	}
+	else {
+		// standard
+		if `pystackedmulti' {
+			_ddml_extract lnames, mname(`mname') vname(`vname') key1(`vtilde') key2(stack_base_est) stata
+			local lnames = r(lnames)
+		}
+		else {
+			local lnames `vtlist'
+		}
+		local nlearners : list sizeof lnames
+		
+		// get values for each resample; rows are learners, columns are resamples
+		forvalues m=1/`nreps' {
+			if "`cvc'"=="cvc" {
+				// single matrix of cvc results for all learners
+				_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2') key3(`m') stata
+				mat `val' = nullmat(`val') , r(val)
+			}
+			else if `pystackedmulti' {
+				// pystacked learners all in one matrix
+				_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2'_L) key3(`m') stata
+				mat `val' = nullmat(`val') , r(val)
+			}
+			else {
+				// loop through learners
+				tempname val_j
+				foreach vt in `vtlist' {
+					_ddml_extract val, mname(`mname') vname(`vname') key1(`vt') key2(`key2') key3(`m') stata
+					mat `val_j' = nullmat(`val_j') \ r(val)
+				}
+				mat `val' = nullmat(`val'), `val_j'
+			}
+		}
+		// add rows for stacking learners unless cvc
+		if `stdflag' & "`cvc'"=="" {
+			forvalues m=1/`nreps' {
+				_ddml_extract val, mname(`mname') vname(`vname') key1(`vtilde') key2(`key2') key3(`m') stata
+				mat `val_st' = nullmat(`val_st') , r(val)
+			}
+			mat `val' = `val' \ `val_st'
+			local lnames `lnames' Std_stacking
+		}
+		if `ssflag' & "`cvc'"=="" {
+			forvalues m=1/`nreps' {
+				_ddml_extract val, mname(`mname') vname(`vname') key1(`shortstack'_ss) key2(`key2') key3(`m') stata
+				mat `val_ss' = nullmat(`val_ss') , r(val)
+			}
+			mat `val' = `val' \ `val_ss'
+			local lnames `lnames' Short_stacking
+		}
+		if `psflag' & "`cvc'"=="" {
+			forvalues m=1/`nreps' {
+				_ddml_extract val, mname(`mname') vname(`vname') key1(`poolstack'_ps) key2(`key2') key3(`m') stata
+				mat `val_ps' = nullmat(`val_ps') , r(val)
+			}
+			mat `val' = `val' \ `val_ps'
+			local lnames `lnames' Pooled_stacking
+		}
+		// add mean/median as first column
+		local nrows : list sizeof lnames
+		if "`medmean'"=="median" {
+			mata: st_matrix("`val'",(runningsum(J(`nrows',1,1)), ddml_median(st_matrix("`val'")')' , st_matrix("`val'")))
+		}
+		else {
+			mata: st_matrix("`val'",(runningsum(J(`nrows',1,1)), mean(st_matrix("`val'")')' , st_matrix("`val'")))
+		}
+		mat rownames `val' = `lnames'
+		display_values `val', nreps(`nreps') `medmean' `nodecimal'
+	}
+	if "`ydz'"=="d" & "`model'"=="fiv" {
+		
+		cap mat drop `val'
+		
+		if `pystackedmulti' {
+			_ddml_extract lnames, mname(`mname') vname(`vname') key1(`vtlist') key2(stack_base_est_h) stata
+			local lnames = r(lnames)
+		}
+		else {
+			local lnames `vtlist'
+		}
+		local nlearners : list sizeof lnames
+		
+		// get values for each resample; rows are learners, columns are resamples
+		forvalues m=1/`nreps' {
+			if "`cvc'"=="cvc" {
+				// single matrix of cvc results for all learners
+				_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2'_h) key3(`m') stata
+				mat `val' = nullmat(`val') , r(val)
+			}
+			else if `pystackedmulti' {
+				// pystacked learners all in one matrix
+				_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2'_L_h) key3(`m') stata
+				mat `val' = nullmat(`val') , r(val)
+			}
+			else {
+				// loop through learners
+				tempname val_j
+				foreach vt in `vtlist' {
+					_ddml_extract val, mname(`mname') vname(`vname') key1(`vt') key2(`key2'_h) key3(`m') stata
+					mat `val_j' = nullmat(`val_j') \ r(val)
+				}
+				mat `val' = nullmat(`val'), `val_j'
+			}
+		}
+		// add mean/median as first column
+		if "`medmean'"=="median" {
+			mata: st_matrix("`val'",(runningsum(J(`nlearners',1,1)), ddml_median(st_matrix("`val'")')' , st_matrix("`val'")))
+		}
+		else {
+			mata: st_matrix("`val'",(runningsum(J(`nlearners',1,1)), mean(st_matrix("`val'")')' , st_matrix("`val'")))
+		}
+		mat rownames `val' = `lnames'
+		di as text "Conditional expectation E[D|X]: " as res "`vname'"
+		display_values `val', nreps(`nreps') `medmean' `nodecimal'
+	}
+	
+	// column names
+	local cnames learner `medmean'
+	forvalues m=1/`nreps' {
+		local cnames `cnames' rep_`m'
+	}
+	mat colnames `val' = `cnames'
+	
+	return matrix values	= `val'
 
 end
 
 
-prog define display_weights
+prog define display_values
 
-	syntax name(name=wmat), [ dh(string) nreps(integer 1) ]
+	syntax name(name=wmat), [ dh(string) nreps(integer 1) mean median NOdecimal ]
 	
 	local rnames : rownames `wmat'
 	local nrows = rowsof(`wmat')
 
-	// check if weights available
+	if "`mean'"=="mean"				local medmean "  Mean"
+	else if "`median'"=="median"	local medmean "Median"
+	else {
+		di as err "internal ddml describe error
+		exit 198
+	}
+
+	// check if values available
 	if el(`wmat',1,1)==. {
-		di as res "(no weights available)"
+		di as res "(not available)"
 		exit
 	}
 	
+	mata: st_numscalar("r(max)",max(abs(st_matrix("`wmat'"))))
+	if "`nodecimal'"=="nodecimal"	local fmt 10.0fc
+	else if r(max) < 10^3			local fmt 10.3f
+	else if r(max) >= 10^6			local fmt 10.2e
+	else							local fmt 10.0fc
+	
 	if "`dh'"=="" {
-		di as text "Learner" _col(27) "Mean" as res "   |" _c
+		di as text "Learner" _col(30) "`medmean'" as res "   |" _c
 		local mloc=26
 		local dhcol=0
 	}
 	else if "`dh'"=="d" {
-		di as text "Learner" _col(23) "Treated" _col(33) "Mean" as res "   |" _c
+		di as text "Learner" _col(23) "Treated" _col(38) "Mean" as res "   |" _c
 		local mloc=32
 		local dhcol=1
 	}
 	else if "`dh'"=="h" {
-		di as text "Learner" _col(22) "Cond exp" _col(33) "Mean" as res "   |" _c
+		di as text "Learner" _col(22) "Cond exp" _col(38) "Mean" as res "   |" _c
 		local mloc=32
 		local dhcol=1
 	}
 	forvalues j=1/`nreps' {
-		di as text %8s "Rep `j'" _c
+		di as text %10s "Rep `j'" _c
 	}
 	di
 
@@ -529,9 +975,9 @@ prog define display_weights
 			}
 			di as res _col(22) %8s "`cetext'" _c
 		}
-		di as res _col(`mloc') %5.3f el(`wmat',`i',2+`dhcol') "   |" _c
+		di as res _col(`mloc') %`fmt' el(`wmat',`i',2+`dhcol') "   |" _c
 		forvalues j=1/`nreps' {
-			di as res %8.3f el(`wmat',`i',2+`dhcol'+`j') _c
+			di as res %`fmt' el(`wmat',`i',2+`dhcol'+`j') _c
 		}
 		di
 	}
@@ -566,9 +1012,9 @@ prog define desc_learners, rclass
 	mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 	mata: st_local("vtlist",invtokens(`eqn'.vtlist))
 
-	foreach vtilde in `vtlist' {
-		di as res _col(2) "Learner:" _col(15) "`vtilde'"
-		mata: st_local("estring", return_learner_item(`eqn',"`vtilde'","estring"))
+	foreach vt in `vtlist' {
+		di as res _col(2) "Learner:" _col(15) "`vt'"
+		mata: st_local("estring", return_learner_item(`eqn',"`vt'","estring"))
 		// remove tabs and extraneous spaces
 		local estring = subinstr("`estring'","	"," ",.)
 		local estring = strtrim(stritrim("`estring'"))
@@ -579,7 +1025,7 @@ prog define desc_learners, rclass
 			di as res _col(15) "est cmd: `estring'"
 		}
 		if `heqn' {
-			mata: st_local("estring_h", return_learner_item(`eqn',"`vtilde'","estring_h"))
+			mata: st_local("estring_h", return_learner_item(`eqn',"`vt'","estring_h"))
 			di as res _col(15) "est cmd (H): `estring_h'"
 		}
 	}
@@ -666,21 +1112,21 @@ prog define desc_crossfit, rclass
 	mat `cfresults_r' = .
 	mat `cfresults0_r' = .
 	mat `cfresults1_r' = .
-	foreach vtilde in `vtlist' {
+	foreach vt in `vtlist' {
 // ?
 		// for pystacked stacking and non-pystacked
 		if `crossfitted' /* & `stdflag' */ {
 			if `pairs'==0 {
 				forvalues m=1/`nreps' {
 					tempname mse_folds
-					mata: st_local("rsq", strofreal(return_result_item(`eqn',"`vtilde'","R-sq","`m'")))
-					mata: st_local("mse", strofreal(return_result_item(`eqn',"`vtilde'","MSE","`m'")))
-					mata: st_matrix("`mse_folds'", return_result_item(`eqn',"`vtilde'","MSE_folds","`m'"))
+					mata: st_local("rsq", strofreal(return_result_item(`eqn',"`vt'","R-sq","`m'")))
+					mata: st_local("mse", strofreal(return_result_item(`eqn',"`vt'","MSE","`m'")))
+					mata: st_matrix("`mse_folds'", return_result_item(`eqn',"`vt'","MSE_folds","`m'"))
 					if `firstrow' {
 						di as res "`vnabbrev'" _c
 						local firstrow = 0
 					}
-					local lnrname `vtilde'_`m'
+					local lnrname `vt'_`m'
 					local lnrabbrev = abbrev("`lnrname'",`lnrlen')
 					local c = `vnlen'+2
 					di as res _col(`c') "`lnrabbrev'" _c
@@ -703,18 +1149,18 @@ prog define desc_crossfit, rclass
 			else {
 				forvalues m=1/`nreps' {
 					tempname mse0_folds mse1_folds
-					mata: st_local("rsq0", strofreal(return_result_item(`eqn',"`vtilde'","R-sq0","`m'")))
-					mata: st_local("rsq1", strofreal(return_result_item(`eqn',"`vtilde'","R-sq1","`m'")))
-					mata: st_local("mse0", strofreal(return_result_item(`eqn',"`vtilde'","MSE0","`m'")))
-					mata: st_local("mse1", strofreal(return_result_item(`eqn',"`vtilde'","MSE1","`m'")))
-					mata: st_matrix("`mse0_folds'", return_result_item(`eqn',"`vtilde'","MSE0_folds","`m'"))
-					mata: st_matrix("`mse1_folds'", return_result_item(`eqn',"`vtilde'","MSE1_folds","`m'"))
+					mata: st_local("rsq0", strofreal(return_result_item(`eqn',"`vt'","R-sq0","`m'")))
+					mata: st_local("rsq1", strofreal(return_result_item(`eqn',"`vt'","R-sq1","`m'")))
+					mata: st_local("mse0", strofreal(return_result_item(`eqn',"`vt'","MSE0","`m'")))
+					mata: st_local("mse1", strofreal(return_result_item(`eqn',"`vt'","MSE1","`m'")))
+					mata: st_matrix("`mse0_folds'", return_result_item(`eqn',"`vt'","MSE0_folds","`m'"))
+					mata: st_matrix("`mse1_folds'", return_result_item(`eqn',"`vt'","MSE1_folds","`m'"))
 					if `firstrow' {
 						di as res "`vnabbrev'" _c
 						local firstrow = 0
 					}
 					forvalues i=0/1 {
-						local lnrname `vtilde'`i'_`m'
+						local lnrname `vt'`i'_`m'
 						local lnrabbrev = abbrev("`lnrname'",`lnrlen')
 						local c = `vnlen'+2
 						di as res _col(`c') "`lnrabbrev'" _c
@@ -742,10 +1188,10 @@ prog define desc_crossfit, rclass
 		if `heqn' & `crossfitted' /* & `stdflag' */ {
 			forvalues m=1/`nreps' {
 				tempname mse_h_folds
-				mata: st_local("rsq_h", strofreal(return_result_item(`eqn',"`vtilde'","R-sq_h","`m'")))
-				mata: st_local("mse_h", strofreal(return_result_item(`eqn',"`vtilde'","MSE_h","`m'")))
-				mata: st_matrix("`mse_h_folds'", return_result_item(`eqn',"`vtilde'","MSE_h_folds","`m'"))
-				local lnrname `vtilde'_h_`m'
+				mata: st_local("rsq_h", strofreal(return_result_item(`eqn',"`vt'","R-sq_h","`m'")))
+				mata: st_local("mse_h", strofreal(return_result_item(`eqn',"`vt'","MSE_h","`m'")))
+				mata: st_matrix("`mse_h_folds'", return_result_item(`eqn',"`vt'","MSE_h_folds","`m'"))
+				local lnrname `vt'_h_`m'
 				local lnrabbrev = abbrev("`lnrname'",`lnrlen')
 				local c = `vnlen'+2
 				di as res _col(`c') "`lnrabbrev'" _c

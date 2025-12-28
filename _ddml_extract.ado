@@ -207,7 +207,7 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 			vkeys = sort(vkeys,(1,4,2))
 			vkeys = vkeys[.,1..3]
 			for (j=1;j<=rows(vkeys);j++) {
-				if ((strpos(vkeys[j,2],show)==1) & (strpos(vkeys[j,2],"folds")==0)) {
+				if (vkeys[j,2]==show) {
 					rmatmse = (rmatmse \ (eqn.resAA).get(vkeys[j,.]))
 					reqn = (reqn \ vnames[i])
 					if (strpos(vkeys[j,2],"0")) {
@@ -227,6 +227,7 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 					rmatmse_folds =(rmatmse_folds \ (eqn.resAA).get(vkeys[j,.]))
 				}
 			}
+
 			// store as r(.) macro
 			// if interactive or LATE, include column for D/Z=0 or D/Z=1
 			if (rows(DZeq01)>0) {
@@ -242,6 +243,7 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 				rmat = (rsmp, rmatmse, rmatmse_folds)
 				cstripe = ("rep" \ "full_sample")
 			}
+
 			rname = vnames[i]+"_"+strlower(show)
 			st_matrix("r("+rname+")",rmat)
 			rstripe = (J(rows(rmat),1,""), rvtilde)
@@ -250,10 +252,12 @@ transmorphic m_ddml_extract(		string scalar mname,		///
 			for (k=1;k<=d.kfolds;k++) {
 				cstripe = (cstripe \ "fold"+strofreal(k))
 			}
+
 			cstripe = (J(rows(cstripe),1,""), cstripe)
 			st_matrixcolstripe("r("+rname+")",cstripe)
 			rmatlist = (rmatlist, rname)
 			display_mse(d, show, reqn, rvtilde, DZeq01, rsmp, rmatmse, rmatmse_folds)
+
 		}
 	}
 	else if (ename~="") {
@@ -382,7 +386,7 @@ function poolstack_extract(									///
 		// weights
 		for (m=1;m<=nreps;m++) {
 			rrep = return_result_item(eqn,vnkey,"ps_weights",strofreal(m))
-			rmat = (rmat \ rrep)
+			rmat = (rmat \ rrep')
 			cstripe = (cstripe \ ("rep_"+strofreal(m)))
 		}
 		// add mean across reps
@@ -444,8 +448,8 @@ function poolstack_extract(									///
 				// D/Z=1
 				rrep1 = return_result_item(eqn,vnkey,"ps_weights1",strofreal(m))
 			}
-			rmat0 = (rmat0 \ rrep0 )
-			rmat1 = (rmat1 \ rrep1 )
+			rmat0 = (rmat0 \ rrep0' )
+			rmat1 = (rmat1 \ rrep1' )
 			cstripe = (cstripe \ ("rep_"+strofreal(m)))
 		}
 		// add mean across reps
@@ -524,7 +528,7 @@ function shortstack_extract(								///
 		// weights
 		for (m=1;m<=nreps;m++) {
 			rrep = return_result_item(eqn,vnkey,"ss_weights",strofreal(m))
-			rmat = (rmat \ rrep)
+			rmat = (rmat \ rrep')
 			cstripe = (cstripe \ ("rep_"+strofreal(m)))
 		}
 		// add mean across reps
@@ -575,8 +579,8 @@ function shortstack_extract(								///
 				// D/Z=1
 				rrep1 = return_result_item(eqn,vnkey,"ss_weights1",strofreal(m))
 			}
-			rmat0 = (rmat0 \ rrep0 )
-			rmat1 = (rmat1 \ rrep1 )
+			rmat0 = (rmat0 \ rrep0' )
+			rmat1 = (rmat1 \ rrep1' )
 			cstripe = (cstripe \ ("rep_"+strofreal(m)))
 		}
 		// add mean across reps
