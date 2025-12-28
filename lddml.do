@@ -289,12 +289,29 @@ transmorphic check_spec(							///
 
 }
 
+real rowvector ddml_median(
+				matrix M
+					)
+{
+	isodd = mod(rows(M),2)
+	
+	R = J(1,cols(M),.)
+	
+	for (c=1; c<=cols(M); c++) {
+		if (isodd) {
+			R[1,c] = (sort(M,c)[ceil(rows(M)/2),c])
+		}
+		else {
+			R[1,c] = (sort(M,c)[ceil(rows(M)/2),c] + sort(M,c)[ceil(rows(M)/2)+1,c])/2
+		}
+	}
+	
+	return(R)
+}
+
 transmorphic model_chars(struct mStruct m)
 {
    	struct eStruct scalar	e
-	
-	// will be set to zero if LIE or any eqn is not pystackedmulti
-	allpystackedmulti				= 1
 
 	numeqnD							= cols(m.nameD)
 	numeqnZ							= cols(m.nameZ)
@@ -451,10 +468,6 @@ transmorphic model_chars(struct mStruct m)
 				st_global("r(D"+strofreal(i)+"_L)", strtrim(vtlistD_L))
 			}
 		}
-		else {
-			// multiple learners, goes to general code
-			allpystackedmulti			= 0
-		}
 	}
 	
 	// Z eqns; if none, nothing returned
@@ -497,13 +510,7 @@ transmorphic model_chars(struct mStruct m)
 				st_global("r(Z"+strofreal(i)+"_L)", strtrim(vtlistZ_L))
 			}
 		}
-		else {
-			// multiple learners, goes to general code
-			allpystackedmulti			= 0
-		}
 	}
-	
-	st_numscalar("r(allpystackedmulti)",	allpystackedmulti)
 
 }
 
