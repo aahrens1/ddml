@@ -1,5 +1,5 @@
 *! ddml v1.5.0
-*! last edited: 28dec2025
+*! last edited: 27jan2026
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 
@@ -167,6 +167,7 @@ program define _crossfit_pystacked, rclass sortpreserve
 							psfinalest(name)		/// final estimator for pooled-stacking
 							finalest(name)			/// final estimator for all
 							NOSTDstack				/// no standard stacking - use psytacked+voting to get learners only
+							CVCbootnum(integer 500)	///
 							*						/// ignored options
 							]
 
@@ -891,8 +892,11 @@ program define _crossfit_pystacked, rclass sortpreserve
 			}
 
 		}	// end of resamples loop
-		
-		// last fold
+
+		// update number of crossfit reps
+		mata: `ename'.crossfitted = `lastrep'
+
+		// last fold, report completed
 		di as text "...completed cross-fitting" _c
 		// if noisily, print new line
 		`qui' di
@@ -1226,8 +1230,9 @@ program define _crossfit_pystacked, rclass sortpreserve
 			mata: add_result_item(`ename',"`vtilde'","N_L",    "`m'", st_matrix("r(N)"))
 			
 			// cvc by learner - save under vname
-			cvc `vt_L_list' if `touse', yvar(`vname') foldvar(`fid')
+			cvc `vt_L_list' if `touse', yvar(`vname') foldvar(`fid') bootnum(`cvcbootnum')
 			mata: add_result_item(`ename',"`vname'","cvc_pval", "`m'", st_matrix("r(pmat)"))
+			mata: add_result_item(`ename',"`vname'","cvc_bootnum", "`m'", `cvcbootnum')
 			
 			// save results relating to stacked learner if it exists
 			if `stdflag' {
@@ -1293,10 +1298,12 @@ program define _crossfit_pystacked, rclass sortpreserve
 			mata: add_learner_item(`ename',"`vtilde'","stack_type","`stype'")
 			
 			// cvc by learner - save under vname
-			cvc `vt1_L_list' if `touse', yvar(`vname') foldvar(`fid')
+			cvc `vt1_L_list' if `touse', yvar(`vname') foldvar(`fid') bootnum(`cvcbootnum')
 			mata: add_result_item(`ename',"`vname'","cvc_pval1", "`m'", st_matrix("r(pmat)"))
-			cvc `vt0_L_list' if `touse', yvar(`vname') foldvar(`fid')
+			cvc `vt0_L_list' if `touse', yvar(`vname') foldvar(`fid') bootnum(`cvcbootnum')
 			mata: add_result_item(`ename',"`vname'","cvc_pval0", "`m'", st_matrix("r(pmat)"))
+			// same bootnum for both
+			mata: add_result_item(`ename',"`vname'","cvc_bootnum", "`m'", `cvcbootnum')
 			
 			// rsq, mse, N by learner - save under vtilde
 			rsqmse `vt1_L_list' if `treatvar'==1 & `touse', yvar(`vname')
@@ -1408,10 +1415,12 @@ program define _crossfit_pystacked, rclass sortpreserve
 			mata: add_learner_item(`ename',"`vtilde'","stack_type_h","`stype_h'")
 			
 			// cvc by learner - save under vname
-			cvc `vt_L_list' if `touse', yvar(`vname') foldvar(`fid')
+			cvc `vt_L_list' if `touse', yvar(`vname') foldvar(`fid') bootnum(`cvcbootnum')
 			mata: add_result_item(`ename',"`vname'","cvc_pval", "`m'", st_matrix("r(pmat)"))
-			cvc `vt_h_L_list' if `touse', yvar(`vname') foldvar(`fid')
+			cvc `vt_h_L_list' if `touse', yvar(`vname') foldvar(`fid') bootnum(`cvcbootnum')
 			mata: add_result_item(`ename',"`vname'","cvc_pval_h", "`m'", st_matrix("r(pmat)"))
+			// same bootnum for both
+			mata: add_result_item(`ename',"`vname'","cvc_bootnum", "`m'", `cvcbootnum')
 			
 			// rsq, mse, N by learner - save under vtilde
 			rsqmse `vt_L_list' if `touse', yvar(`vname')
@@ -1944,6 +1953,7 @@ program define _crossfit_other, rclass sortpreserve
 													/// legal but ignored options:
 							psfinalest(name)		///
 							stdfinalest(name)		///
+							CVCbootnum(integer 500)	///
 							*						/// ignored options - will trigger syntax error
 							]
 
@@ -2480,7 +2490,9 @@ program define _crossfit_other, rclass sortpreserve
 			}
 		}
 	
-		// last fold, insert new line
+		// update number of crossfit reps
+		mata: `ename'.crossfitted = `lastrep'
+		// last fold, report completed
 		di as text "...completed cross-fitting" _c
 
 		******************************** SHORTSTACKING ************************************
@@ -2899,14 +2911,15 @@ program define _crossfit_other, rclass sortpreserve
 		
 		// cvc
 		if "`est_type'"=="partial" { // case 1 - partially-linear
-			cvc `vt_L_list' if `touse', yvar(`vname') foldvar(`fid')
+			cvc `vt_L_list' if `touse', yvar(`vname') foldvar(`fid') bootnum(`cvcbootnum')
 			tempname pmat
 			mat `pmat' = r(pmat)
 			mata: add_result_item(`ename',"`vname'","cvc_pval", "`m'", st_matrix("`pmat'"))
+			mata: add_result_item(`ename',"`vname'","cvc_bootnum", "`m'", `cvcbootnum')
 		}
 		else if "`est_type'"=="interactive" {	// case 2 - interactive
 			tempname pmat1
-			cvc `vt1_L_list' if `touse', yvar(`vname') foldvar(`fid')
+			cvc `vt1_L_list' if `touse', yvar(`vname') foldvar(`fid') bootnum(`cvcbootnum')
 			mat `pmat1' = r(pmat)
 			mata: add_result_item(`ename',"`vname'","cvc_pval1", "`m'", st_matrix("`pmat1'"))
 			// LATE special case - perfect assignment (when cvc should be missing)
@@ -2919,16 +2932,20 @@ program define _crossfit_other, rclass sortpreserve
 				mat `pmat0' = `pmat1' * .
 			}
 			mata: add_result_item(`ename',"`vname'","cvc_pval0", "`m'", st_matrix("`pmat0'"))
+			// same bootnum for both
+			mata: add_result_item(`ename',"`vname'","cvc_bootnum", "`m'", `cvcbootnum')
 		}
 		else if "`est_type'"=="fiv" { // case 3 - FIV
-			cvc `vt_L_list' if `touse', yvar(`vname') foldvar(`fid')
+			cvc `vt_L_list' if `touse', yvar(`vname') foldvar(`fid') bootnum(`cvcbootnum')
 			tempname pmat
 			mat `pmat' = r(pmat)
-			mata: add_result_item(`ename',"`vname'","cvc_pval", "`m'", st_matrix("`pmat'"))
+			mata: add_result_item(`ename',"`vname'","cvc_pval", "`m'", st_matrix("`pmat'")) bootnum(`cvcbootnum')
 			cvc `vt_h_L_list' if `touse', yvar(`vname') foldvar(`fid')
 			tempname pmat_h
 			mat `pmat_h' = r(pmat)
 			mata: add_result_item(`ename',"`vname'","cvc_pval_h", "`m'", st_matrix("`pmat_h'"))
+			// same bootnum for both
+			mata: add_result_item(`ename',"`vname'","cvc_bootnum", "`m'", `cvcbootnum')
 		}
 
 		// add shortstack results

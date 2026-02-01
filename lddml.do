@@ -45,6 +45,7 @@ struct eStruct {
 	real scalar						nlearners		// number of learners
 	real scalar						ateflag			// =1 if treatment variable in ATE/LATE
 	real scalar						pystackedmulti	// =#learners if pystacked with multiple learners
+	real scalar						crossfitted   	// =number of completed crossfitting reps; 0 if none
 	class AssociativeArray scalar	lrnAA			// AssociativeArray with all learners //
 													// (keys=vtilde,object)
 	class AssociativeArray scalar	resAA			// AssociativeArray with all learner results //
@@ -55,24 +56,25 @@ struct eStruct {
 // should perhaps make vname a required argument for this function
 struct eStruct init_eStruct()
 {
-	struct eStruct scalar	m
+	struct eStruct scalar	e
 
-	m.vname				= ""
-	m.etype				= ""
-	m.model				= ""
-	m.vtlist			= J(1,0,"")
-	m.shortstack		= ""
-	m.poolstack			= ""
-	m.nlearners			= 0
-	m.ateflag			= 0
-	m.pystackedmulti	= 0
+	e.vname				= ""
+	e.etype				= ""
+	e.model				= ""
+	e.vtlist			= J(1,0,"")
+	e.shortstack		= ""
+	e.poolstack			= ""
+	e.nlearners			= 0
+	e.ateflag			= 0
+	e.pystackedmulti	= 0
+	e.crossfitted		= 0
 	
-	(m.lrnAA).reinit("string",2)
-	(m.resAA).reinit("string",3)
-	(m.lrnAA).notfound(NULL)
-	(m.resAA).notfound(NULL)
+	(e.lrnAA).reinit("string",2)
+	(e.resAA).reinit("string",3)
+	(e.lrnAA).notfound(NULL)
+	(e.resAA).notfound(NULL)
 	
-	return(m)
+	return(e)
 }
 
 // clear results from eStruct
@@ -81,6 +83,7 @@ void clear_equation_results(struct eStruct e)
 	(e.resAA).reinit("string",3)
 	e.shortstack	= ""
 	e.poolstack		= ""
+	e.crossfitted	= 0
 }
 
 // ddml model structure
@@ -103,7 +106,7 @@ struct mStruct {
 	real scalar						psflag			// flag for pooled-stacking
 	string scalar					strDatavars		// string with expanded names of Stata variables
 	real matrix						matDatavars		// matrix with values of Stata variables
-	real scalar						crossfitted   	// =number of reps for which crossfitting; 0 if not
+	real scalar						crossfitted   	// =number of completed crossfitting reps; 0 if none
 	real scalar						estimated		// =1 if estimation has been done; 0 if not
 	real scalar						prefixflag		// =1 if model name to be added as prefix to vars
 	real scalar						perfectflag		// (interactiveiv/LATE model only) perfect assignment to treatment
@@ -362,6 +365,7 @@ transmorphic model_chars(struct mStruct m)
 		}
 		st_global("r(Y)",vtlistY)
 		st_numscalar("r(numlrnY)",		numlrnY)
+		st_numscalar("r(Ycrossfitted)",	e.crossfitted)
 		// pystacked as only learner
 		if (numlrnY==1) {
 			est_main					= return_learner_item(e,e.vtlist,"est_main")
@@ -410,6 +414,8 @@ transmorphic model_chars(struct mStruct m)
 		poolstack						= e.poolstack
 		numlrnD							= cols(e.vtlist)
 		vtlistD							= invtokens(e.vtlist)
+		// actually needed only once
+		st_numscalar("r(Dcrossfitted)",	e.crossfitted)
 		if (shortstack~="") {
 			vtlistD = vtlistD + " " + shortstack + "_ss"
 		}
@@ -475,7 +481,7 @@ transmorphic model_chars(struct mStruct m)
 		e = (m.eqnAA).get(m.nameZ[1,i])
 		shortstack						= e.shortstack
 		poolstack						= e.poolstack
-		numlrnZ										= cols(e.vtlist)
+		numlrnZ							= cols(e.vtlist)
 		vtlistZ							= invtokens(e.vtlist)
 		if (shortstack~="") {
 			vtlistZ = vtlistZ + " " + shortstack + "_ss"
@@ -485,6 +491,8 @@ transmorphic model_chars(struct mStruct m)
 		}
 		st_global("r(Z"+strofreal(i)+")",vtlistZ)
 		st_numscalar("r(numlrnZ"+strofreal(i)+")",	numlrnZ)
+		// actually needed only once
+		st_numscalar("r(Zcrossfitted)",	e.crossfitted)
 		// pystacked as only learner
 		if (numlrnZ==1) {
 			est_main					= return_learner_item(e,e.vtlist,"est_main")

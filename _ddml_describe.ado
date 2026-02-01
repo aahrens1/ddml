@@ -280,11 +280,16 @@ program define _ddml_describe, rclass
         di as res `"CVC test ({browse "https://doi.org/10.1080/01621459.2019.1672556":Lei 2020}):"'
         di as res "H0: " as text "Learner has the lowest predictive risk among all candidate learners."
         di as res "HA: " as text "There is another learner with lower predictive risk."
+        // currently use same bootstrap num for all vars and reps
+		_ddml_extract bootnum, mname(`mname') vname(`nameY') key1(`nameY') key2("cvc_bootnum") key3("1") stata
+		local cvcbootnum = r(bootnum)
+		di as res %3.0f `cvcbootnum' as text " bootstrap reps"
         di
         di as res "CVC test p-values:"
 		desc_values `mname', vname(`nameY') etype(yeq) cvc median
 		mat `vmat' = r(values)
 		return mat cvc_`nameY' = `vmat'
+		return scalar cvcbootnum = `cvcbootnum'
 		// should always be a D eqn
 		if `numeqnD' {
 			foreach var in `nameD' {
@@ -1115,7 +1120,7 @@ prog define desc_crossfit, rclass
 	foreach vt in `vtlist' {
 // ?
 		// for pystacked stacking and non-pystacked
-		if `crossfitted' /* & `stdflag' */ {
+		if `crossfitted' & `stdflag' {
 			if `pairs'==0 {
 				forvalues m=1/`nreps' {
 					tempname mse_folds
@@ -1185,7 +1190,7 @@ prog define desc_crossfit, rclass
 			}
 		}
 		// fiv model, for pystacked stacking and non-pystacked
-		if `heqn' & `crossfitted' /* & `stdflag' */ {
+		if `heqn' & `crossfitted' & `stdflag' {
 			forvalues m=1/`nreps' {
 				tempname mse_h_folds
 				mata: st_local("rsq_h", strofreal(return_result_item(`eqn',"`vt'","R-sq_h","`m'")))

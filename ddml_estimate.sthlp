@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 30aug2024}{...}
+{* *! version 1feb2026}{...}
 {viewerjumpto "Syntax" "ddml_estimate##syntax"}{...}
 {viewerjumpto "Cross-fit options" "ddml_estimate##crossfit"}{...}
 {viewerjumpto "Estimation options" "ddml_estimate##estimation"}{...}
@@ -41,7 +41,7 @@ See the help for {help ddml stacking} for a detailed discussion and examples of 
 {marker syntax}{...}
 {title:Syntax}
 
-{p 8 14}{cmd:ddml crossfit} [ , {opt mname(name)} {opt shortstack} {opt poolstack} {cmdab:NOSTD:stack} {opt finalest(name)}{bind: ]} 
+{p 8 14}{cmd:ddml crossfit} [ , {opt mname(name)} {opt shortstack} {opt poolstack} {cmdab:NOSTD:stack} {cmdab:CVC:bootnum(}{it:integer}{cmd:)} {opt finalest(name)} {opt yeqn} {opt deqn} {opt zeqn}{bind: ]} 
 
 {p 8 14}{cmd:ddml estimate} [ , {opt mname(name)} {cmdab:r:obust} {opt cluster(varname)} {opt vce(type)}
 {opt atet} {opt ateu} {opt trim(real)}
@@ -92,6 +92,13 @@ See {help pystacked} for alternative stacking final estimators.
 NB: use of this option is incompatible with use of the {opt finalest(.)} option
 when {help pystacked} is the learner specified in an equation using {help ddml eq};
 use {opt finalest} in one or the other, or neither (the default), but not both.
+{p_end}
+{synopt:{cmdab:CVC:bootnum(}{it:integer}{cmd:)}} sets the number of bootstrap reps
+for the {helpb ddml##Lei2020:Lei (2020)} CVC (cross-validation with confidence) test.
+{p_end}
+{synopt:{opt yeqn}, {opt deqn}, {opt zeqn}} requests that only the specified equations
+are to be crossfitted.
+Default is to crossfit all equations.
 {p_end}
 {synoptline}
 {p2colreset}{...}
