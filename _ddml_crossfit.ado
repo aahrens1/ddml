@@ -1,5 +1,5 @@
 *! ddml v1.5.0
-*! last edited: 1feb2026
+*! last edited: 2feb2026
 *! authors: aa/ms
 
 *** ddml cross-fitting
@@ -250,7 +250,7 @@ program _ddml_crossfit, eclass sortpreserve
 		mata: (`mname'.eqnAA).put("`nameY'",`eqn')
 		
 		// update
-		local dcrossfitted = `lastrep'
+		local ycrossfitted = `lastrep'
 	}
 	
 	************************** D equation **************************
