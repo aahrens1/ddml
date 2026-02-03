@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 28dec2025}{...}
+{* *! version 3feb2026}{...}
 {smcl}
 {pstd}{ul:ddml describe utility - Basic example with {help pystacked}}{p_end}
 
@@ -41,4 +41,4 @@ and estimation results.{p_end}
 {pstd}The {opt all} option is equivalent to specifying all options.{p_end}
 
 {phang2}. {stata "ddml describe, all"}{p_end}
-{phang2}. {stata "ddml describe, sample learners crossfit estimates"}{p_end}
+

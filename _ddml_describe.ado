@@ -1,11 +1,11 @@
 *! ddml v1.5.0
-*! last edited: 28dec2025
+*! last edited: 3feb2026
 *! authors: aa/ms
 
 
 program define _ddml_describe, rclass
 	version 16
-	syntax name(name=mname), [LEARNers CROSSfit ESTimates SAMple STACKing cvc rsq mse rmse n stweights ssweights psweights all ]
+	syntax name(name=mname), [LEARNers CROSSfit ESTimates SAMple STACKing cvc rsq mse rmse n stweights ssweights psweights all mean median ]
 	
 	// blank eqn - declare this way so that it's a struct and not transmorphic
 	tempname eqn
@@ -86,6 +86,17 @@ program define _ddml_describe, rclass
 		}
 		if `optprob'	di as res "some selected option(s) require prior crossfitting; not reported"
 	}
+	
+	// syntax check - incompatible options
+	if "`mean'"~="" & "`median'"~="" {
+		di as err "incompatible options - mean and median"
+		exit 198
+	}
+	else if "`mean'`median'"=="" {
+		// default is mean
+		local mean mean
+	}
+	local medmean `mean'`median'
 
 	// basic info about equations and learners - always displayed
 	di
@@ -239,7 +250,7 @@ program define _ddml_describe, rclass
 		
 		// always a Y eqn
 		tempname stweights_Y1 ssweights_Y1 psweights_Y1
-		desc_stacking `mname', vname(`nameY') etype(yeq)
+		desc_stacking `mname', vname(`nameY') etype(yeq) `medmean'
 		mat `vmat' = r(stweights)
 		return mat stweights_`nameY' = `vmat'
 		mat `vmat' = r(ssweights)
@@ -250,7 +261,7 @@ program define _ddml_describe, rclass
 		if `numeqnD' {
 			foreach var in `nameD' {
 				tempname stweights_D`dnum' ssweights_D`dnum' psweights_D`dnum'
-				desc_stacking `mname', vname(`var') etype(deq)
+				desc_stacking `mname', vname(`var') etype(deq) `medmean'
 				mat `vmat' = r(stweights)
 				return mat stweights_`var' = `vmat'
 				mat `vmat' = r(ssweights)
@@ -263,7 +274,7 @@ program define _ddml_describe, rclass
 		if `numeqnZ' {
 			local znum 1
 			foreach var in `nameZ' {
-				desc_stacking `mname', vname(`var') etype(zeq)
+				desc_stacking `mname', vname(`var') etype(zeq) `medmean'
 				mat `vmat' = r(stweights)
 				return mat stweights_`var' = `vmat'
 				mat `vmat' = r(ssweights)
@@ -280,27 +291,40 @@ program define _ddml_describe, rclass
         di as res `"CVC test ({browse "https://doi.org/10.1080/01621459.2019.1672556":Lei 2020}):"'
         di as res "H0: " as text "Learner has the lowest predictive risk among all candidate learners."
         di as res "HA: " as text "There is another learner with lower predictive risk."
-        // currently use same bootstrap num for all vars and reps
-		_ddml_extract bootnum, mname(`mname') vname(`nameY') key1(`nameY') key2("cvc_bootnum") key3("1") stata
-		local cvcbootnum = r(bootnum)
-		di as res %3.0f `cvcbootnum' as text " bootstrap reps"
+        // bootstrap num can vary across vars or reps
+        local allvars `nameY' `nameD' `nameZ'
+        forvalues m=1/`nreps' {
+        	foreach var in `allvars' {
+				_ddml_extract bootnum, mname(`mname') vname(`var') key1(`var') key2("cvc_bootnum") key3("`m'") stata
+				local prevbootnum `thisbootnum'
+				local thisbootnum `r(bootnum)'
+				// list of bootnums by rep and variable
+				local cvcbootnum `cvcbootnum' `thisbootnum'
+				// set flag
+				if "`prevbootnum'"~="" & "`prevbootnum'"~="`thisbootnum'"	local cvcbootnum_msg "(avg; varies by rep/variable)"
+			}
+		}
+		// if msg is blank, it's the same bootnum for every rep/variable
+		if "`cvcbootnum_msg'"==""	local cvcbootnum = `thisbootnum'
+		else						mata: st_local("cvcbootnum",strofreal(mean(strtoreal(tokens("`cvcbootnum'")'))))
+		di as res %3.0f `cvcbootnum' as text " bootstrap reps `cvcbootnum_msg'"
         di
         di as res "CVC test p-values:"
-		desc_values `mname', vname(`nameY') etype(yeq) cvc median
+		desc_values `mname', vname(`nameY') etype(yeq) cvc `medmean'
 		mat `vmat' = r(values)
 		return mat cvc_`nameY' = `vmat'
 		return scalar cvcbootnum = `cvcbootnum'
 		// should always be a D eqn
 		if `numeqnD' {
 			foreach var in `nameD' {
-				desc_values `mname', vname(`var') etype(deq) cvc median
+				desc_values `mname', vname(`var') etype(deq) cvc `medmean'
 				mat `vmat' = r(values)
 				return mat cvc_`var' = `vmat'
 			}
 		}
 		if `numeqnZ' {
 			foreach var in `nameZ' {
-				desc_values `mname', vname(`var') etype(zeq) cvc median
+				desc_values `mname', vname(`var') etype(zeq) cvc `medmean'
 				mat `vmat' = r(values)
 				return mat cvc_`var' = `vmat'
 			}
@@ -315,20 +339,20 @@ program define _ddml_describe, rclass
 			if "`stat'"=="mse"		di as res "MSE by learner:"
 			if "`stat'"=="rmse"		di as res "RMSE by learner:"
 			if "`stat'"=="n"		di as res "Sample size by learner:"
-			desc_values `mname', vname(`nameY') etype(yeq) `stat' mean
+			desc_values `mname', vname(`nameY') etype(yeq) `stat' `medmean'
 			mat `vmat' = r(values)
 			return mat `stat'_`nameY' = `vmat'
 			// should always be a D eqn
 			if `numeqnD' {
 				foreach var in `nameD' {
-					desc_values `mname', vname(`var') etype(deq) `stat' mean
+					desc_values `mname', vname(`var') etype(deq) `stat' `medmean'
 					mat `vmat' = r(values)
 					return mat `stat'_`var' = `vmat'
 				}
 			}
 			if `numeqnZ' {
 				foreach var in `nameZ' {
-					desc_values `mname', vname(`var') etype(zeq) `stat' mean
+					desc_values `mname', vname(`var') etype(zeq) `stat' `medmean'
 					mat `vmat' = r(values)
 					return mat `stat'_`var' = `vmat'
 				}
@@ -354,7 +378,7 @@ end
 
 prog define desc_stacking, rclass
 
-	syntax name(name=mname), vname(string) etype(string)	// etype is yeq, deq or zeq (not dheq)
+	syntax name(name=mname), vname(string) etype(string) [ mean median ]	// etype is yeq, deq or zeq (not dheq)
 
 	tempname eqn
 	mata: `eqn' = init_eStruct()
@@ -381,6 +405,8 @@ prog define desc_stacking, rclass
 	if ("`model'"=="fiv") & "`etype'"=="deq" {
 		local dh h
 	}
+	
+	local medmean `mean'`median'
 
 	tempname wmat
 	
@@ -390,16 +416,14 @@ prog define desc_stacking, rclass
 	// standard stacking
 	if `stdflag' {
 		local vtilde `vtlist'
-		// qui _ddml_extract, mname(`mname') show(stweights)
-		// mat `wmat' = r(`vtilde'_w_mn)
-		extract_weights `mname', vname(`vname') etype(`etype') stweights
+		extract_weights `mname', vname(`vname') etype(`etype') stweights `medmean'
 		mat `wmat' = r(weights)
 		di
 		di as text "Standard stacking weights: " _c
 		if `wmat'[1,1] ~= . {
 			di as res "`vtilde'"
-			display_values `wmat', dh(`dh') nreps(`nreps') mean
-			di as text "(nb: std stacking weights above are means across `kfolds' folds)"
+			display_values `wmat', dh(`dh') nreps(`nreps') `medmean'
+			di as text "(nb: std stacking weights above are `medmean's across `kfolds' folds)"
 		}
 		else {
 			// don't display varname if weights not available
@@ -410,27 +434,23 @@ prog define desc_stacking, rclass
 
 	// short-stacking
 	if `ssflag' {
-		// qui _ddml_extract, mname(`mname') show(ssweights)
-		// mat `wmat' = r(`shortstack'_ss)
-		extract_weights `mname', vname(`vname') etype(`etype') ssweights
+		extract_weights `mname', vname(`vname') etype(`etype') ssweights `medmean'
 		mat `wmat' = r(weights)
 		di
 		di as text "Short-stacking weights: " as res "`shortstack'_ss"
-		display_values `wmat', dh(`dh') nreps(`nreps') mean
+		display_values `wmat', dh(`dh') nreps(`nreps') `medmean'
 		return matrix ssweights=`wmat'
 	}
 
 	// pooled stacking
 	if `psflag' {
-		// qui _ddml_extract, mname(`mname') show(psweights)
-		// mat `wmat' = r(`poolstack'_ps)
-		extract_weights `mname', vname(`vname') etype(`etype') psweights
+		extract_weights `mname', vname(`vname') etype(`etype') psweights `medmean'
 		mat `wmat' = r(weights)
 		di
 		di as text "Pooled stacking weights: " _c
 		if `wmat'[1,1] ~= . {
 			di as res "`poolstack'_ps"
-			display_values `wmat', dh(`dh') nreps(`nreps') mean
+			display_values `wmat', dh(`dh') nreps(`nreps') `medmean'
 		}
 		else {
 			// don't display varname if weights not available
@@ -448,6 +468,7 @@ prog define extract_weights, rclass
 	syntax name(name=mname), vname(string) etype(string)		/// etype is yeq, deq or zeq (not dheq)
 								[								///
 								stweights ssweights psweights	///
+								mean median						///
 								 ]
 
 	tempname eqn
@@ -501,6 +522,13 @@ prog define extract_weights, rclass
 		exit 198
 	}
 
+	if "`median'"=="median"		local medmean	median
+	else if "`mean'"=="mean"	local medmean	mean
+	else {
+		di as err "ddml describe error"
+		exit 198
+	}
+	
 	tempname wmat
 	tempname val val_m val_0 val_1 val_h val_m_h
 
@@ -525,8 +553,9 @@ prog define extract_weights, rclass
 				_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2'`i') key3(`m') stata
 				mat `val_m' = r(val)
 				if `stflag' {
-					// for std stacking, need to convert into means across folds
-					mata: st_matrix("`val_m'", mean(st_matrix("`val_m'")')')
+					// for std stacking, need to convert into means/medians across folds
+					if "`medmean'"=="mean"	mata: st_matrix("`val_m'", mean(st_matrix("`val_m'")')')
+					else					mata: st_matrix("`val_m'", ddml_median(st_matrix("`val_m'")')')
 				}
 				mat `val_`i'' = nullmat(`val_`i'') , `val_m'
 			}
@@ -566,16 +595,28 @@ prog define extract_weights, rclass
 			_ddml_extract val, mname(`mname') vname(`vname') key1(`key1') key2(`key2'_h) key3(`m') stata
 			mat `val_m_h' = r(val)
 			if `stflag' {
-				// for std stacking, need to convert into means across folds
-				mata: st_matrix("`val_m'", mean(st_matrix("`val_m'")')')
-				mata: st_matrix("`val_m_h'", mean(st_matrix("`val_m_h'")')')
+				// for std stacking, need to convert into means/medians across folds
+				if "`medmean'"=="mean" {
+					mata: st_matrix("`val_m'", mean(st_matrix("`val_m'")')')
+					mata: st_matrix("`val_m_h'", mean(st_matrix("`val_m_h'")')')
+				}
+				else {
+					mata: st_matrix("`val_m'", ddml_median(st_matrix("`val_m'")')')
+					mata: st_matrix("`val_m_h'", ddml_median(st_matrix("`val_m_h'")')')
+				}
 			}
 			mat `val' = nullmat(`val') , `val_m'
 			mat `val_h' = nullmat(`val_h') , `val_m_h'
 		}
 		// add learner number, h=0/1 and mean as first column
-		mata: st_matrix("`val'", (runningsum(J(`nlearners',1,1)), J(`nlearners',1,0), mean(st_matrix("`val'")')' , st_matrix("`val'")))
-		mata: st_matrix("`val_h'", (runningsum(J(`nlearners',1,1)), J(`nlearners',1,1), mean(st_matrix("`val_h'")')' , st_matrix("`val_h'")))
+		if "`medmean'"=="mean" {
+			mata: st_matrix("`val'", (runningsum(J(`nlearners',1,1)), J(`nlearners',1,0), mean(st_matrix("`val'")')' , st_matrix("`val'")))
+			mata: st_matrix("`val_h'", (runningsum(J(`nlearners',1,1)), J(`nlearners',1,1), mean(st_matrix("`val_h'")')' , st_matrix("`val_h'")))
+		}
+		else {
+			mata: st_matrix("`val'", (runningsum(J(`nlearners',1,1)), J(`nlearners',1,0), ddml_median(st_matrix("`val'")')' , st_matrix("`val'")))
+			mata: st_matrix("`val_h'", (runningsum(J(`nlearners',1,1)), J(`nlearners',1,1), ddml_median(st_matrix("`val_h'")')' , st_matrix("`val_h'")))
+		}
 		// rownames
 		mat rownames `val' = `lnames'
 		mat rownames `val_h' = `lnames'
@@ -606,12 +647,14 @@ prog define extract_weights, rclass
 			mat `val_m' = r(val)
 			if `stflag' {
 				// for std stacking, need to convert into means across folds
-				mata: st_matrix("`val_m'", mean(st_matrix("`val_m'")')')
+				if "`medmean'"=="mean"		mata: st_matrix("`val_m'", mean(st_matrix("`val_m'")')')
+				else						mata: st_matrix("`val_m'", ddml_median(st_matrix("`val_m'")')')
 			}
 			mat `val' = nullmat(`val') , `val_m'
 		}
 		// add learner number and mean as first column
-		mata: st_matrix("`val'",(runningsum(J(`nlearners',1,1)), mean(st_matrix("`val'")')' , st_matrix("`val'")))
+		if "`medmean'"=="mean"		mata: st_matrix("`val'",(runningsum(J(`nlearners',1,1)), mean(st_matrix("`val'")')' , st_matrix("`val'")))
+		else						mata: st_matrix("`val'",(runningsum(J(`nlearners',1,1)), ddml_median(st_matrix("`val'")')' , st_matrix("`val'")))
 		// rownames and colnames
 		mat rownames `val' = `lnames'
 		local cnames learner mean_weight
@@ -701,7 +744,6 @@ prog define desc_values, rclass
 		di as text "E[Z|X]: " _c
 	}
 	di as res "`vname'"
-	
 
 	if ("`model'"=="interactive" & "`ydz'"=="y") 	|	///
 		("`model'"=="interactiveiv" & "`ydz'"=="y")	|	///

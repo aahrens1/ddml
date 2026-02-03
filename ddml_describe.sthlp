@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 28dec2025}{...}
+{* *! version 3feb2026}{...}
 {viewerjumpto "Syntax" "ddml_describe##syntax"}{...}
 {viewerjumpto "Examples" "ddml_describe##examples"}{...}
 {viewerjumpto "Installation" "ddml_describe##installation"}{...}
@@ -89,6 +89,9 @@ R-sqs by learner and resample.
 {p_end}
 {synopt:{opt n}}
 sample sizes by learner and resample.
+{p_end}
+{synopt:{opt mean} {opt median}}
+report mean (default) or median across resamples (crossfits).
 {p_end}
 {synopt:{opt all}}
 report information relating to all options.
