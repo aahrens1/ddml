@@ -1,5 +1,5 @@
 *! ddml v1.5.0
-*! last edited: 18dec2025
+*! last edited: 5feb2026
 *! authors: aa/ms
 
 program _ddml_estimate_linear, eclass sortpreserve
@@ -265,6 +265,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				local finalest	`e(finalest)'
 				mat `sweights'	= e(b)
 				qui predict double `yhat'
+				// save weights as column vector
+				mat `sweights' = `sweights''
 			}
 			else if `stdflag' {
 				// standard stacking uses stacking CV predictions, stored in a mata struct
@@ -291,6 +293,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 					qui replace `yhat_k' = .
 					mat score `yhat_k' = `sweights' if `touse' & `mname'_fid_`m'==`k', replace
 					qui replace `yhat' = `yhat_k' if `mname'_fid_`m'==`k'
+					// save weights as column vector
 					mat `stdweights' = nullmat(`stdweights') , `sweights''
 				}
 				frame change `cframe'
@@ -318,6 +321,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				mat score double `yhat' = `sweights' if `touse'
 				cap mata: mata drop `y_stacking_cv'
 				cap mata: mata drop `sweights'
+				// save weights as column vector
+				mat `sweights' = `sweights''
 			}
 			// Name of newly-stacked variable depends on stacking method.
 			if `stdflag' {
@@ -2466,7 +2471,7 @@ program define replay_estimate, eclass
 	else if "`e(model)'"~="fiv" {
 		forvalues i=1/`numeqnD' {
 			local Dtilde : word `i' of `e(d_m)' {
-			di as res "D-`Dtilde' " _c
+			di as res "D`i'-`Dtilde' " _c
 		}
 	}
 	else {

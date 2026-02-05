@@ -1,5 +1,5 @@
 *! ddml v1.5.0
-*! last edited: 18dec2025
+*! last edited: 5feb2026
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -295,6 +295,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				local finalest	`e(finalest)'
 				mat `sweights'	= e(b)
 				qui predict double `yhat'
+				// save weights as column vector
+				mat `sweights' = `sweights''
 			}
 			else if `stdflag' {
 				// standard stacking uses stacking CV predictions, stored in a mata struct
@@ -321,6 +323,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 					qui replace `yhat_k' = .
 					mat score `yhat_k' = `sweights' if `touse' & `mname'_fid_`m'==`k', replace
 					qui replace `yhat' = `yhat_k' if `mname'_fid_`m'==`k'
+					// save weights as column vector
 					mat `stdweights' = nullmat(`stdweights') , `sweights''
 				}
 				frame change `cframe'
@@ -348,6 +351,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 				mat score double `yhat' = `sweights' if `touse'
 				cap mata: mata drop `y_stacking_cv'
 				cap mata: mata drop `sweights'
+				// save weights as column vector
+				mat `sweights' = `sweights''
 			}
 			// Name of newly-stacked variable depends on stacking method.
 			if `stdflag' {
@@ -459,7 +464,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 					qui count if `vname'!=0 & `treatvar'==0 & `touse'
 					if (r(N)==0 & "`etype'"=="D" & `t'==0) {
 						qui gen double `yhat' = 0
-						mat `sweights'		= J(1,`nlearners',.)
+						// save weights as column vector
+						mat `sweights'		= J(`nlearners',1,.)
 					}
 					else {
 						`qui' _ddml_nnls `vname' `learner_list' if `touse' & `treatvar'==`t', finalest(`finalest') stype(`stype')
@@ -468,6 +474,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 						local finalest		`e(finalest)'
 						mat `sweights'		= e(b)
 						qui predict double `yhat'
+						// save weights as column vector
+						mat `sweights' = `sweights''
 					}
 				}
 				else if `stdflag' {
@@ -496,8 +504,9 @@ program _ddml_estimate_stacking, eclass sortpreserve
 							// change back to main frame and create predicted Dhat for this fold
 							frame change `cframe'
 							qui replace `yhat' = 0 if `mname'_fid_`m'==`k'
-							mat `sweights'		= J(1,`nlearners',.)
-							mat `stdweights' = nullmat(`stdweights') , `sweights''
+							// save weights as column vector
+							mat `sweights'		= J(`nlearners',1,.)
+							mat `stdweights' = nullmat(`stdweights') , `sweights'
 						}
 						else {
 							`qui' _ddml_nnls `vname' `learner_list' if `fidtouse'==`k', finalest(`finalest') stype(`stype')
@@ -512,6 +521,7 @@ program _ddml_estimate_stacking, eclass sortpreserve
 							qui replace `yhat_k' = .
 							mat score `yhat_k' = `sweights' if `touse' & `mname'_fid_`m'==`k', replace
 							qui replace `yhat' = `yhat_k' if `mname'_fid_`m'==`k'
+							// save weights as column vector
 							mat `stdweights' = nullmat(`stdweights') , `sweights''
 						}
 					}
@@ -529,7 +539,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 						// if late and Z==0, then the predicted Dhat is 0
 						// and set stacking weights to missing
 						qui gen double `yhat' = 0
-						mat `sweights' = J(1,`nlearners',.)
+						// save weights as column vector
+						mat `sweights' = J(`nlearners',1,.)
 					}
 					else {
 						tempname tframe y_stacking_cv
@@ -552,6 +563,8 @@ program _ddml_estimate_stacking, eclass sortpreserve
 						mat score double `yhat' = `sweights' if `touse'
 						cap mata: mata drop `y_stacking_cv'
 						cap mata: mata drop `sweights'
+						// save weights as column vector
+						mat `sweights' = `sweights''
 					}
 				}
 				// Name of newly-stacked variable depends on stacking method.
