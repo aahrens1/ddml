@@ -6,13 +6,20 @@ if ("`c(username)'"=="kahrens") {
 }
 
 cap cd "/Users/kahrens/MyProjects/ddml/cert"
-cap cd "C:\LocalStore\ecomes\Documents\GitHub\ddml\cert"
+cap cd "C:\LocalStore\ecomes\GitHub\ddml\cert"
 
 cap log close
 log using "ddml_cert_partial_iv", replace text
 
 which ddml
 mata: whichddml()
+mata: whichddml()
+which crossfit
+which _ddml_crossfit
+which _ddml_estimate_linear
+which _ddml_describe
+which _ddml_extract
+which pystacked, all
 
 use https://statalasso.github.io/dta/AJR.dta, clear
 
@@ -41,6 +48,8 @@ ddml E[Z|X]: pystacked $Z1 $X , type(reg)
 ddml E[Z|X]: pystacked $Z2 $X , type(reg)
 ddml crossfit
 ddml estimate, robust
+ddml describe, all
+
 *** replay
 ddml estimate, mname(m0) spec(st) rep(1) replay notable
 *** append, estimate, replay

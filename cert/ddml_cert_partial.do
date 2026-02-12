@@ -6,13 +6,19 @@ if ("`c(username)'"=="kahrens") {
 }
 
 cap cd "/Users/kahrens/MyProjects/ddml/cert"
-cap cd "C:\LocalStore\ecomes\Documents\GitHub\ddml\cert"
+cap cd "C:\LocalStore\ecomes\GitHub\ddml\cert"
 
 cap log close
 log using "ddml_cert_partial", replace text
 
 which ddml
 mata: whichddml()
+which crossfit
+which _ddml_crossfit
+which _ddml_estimate_linear
+which _ddml_describe
+which _ddml_extract
+which pystacked, all
 
 use https://statalasso.github.io/dta/AJR.dta, clear
 
@@ -40,6 +46,8 @@ ddml E[D|X]: pystacked $D1 $X , type(reg)
 ddml E[D|X]: pystacked $D2 $X , type(reg)
 ddml crossfit
 ddml estimate, robust
+ddml describe, all
+
 *** replay
 ddml estimate, mname(m0) spec(st) rep(1) replay notable
 *** append, estimate, replay
@@ -159,6 +167,135 @@ ddml estimate, mname(m0) spec(ss) rep(1) replay notable
 ddml estimate, mname(m0) spec(ss) rep(2) replay notable
 ddml estimate, mname(m0) spec(ss) rep(mn) replay notable
 ddml estimate, mname(m0) spec(ss) rep(md) replay notable
+
+********************************************************************************
+**** Various combinations													****
+********************************************************************************
+
+// single regress Y, pystacked D
+ddml init partial, kfolds(2) reps(2)
+ddml E[Y|X]: regress $Y $X
+ddml E[D|X]: pystacked $D1 $X, type(reg)
+ddml crossfit, shortstack poolstack
+ddml estimate, robust
+ddml describe, all
+
+// single regress Y w no Xs, pystacked D
+ddml init partial, kfolds(2) reps(2)
+ddml E[Y|X]: regress $Y
+ddml E[D|X]: pystacked $D1 $X, type(reg)
+ddml crossfit, shortstack poolstack
+ddml estimate, robust
+ddml describe, all
+
+// single regress Y, multiple no-pystacked D
+ddml init partial, kfolds(2) reps(2)
+ddml E[Y|X]: regress $Y $X
+ddml E[D|X]: pystacked $D1 $X, m(lassocv) type(reg)
+ddml E[D|X]: regress $D1 $X
+ddml crossfit, shortstack
+ddml estimate, robust
+ddml describe, all
+
+// multiple no-pystacked Y, multiple no-pystacked D
+ddml init partial, kfolds(2) reps(2)
+ddml E[Y|X]: regress $Y $X
+ddml E[Y|X]: regress $Y
+ddml E[D|X]: pystacked $D1 $X, m(lassocv) type(reg)
+ddml E[D|X]: regress $D1 $X
+ddml crossfit, shortstack
+ddml estimate, robust
+ddml describe, all
+
+// pystacked Y, single regress D
+ddml init partial, kfolds(2) reps(2)
+ddml E[Y|X]: pystacked $Y $X, type(reg)
+ddml E[D|X]: regress $D1 $X
+ddml crossfit, shortstack poolstack
+ddml estimate, robust
+ddml describe, all
+
+// pystacked Y, single regress D w no Xs
+ddml init partial, kfolds(2) reps(2)
+ddml E[Y|X]: pystacked $Y $X, type(reg)
+ddml E[D|X]: regress $D1
+ddml crossfit, shortstack poolstack
+ddml estimate, robust
+ddml describe, all
+
+// pystacked Y, mulitple no-pystacked D
+ddml init partial, kfolds(2) reps(2)
+ddml E[Y|X]: pystacked $Y $X, type(reg)
+ddml E[D|X]: regress $D1
+ddml E[D|X]: pystacked $D1 $X, m(lassocv) type(reg)
+ddml crossfit, shortstack poolstack
+ddml estimate, robust
+ddml describe, all
+
+********************************************************************************
+**** Selective re-estimation												****
+********************************************************************************
+
+set seed 123
+
+/// initialise ddml and select model
+ddml init partial, kfolds(2) reps(3)
+ddml E[Y|X]: pystacked $Y $X , type(reg)
+ddml E[D|X]: pystacked $D1 $X , type(reg)
+ddml E[D|X]: pystacked $D2 $X , type(reg)
+ddml crossfit
+ddml estimate
+
+// errors - unbalanced #vars
+cap noi ddml estimate, mname(m0)										///
+	y(Y1_pystacked_*)													///
+	d(D1_pystacked_1 D1_pystacked_2 D1_pystacked_3						///
+		D2_pystacked_1 D2_pystacked_2 D2_pystacked_3)
+assert _rc==198
+cap noi ddml estimate, mname(m0)										///
+	y(Y1_pystacked_1 Y1_pystacked_2 Y1_pystacked_3)						///
+	d(D1_pystacked_*													///
+		D2_pystacked_1 D2_pystacked_2 D2_pystacked_3)
+assert _rc==198
+cap noi ddml estimate, mname(m0)										///
+	y(Y1_pystacked_1 Y1_pystacked_2 Y1_pystacked_3)						///
+	d(D1_pystacked_1 D1_pystacked_2 D1_pystacked_3						///
+		D2_pystacked_*)
+assert _rc==198
+
+// single replay
+ddml estimate, mname(m0) spec(st) rep(2) notable replay
+mat b=e(b)
+mat V=e(V)
+ddml estimate, mname(m0)												///
+	y(Y1_pystacked_2)													///
+	d(D1_pystacked_2 D2_pystacked_2)
+assert mreldif(b,(e(b))) < 10e-7
+assert mreldif(V,(e(V))) < 10e-7
+
+// replicate median
+ddml estimate, mname(m0) spec(st) rep(md) notable replay
+mat b=e(b)
+mat V=e(V)
+ddml estimate, mname(m0)												///
+	y(Y1_pystacked_1 Y1_pystacked_2 Y1_pystacked_3)						///
+	d(D1_pystacked_1 D1_pystacked_2 D1_pystacked_3						///
+		D2_pystacked_1 D2_pystacked_2 D2_pystacked_3)
+assert mreldif(b,(e(b))) < 10e-7
+assert mreldif(V,(e(V))) < 10e-7
+
+// replicate mean
+ddml estimate, mname(m0) spec(st) rep(mn) notable replay
+mat b=e(b)
+mat V=e(V)
+ddml estimate, mname(m0)												///
+	mean																///
+	y(Y1_pystacked_1 Y1_pystacked_2 Y1_pystacked_3)						///
+	d(D1_pystacked_1 D1_pystacked_2 D1_pystacked_3						///
+		D2_pystacked_1 D2_pystacked_2 D2_pystacked_3)
+assert mreldif(b,(e(b))) < 10e-7
+assert mreldif(V,(e(V))) < 10e-7
+
 
 ******************************************************************************** 
 **** Restacking with ddml estimate											****

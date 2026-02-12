@@ -6,13 +6,18 @@ if ("`c(username)'"=="kahrens") {
 }
 
 cap cd "/Users/kahrens/MyProjects/ddml/cert"
-cap cd "C:\LocalStore\ecomes\Documents\GitHub\ddml\cert"
+cap cd "C:\LocalStore\ecomes\GitHub\ddml\cert"
 
 cap log close
 log using "ddml_cert_interactiveiv", replace text
 
 which ddml, all
 mata: whichddml()
+which crossfit
+which _ddml_crossfit
+which _ddml_estimate_ate_late
+which _ddml_describe
+which _ddml_extract
 which pystacked, all
 
 use "http://fmwww.bc.edu/repec/bocode/j/jtpa.dta",clear   
@@ -39,12 +44,16 @@ ddml E[D|X,Z]: pystacked $D $X, type(class) method(logit gradboost)
 ddml E[Z|X]: pystacked $Z $X, type(class) method(logit gradboost)
 ddml crossfit
 ddml estimate
+ddml describe, all
+
 *** replay
 ddml estimate, mname(m0) spec(st) rep(1) replay notable
 *** append, estimate, replay
 ddml sample, append(1)
 ddml crossfit
 ddml estimate
+ddml describe, all
+
 *** replay
 ddml estimate, mname(m0) spec(st) rep(1) replay notable
 ddml estimate, mname(m0) spec(st) rep(2) replay notable
@@ -192,6 +201,74 @@ ddml overlap, name(triangle, replace)							///
 	title("Propensity score: triangle kernel")
 ddml overlap, kernel(epanechnikov) name(epanechnikov, replace)	///
 	title("Propensity score: epanechnikov kernel")
+
+********************************************************************************
+**** Various combinations 													****
+********************************************************************************
+
+// single regress Y, pystacked D and Z
+ddml init interactiveiv, kfolds(2) reps(2)
+ddml E[Y|X,Z]: regress $Y $X
+ddml E[D|X,Z]: pystacked $D $X, type(class) method(logit gradboost)
+ddml E[Z|X]: pystacked $Z $X, type(class) method(logit gradboost)
+ddml crossfit, shortstack poolstack
+ddml estimate
+ddml describe, all
+
+// single regress Y w no Xs, pystacked D and Z
+ddml init interactiveiv, kfolds(2) reps(2)
+ddml E[Y|X,Z]: regress $Y
+ddml E[D|X,Z]: pystacked $D $X, type(class) method(logit gradboost)
+ddml E[Z|X]: pystacked $Z $X, type(class) method(logit gradboost)
+ddml crossfit, shortstack poolstack
+ddml estimate
+ddml describe, all
+
+// single regress Y, multiple no-pystacked D and Z
+ddml init interactiveiv, kfolds(2) reps(2)
+ddml E[Y|X,Z]: regress $Y $X
+ddml E[D|X,Z]: pystacked $D $X, type(class) method(gradboost)
+ddml E[D|X,Z]: logit $D $X
+ddml E[Z|X]: pystacked $Z $X, type(class) method(gradboost)
+ddml E[Z|X]: logit $Z $X
+ddml crossfit, shortstack poolstack
+ddml estimate
+ddml describe, all
+
+// multiple no-pystacked Y, multiple no-pystacked D
+ddml init interactiveiv, kfolds(2) reps(2)
+ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(gradboost)
+ddml E[Y|X,Z]: regress $Y $X
+ddml E[D|X,Z]: pystacked $D $X, type(class) method(gradboost)
+ddml E[D|X,Z]: logit $D $X
+ddml E[Z|X]: pystacked $Z $X, type(class) method(gradboost)
+ddml E[Z|X]: logit $Z $X
+ddml crossfit, shortstack poolstack
+ddml estimate
+ddml describe, all
+
+// multiple no-pystacked Y, multiple no-pystacked D inc w no Xs 
+ddml init interactiveiv, kfolds(2) reps(2)
+ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(gradboost)
+ddml E[Y|X,Z]: regress $Y $X
+ddml E[D|X,Z]: pystacked $D $X, type(class) method(gradboost)
+ddml E[D|X,Z]: logit $D
+ddml E[Z|X]: pystacked $Z $X, type(class) method(gradboost)
+ddml E[Z|X]: logit $Z
+ddml crossfit, shortstack poolstack
+ddml estimate
+ddml describe, all
+
+// pystacked Y, single logit D and Z
+ddml init interactiveiv, kfolds(2) reps(2)
+ddml E[Y|X,Z]: pystacked $Y $X, type(reg) method(ols gradboost)
+ddml E[D|X,Z]: logit $D $X
+ddml E[Z|X]: logit $Z $X
+ddml crossfit, shortstack poolstack
+ddml estimate
+ddml describe, all
+
+
 
 log close
 

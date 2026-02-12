@@ -6,7 +6,7 @@ if ("`c(username)'"=="kahrens") {
 }
 
 cap cd "/Users/kahrens/MyProjects/ddml/cert"
-cap cd "C:\LocalStore\ecomes\Documents\GitHub\ddml\cert"
+cap cd "C:\LocalStore\ecomes\GitHub\ddml\cert"
 
 cap log close
 log using "ddml_cert_fiv", replace text
@@ -44,6 +44,8 @@ ddml extract, show(pystacked)
 ddml sample, append(1)
 ddml crossfit
 ddml estimate
+ddml describe, all
+
 *** replay
 ddml estimate, mname(m0) spec(st) rep(1) replay notable
 ddml estimate, mname(m0) spec(st) rep(2) replay notable
