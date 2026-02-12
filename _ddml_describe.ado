@@ -1,5 +1,5 @@
 *! ddml v1.5.0
-*! last edited: 3feb2026
+*! last edited: 6feb2026
 *! authors: aa/ms
 
 
@@ -1102,6 +1102,7 @@ prog define desc_crossfit, rclass
 	mata: st_local("stdflag",strofreal(`mname'.stdflag))
 	mata: st_local("ssflag",strofreal(`mname'.ssflag))
 	mata: st_local("psflag",strofreal(`mname'.psflag))
+	local nostackflag = ~`stdflag' & ~`ssflag' & ~`psflag'
 	
 	// used below to indicate set of crossfitting results to report
 	local pairs		= 0
@@ -1160,9 +1161,8 @@ prog define desc_crossfit, rclass
 	mat `cfresults0_r' = .
 	mat `cfresults1_r' = .
 	foreach vt in `vtlist' {
-// ?
 		// for pystacked stacking and non-pystacked
-		if `crossfitted' & `stdflag' {
+		if `crossfitted' & (`stdflag' | `nostackflag') {
 			if `pairs'==0 {
 				forvalues m=1/`nreps' {
 					tempname mse_folds
@@ -1232,7 +1232,7 @@ prog define desc_crossfit, rclass
 			}
 		}
 		// fiv model, for pystacked stacking and non-pystacked
-		if `heqn' & `crossfitted' & `stdflag' {
+		if `heqn' & `crossfitted' & (`stdflag' | `nostackflag') {
 			forvalues m=1/`nreps' {
 				tempname mse_h_folds
 				mata: st_local("rsq_h", strofreal(return_result_item(`eqn',"`vt'","R-sq_h","`m'")))
