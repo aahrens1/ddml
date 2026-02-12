@@ -1,5 +1,5 @@
 *! ddml v1.5.0
-*! last edited: 5feb2026
+*! last edited: 12feb2026
 *! authors: aa/ms
 
 program _ddml_estimate_ate_late, eclass sortpreserve
@@ -73,25 +73,30 @@ program _ddml_estimate_ate_late, eclass sortpreserve
 	
 	// check that std or pooled stacking is available across all variables; if not, set model stacking flag to 0
 	if `stdflag' | `psflag' {
+		local warnflag = 0
 		// check Y eqn
 		mata: `eqn' = (`mname'.eqnAA).get("`nameY'")
 		// used for checking
 		mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
 		if `pystackedmulti'==0 {
-			di as res "nb: estimates using stacked or pool-stacked for all eqns not reported"
-			di as res "    either use one pystacked call for each model equation or specify"
-			di as res "    the specific variables to use with the y(.), d(.), z(.), dh(.) options"
+			di as res "nb: Estimates using stacked or pool-stacked for all eqns not reported;"
+			di as res "    for stacked or pool-stacked, use one pystacked call for each model equation."
+			di as res "    Alternatively, specify variables to use with the y(.), d(.), z(.) options."
 			mata: `mname'.stdflag = 0
 			mata: `mname'.psflag = 0
+			local warnflag = 1
 		}
 		// check D and Z eqns
 		foreach vname in `nameD' `nameZ' {
 			mata: `eqn' = (`mname'.eqnAA).get("`vname'")
 			mata: st_local("pystackedmulti", strofreal(`eqn'.pystackedmulti))
 			if `pystackedmulti'==0 {
-				di as res "warning..."
+				di as res "nb: Estimates using stacked or pool-stacked for all eqns not reported;"
+				di as res "    for stacked or pool-stacked, use one pystacked call for each model equation."
+				di as res "    Alternatively, specify variables to use with the y(.), d(.), z(.) options."
 				mata: `mname'.stdflag = 0
 				mata: `mname'.psflag = 0
+				local warnflag = 1
 			}
 		}
 	}
