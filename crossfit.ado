@@ -1,5 +1,5 @@
 *! ddml v1.5.0
-*! last edited: 27jan2026
+*! last edited: 12feb2026
 *! authors: aa/ms
 * need to accommodate weights in parsing of estimation strings
 
@@ -2939,7 +2939,7 @@ program define _crossfit_other, rclass sortpreserve
 			cvc `vt_L_list' if `touse', yvar(`vname') foldvar(`fid') bootnum(`cvcbootnum')
 			tempname pmat
 			mat `pmat' = r(pmat)
-			mata: add_result_item(`ename',"`vname'","cvc_pval", "`m'", st_matrix("`pmat'")) bootnum(`cvcbootnum')
+			mata: add_result_item(`ename',"`vname'","cvc_pval", "`m'", st_matrix("`pmat'"))
 			cvc `vt_h_L_list' if `touse', yvar(`vname') foldvar(`fid')
 			tempname pmat_h
 			mat `pmat_h' = r(pmat)
